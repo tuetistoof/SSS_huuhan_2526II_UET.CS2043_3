@@ -1,10 +1,20 @@
 package com.SSScloud.auction;
 
+import java.time.LocalDate;
+
 public abstract class Entity {
     private String Name;
-    public Entity(String Name){
+     private LocalDate TimeImport;
+
+    public Entity(String Name, LocalDate TimeImport){
         this.Name = Name;
+        this.TimeImport = TimeImport;
     }
 
-    public String getName();
+    public void setName(){
+        this.Name = Name;
+    }
+    public String getName(String Name){
+        return this.Name;
+    }
 }
