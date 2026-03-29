@@ -10,7 +10,7 @@ public abstract class Entity {
     }
 
     public void setName(){
-        this.Name = Name;
+        this.Name = Name;   
     }
 
     public String getName(String Name){
