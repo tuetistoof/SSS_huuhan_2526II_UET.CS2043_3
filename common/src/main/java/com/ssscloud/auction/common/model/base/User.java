@@ -1,4 +1,4 @@
-package com.SSScloud.auction;
+package com.ssscloud.auction.common.model.base;
 
 public abstract class User extends Entity{
     private String UserName;

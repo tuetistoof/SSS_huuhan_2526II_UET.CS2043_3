@@ -1,4 +1,4 @@
-package com.SSScloud.auction;
+package com.ssscloud.auction.common.model.base;
 
 import java.time.LocalDate;
 

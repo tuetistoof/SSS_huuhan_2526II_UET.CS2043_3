@@ -1,4 +1,6 @@
-package com.SSScloud.auction;
+package com.ssscloud.auction.common.model;
+
+import com.ssscloud.auction.common.model.base.User;
 
 public class Bidder extends User {
     private long AccountBalance;
