@@ -3,13 +3,13 @@ package com.SSScloud.auction;
 import java.time.LocalDate;
 
 public abstract class Item extends Entity{
-    private String Id;
     private double BasePrice;
+    private LocalDate Manufacturingime;
 
-    public Item(String id, String name, double BasePrice, LocalDate TimeImport){
-        super(name, TimeImport);
-        this.Id = id;
-        this.BasePrice = BasePrice;
+    public Item(String Id, String Name, double BasePrice, LocalDate Manufacturingime){
+        super(Id, Name);
+        this.BasePrice;= BasePrice;
+        this.Manufacturingime = Manufacturingime;
     }
 
     public void SetBasePrice(double BasePrice){
