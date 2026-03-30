@@ -5,14 +5,14 @@ import java.time.LocalDate;
 public abstract class Item extends Entity{
     private double BasePrice;
     private LocalDate ManufacturingDate;
-    private String Brand, ItemDescibe;
+    private String Brand, Description;
 
-    public Item(String Id, String Name, double BasePrice, LocalDate ManufacturingDate, String Brand, String ItemDescibe){
+    public Item(String Id, String Name, double BasePrice, LocalDate ManufacturingDate, String Brand, String Description){
         super(Id, Name);
         this.BasePrice = BasePrice;
         this.ManufacturingDate = ManufacturingDate;
         this.Brand = Brand;
-        this.ItemDescibe = ItemDescibe;
+        this.Description = Description;
     }
 
     // tinh gia san pham
@@ -40,11 +40,11 @@ public abstract class Item extends Entity{
         Brand = brand;
     }
 
-    public String getItemDescibe() {
-        return ItemDescibe;
+    public String getDescription() {
+        return Description;
     }
-    public void setItemDescibe(String itemDescibe) {
-        ItemDescibe = itemDescibe;
+    public void setDescription(String description) {
+        Description = description;
     }
 }
 
