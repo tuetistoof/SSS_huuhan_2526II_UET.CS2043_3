@@ -5,13 +5,13 @@ import java.time.LocalDate;
 public abstract class Item extends Entity{
     private double BasePrice;
     private LocalDate Manufacturingime;
-    private String Author, ItemDescibe;
+    private String Origin, ItemDescibe;
 
     public Item(String Id, String Name, double BasePrice, LocalDate Manufacturingime, String Author, String ItemDescibe){
         super(Id, Name);
         this.BasePrice = BasePrice;
         this.Manufacturingime = Manufacturingime;
-        this.Author = Author;
+        this.Origin = Author;
         this.ItemDescibe = ItemDescibe;
     }
 
@@ -24,7 +24,7 @@ public abstract class Item extends Entity{
     }
 
     public String getAuthor(){
-        return this.Author;        
+        return this.Origin;
     }
     
     @Override
