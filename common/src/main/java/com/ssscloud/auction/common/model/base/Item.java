@@ -4,32 +4,47 @@ import java.time.LocalDate;
 
 public abstract class Item extends Entity{
     private double BasePrice;
-    private LocalDate Manufacturingime;
-    private String Origin, ItemDescibe;
+    private LocalDate ManufacturingDate;
+    private String Brand, Description;
 
-    public Item(String Id, String Name, double BasePrice, LocalDate Manufacturingime, String Author, String ItemDescibe){
+    public Item(String Id, String Name, double BasePrice, LocalDate ManufacturingDate, String Brand, String Description){
         super(Id, Name);
         this.BasePrice = BasePrice;
-        this.Manufacturingime = Manufacturingime;
-        this.Origin = Origin;
-        this.ItemDescibe = ItemDescibe;
+        this.ManufacturingDate = ManufacturingDate;
+        this.Brand = Brand;
+        this.Description = Description;
     }
 
-    public void SetBasePrice(double BasePrice){
-        this.BasePrice = BasePrice;
-    }
-
-    public double getFinalPrice(){
-        return this.BasePrice;
-    }
-
-    public String getAuthor(){
-        return this.Origin;
-    }
+    // tinh gia san pham
+    public abstract getPrice();
     
-    @Override
-    public String toString() {
-        return this.ItemDescibe;
+    // getter setter
+    public double getBasePrice() {
+        return BasePrice;
+    }
+    public void setBasePrice(double basePrice) {
+        BasePrice = basePrice;
+    }
+
+    public LocalDate getManufacturingDate() {
+        return ManufacturingDate;
+    }
+    public void setManufacturingDate(LocalDate manufacturingDate) {
+        ManufacturingDate = manufacturingDate;
+    }
+
+    public String getBrand() {
+        return Brand;
+    }
+    public void setBrand(String brand) {
+        Brand = brand;
+    }
+
+    public String getDescription() {
+        return Description;
+    }
+    public void setDescription(String description) {
+        Description = description;
     }
 }
 
