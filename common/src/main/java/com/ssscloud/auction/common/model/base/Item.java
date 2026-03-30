@@ -11,7 +11,7 @@ public abstract class Item extends Entity{
         super(Id, Name);
         this.BasePrice = BasePrice;
         this.Manufacturingime = Manufacturingime;
-        this.Origin = Author;
+        this.Origin = Origin;
         this.ItemDescibe = ItemDescibe;
     }
 
