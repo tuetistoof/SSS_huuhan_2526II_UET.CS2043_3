@@ -4,8 +4,13 @@ import com.ssscloud.auction.common.model.base.Item;
 
 import java.time.LocalDate;
 
-public class Arts extends Item {
-    public Arts(String Id, String Name, double BasePrice, LocalDate Manufacturingime, String Author, String ItemDescibe){
-        super(Id, Name, BasePrice, Manufacturingime, Author, ItemDescibe);
+public class Art extends Item {
+    public Art(String id, String name, double basePrice, double transactionFee, LocalDate manufacturingDate,String creator, String description){
+        super(id, name, basePrice, transactionFee, manufacturingDate, creator, description);
     }
+    @Override
+    public double getPrice() {
+        return super.getBasePrice() + super.getTransactionFee();
+    }
+
 }
