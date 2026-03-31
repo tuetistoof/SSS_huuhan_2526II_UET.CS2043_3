@@ -8,7 +8,7 @@ public abstract class User extends Entity{
     private String email;
     private UserRole role;
     
-    public User (String id, String name, String userName, String password, String email, UserRole role)
+    public User (int id, String name, String userName, String password, String email, UserRole role)
     {
         super (id, name);
         this.userName = userName;
@@ -38,4 +38,9 @@ public abstract class User extends Entity{
     public void setEmail(String email) {
         this.email = email;
     }
+    // role cua 1 nguoi khong the thay doi
+    // public UserRole getRole()
+    // {
+    //     return role;
+    // }
 }

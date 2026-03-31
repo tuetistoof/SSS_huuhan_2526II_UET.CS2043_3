@@ -1,11 +1,12 @@
 package com.ssscloud.auction.common.model.base;
 
+import java.util.UUID;
 
 public abstract class Entity {
     private String id;
     private String name;
     public Entity(String id, String name){
-        this.id = id;
+        this.id = createId();
         this.name = name;
 
     }
@@ -21,5 +22,11 @@ public abstract class Entity {
     // Id khong the thay doi
     public String getId() {
         return id;
+    }
+
+    // ham bo tro
+    public String createId()
+    {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 }
