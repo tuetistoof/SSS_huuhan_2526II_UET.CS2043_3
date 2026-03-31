@@ -9,8 +9,8 @@ public class Vehicle extends Item {
     private LocalDate purchaseDate;
     private Period warrantyPeriod;
 
-    public Vehicle (String id, String name, double basePrice, double transactionFee, LocalDate manufacturingDate,String creator, String description){        
-        super(id, name, basePrice, transactionFee, manufacturingDate, creator, description);
+    public Vehicle (String name, double basePrice, double transactionFee, LocalDate manufacturingDate,String creator, String description){        
+        super(name, basePrice, transactionFee, manufacturingDate, creator, description);
         this.purchaseDate = null;
         this.warrantyPeriod = Period.ZERO;        
     }

@@ -8,8 +8,8 @@ public abstract class Item extends Entity{
     private String creator;
     private String description;
     private double transactionFee;
-    public Item(String id, String name, double basePrice, double transactionFee, LocalDate manufacturingDate,String creator, String description){
-        super(id, name);
+    public Item(String name, double basePrice, double transactionFee, LocalDate manufacturingDate,String creator, String description){
+        super(name);
         this.basePrice = basePrice;
         this.manufacturingDate = manufacturingDate;
         this.creator = creator;
