@@ -10,8 +10,8 @@ public class Electronic extends Item {
     private Period warrantyPeriod;
 
     // constructor ko co 2 thuoc tinh rieng cua Electronic vi chi khi mua hang moi xuat hien trang thai day nen lat nua viet o setter
-    public Electronic (String name, double basePrice, double transactionFee, LocalDate manufacturingDate,String creator, String description){        
-        super(name, basePrice, transactionFee, manufacturingDate, creator, description);
+    public Electronic (String name, double basePrice, LocalDate manufacturingDate,String creator, String description){        
+        super(name, basePrice, manufacturingDate, creator, description);
         this.purchaseDate = null;
         this.warrantyPeriod = Period.ZERO;        
     }
@@ -21,9 +21,10 @@ public class Electronic extends Item {
     public double getPrice() {
         LocalDate now = LocalDate.now();
         Period period = Period.between(super.getManufacturingDate(), now);
+        double lastPrice = super.getBasePrice();
         if (period.getYears() >= 3)
-            return super.getBasePrice() * 0.9 + super.getTransactionFee();
-        else return super.getBasePrice() + super.getTransactionFee();
+            lastPrice = super.getBasePrice() * 0.9;
+        return lastPrice + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
     }
 
 
