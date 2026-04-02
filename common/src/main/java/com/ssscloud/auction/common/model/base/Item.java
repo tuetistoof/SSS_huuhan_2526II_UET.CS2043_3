@@ -54,4 +54,3 @@ public abstract class Item extends Entity{
         this.description = description;
     }
 }
-
