@@ -1,0 +1,7 @@
+package com.ssscloud.auction.common.exception;
+
+public class AuctionClosedException extends AuctionException {
+    public AuctionClosedException(){
+        super("AUCTION_CLOSED", "The auction has ended!");
+    }
+}
