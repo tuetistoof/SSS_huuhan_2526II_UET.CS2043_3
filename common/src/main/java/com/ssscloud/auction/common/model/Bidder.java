@@ -11,4 +11,11 @@ public class Bidder extends User {
         this.accountBalance = accountBalance;
     }
     
+    //getter setter
+    public long getAccountBalance() {
+        return accountBalance;
+    }
+    public void setAccountBalance(long accountBalance) {
+        this.accountBalance = accountBalance;
+    }
 }
