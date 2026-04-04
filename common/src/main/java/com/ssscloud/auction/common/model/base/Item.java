@@ -3,48 +3,54 @@ package com.ssscloud.auction.common.model.base;
 import java.time.LocalDate;
 
 public abstract class Item extends Entity{
-    private double BasePrice;
-    private LocalDate ManufacturingDate;
-    private String Brand, Description;
-
-    public Item(String Id, String Name, double BasePrice, LocalDate ManufacturingDate, String Brand, String Description){
-        super(Id, Name);
-        this.BasePrice = BasePrice;
-        this.ManufacturingDate = ManufacturingDate;
-        this.Brand = Brand;
-        this.Description = Description;
+    private double basePrice;
+    private LocalDate manufacturingDate;
+    private String creator;
+    private String description;
+    private final double transactionFee = 0.1;
+    private final double maxTransactionFee = 10000.0;
+    public Item(String name, double basePrice, LocalDate manufacturingDate,String creator, String description){
+        super(name);
+        this.basePrice = basePrice;
+        this.manufacturingDate = manufacturingDate;
+        this.creator = creator;
+        this.description = description;
     }
 
     // tinh gia san pham
-    public abstract getPrice();
-    
+    public abstract double getPrice();
     // getter setter
     public double getBasePrice() {
-        return BasePrice;
+        return basePrice;
     }
     public void setBasePrice(double basePrice) {
-        BasePrice = basePrice;
+        this.basePrice = basePrice;
     }
 
     public LocalDate getManufacturingDate() {
-        return ManufacturingDate;
+        return manufacturingDate;
     }
     public void setManufacturingDate(LocalDate manufacturingDate) {
-        ManufacturingDate = manufacturingDate;
+        this.manufacturingDate = manufacturingDate;
     }
 
     public String getBrand() {
-        return Brand;
+        return creator;
     }
-    public void setBrand(String brand) {
-        Brand = brand;
+    public void setBrand(String creator) {
+        this.creator = creator;
     }
 
     public String getDescription() {
-        return Description;
+        return description;
     }
     public void setDescription(String description) {
-        Description = description;
+        this.description = description;
+    }
+    public double getTransactionFee() {
+        return transactionFee;
+    }
+    public double getMaxTransactionFee() {
+        return maxTransactionFee;
     }
 }
-

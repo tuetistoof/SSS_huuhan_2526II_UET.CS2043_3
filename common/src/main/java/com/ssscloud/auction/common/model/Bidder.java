@@ -1,13 +1,14 @@
 package com.ssscloud.auction.common.model;
 
+import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.model.base.User;
 
 public class Bidder extends User {
-    private long AccountBalance;
-    public Bidder (String Id, String Name, String UserName, String Password, long AccountBalance)
+    private long accountBalance;
+    public Bidder (String name, String userName, String password, String email, UserRole role, long accountBalance)
     {
-        super (Id, Name, UserName, Password);
-        this.AccountBalance = AccountBalance;
+        super(name, userName, password, email, role);
+        this.accountBalance = accountBalance;
     }
     
 }
