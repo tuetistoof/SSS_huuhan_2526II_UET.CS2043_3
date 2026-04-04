@@ -1,23 +1,31 @@
-//code test
-package com.ssscloud.auction.client;
+package com.ssscloud.auction.client; // Cấu trúc thư mục của sếp
+
+import com.ssscloud.auction.client.util.SceneManager;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class ClientApplication extends Application {
-	@Override
-	public void start(Stage stage) throws Exception {
-		FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("/fxml/login-signin.fxml"));
-		Scene scene = new Scene(fxmlLoader.load(), 800, 800);
 
-		stage.setTitle("Phần Mềm Đấu Giá");
-		stage.setScene(scene);
-		stage.show();
-	}
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+        SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
+        SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
+        
+        Scene scene = new Scene(SceneManager.loginScene, 1280, 720);
+        
+        primaryStage.setTitle("Cloud Bidding");
+        primaryStage.setScene(scene);
+        
+        // primaryStage.setResizable(false); 
+        primaryStage.show();
+    }
 
-	public static void main(String[] args) {
-		launch(args);
-	}
+    public static void main(String[] args) {
+
+        launch(args);
+    }
 }
