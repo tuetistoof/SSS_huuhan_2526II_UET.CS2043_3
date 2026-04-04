@@ -17,8 +17,6 @@ public abstract class User extends Entity{
         this.role = role;
     }
 
-    public abstract String getRole();
-    
     // getter setter
     // userName khong the thay doi
     public String getUserName() {
@@ -38,9 +36,9 @@ public abstract class User extends Entity{
     public void setEmail(String email) {
         this.email = email;
     }
-    // role cua 1 nguoi khong the thay doi
-    // public UserRole getRole()
-    // {
-    //     return role;
-    // }
+    //role cua 1 nguoi khong the thay doi
+    public UserRole getRole()
+    {
+        return role;
+    }
 }
