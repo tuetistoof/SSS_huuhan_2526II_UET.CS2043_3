@@ -121,6 +121,5 @@ public class LoginSignupController {
 
     @FXML
     private void handleChkPassword(ActionEvent event) {
-        
     }  
 }
