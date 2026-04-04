@@ -1,0 +1,7 @@
+package com.ssscloud.auction.common.exception;
+
+public class AuctionNotFoundException extends AuctionException {
+    public AuctionNotFoundException(){
+        super("AUCTION_NOT_FOUND", "The auction cannot be found!");
+    }
+}
