@@ -14,6 +14,8 @@ public class Vehicle extends Item {
         this.purchaseDate = null;
         this.warrantyPeriod = Period.ZERO;        
     }
+    public Vehicle(){}
+    
     @Override
     public double getPrice(){
         return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
