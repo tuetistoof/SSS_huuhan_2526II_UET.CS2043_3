@@ -2,6 +2,8 @@ package com.ssscloud.auction.client.controller;
 
 import java.io.IOException;
 
+import com.ssscloud.auction.client.util.SceneManager;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -37,10 +39,18 @@ public class LoginSignupController {
     private TextField txtEmail;
 
     @FXML
-    private PasswordField txtPassword;
+    private TextField txtPassword;
+
+    @FXML
+    private PasswordField txtPasswordHidden;
 
     @FXML
     public void initialize() {
+        txtPassword.textProperty().bindBidirectional(txtPasswordHidden.textProperty());
+
+        txtPassword.visibleProperty().bind(chkPassword.selectedProperty());
+        txtPasswordHidden.visibleProperty().bind(chkPassword.selectedProperty().not());
+        
         lblError.setText("");
         lblError.setVisible(false);
         lblError.setManaged(false);
@@ -75,7 +85,7 @@ public class LoginSignupController {
             hasError = true;
         }
         if (pass.isEmpty()) {
-            txtPassword.getStyleClass().add("input-error");
+            txtPasswordHidden.getStyleClass().add("input-error");
             hasError = true;
         }
         if (hasError == true) {
@@ -104,22 +114,16 @@ public class LoginSignupController {
             lblError.setVisible(true);
             lblError.setManaged(true);
             txtEmail.getStyleClass().add("input-error");
-            txtPassword.getStyleClass().add("input-error");
+            txtPasswordHidden.getStyleClass().add("input-error");
         }
     }
 
     @FXML
     private void handleSignUp(ActionEvent event) {
-        try {
-                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
-                btnLogin.getScene().setRoot(homeRoot);
-            }
-            catch (IOException e) {
-                throw new RuntimeException("Where is my signup.fxml?", e);
-            }
+        Scene currentScene = btnLogin.getScene();
+        currentScene.setRoot(SceneManager.registerScene);
+        Stage stage = (Stage) currentScene.getWindow();
+        stage.sizeToScene();
+        stage.centerOnScreen();
     }
-
-    @FXML
-    private void handleChkPassword(ActionEvent event) {
-    }  
 }
