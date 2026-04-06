@@ -7,7 +7,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AuctionSocketServer{
-    private static final int maxThread = 1000;
+    // khong dung thi tam thoi dong vao cho do an canh bao 
+    // private static final int maxThread = 1000;
     private static ExecutorService pool = Executors.newCachedThreadPool();
 
     public static void main(String[] args) {
@@ -17,7 +18,8 @@ public class AuctionSocketServer{
 
                 pool.execute(new ClientHandler(clientSocket));
             }
-        } catch (IOException e){
+        } 
+        catch (IOException e){
             System.out.println(e.getMessage());
         }
     }

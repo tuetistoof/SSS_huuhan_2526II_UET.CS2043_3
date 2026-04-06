@@ -3,7 +3,6 @@ package com.ssscloud.auction.server.networking;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -27,10 +26,17 @@ public class ClientHandler implements Runnable{
                 String jsonReponse = messageHandler.proccessRequest(jsonFromClient);
                 writer.print(jsonReponse);
             }
-        } catch (IOException e) {
+        } 
+        catch (IOException e) {
             System.out.println("Client đã ngắt kết nối");
-        } finally{
-            this.clientSocket.close();
+        } 
+        finally {
+            try {
+                this.clientSocket.close();
+            } 
+            catch (IOException e) {
+                System.out.println("Lỗi đóng socket: " + e.getMessage());
+            }
         }
 
     }
