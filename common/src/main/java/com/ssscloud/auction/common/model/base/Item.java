@@ -9,6 +9,8 @@ public abstract class Item extends Entity{
     private String description;
     private final double transactionFee = 0.1;
     private final double maxTransactionFee = 10000.0;
+
+    public Item(){}
     public Item(String name, double basePrice, LocalDate manufacturingDate,String creator, String description){
         super(name);
         this.basePrice = basePrice;

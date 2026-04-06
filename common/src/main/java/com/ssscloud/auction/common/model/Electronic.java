@@ -15,6 +15,7 @@ public class Electronic extends Item {
         this.purchaseDate = null;
         this.warrantyPeriod = warrantyPeriod;
     }
+    public Electronic(){}
     
     // neu sân pham da sam xuat lau hon 3 nam thi giam 10%
     @Override
