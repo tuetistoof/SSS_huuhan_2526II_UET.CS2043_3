@@ -5,13 +5,19 @@ import com.ssscloud.auction.common.model.base.Item;
 import java.time.LocalDate;
 
 public class Art extends Item {
-    public Art(){}
-    public Art(String name, double basePrice, LocalDate manufacturingDate,String creator, String description){
-        super(name, basePrice, manufacturingDate, creator, description);
+    private boolean certificate;
+    public Art(String sellerId, String name, double basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
+        super(sellerId, name, basePrice, manufacturingDate, creator, description);
+        this.certificate = certificate;
     }
     @Override
     public double getPrice() {
         return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    }
+
+    //getter setter
+    public boolean getCertificate(){
+        return this.certificate;
     }
 
 }

@@ -9,16 +9,25 @@ public class Vehicle extends Item {
     private LocalDate purchaseDate;
     private Period warrantyPeriod;
 
-    public Vehicle (String name, double basePrice, LocalDate manufacturingDate,String creator, String description){        
-        super(name, basePrice, manufacturingDate, creator, description);
+    public Vehicle (String sellerId, String name, double basePrice, LocalDate manufacturingDate,String creator, String description){        
+        super(sellerId, name, basePrice, manufacturingDate, creator, description);
         this.purchaseDate = null;
         this.warrantyPeriod = Period.ZERO;        
     }
-    public Vehicle(){}
+    public Vehicle (String sellerId, String name, double basePrice, LocalDate manufacturingDate,String creator, String description, Period warrantyPeriod){        
+        super(sellerId, name, basePrice, manufacturingDate, creator, description);
+        this.purchaseDate = null;
+        this.warrantyPeriod = warrantyPeriod;
+    }
     
     @Override
     public double getPrice(){
         return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    }
+    public boolean checkWarranty(){
+        if (warrantyPeriod == Period.ZERO)
+            return false;
+        else return true;
     }
 
     // getter setter
