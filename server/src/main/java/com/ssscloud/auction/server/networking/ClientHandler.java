@@ -9,9 +9,11 @@ import java.net.Socket;
 
 public class ClientHandler implements Runnable{
     private Socket clientSocket;
+    private MessageHandler messageHandler;
 
-    public ClientHandler(Socket socket){
+    public ClientHandler(Socket socket, MessageHandler messageHandler){
         this.clientSocket = socket;
+        this.messageHandler = messageHandler;
     }
     @Override
     public void run() {
@@ -19,12 +21,13 @@ public class ClientHandler implements Runnable{
             BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8"));
             PrintWriter writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(),"UTF-8"), true);
 
-            MessageHandler messageHandler = new MessageHandler();
-
             String jsonFromClient;
             while((jsonFromClient = reader.readLine()) != null){
-                String jsonReponse = messageHandler.proccessRequest(jsonFromClient);
-                writer.print(jsonReponse);
+                String jsonResponse = messageHandler.handleMessage(jsonFromClient);
+                if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                    writer.println(jsonResponse);
+                    writer.flush();
+                }
             }
         } 
         catch (IOException e) {
@@ -38,6 +41,6 @@ public class ClientHandler implements Runnable{
                 System.out.println("Lỗi đóng socket: " + e.getMessage());
             }
         }
-
     }
 }
+
