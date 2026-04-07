@@ -6,8 +6,13 @@ import com.google.gson.JsonParser;
 
 import netscape.javascript.JSObject;
 
+import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.UserController;
 public class MessageHandler {
     private  Gson gson = new Gson();
+
     private BidController bidController = new BidController();
     private UserController userController = new UserController();
 
@@ -30,7 +35,8 @@ public class MessageHandler {
                 default:
                     return createErrorReponse("Hành động không hợp lệ");
             }   
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             e.printStackTrace();
             return createErrorReponse("Lỗi cú pháp Json hoặc lỗi hệ thống");
         }
