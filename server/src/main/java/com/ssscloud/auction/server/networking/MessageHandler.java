@@ -13,21 +13,11 @@ import com.ssscloud.auction.server.controller.UserController;
 
 import netscape.javascript.JSObject;
 
-import com.ssscloud.auction.common.dto.response.BidDTO;
-import com.ssscloud.auction.common.dto.response.UserDTO;
-import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.UserController;
 public class MessageHandler {
     private  Gson gson = new Gson();
-<<<<<<< HEAD
-
-    private BidController bidController = new BidController();
-    private UserController userController = new UserController();
-=======
     private BidController bidController;
     private UserController userController;
     private AuctionController auctionController;
->>>>>>> Onion
 
     public MessageHandler(UserController userController, 
                           AuctionController auctionController, 
@@ -72,18 +62,11 @@ public class MessageHandler {
                     break;
 
                 default:
-<<<<<<< HEAD
-                    return createErrorReponse("Hành động không hợp lệ");
-            }   
-        } 
-        catch (Exception e) {
-=======
                     System.err.println("Action không được hỗ trợ: " + action + " từ client " + clientId);
             }
 
         } catch (Exception e) {
             System.err.println("Lỗi xử lý message từ client " + clientId + ": " + e.getMessage());
->>>>>>> Onion
             e.printStackTrace();
         }
     }
