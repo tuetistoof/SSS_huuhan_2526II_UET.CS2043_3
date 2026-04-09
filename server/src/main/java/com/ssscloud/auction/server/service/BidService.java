@@ -23,6 +23,7 @@ public class BidService {
         if (!BidValidator.isPositiveBid(request.getBidAmount())){
             throw new InvalidBidException("Bid amount must be positive");
         }
+   
         //chưa có dao để viết nốt
 
 
