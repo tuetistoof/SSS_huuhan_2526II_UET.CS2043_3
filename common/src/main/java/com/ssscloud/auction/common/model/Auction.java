@@ -1,86 +1,101 @@
 package com.ssscloud.auction.common.model;
 
-import com.ssscloud.auction.common.model.enums.AuctionStatus;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Entity đại diện cho một phiên đấu giá
- */
+import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.model.base.Entity;
+
 public class Auction extends Entity {
-
-    private String title;
-    private String description;
-    private double startingPrice;
-    private double currentPrice;
-    private LocalDateTime endTime;
-    private AuctionStatus status = AuctionStatus.OPEN;
     private String sellerId;
+    private String itemId;
+    private long startPrice;
+    private long currentPrice;
+    private long minIncrement;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private AuctionStatus status;
     private String highestBidderId;
-    private Item item;                          // Sản phẩm được đấu giá
-    private List<BidTransaction> bidHistory = new ArrayList<>();
-
-    // Constructor mặc định
-    public Auction() {
-    }
-
-    // Constructor đầy đủ (khuyến khích)
-    public Auction(String title, String description, double startingPrice, 
-                   LocalDateTime endTime, String sellerId, Item item) {
-        this.title = title;
-        this.description = description;
-        this.startingPrice = startingPrice;
-        this.currentPrice = startingPrice;
-        this.endTime = endTime;
+    private String winnerId;
+    private final int extendTime = 36;
+    private String description;
+    public Auction (String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description){
         this.sellerId = sellerId;
-        this.item = item;
+        this.itemId = itemId;
+        this.startPrice = startPrice;
+        this.currentPrice = currentPrice;
+        this.minIncrement = minIncrement;
+        this.startTime = starTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.highestBidderId = null;
+        this.winnerId = null;
+        this.description = description;
     }
 
-    // ==================== GETTER & SETTER ====================
-
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
-
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
-
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
-
-    public AuctionStatus getStatus() { return status; }
-    public void setStatus(AuctionStatus status) { this.status = status; }
-
-    public String getSellerId() { return sellerId; }
-    public void setSellerId(String sellerId) { this.sellerId = sellerId; }
-
-    public String getHighestBidderId() { return highestBidderId; }
-    public void setHighestBidderId(String highestBidderId) { this.highestBidderId = highestBidderId; }
-
-    public Item getItem() { return item; }
-    public void setItem(Item item) { this.item = item; }
-
-    public List<BidTransaction> getBidHistory() { return bidHistory; }
-    public void setBidHistory(List<BidTransaction> bidHistory) { this.bidHistory = bidHistory; }
-
-    // Method hỗ trợ
-    public boolean isActive() {
-        return status.isActive();
+    //getter setter
+    // seller Id quyet dinh qua viec ai la nguoi truy cap
+    public String getSellerId() {
+        return sellerId;
     }
 
-    @Override
-    public String toString() {
-        return "Auction{" +
-                "id=" + getId() +
-                ", title='" + title + '\'' +
-                ", currentPrice=" + currentPrice +
-                ", status=" + status +
-                '}';
+    //khi tao san pham va dang ban thi khong the sua chi co the xoa
+    public String getItemId() {
+        return itemId;
+    }
+    
+    public long getStartPrice() {
+        return startPrice;
+    }
+    public void setStartPrice(long startPrice) {
+        this.startPrice = startPrice;
+    }
+    
+    public long getCurrentPrice() {
+        return currentPrice;
+    }
+    public void setCurrentPrice(long currentPrice) {
+        this.currentPrice = currentPrice;
+    }
+    
+    public long getMinIncrement() {
+        return minIncrement;
+    }
+    public void setMinIncrement(long minIncrement) {
+        this.minIncrement = minIncrement;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+    public AuctionStatus getStatus() {
+        return status;
+    }
+    public void setStatus(AuctionStatus status) {
+        this.status = status;
+    }
+    public String getHighestBidderId() {
+        return highestBidderId;
+    }
+    public void setHighestBidderId(String highestBidderId) {
+        this.highestBidderId = highestBidderId;
+    }
+    public String getWinnerId() {
+        return winnerId;
+    }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
