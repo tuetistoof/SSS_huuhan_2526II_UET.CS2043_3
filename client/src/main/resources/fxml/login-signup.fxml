@@ -24,22 +24,27 @@
                      <children>
                         <VBox alignment="CENTER_LEFT" spacing="5.0">
                            <children>
-                              <Label style="-fx-font-family: 'Gabriola', serif; -fx-font-size: 72px; -fx-text-fill: #333333;" text="Welcome Back," />
-                              <Label style="-fx-font-family: 'Arial', sans-serif; -fx-font-size: 16px; -fx-text-fill: #555555;" text="Sign in to continue" />
+                              <Label style="-fx-font-family: 'Gabriola', serif; -fx-font-size: 72px;" text="Welcome Back," />
+                              <Label style="-fx-font-family: 'Arial', sans-serif; -fx-font-size: 16px;" text="Sign in to continue" />
                            </children>
                         </VBox>
             
-                        <VBox spacing="15.0">
+                        <VBox alignment="CENTER" spacing="15.0">
                            <children>
-                              <TextField fx:id="txtEmail" promptText="Email:" styleClass="input-field" />
-                              <PasswordField fx:id="txtPassword" promptText="Password:" styleClass="input-field, password-field" />
+                              <TextField fx:id="txtEmail" promptText="Email" styleClass="input-field" />
+                              <StackPane>
+                                 <children>
+                                    <TextField fx:id="txtPassword" styleClass="input-field" />
+                                    <PasswordField fx:id="txtPasswordHidden" promptText="Password:" styleClass="input-field, password-field" />
+                                 </children>
+                              </StackPane>
                               <Label fx:id="lblError" alignment="CENTER" textFill="#dc493a" />
                            </children>
                         </VBox>
             
                         <HBox alignment="CENTER_LEFT">
                            <children>
-                              <CheckBox fx:id="chkPassword" mnemonicParsing="false" onAction="#handleChkPassword" text="Show password" />
+                              <CheckBox fx:id="chkPassword" mnemonicParsing="false" text="Show password" />
                               <Pane HBox.hgrow="ALWAYS" />
                               <Hyperlink fx:id="linkForgetPassword" onAction="#handleForgetPassword" styleClass="link-clean" text="Forgot Password?" />
                            </children>

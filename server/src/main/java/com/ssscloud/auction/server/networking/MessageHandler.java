@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.networking;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
@@ -27,47 +28,51 @@ public class MessageHandler {
         this.bidController = bidController;
     }
 
-    public void handleMessage(String clientId, String jsonMessage) {
+    public String handleMessage(String jsonMessage) {
         try {
             //Chuyển JSON thành ClientMessage object
             ClientMessage msg = JsonUtils.fromJson(jsonMessage, ClientMessage.class);
 
             if (msg == null || msg.getAction() == null) {
-                System.err.println("Message không hợp lệ từ client " + clientId);
-                return;
+                System.err.println("Message không hợp lệ từ client ");
+                return JsonUtils.toJson(ApiResponse.error("Message không hợp lệ"));
             }
 
             String action = msg.getAction().toUpperCase().trim();
+            String responseJson = null;
 
             //Dựa vào action để gọi Controller phù hợp
             switch (action) {
                 case "LOGIN":
-                    userController.login(clientId, msg.getData());
+                    responseJson = userController.login(msg.getData());
                     break;
 
                 case "REGISTER":
-                    userController.register(clientId, msg.getData());
+                    responseJson = userController.register(msg.getData());
                     break;
 
                 case "CREATE_AUCTION":
-                    auctionController.createAuction(clientId, msg.getData());
+                    responseJson = auctionController.createAuction(msg.getData());
                     break;
 
                 case "PLACE_BID":
-                    bidController.placeBid(clientId, msg.getData());
+                    responseJson = bidController.placeBid(msg.getData());
                     break;
 
                 case "AUTO_BID":
-                    bidController.registerAutoBid(clientId, msg.getData());
+                    responseJson = bidController.registerAutoBid(msg.getData());
                     break;
 
                 default:
-                    System.err.println("Action không được hỗ trợ: " + action + " từ client " + clientId);
+                    responseJson = JsonUtils.toJson(
+                    ApiResponse.error("Action không được hỗ trợ: " + action)
+                );
             }
+            return responseJson != null ? responseJson : "{}";
 
         } catch (Exception e) {
-            System.err.println("Lỗi xử lý message từ client " + clientId + ": " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Lỗi xử lý message từ client: "  + e.getMessage());
+            return JsonUtils.toJson(ApiResponse.error("Lỗi hệ thống: " + e.getMessage()));
         }
     }
 

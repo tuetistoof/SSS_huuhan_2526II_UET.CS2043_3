@@ -15,12 +15,11 @@ public class ClientApplication extends Application {
         SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
         
-        Scene scene = new Scene(SceneManager.loginScene, 1280, 720);
+        Scene scene = new Scene(SceneManager.loginScene);
         
         primaryStage.setTitle("Cloud Bidding");
         primaryStage.setScene(scene);
         
-        // primaryStage.setResizable(false); 
         primaryStage.show();
     }
 

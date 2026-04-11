@@ -1,4 +1,4 @@
-package com.ssscloud.auction.common.dto;
+package com.ssscloud.auction.common.dto.response;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
