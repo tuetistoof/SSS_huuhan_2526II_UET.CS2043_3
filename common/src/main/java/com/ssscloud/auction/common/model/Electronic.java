@@ -10,6 +10,8 @@ public class Electronic extends Item {
     private LocalDate purchaseDate;
     private Period warrantyPeriod;
     // constructor ko co 2 thuoc tinh rieng cua Electronic vi chi khi mua hang moi xuat hien trang thai day nen lat nua viet o setter
+
+    public Electronic() {} // dùng trong factory
     public Electronic (String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean isRepaired, Period warrantyPeriod){        
         super(sellerId, name, basePrice, manufacturingDate, creator, description);
         this.purchaseDate = null;

@@ -16,6 +16,8 @@ public abstract class Item extends Entity{
     // he thong tinh toan tien tu dong lam tron len
     private final double transactionFee = 0.1; 
     private final double maxTransactionFee = 10000.0;
+
+    public Item() {} //dùng trong factory
     public Item(String sellerID, String name, long basePrice, LocalDate manufacturingDate,String creator, String description){
         super(name);
         this.sellerId = sellerID;

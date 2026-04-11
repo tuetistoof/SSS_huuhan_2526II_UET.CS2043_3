@@ -9,6 +9,8 @@ public class Vehicle extends Item {
     private LocalDate purchaseDate;
     private Period warrantyPeriod;
 
+
+    public Vehicle() {} //constructor cần dùng trong factory
     public Vehicle (String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description){        
         super(sellerId, name, basePrice, manufacturingDate, creator, description);
         this.purchaseDate = null;

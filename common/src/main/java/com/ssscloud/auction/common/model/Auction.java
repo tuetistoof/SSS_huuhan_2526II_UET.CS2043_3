@@ -1,6 +1,8 @@
 package com.ssscloud.auction.common.model;
 
-import com.ssscloud.auction.common.model.enums.AuctionStatus;
+import com.ssscloud.auction.common.model.base.Entity;
+import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.enums.AuctionStatus;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class Auction extends Entity {
     public Auction() {
     }
 
-    // Constructor đầy đủ (khuyến khích)
+    // Constructor đầy đủ 
     public Auction(String title, String description, double startingPrice, 
                    LocalDateTime endTime, String sellerId, Item item) {
         this.title = title;
@@ -37,7 +39,7 @@ public class Auction extends Entity {
         this.item = item;
     }
 
-    // ==================== GETTER & SETTER ====================
+    //  GETTER & SETTER
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -69,10 +71,36 @@ public class Auction extends Entity {
     public List<BidTransaction> getBidHistory() { return bidHistory; }
     public void setBidHistory(List<BidTransaction> bidHistory) { this.bidHistory = bidHistory; }
 
-    // Method hỗ trợ
-    public boolean isActive() {
-        return status.isActive();
+    // set state methods
+    public void start() {
+        if (this.status == AuctionStatus.OPEN) {
+            this.status = AuctionStatus.RUNNING;
+        }
     }
+
+    public void finish() {
+        if (this.status == AuctionStatus.OPEN || this.status == AuctionStatus.RUNNING) {
+            this.status = AuctionStatus.FINISHED;
+        }
+    }
+ 
+    public void markPaid() {
+        if (this.status == AuctionStatus.FINISHED) {
+            this.status = AuctionStatus.PAID;
+        }
+    }
+
+    public void cancel() {
+        if (this.status.isActive()) {
+            this.status = AuctionStatus.CANCELED;
+        }
+    }
+
+    
+
+    //helpers
+    public boolean isActive()  { return status.isActive(); }
+    public boolean isExpired() { return LocalDateTime.now().isAfter(endTime); }
 
     @Override
     public String toString() {
