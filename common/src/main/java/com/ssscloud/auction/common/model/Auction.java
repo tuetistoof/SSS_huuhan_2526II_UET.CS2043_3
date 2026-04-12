@@ -1,6 +1,5 @@
 package com.ssscloud.auction.common.model;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
