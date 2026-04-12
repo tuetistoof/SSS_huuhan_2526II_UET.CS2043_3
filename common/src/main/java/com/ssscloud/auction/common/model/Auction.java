@@ -3,14 +3,18 @@ package com.ssscloud.auction.common.model;
 import com.ssscloud.auction.common.model.base.Entity;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.observer.Subject;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Entity đại diện cho một phiên đấu giá
+ * subject cho observer pattern
  */
-public class Auction extends Entity {
+public class Auction extends Entity implements Subject{
 
     private String title;
     private String description;
@@ -94,6 +98,25 @@ public class Auction extends Entity {
         if (this.status.isActive()) {
             this.status = AuctionStatus.CANCELED;
         }
+    }
+
+    public void placeBid(BidTransaction bid) {
+        //setState
+        this.currentPrice          = bid.getBidAmount();
+        this.highestBidderId       = bid.getBidderId();
+        this.bidHistory.add(bid);
+        if (this.status == AuctionStatus.OPEN) {
+            this.status = AuctionStatus.RUNNING;
+        }
+ 
+        //notify
+        notifyObservers();
+    }
+
+    @Override
+    public void notifyObservers() {
+        // Truyền chính this vào — ChangeManager tìm HashMap[this] → list observer
+        ChangeManager.getInstance().notify(this);
     }
 
     
