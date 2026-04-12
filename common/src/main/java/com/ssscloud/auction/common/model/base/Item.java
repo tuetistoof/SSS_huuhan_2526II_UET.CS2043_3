@@ -5,15 +5,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Item extends Entity{
-    private double basePrice;
+    // tinh theo gia viet nam nen de la long
+    private long basePrice;
     private LocalDate manufacturingDate;
     private String creator;
     private String description;
     private String sellerId;   
     private List <String> imageUrl = new ArrayList<>(); 
-    private final double transactionFee = 0.1;
+    // khong nen de la final de cho he thong co the sua duoc kieu v
+    // he thong tinh toan tien tu dong lam tron len
+    private final double transactionFee = 0.1; 
     private final double maxTransactionFee = 10000.0;
-    public Item(String sellerID, String name, double basePrice, LocalDate manufacturingDate,String creator, String description){
+
+    public Item() {} //dùng trong factory
+    public Item(String sellerID, String name, long basePrice, LocalDate manufacturingDate,String creator, String description){
         super(name);
         this.sellerId = sellerID;
         this.basePrice = basePrice;
@@ -42,7 +47,7 @@ public abstract class Item extends Entity{
     public double getBasePrice() {
         return basePrice;
     }
-    public void setBasePrice(double basePrice) {
+    public void setBasePrice(long basePrice) {
         this.basePrice = basePrice;
     }
 
