@@ -74,9 +74,11 @@ public class LoginSignupController {
         lblError.setVisible(false);
         lblError.setManaged(false);
         
+        //lấy dữ liệu từ UI
         String email = txtEmail.getText().trim();
         String pass = txtPassword.getText().trim();
         
+        //validate thông tin (không gửi server nếu thông tin rỗng)
         boolean loginSuccess = false;
         boolean hasError = false;
 
@@ -98,6 +100,7 @@ public class LoginSignupController {
         // if (!pass.equals("MK trong db")) {
         //     loginSuccess = false;
         // }
+        
         
         loginSuccess = true;
         if (loginSuccess) {

@@ -6,6 +6,8 @@ import java.time.LocalDate;
 
 public class Art extends Item {
     private boolean certificate;
+
+    public Art() {} //dùng trong factory
     public Art(String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
         super(sellerId, name, basePrice, manufacturingDate, creator, description);
         this.certificate = certificate;
