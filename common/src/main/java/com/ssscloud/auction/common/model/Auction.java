@@ -1,15 +1,22 @@
 package com.ssscloud.auction.common.model;
 
+<<<<<<< HEAD
+=======
 import com.ssscloud.auction.common.model.base.Entity;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.observer.Subject;
 
+>>>>>>> f7473fc67a0a3f2fa5214d775b8a5758661a0d7a
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
+<<<<<<< HEAD
+import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.model.base.Entity;
+
+public class Auction extends Entity {
+=======
 /**
  * Entity đại diện cho một phiên đấu giá
  * subject cho observer pattern
@@ -22,8 +29,22 @@ public class Auction extends Entity implements Subject{
     private double currentPrice;
     private LocalDateTime endTime;
     private AuctionStatus status = AuctionStatus.OPEN;
+>>>>>>> f7473fc67a0a3f2fa5214d775b8a5758661a0d7a
     private String sellerId;
+    private String itemId;
+    private long startPrice;
+    private long currentPrice;
+    private long minIncrement;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private AuctionStatus status;
     private String highestBidderId;
+<<<<<<< HEAD
+    private String winnerId;
+    private final int extendTime = 36;
+    private String description;
+    public Auction (String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description){
+=======
     private Item item;                          // Sản phẩm được đấu giá
     private List<BidTransaction> bidHistory = new ArrayList<>();
 
@@ -39,10 +60,86 @@ public class Auction extends Entity implements Subject{
         this.startingPrice = startingPrice;
         this.currentPrice = startingPrice;
         this.endTime = endTime;
+>>>>>>> f7473fc67a0a3f2fa5214d775b8a5758661a0d7a
         this.sellerId = sellerId;
-        this.item = item;
+        this.itemId = itemId;
+        this.startPrice = startPrice;
+        this.currentPrice = currentPrice;
+        this.minIncrement = minIncrement;
+        this.startTime = starTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.highestBidderId = null;
+        this.winnerId = null;
+        this.description = description;
     }
 
+<<<<<<< HEAD
+    //getter setter
+    // seller Id quyet dinh qua viec ai la nguoi truy cap
+    public String getSellerId() {
+        return sellerId;
+    }
+
+    //khi tao san pham va dang ban thi khong the sua chi co the xoa
+    public String getItemId() {
+        return itemId;
+    }
+    
+    public long getStartPrice() {
+        return startPrice;
+    }
+    public void setStartPrice(long startPrice) {
+        this.startPrice = startPrice;
+    }
+    
+    public long getCurrentPrice() {
+        return currentPrice;
+    }
+    public void setCurrentPrice(long currentPrice) {
+        this.currentPrice = currentPrice;
+    }
+    
+    public long getMinIncrement() {
+        return minIncrement;
+    }
+    public void setMinIncrement(long minIncrement) {
+        this.minIncrement = minIncrement;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+    public AuctionStatus getStatus() {
+        return status;
+    }
+    public void setStatus(AuctionStatus status) {
+        this.status = status;
+    }
+    public String getHighestBidderId() {
+        return highestBidderId;
+    }
+    public void setHighestBidderId(String highestBidderId) {
+        this.highestBidderId = highestBidderId;
+    }
+    public String getWinnerId() {
+        return winnerId;
+    }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+=======
     //  GETTER & SETTER
 
     public String getTitle() { return title; }
@@ -133,5 +230,6 @@ public class Auction extends Entity implements Subject{
                 ", currentPrice=" + currentPrice +
                 ", status=" + status +
                 '}';
+>>>>>>> f7473fc67a0a3f2fa5214d775b8a5758661a0d7a
     }
 }
