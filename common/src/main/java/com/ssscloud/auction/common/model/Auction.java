@@ -25,6 +25,7 @@ public class Auction extends Entity implements Subject {
     private LocalDateTime endTime;
     private AuctionStatus status;
     private String highestBidderId;
+    private LocalDateTime bidTime;
     private String winnerId;
     private final int extendTime = 36;
     private String description;
@@ -39,6 +40,7 @@ public class Auction extends Entity implements Subject {
         this.endTime = endTime;
         this.status = status;
         this.highestBidderId = null;
+        this.bidTime = null;
         this.winnerId = null;
         this.description = description;
         this.bidHistory = new ArrayList<>();
@@ -110,7 +112,6 @@ public class Auction extends Entity implements Subject {
                 ", status=" + status +
                 '}';
     }
-
     // getter setter
     // seller Id quyet dinh qua viec ai la nguoi truy cap
     public String getSellerId() {
@@ -178,8 +179,17 @@ public class Auction extends Entity implements Subject {
         this.highestBidderId = highestBidderId;
     }
 
+    public LocalDateTime getBidTime() {
+        return bidTime;
+    }
+    public void setBidTime(LocalDateTime bidTime) {
+        this.bidTime = bidTime;
+    }
     public String getWinnerId() {
         return winnerId;
+    }
+    public void setWinnerId(String winnerId) {
+        this.winnerId = winnerId;
     }
 
     public String getDescription() {
