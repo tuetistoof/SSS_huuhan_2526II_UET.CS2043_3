@@ -117,13 +117,29 @@ public class LoginSignupController {
             txtPasswordHidden.getStyleClass().add("input-error");
         }
     }
+    @FXML
+    private void clearLoginForm() {
+        txtEmail.clear(); 
+        txtPassword.clear();
+        txtPasswordHidden.clear();
+
+        txtEmail.getStyleClass().remove("input-error");
+        txtPassword.getStyleClass().remove("input-error");
+        txtPasswordHidden.getStyleClass().remove("input-error");
+        
+        lblError.setText("");
+        lblError.setVisible(false);
+        lblError.setManaged(false);
+
+        chkPassword.setSelected(false); 
+    }
 
     @FXML
     private void handleSignUp(ActionEvent event) {
+        clearLoginForm();
         Scene currentScene = btnLogin.getScene();
         currentScene.setRoot(SceneManager.registerScene);
         Stage stage = (Stage) currentScene.getWindow();
         stage.sizeToScene();
-        stage.centerOnScreen();
     }
 }

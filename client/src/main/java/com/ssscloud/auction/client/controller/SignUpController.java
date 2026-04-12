@@ -73,7 +73,6 @@ public class SignUpController {
         currentScene.setRoot(SceneManager.loginScene);
         Stage stage = (Stage) currentScene.getWindow();
         stage.sizeToScene();
-        stage.centerOnScreen();
     }
 
     @FXML
