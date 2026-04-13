@@ -64,14 +64,9 @@ public class ChangeManager {
             } catch (Exception e) {
                 // 1 observer lỗi không được dừng các observer khác
                 System.err.println("[ChangeManager] Lỗi notify observer: " + e.getMessage());
+            }
         }
     }
 }
 
 
-
-
-
-
-    
-}
