@@ -6,15 +6,14 @@ public enum AuctionStatus {
     RUNNING,
     FINISHED,
     PAID,
-    CANCELED,
-    EXPIRED;
+    CANCELED;
 
     public boolean isActive() {
         return this == OPEN || this == RUNNING;
     }
 
     public boolean isEnded() {
-        return this == FINISHED || this == PAID || this == CANCELED || this == EXPIRED;
+        return this == FINISHED || this == PAID || this == CANCELED;
     }
 }
     

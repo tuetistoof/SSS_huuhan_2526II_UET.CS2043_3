@@ -38,7 +38,7 @@ public class ConcurrentBidManager {
         auctionLocks.remove(auctionID);
     }
 
-    public BidTransaction placeBid(Auction auction, String bidderId, String bidderUsername, double amount, BidType type){
+    public BidTransaction placeBid(Auction auction, String bidderId, String bidderUsername, long amount, BidType type){
         ReentrantLock lock = getLock(auction.getId());  //lấy lock của phiên đấy
         lock.lock();
         try {
