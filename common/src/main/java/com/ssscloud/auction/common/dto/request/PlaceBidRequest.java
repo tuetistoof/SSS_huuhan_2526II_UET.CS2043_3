@@ -5,21 +5,21 @@ import java.io.Serializable;
 public class PlaceBidRequest implements Serializable  {
     private static final long serialVersionUID = 1L;
 
-    private Long auctionId;
-    private double bidAmount;
+    private String auctionId;
+    private long bidAmount;
 
     public PlaceBidRequest() {}
 
-    public PlaceBidRequest(Long auctionId, double bidAmount) {
+    public PlaceBidRequest(String auctionId, long bidAmount) {
         this.auctionId = auctionId;
         this.bidAmount = bidAmount;
     }
     //getter setter
-    public Long getAuctionId() { return auctionId; }
-    public void setAuctionId(Long auctionId) { this.auctionId = auctionId; }
+    public String getAuctionId() { return auctionId; }
+    public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
 
-    public double getBidAmount() { return bidAmount; }
-    public void setBidAmount(double bidAmount) { this.bidAmount = bidAmount; }
+    public long getBidAmount() { return bidAmount; }
+    public void setBidAmount(long bidAmount) { this.bidAmount = bidAmount; }
 
     @Override
     public String toString() {
