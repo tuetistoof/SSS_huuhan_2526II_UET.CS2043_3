@@ -1,7 +1,6 @@
 package com.ssscloud.auction.common.model;
 
 import com.ssscloud.auction.common.model.base.Entity;
-import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.observer.Subject;
