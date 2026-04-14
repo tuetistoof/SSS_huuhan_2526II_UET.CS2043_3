@@ -11,13 +11,13 @@ public class Vehicle extends Item {
 
 
     public Vehicle() {} //constructor cần dùng trong factory
-    public Vehicle (String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description){        
-        super(sellerId, name, basePrice, manufacturingDate, creator, description);
-        this.purchaseDate = null;
-        this.warrantyPeriod = Period.ZERO;        
-    }
     public Vehicle (String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, Period warrantyPeriod){        
         super(sellerId, name, basePrice, manufacturingDate, creator, description);
+        this.purchaseDate = null;
+        this.warrantyPeriod = warrantyPeriod;
+    }
+    public Vehicle (String id, String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, Period warrantyPeriod){        
+        super(id, sellerId, name, basePrice, manufacturingDate, creator, description);
         this.purchaseDate = null;
         this.warrantyPeriod = warrantyPeriod;
     }

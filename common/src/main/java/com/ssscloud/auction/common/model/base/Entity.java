@@ -9,7 +9,10 @@ public abstract class Entity {
     public Entity(String name){
         this.id = createId();
         this.name = name;
-
+    }
+    public Entity(String id, String name){
+        this.id = id;
+        this.name = name;
     }
 
     // getter setter

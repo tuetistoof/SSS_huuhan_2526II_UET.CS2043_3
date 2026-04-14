@@ -12,6 +12,12 @@ public class Art extends Item {
         super(sellerId, name, basePrice, manufacturingDate, creator, description);
         this.certificate = certificate;
     }
+    public Art(String id, String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
+        super(id, sellerId, name, basePrice, manufacturingDate, creator, description);
+        this.certificate = certificate;
+    }
+
+    
     @Override
     public double getPrice() {
         return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());

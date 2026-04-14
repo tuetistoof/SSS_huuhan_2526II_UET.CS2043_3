@@ -26,6 +26,14 @@ public abstract class Item extends Entity{
         this.creator = creator;
         this.description = description;
     }
+    public Item(String id,String sellerID, String name, long basePrice, LocalDate manufacturingDate,String creator, String description){
+        super(id, name);
+        this.sellerId = sellerID;
+        this.basePrice = basePrice;
+        this.manufacturingDate = manufacturingDate;
+        this.creator = creator;
+        this.description = description;
+    }
     // them anh xoa anh
     public void addImage (String url)
     {

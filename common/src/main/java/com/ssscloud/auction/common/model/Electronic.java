@@ -18,11 +18,11 @@ public class Electronic extends Item {
         this.isRepaired = isRepaired;
         this.warrantyPeriod = warrantyPeriod;
     }
-    public Electronic (String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean isRepaired){        
-        super(sellerId, name, basePrice, manufacturingDate, creator, description);
+    public Electronic (String id, String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean isRepaired, Period warrantyPeriod){        
+        super(id, sellerId, name, basePrice, manufacturingDate, creator, description);
         this.purchaseDate = null;
         this.isRepaired = isRepaired;
-        this.warrantyPeriod = Period.ZERO;
+        this.warrantyPeriod = warrantyPeriod;
     }
     
     // neu sân pham da sam xuat lau hon 3 nam thi giam 10%
