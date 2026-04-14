@@ -1,3 +1,4 @@
+// cac ham dung chung cho ca DAO
 package com.ssscloud.auction.server.dao;
 
 import java.sql.Connection;
@@ -24,12 +25,13 @@ public abstract class BaseDAO {
     protected void resetAutocommit (Connection conn){
         if (conn != null) {
                 try {
-                    conn.setAutoCommit(true); // ← bọc try-catch riêng
+                    conn.setAutoCommit(true);
                 } catch (SQLException e) {
                     logger.warning("Lỗi khi reset autoCommit: " + e.getMessage());
                 }
             }
     }
+
     protected void closeResource(AutoCloseable... resource) {
         for (AutoCloseable r : resource) {
             if (r != null) {
