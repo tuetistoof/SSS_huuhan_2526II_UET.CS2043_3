@@ -45,6 +45,12 @@ public class LoginSignupController {
     private PasswordField txtPasswordHidden;
 
     @FXML
+    private Parent loading; // Giao diện của khung loading
+
+    @FXML
+    private LoadingController loadingController;
+
+    @FXML
     public void initialize() {
         txtPassword.textProperty().bindBidirectional(txtPasswordHidden.textProperty());
 
@@ -88,6 +94,7 @@ public class LoginSignupController {
         }
         if (pass.isEmpty()) {
             txtPasswordHidden.getStyleClass().add("input-error");
+            txtPassword.getStyleClass().add("input-error");
             hasError = true;
         }
         if (hasError == true) {
@@ -100,25 +107,74 @@ public class LoginSignupController {
         // if (!pass.equals("MK trong db")) {
         //     loginSuccess = false;
         // }
+
+        //Test loading screen
+        if (loading != null && loadingController != null) {
+        loading.setVisible(true);
+        loadingController.playAnimation();
         
-        
-        loginSuccess = true;
-        if (loginSuccess) {
+        // Test thử tí rồi tắt
+        new Thread(() -> {
             try {
-                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
-                btnLogin.getScene().setRoot(homeRoot);
+            Thread.sleep(500);
+                boolean isSuccess = true; 
+
+                // quay lại UI thread để chuyển cảnh
+                javafx.application.Platform.runLater(() -> {
+                    // Tắt hoạt cảnh
+                    loadingController.stopAnimation();
+                    loading.setVisible(false);
+
+                    //login vào home
+                    if (isSuccess) {
+                        try {
+                            Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
+                            btnLogin.getScene().setRoot(homeRoot);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    else {
+                        lblError.setText("Incorrect email or password");
+                        lblError.setVisible(true);
+                        lblError.setManaged(true);
+                    }
+                });
             }
-            catch (IOException e) {
-                throw new RuntimeException("Where is my home.fxml?", e);
-            }
+            catch (Exception e) {
+                e.printStackTrace();
+                }
+            }).start();
+        } else {
+            // Nếu nó nhảy vào đây thì m phải check lại fx:id trong file fxml và biến controller
+            System.out.println("Game me di");
         }
-        else {
-            lblError.setText("Incorrect email or password");
-            lblError.setVisible(true);
-            lblError.setManaged(true);
-            txtEmail.getStyleClass().add("input-error");
-            txtPasswordHidden.getStyleClass().add("input-error");
-        }
+
+        /*
+        Kinh nghiệm rút ra:
+        - muốn thêm loading sceen thì đầu tiên phải vào cái fxml của cảnh đang muốn thêm và add cái loading.fxml vào để lấy ra mà dùng
+        - cần chạy một luồng riêng để tạo lại cảnh ko sẽ bị đơ cho đến khi server xong tác vụ nặng như check tk
+        */
+
+        //Hết test loading screen
+        
+        // loginSuccess = true;
+        // if (loginSuccess) {
+        //     try {
+        //         Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
+        //         btnLogin.getScene().setRoot(homeRoot);
+        //     }
+        //     catch (IOException e) {
+        //         throw new RuntimeException("Where is my home.fxml?", e);
+        //     }
+        // }
+        // else {
+        //     lblError.setText("Incorrect email or password");
+        //     lblError.setVisible(true);
+        //     lblError.setManaged(true);
+        //     txtEmail.getStyleClass().add("input-error");
+        //     txtPasswordHidden.getStyleClass().add("input-error");
+        // }
     }
     @FXML
     private void clearLoginForm() {

@@ -50,7 +50,7 @@
                            </children>
                         </HBox>
             
-                        <Button fx:id="btnLogin" mnemonicParsing="false" onAction="#handleLogin" styleClass="login-btn" text="Login" textFill="WHITE" />
+                        <Button fx:id="btnLogin" mnemonicParsing="false" onAction="#handleLogin" styleClass="btn" text="Login" textFill="WHITE" />
             
                         <HBox alignment="CENTER" spacing="5.0">
                            <children>
@@ -64,5 +64,6 @@
             </HBox>
          </children>
       </AnchorPane>
+      <fx:include fx:id="loading" source="loading.fxml" visible="false" />
    </children>
 </StackPane>
