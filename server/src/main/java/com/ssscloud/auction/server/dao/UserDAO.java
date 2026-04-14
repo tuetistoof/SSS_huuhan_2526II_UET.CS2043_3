@@ -14,9 +14,9 @@ import com.ssscloud.auction.common.model.base.User;
 
 public class UserDAO extends BaseDAO {
     public boolean saveBidder(Bidder bidder) {
-        String sqlEntitiy = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlUser = "INSERT INTO user (id, userName, password, email, role) VALUES (?, ?, ?, ?, ?)";
-        String sqlBidder = "INSERT INTO bidder (id, accountBalance) VALUES (?, ?)";
+        String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
+        String sqlUser = "INSERT INTO user (id, user_name, password, email, role) VALUES (?, ?, ?, ?, ?)";
+        String sqlBidder = "INSERT INTO bidder (id, account_balance) VALUES (?, ?)";
 
         Connection conn = null;
         PreparedStatement psEntity = null, psUser = null, psBidder = null;
@@ -24,7 +24,7 @@ public class UserDAO extends BaseDAO {
             conn = getConnection();
             conn.setAutoCommit(false);
 
-            psEntity = conn.prepareStatement(sqlEntitiy);
+            psEntity = conn.prepareStatement(sqlEntity);
             psEntity.setString(1, bidder.getId());
             psEntity.setString(2, bidder.getName());
             psEntity.executeUpdate();
@@ -56,6 +56,52 @@ public class UserDAO extends BaseDAO {
         } finally {
             resetAutocommit(conn);
             closeResource(psEntity, psUser, psBidder);
+        }
+    }
+
+    public boolean saveSeller(Seller seller) {
+        String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
+        String sqlUser = "INSERT INTO user (id, user_name, password, email, role) VALUES (?, ?, ?, ?, ?)";
+        String sqlSeller = "INSERT INTO bidder (id, bank_account) VALUES (?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psEntity = null, psUser = null, psSeller = null;
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false);
+
+            psEntity = conn.prepareStatement(sqlEntity);
+            psEntity.setString(1, seller.getId());
+            psEntity.setString(2, seller.getName());
+            psEntity.executeUpdate();
+
+            psUser = conn.prepareStatement(sqlUser);
+            psUser.setString(1, seller.getId());
+            psUser.setString(2, seller.getUserName());
+            psUser.setString(3, seller.getPassword());
+            psUser.setString(4, seller.getEmail());
+            psUser.setString(5, seller.getRole().name());
+            psUser.executeUpdate();
+
+            psSeller = conn.prepareStatement(sqlSeller);
+            psSeller.setString(1, seller.getId());
+            psSeller.setString(2, seller.getBankAccount());
+            psSeller.executeUpdate();
+
+            conn.commit();
+            logger.info("da luu seller: " + seller.getUserName());
+            return true;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            logger.warning("User name da ton tai: " + seller.getUserName() + " - " + e.getMessage());
+            safelyRollback(conn);
+            return false;
+        } catch (SQLException e) {
+            logger.severe("Loi kh luu seller: " + seller.getUserName() + " - " + e.getMessage());
+            safelyRollback(conn);
+            return false;
+        } finally {
+            resetAutocommit(conn);
+            closeResource(psEntity, psUser, psSeller);
         }
     }
 

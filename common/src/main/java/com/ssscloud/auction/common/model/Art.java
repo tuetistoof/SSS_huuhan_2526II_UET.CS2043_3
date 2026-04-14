@@ -8,20 +8,20 @@ public class Art extends Item {
     private boolean certificate;
 
     public Art() {} //dùng trong factory
-    public Art(String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
-        super(sellerId, name, basePrice, manufacturingDate, creator, description);
+    public Art(String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
+        super(name, sellerId, basePrice, manufacturingDate, creator, description);
         this.certificate = certificate;
     }
-    public Art(String id, String sellerId, String name, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
-        super(id, sellerId, name, basePrice, manufacturingDate, creator, description);
+    public Art(String id, String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
+        super(id, name, sellerId, basePrice, manufacturingDate, creator, description);
         this.certificate = certificate;
     }
 
     
-    @Override
-    public double getPrice() {
-        return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
-    }
+    // @Override
+    // public double getPrice() {
+    //     return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    // }
 
     //getter setter
     public boolean getCertificate(){
