@@ -12,6 +12,11 @@ public class Bidder extends User {
         super(name, userName, password, email, role);
         this.accountBalance = accountBalance;
     }
+    public Bidder (String id, String name, String userName, String password, String email, UserRole role, long accountBalance)
+    {
+        super(id, name, userName, password, email, role);
+        this.accountBalance = accountBalance;
+    }
     
     //getter setter
     public long getAccountBalance() {

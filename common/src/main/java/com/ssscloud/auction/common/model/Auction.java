@@ -29,7 +29,8 @@ public class Auction extends Entity implements Subject {
     private final int extendTime = 36;
     private String description;
     private List <BidTransaction> bidHistory;
-    public Auction(String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description) {
+    public Auction(String name, String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description) {
+        super (name);
         this.sellerId = sellerId;
         this.itemId = itemId;
         this.startPrice = startPrice;
