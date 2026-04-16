@@ -8,4 +8,8 @@ public class Admin extends User {
     {
         super(name, userName, password, email, role);
     }
+    public Admin (String id, String name, String userName, String password, String email, UserRole role)
+    {
+        super(id, name, userName, password, email, role);
+    }
 }

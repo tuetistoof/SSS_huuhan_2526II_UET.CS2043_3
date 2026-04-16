@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class ClientApplication extends Application {
 
@@ -16,10 +17,10 @@ public class ClientApplication extends Application {
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
         
         Scene scene = new Scene(SceneManager.loginScene);
-        
+        //primaryStage.initStyle(StageStyle.UNDECORATED);
         primaryStage.setTitle("Cloud Bidding");
         primaryStage.setScene(scene);
-        
+        primaryStage.centerOnScreen();
         primaryStage.show();
     }
 

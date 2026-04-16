@@ -1,7 +1,6 @@
 package com.ssscloud.auction.common.model;
 
 import com.ssscloud.auction.common.model.base.Entity;
-import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.observer.Subject;
@@ -30,7 +29,8 @@ public class Auction extends Entity implements Subject {
     private final int extendTime = 36;
     private String description;
     private List <BidTransaction> bidHistory;
-    public Auction(String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description) {
+    public Auction(String name, String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description) {
+        super (name);
         this.sellerId = sellerId;
         this.itemId = itemId;
         this.startPrice = startPrice;

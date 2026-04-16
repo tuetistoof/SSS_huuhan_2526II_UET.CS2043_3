@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
  * Ánh xạ với DB: bảng `bid` trong init.sql
  */
 public class BidTransaction{
-
-    private String id;
     private String auctionId;
     private String bidderId;
     private String bidderUsername;
@@ -20,7 +18,6 @@ public class BidTransaction{
 
     // Constructor đầy đủ — dùng khi tạo bid mới
     public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, BidType type) {
-        this.id = java.util.UUID.randomUUID().toString();
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
@@ -34,9 +31,6 @@ public class BidTransaction{
     }
 
     // Getter
-    public String getId() {
-        return id;
-    }
 
     public String getAuctionId() {
         return auctionId;
@@ -63,10 +57,6 @@ public class BidTransaction{
     }
 
     // Setters cần cho DAO khi đọc từ DB
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public void setAuctionId(String auctionId) {
         this.auctionId = auctionId;
     }
