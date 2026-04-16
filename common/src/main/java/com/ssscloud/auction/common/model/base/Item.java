@@ -97,6 +97,9 @@ public abstract class Item extends Entity {
     public void setDescription(String description) {
         this.description = description;
     }
+    public ItemType getType() {
+        return type;
+    }
     public List<String> getImageUrl() {
         return imageUrl;
     }
