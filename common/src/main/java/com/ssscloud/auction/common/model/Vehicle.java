@@ -1,8 +1,10 @@
 package com.ssscloud.auction.common.model;
 
+import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.model.base.Item;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class Vehicle extends Item {
     private boolean isRepaired;
@@ -11,14 +13,14 @@ public class Vehicle extends Item {
 
 
     public Vehicle() {} //constructor cần dùng trong factory
-    public Vehicle (String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean isRepaired, int warrantyPeriod){        
-        super(name, sellerId, basePrice, manufacturingDate, creator, description);
+    public Vehicle (String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
+        super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
         this.isRepaired = isRepaired;
         this.purchaseDate = null;
         this.warrantyPeriod = warrantyPeriod;
     }
-    public Vehicle (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, boolean isRepaired,LocalDate purchaseDate, int warrantyPeriod){        
-        super(id, name, sellerId, basePrice, manufacturingDate, creator, description);
+    public Vehicle (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type,  List<String> imageUrl, boolean isRepaired,LocalDate purchaseDate, int warrantyPeriod){        
+        super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type,imageUrl);
         this.isRepaired = isRepaired;
         this.purchaseDate = purchaseDate;
         this.warrantyPeriod = warrantyPeriod;

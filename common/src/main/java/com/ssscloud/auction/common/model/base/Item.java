@@ -1,8 +1,9 @@
 package com.ssscloud.auction.common.model.base;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
+
+import com.ssscloud.auction.common.enums.ItemType;
 
 public abstract class Item extends Entity {
     // tinh theo gia viet nam nen de la long
@@ -11,7 +12,8 @@ public abstract class Item extends Entity {
     private LocalDate manufacturingDate;
     private String creator;
     private String description;
-    private List<String> imageUrl = new ArrayList<>();
+    private ItemType type;
+    private List<String> imageUrl;
     // khong nen de la final de cho he thong co the sua duoc kieu v
     // he thong tinh toan tien tu dong lam tron len
     // private final double transactionFee = 0.1;
@@ -21,22 +23,26 @@ public abstract class Item extends Entity {
     } // dùng trong factory
 
     public Item(String name, String sellerID,long basePrice, LocalDate manufacturingDate, String creator,
-            String description) {
+            String description, ItemType type, List <String> imageUrl) {
         super(name);
         this.sellerId = sellerID;
         this.basePrice = basePrice;
         this.manufacturingDate = manufacturingDate;
         this.creator = creator;
         this.description = description;
+        this.type = type;
+        this.imageUrl = imageUrl;
     }
 
-    public Item(String id, String name, String sellerID, long basePrice, LocalDate manufacturingDate, String creator, String description) {
+    public Item(String id, String name, String sellerID, long basePrice, LocalDate manufacturingDate, String creator, String description, ItemType type, List <String> imageUrl) {
         super(id, name);
         this.sellerId = sellerID;
         this.basePrice = basePrice;
         this.manufacturingDate = manufacturingDate;
         this.creator = creator;
         this.description = description;
+        this.type = type;
+        this.imageUrl = imageUrl;
     }
 
     // them anh xoa anh
@@ -90,6 +96,9 @@ public abstract class Item extends Entity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    public List<String> getImageUrl() {
+        return imageUrl;
     }
 
     // public double getTransactionFee() {

@@ -1,19 +1,21 @@
 package com.ssscloud.auction.common.model;
 
+import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.model.base.Item;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class Art extends Item {
     private boolean certificate;
 
     public Art() {} //dùng trong factory
-    public Art(String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
-        super(name, sellerId, basePrice, manufacturingDate, creator, description);
+    public Art(String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean certificate){
+        super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
         this.certificate = certificate;
     }
-    public Art(String id, String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, boolean certificate){
-        super(id, name, sellerId, basePrice, manufacturingDate, creator, description);
+    public Art(String id, String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type,  List<String> imageUrl, boolean certificate){
+        super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
         this.certificate = certificate;
     }
 
