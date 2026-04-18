@@ -12,7 +12,6 @@ public class ClientMessage implements Serializable {
     private String action;   // Tên hành động: LOGIN, REGISTER, PLACE_BID, CREATE_AUCTION...
     private Object data;     // Dữ liệu đính kèm (có thể là bất kỳ DTO nào)
 
-    // Constructor không tham số (bắt buộc cho JSON)
     public ClientMessage() {
     }
     public ClientMessage(String action, Object data) {

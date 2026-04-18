@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client.networking;
 
-public class MessageListener {
+public interface MessageListener {
+    void onMessageReceived(String json);
     
 }

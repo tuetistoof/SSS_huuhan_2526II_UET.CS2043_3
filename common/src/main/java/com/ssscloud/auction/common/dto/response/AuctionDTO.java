@@ -8,7 +8,7 @@ public class AuctionDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Long id;
+    private String id;
     private String title;
     private String description;
     private double startingPrice;
@@ -18,11 +18,12 @@ public class AuctionDTO implements Serializable {
     private String sellerName;
     private String highestBidderName;
     private int bidCount;
+    private double minIncrement;
 
     public AuctionDTO() {}
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -50,6 +51,9 @@ public class AuctionDTO implements Serializable {
 
     public int getBidCount() { return bidCount; }
     public void setBidCount(int bidCount) { this.bidCount = bidCount; }
+
+    public double getMinIncrement(){return minIncrement;}
+    public void setMinIncrement() {this.minIncrement = minIncrement;}
 
     @Override
     public String toString() {
