@@ -2,8 +2,10 @@ package com.ssscloud.auction.server.networking;
 
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.BidTransaction;
 
 import java.io.PrintWriter;
+import java.util.List;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.observer.Observer;
@@ -19,7 +21,7 @@ public class ClientObserver implements Observer {
     private final String clientId;
     private final PrintWriter writer;
 
-    public ClientObserver(String clientId, PrintWriter writer) {
+    public ClientObserver(PrintWriter writer, String clientId) {
         this.clientId = clientId;
         this.writer = writer;
     }
@@ -31,18 +33,24 @@ public class ClientObserver implements Observer {
             Auction auction = (Auction) subject;
                 
                 // Tạo BidDTO từ auction (hoặc lấy bid mới nhất)
-                BidDTO bidDTO = new BidDTO();
-                //bidDTO.setAuctionId(auction.getId());
-                bidDTO.setBidAmount(auction.getCurrentPrice());
-                bidDTO.setBidderUsername(auction.getHighestBidderName());
+            BidDTO dto = new BidDTO();
+            dto.setAuctionId(auction.getAuctionConfig().getId());
+            dto.setCurrentPrice(auction.getCurrentPrice());
+            dto.setBidderUsername(auction.getHighestBidderName());  
 
-                // Tạo message push
-                ClientMessage pushMsg = new ClientMessage("BID_UPDATE", bidDTO);
-                String json = JsonUtils.toJson(pushMsg);
-                if (writer != null) {
-                    writer.println(json);
-                    writer.flush(); //push về client
-                }
+            List<BidTransaction> history = auction.getBidHistory();
+            if (!history.isEmpty()) {
+                BidTransaction latest = history.get(history.size() - 1);
+                dto.setBidAmount(latest.getBidAmount());
+                dto.setBidTime(latest.getBidTime());
+                dto.setBidType(latest.getType().name());
+            }
+
+            ClientMessage pushMsg = new ClientMessage("BID_UPDATE", dto);
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(pushMsg));
+            }
+
         } catch (Exception e) {
             System.err.println("Lỗi push đến client " + clientId + ": " + e.getMessage());
         }

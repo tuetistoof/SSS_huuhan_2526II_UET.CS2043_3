@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
@@ -28,7 +29,7 @@ public class MessageHandler {
         this.bidController = bidController;
     }
 
-    public String handleMessage(String jsonMessage) {
+    public String handleMessage(String jsonMessage, ClientHandler client) {
         try {
             //Chuyển JSON thành ClientMessage object
             ClientMessage msg = JsonUtils.fromJson(jsonMessage, ClientMessage.class);
@@ -45,19 +46,28 @@ public class MessageHandler {
             switch (action) {
                 case "LOGIN":
                     responseJson = userController.login(msg.getData());
-                    break;
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(response, UserDTO.class);
+                    if (parsed != null && parsed.isSuccess() && parsed.getData() != null) {
+                        UserDTO user = parsed.getData();
+                        client.setSession(user.getId(), user.getUsername());
+                    }
+                    return responseJson;
 
                 case "REGISTER":
-                    responseJson = userController.register(msg.getData());
-                    break;
-
+                    return userController.register(msg.getData());
+                    
                 case "CREATE_AUCTION":
-                    responseJson = auctionController.createAuction(msg.getData());
-                    break;
+                    return auctionController.createAuction(msg.getData());
 
                 case "PLACE_BID":
-                    responseJson = bidController.placeBid(msg.getData());
-                    break;
+                    String raw = JsonUtils.toJson(msg.getData());
+                    PlaceBidRequest req = JsonUtils.fromJson(raw, PlaceBidRequest.class);
+                    if (req == null) {
+                        return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
+                    }
+                    req.setBidderId(client.getUserId());
+                    req.setBidderUsername(client.getUsername());
+                    return bidController.placeBid(req);
 
                 case "AUTO_BID":
                     responseJson = bidController.registerAutoBid(msg.getData());

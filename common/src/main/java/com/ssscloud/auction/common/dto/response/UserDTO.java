@@ -7,7 +7,7 @@ import com.ssscloud.auction.common.enums.UserRole;
 public class UserDTO implements Serializable{
     private static final long serialVersionUID = 1L;
 
-    private Long id;
+    private String id;
     private String username;
     private String fullName;
     private String email;
@@ -15,7 +15,7 @@ public class UserDTO implements Serializable{
 
     public UserDTO() {}
 
-    public UserDTO(Long id, String username, String fullName, String email, UserRole role) {
+    public UserDTO(String id, String username, String fullName, String email, UserRole role) {
         this.id = id;
         this.username = username;
         this.fullName = fullName;
@@ -23,8 +23,8 @@ public class UserDTO implements Serializable{
         this.role = role;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }

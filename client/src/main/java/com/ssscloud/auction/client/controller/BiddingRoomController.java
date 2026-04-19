@@ -74,7 +74,7 @@ public class BiddingRoomController implements MessageListener{
 
         new Thread(()-> {
             try{
-                PlaceBidRequest bidDto = new PlaceBidRequest(currentAuction.getId(), amount, currentUserId);
+                PlaceBidRequest bidDto = new PlaceBidRequest(currentAuction.getId(), amount);
                 String json = JsonUtils.toJson(bidDto);
                 AuctionClientSocket.getInstance().send(json);  //gửi qua socket
             } catch(Exception e){

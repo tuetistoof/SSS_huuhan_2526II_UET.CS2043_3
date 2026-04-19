@@ -1,6 +1,7 @@
 package com.ssscloud.auction.common.model;
 
 import com.ssscloud.auction.common.model.base.AuctionConfig;
+import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -169,6 +170,13 @@ public class Auction implements Subject {
     }
     public void setWinnerId(String winnerId) {
         this.winnerId = winnerId;
+    }
+
+    public List<BidTransaction> getBidHistory() {
+        return bidHistory;
+    }
+    public void setBidHistory(List<BidTransaction> bidHistory) {
+        this.bidHistory = bidHistory;
     }
 
 
