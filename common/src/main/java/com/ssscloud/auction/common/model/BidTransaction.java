@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 
 public class BidTransaction{
     private String auctionId;
-    private long bidAmount;
     private String bidderId;
     private String bidderUsername;
+    private long bidAmount;
     private LocalDateTime bidTime;
     private BidType type; // MANUAL hoặc AUTO
 
     // Constructor đầy đủ — dùng khi tạo bid mới
-    public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, int bidCount, LocalDateTime bidTime, BidType type) {
+    public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, LocalDateTime bidTime, BidType type) {
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
@@ -42,12 +42,12 @@ public class BidTransaction{
     public long getBidAmount() {
         return bidAmount;
     }
+
     public LocalDateTime getBidTime() {
         return bidTime;
     }
 
-    p
-    ublic BidType getType() {
+    public BidType getType() {
         return type;
     }
 
