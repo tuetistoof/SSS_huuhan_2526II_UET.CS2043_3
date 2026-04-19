@@ -222,7 +222,7 @@ public class ItemDAO extends BaseDAO {
     } 
 
     public List <Item> findBySellerId (String sellerId){
-        String sql = "SELECT i.id, i.item_type FROM item i WHERE i.seller_id = ?";
+        String sql = "SELECT i.id FROM item i WHERE i.seller_id = ?";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -234,16 +234,15 @@ public class ItemDAO extends BaseDAO {
             ps.setString(1, sellerId);
             rs = ps.executeQuery();
 
-            List<String[]> rows = new ArrayList<>();
+            List<String> rows = new ArrayList<>();
             while (rs.next()) {
                 String id = rs.getString("id");
-                String type = rs.getString("item_type");
-                rows.add(new String[] {id, type});
+                rows.add(id);
             }
             
 
-            for (String[] row : rows) {
-                Item item = findById (row[0]);
+            for (String row : rows) {
+                Item item = findById (row);
                 if (item != null) list.add(item);
             }
             return list;

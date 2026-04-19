@@ -17,12 +17,12 @@ public class BidTransaction{
     private BidType type; // MANUAL hoặc AUTO
 
     // Constructor đầy đủ — dùng khi tạo bid mới
-    public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, BidType type) {
+    public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, LocalDateTime bidTime, BidType type) {
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
         this.bidAmount = bidAmount;
-        this.bidTime = LocalDateTime.now();
+        this.bidTime = bidTime;
         this.type = type;
     }
 
