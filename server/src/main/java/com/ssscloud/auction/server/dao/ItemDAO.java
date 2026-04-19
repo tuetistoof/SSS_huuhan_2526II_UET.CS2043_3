@@ -19,7 +19,7 @@ import com.ssscloud.auction.common.model.base.Item;
 public class ItemDAO extends BaseDAO {
     public boolean saveElectronic (Electronic electronic) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlItem = "INSERT INTO item (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlItem = "INSERT INTO auction_config (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlElectronic = "INSERT INTO electronic (id, is_repaired, purchase_date, warranty_period) VALUES (?, ?, ?, ?)";
         Connection conn = null;

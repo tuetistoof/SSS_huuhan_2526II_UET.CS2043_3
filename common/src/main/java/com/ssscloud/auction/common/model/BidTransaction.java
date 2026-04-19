@@ -8,7 +8,6 @@ public class BidTransaction{
     private long bidAmount;
     private String bidderId;
     private String bidderUsername;
-    private int bidCount;
     private LocalDateTime bidTime;
     private BidType type; // MANUAL hoặc AUTO
 
@@ -18,7 +17,6 @@ public class BidTransaction{
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
         this.bidAmount = bidAmount;
-        this.bidCount = bidCount;
         this.bidTime = bidTime;
         this.type = type;
     }
@@ -44,14 +42,12 @@ public class BidTransaction{
     public long getBidAmount() {
         return bidAmount;
     }
-    public int getBidCount() {
-        return bidCount;
-    }
     public LocalDateTime getBidTime() {
         return bidTime;
     }
 
-    public BidType getType() {
+    p
+    ublic BidType getType() {
         return type;
     }
 

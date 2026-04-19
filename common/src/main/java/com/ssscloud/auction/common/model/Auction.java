@@ -1,7 +1,6 @@
 package com.ssscloud.auction.common.model;
 
 import com.ssscloud.auction.common.model.base.AuctionConfig;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -23,7 +22,6 @@ public class Auction implements Subject {
     private long currentPrice;
     private String highestBidderId;
     private String highestBidderName;
-    private int bidCount;
     private LocalDateTime bidTime;
     private BidType bidType;
     private List <BidTransaction> bidHistory;
@@ -38,9 +36,7 @@ public class Auction implements Subject {
         this.currentPrice = currentPrice;
         this.highestBidderId = null;
         this.highestBidderName = null;
-        this.bidCount = 0;
         this.bidTime = null;
-        this.winnerId = null;
         this.bidHistory = new ArrayList<>();
     }
     // set state methods
@@ -147,12 +143,6 @@ public class Auction implements Subject {
     public void setHighestBidderName(String highestBidderName) {
         this.highestBidderName = highestBidderName;
     }
-    public int getBidCount() {
-        return bidCount;
-    }
-    public void setBidCount(int bidCount) {
-        this.bidCount = bidCount;
-    }
     public LocalDateTime getBidTime() {
         return bidTime;
     }
@@ -165,13 +155,6 @@ public class Auction implements Subject {
     public void setBidTime(LocalDateTime bidTime) {
         this.bidTime = bidTime;
     }
-    public String getWinnerId() {
-        return winnerId;
-    }
-    public void setWinnerId(String winnerId) {
-        this.winnerId = winnerId;
-    }
-
     public List<BidTransaction> getBidHistory() {
         return bidHistory;
     }
