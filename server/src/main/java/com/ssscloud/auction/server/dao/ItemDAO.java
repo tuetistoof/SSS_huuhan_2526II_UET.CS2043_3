@@ -20,7 +20,7 @@ public class ItemDAO extends BaseDAO {
     public boolean saveElectronic (Electronic electronic) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlItemImageUrl = "INSERT INTO item_image_url (id, image_url) VALUES (?,?)";
+        String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlElectronic = "INSERT INTO electronic (id, is_repaired, purchase_date, warranty_period) VALUES (?, ?, ?, ?)";
         Connection conn = null;
         PreparedStatement psEntity = null, psItem = null, psIemImageUrl = null, psElectronic = null;
@@ -75,7 +75,7 @@ public class ItemDAO extends BaseDAO {
     public boolean saveVehicle (Vehicle vehicle) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
        String sqlItem = "INSERT INTO item (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlItemImageUrl = "INSERT INTO item_image_url (id, image_url) VALUES (?,?)";
+        String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlVehicle = "INSERT INTO vehicle (id, is_repaired, purchase_date, warranty_period) VALUES (?, ?, ?, ?)";
 
         Connection conn = null;
@@ -132,7 +132,7 @@ public class ItemDAO extends BaseDAO {
     public boolean saveArt (Art art) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
        String sqlItem = "INSERT INTO item (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlItemImageUrl = "INSERT INTO item_image_url (id, image_url) VALUES (?,?)";
+        String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlArt = "INSERT INTO art (id, certificate) VALUES (?, ?)";
 
         Connection conn = null;
@@ -196,7 +196,7 @@ public class ItemDAO extends BaseDAO {
                     "vehicle.is_repaired AS vehicle_is_repaired, vehicle.purchase_date AS vehicle_purchase_date, vehicle.warranty_period AS vehicle_warranty_period " +
                     "FROM entity e " +
                     "JOIN item i ON e.id = i.id " +
-                    "LEFT JOIN item_image img ON i.id = img.id " +
+                    "LEFT JOIN item_image img ON i.id = img.item_id " +
                     "LEFT JOIN art art ON i.id = art.id " +
                     "LEFT JOIN electronic s ON i.id = electronic.id " +
                     "LEFT JOIN vehicle vehicle ON i.id = vehicle.id ";
@@ -265,7 +265,7 @@ public class ItemDAO extends BaseDAO {
                     "vehicle.is_repaired AS vehicle_is_repaired, vehicle.purchase_date AS vehicle_purchase_date, vehicle.warranty_period AS vehicle_warranty_period " +
                     "FROM entity e " +
                     "JOIN item i ON e.id = i.id " +
-                    "LEFT JOIN item_image img ON i.id = img.id " +
+                    "LEFT JOIN item_image img ON i.id = img.item_id " +
                     "LEFT JOIN art art ON i.id = art.id " +
                     "LEFT JOIN electronic s ON i.id = electronic.id " +
                     "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +

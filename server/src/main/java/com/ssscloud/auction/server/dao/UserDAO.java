@@ -108,8 +108,8 @@ public class UserDAO extends BaseDAO {
     public User findByUsername(String userName) {
         String sql = "SELECT " +
                 "e.id, e.name, " +
-                "u.userName, u.password, u.email, u.role, " +
-                "b.accountBalance, s.bankAccount " +
+                "u.user_name, u.password, u.email, u.role, " +
+                "b.account_balance, s.bank_account " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -138,12 +138,46 @@ public class UserDAO extends BaseDAO {
             closeResource(rs, ps);
         }
     }
+    
+    public User findByEmail(String email) {
+        String sql = "SELECT " +
+                "e.id, e.name, " +
+                "u.user_name, u.password, u.email, u.role, " +
+                "b.account_balance, s.bank_account " +
+                "FROM entity e " +
+                "JOIN user u ON e.id = u.id " +
+                "LEFT JOIN bidder b ON u.id = b.id " +
+                "LEFT JOIN seller s ON u.id = s.id " +
+                "WHERE u.email = ?";
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, email);
+            rs = ps.executeQuery();
+
+            if (rs.next())
+                return mapResultSetToUser(rs);
+            else {
+                logger.info("Khong tim thay user: " + email);
+                return null;
+            }
+        } catch (SQLException e) {
+            logger.info("Loi khi tim theo userName: " + email + " - " + e.getMessage());
+            return null;
+        } finally {
+            closeResource(rs, ps);
+        }
+    }
     // dung cho login register và mot so tac vu
     public User findById(String id) {
         String sql = "SELECT " +
                 "e.id, e.name, " +
-                "u.userName, u.password, u.email, u.role, " +
-                "b.accountBalance, s.bankAccount " +
+                "u.user_name, u.password, u.email, u.role, " +
+                "b.account_balance, s.bank_account " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
