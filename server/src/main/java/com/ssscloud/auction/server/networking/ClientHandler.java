@@ -15,6 +15,12 @@ public class ClientHandler implements Runnable{
         this.clientSocket = socket;
         this.messageHandler = messageHandler;
     }
+
+    // Session của client này — được set sau khi LOGIN thành công
+    private String userId;
+    private String username;
+    
+
     @Override
     public void run() {
         try {
@@ -23,7 +29,7 @@ public class ClientHandler implements Runnable{
 
             String jsonFromClient;
             while((jsonFromClient = reader.readLine()) != null){
-                String jsonResponse = messageHandler.handleMessage(jsonFromClient);
+                String jsonResponse = messageHandler.handleMessage(jsonFromClient, this); //truyền this vào để id,username được set sẵn sau khi login
                 if (jsonResponse != null && !jsonResponse.isEmpty()) {
                     writer.println(jsonResponse);
                     writer.flush();
@@ -41,6 +47,14 @@ public class ClientHandler implements Runnable{
                 System.out.println("Lỗi đóng socket: " + e.getMessage());
             }
         }
+    }
+
+    //getter setter
+    public String getUserId()   { return userId; }
+    public String getUsername() { return username; }
+    public void setSession(String userId, String username) {
+        this.userId   = userId;
+        this.username = username;
     }
 }
 

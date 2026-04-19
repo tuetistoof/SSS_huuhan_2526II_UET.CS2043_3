@@ -1,7 +1,9 @@
 package com.ssscloud.auction.common.model;
 
-import com.ssscloud.auction.common.model.base.Entity;
+import com.ssscloud.auction.common.model.base.AuctionConfig;
+import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.observer.Subject;
 
@@ -13,43 +15,34 @@ import java.util.List;
  * Entity đại diện cho một phiên đấu giá
  * subject cho observer pattern
  */
-public class Auction extends Entity implements Subject {
-
+public class Auction implements Subject {
+    AuctionConfig auctionConfig;
+    private AuctionStatus status;
     private String sellerId;
     private String itemId;
-    private long startPrice;
     private long currentPrice;
-    private long minIncrement;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private AuctionStatus status;
     private String highestBidderId;
+    private String highestBidderName;
+    private int bidCount;
     private LocalDateTime bidTime;
-    private String winnerId;
-    private final int extendTime = 36;
-    private String description;
+    private BidType bidType;
     private List <BidTransaction> bidHistory;
-    public Auction(String name, String sellerId, String itemId, long startPrice, long currentPrice, long minIncrement, LocalDateTime starTime, LocalDateTime endTime, AuctionStatus status, String description) {
-        super (name);
-        this.sellerId = sellerId;
-        this.itemId = itemId;
-        this.startPrice = startPrice;
-        this.currentPrice = currentPrice;
-        this.minIncrement = minIncrement;
-        this.startTime = starTime;
-        this.endTime = endTime;
-        this.status = status;
-        this.highestBidderId = null;
-        this.bidTime = null;
-        this.winnerId = null;
-        this.description = description;
-        this.bidHistory = new ArrayList<>();
-    }
-
-    // Constructor mặc định
     public Auction() {
     }
-
+    public Auction (AuctionConfig auctionConfig, String sellerId, String itemId, long currentPrice, AuctionStatus status)
+    {
+        this.auctionConfig = auctionConfig;
+        this.status = status;
+        this.sellerId = sellerId;
+        this.itemId = itemId;
+        this.currentPrice = currentPrice;
+        this.highestBidderId = null;
+        this.highestBidderName = null;
+        this.bidCount = 0;
+        this.bidTime = null;
+        this.winnerId = null;
+        this.bidHistory = new ArrayList<>();
+    }
     // set state methods
     public void start() {
         if (this.status == AuctionStatus.OPEN) {
@@ -100,67 +93,37 @@ public class Auction extends Entity implements Subject {
     }
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(endTime);
+        return LocalDateTime.now().isAfter(auctionConfig.getEndTime());
     }
 
     @Override
     public String toString() {
         return "Auction{" +
-                "id=" + super.getId() +
-                ", name='" + super.getName() + '\'' +
+                "id=" + auctionConfig.getId() +
+                ", name='" + auctionConfig.getName() + '\'' +
                 ", currentPrice=" + currentPrice +
                 ", status=" + status +
                 '}';
     }
     // getter setter
-    // seller Id quyet dinh qua viec ai la nguoi truy cap
+    public AuctionConfig getAuctionConfig() {
+        return auctionConfig;
+    }
     public String getSellerId() {
         return sellerId;
     }
-
-    // khi tao san pham va dang ban thi khong the sua chi co the xoa
     public String getItemId() {
         return itemId;
     }
-
-    public long getStartPrice() {
-        return startPrice;
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
     }
-
-    public void setStartPrice(long startPrice) {
-        this.startPrice = startPrice;
-    }
-
     public long getCurrentPrice() {
         return currentPrice;
     }
 
     public void setCurrentPrice(long currentPrice) {
         this.currentPrice = currentPrice;
-    }
-
-    public long getMinIncrement() {
-        return minIncrement;
-    }
-
-    public void setMinIncrement(long minIncrement) {
-        this.minIncrement = minIncrement;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
     }
 
     public AuctionStatus getStatus() {
@@ -178,9 +141,26 @@ public class Auction extends Entity implements Subject {
     public void setHighestBidderId(String highestBidderId) {
         this.highestBidderId = highestBidderId;
     }
-
+    public String getHighestBidderName() {
+        return highestBidderName;
+    }
+    public void setHighestBidderName(String highestBidderName) {
+        this.highestBidderName = highestBidderName;
+    }
+    public int getBidCount() {
+        return bidCount;
+    }
+    public void setBidCount(int bidCount) {
+        this.bidCount = bidCount;
+    }
     public LocalDateTime getBidTime() {
         return bidTime;
+    }
+    public BidType getBidType() {
+        return bidType;
+    }
+    public void setBidType(BidType bidType) {
+        this.bidType = bidType;
     }
     public void setBidTime(LocalDateTime bidTime) {
         this.bidTime = bidTime;
@@ -192,12 +172,12 @@ public class Auction extends Entity implements Subject {
         this.winnerId = winnerId;
     }
 
-    public String getDescription() {
-        return description;
+    public List<BidTransaction> getBidHistory() {
+        return bidHistory;
+    }
+    public void setBidHistory(List<BidTransaction> bidHistory) {
+        this.bidHistory = bidHistory;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
 }

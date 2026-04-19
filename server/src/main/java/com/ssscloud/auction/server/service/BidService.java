@@ -1,9 +1,8 @@
 package com.ssscloud.auction.server.service;
 
 import com.ssscloud.auction.common.util.BidValidator;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.BidDAO;
 
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.exception.*;
@@ -14,8 +13,8 @@ import com.ssscloud.auction.common.enums.BidType;
 
 /**
  * điều phối logic luồng đấu giá
- * luồng: controller gọi BidController.placebid(json)
- * -> BidServer.placebid(request, bidderID) : validate cơ bản, tìm auction trong memory
+ * luồng: controller gọi BidController.placebid(dto)
+ * -> BidService.placebid(request, bidderID) : validate cơ bản, tìm auction trong memory
  * -> xử lí concurrency
  * -> thông báo observer
  * bidDAO save
@@ -26,46 +25,55 @@ import com.ssscloud.auction.common.enums.BidType;
 
 public class BidService {
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
-    private static final Map<String, Auction> auctionStore = new ConcurrentHashMap<>(); //này dùng tạm cho thiếu DATABASE 
-
     //làm observer sau 
-
-
-
-
-
-
-
-
-    public BidDTO placeBid(PlaceBidRequest request, String bidderID, String bidderUsername){
-        
-
-        //SỬ DỤNG BidValidator
-        if (!BidValidator.isPositiveBid(request.getBidAmount())){
-            throw new InvalidBidException("Bid amount must be positive");
-        }
-        // viết thêm validate nữa
-
-        String auctionId = request.getAuctionId().toString();
-        Auction auction = auctionStore.get(auctionId); //tìm auction theo id
-
-
-        BidTransaction bid;
-        try { 
-            bid = bidManager.placeBid(auction, bidderID, bidderUsername, request.getBidAmount(), BidType.MANUAL);
-    
-        } catch (Exception e){ // đoạn này viết láo, chưa viết try catch hết
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi khi đặt giá: " + e.getMessage(), e);
-        }
-        return toDTO(bid);
+    private final AuctionDAO auctionDAO;
+    private final BidDAO bidDAO;
+    private final AntiSnipingService antiSnipingService;
+    private final AutoBidService autoBidService;
+ 
+    public BidService(AuctionDAO auctionDAO, BidDAO bidDAO, AntiSnipingService antiSnipingService, AutoBidService autoBidService) {
+        this.auctionDAO     = auctionDAO;
+        this.bidDAO         = bidDAO;
+        this.antiSnipingService = antiSnipingService;
+        this.autoBidService = autoBidService;
     }
 
-    private BidDTO toDTO(BidTransaction bid){
+    public BidDTO placeBid(PlaceBidRequest request){  //handle req từ bid controller chuyển thành dto response chuyển lại client
+        //validate cơ bản
+        if (!BidValidator.isPositiveBid(request.getBidAmount())) {
+            throw new InvalidBidException("Số tiền đặt phải lớn hơn 0");
+        }
+        if (request.getAuctionId() == null || request.getAuctionId().isBlank()) {
+            throw new InvalidBidException("Thiếu auctionId");
+        }
+        if (request.getBidderId() == null || request.getBidderId().isBlank()) {
+            throw new InvalidBidException("Thiếu bidderId");
+        }
+        Auction auction = new Auction();
+        //Auction auction = auctionDAO.findById(request.getAuctionId());   nao có database thì xóa dòng trên, dữ dòng này
+        
+        String auctionId = auction.getAuctionConfig().getId();
+
+        BidTransaction bid = bidManager.placeBid(
+            auction,
+            request.getBidderId(),
+            request.getBidderUsername(),
+            request.getBidAmount(),
+            BidType.MANUAL
+        );
+
+        //lưu vào dao
+        //antisnipping
+        return toDTO(bid, auction.getCurrentPrice());
+    }
+    private BidDTO toDTO(BidTransaction bid, long currentPrice) {
         BidDTO dto = new BidDTO();
+        dto.setAuctionId(bid.getAuctionId());
         dto.setBidderUsername(bid.getBidderUsername());
         dto.setBidAmount(bid.getBidAmount());
+        dto.setCurrentPrice(currentPrice);
         dto.setBidTime(bid.getBidTime());
         return dto;
     }
+
 }
