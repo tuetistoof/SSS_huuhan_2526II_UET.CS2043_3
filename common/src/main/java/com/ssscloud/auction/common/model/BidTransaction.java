@@ -10,9 +10,10 @@ import java.time.LocalDateTime;
  */
 public class BidTransaction{
     private String auctionId;
+    private long bidAmount;
     private String bidderId;
     private String bidderUsername;
-    private long bidAmount;
+    private String bidCount;
     private LocalDateTime bidTime;
     private BidType type; // MANUAL hoặc AUTO
 
