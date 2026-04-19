@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client; // Cấu trúc thư mục của sếp
 
+import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 
 import javafx.application.Application;
@@ -13,6 +14,8 @@ public class ClientApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // Trong method start(), trước khi show màn hình login
+        AuctionClientSocket.getInstance().connect("localhost", 5000);
         SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
         

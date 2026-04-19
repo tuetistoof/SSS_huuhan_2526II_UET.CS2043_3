@@ -228,7 +228,6 @@ public class UserDAO extends BaseDAO {
         }
     }
 
-
     // cac ham update sua thong tin user
     public boolean updatePassword(String id, String newPassword) {
         String sql = "UPDATE user SET password = ? WHERE id = ?";
@@ -283,11 +282,11 @@ public class UserDAO extends BaseDAO {
             ps.setString(1, newAccountBlance);
             ps.setString(2, id);
             int row = ps.executeUpdate();
-            logger.info("update account blance userId = " + id + " - row =" + row);
+            logger.info("update account balance userId = " + id + " - row =" + row);
             return row > 0;
 
         } catch (SQLException e) {
-            logger.severe("Lỗi update account blance id: " + id + " - " + e.getMessage());
+            logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
             return false;
         } finally {
             closeResource(ps);
@@ -324,12 +323,12 @@ public class UserDAO extends BaseDAO {
         UserRole role = UserRole.valueOf(rs.getString("role"));
         switch (role) {
             case BIDDER: {
-                long balance = rs.getLong("account_alance");
+                long balance = rs.getLong("account_balance");
                 Bidder b = new Bidder(id, name, userName, password, email, role, balance);
                 return b;
             }
             case SELLER: {
-                String bankAccount = rs.getString("bank_ccount");
+                String bankAccount = rs.getString("bank_account");
                 Seller s = new Seller(id, name, userName, password, email, role, bankAccount);
                 return s;
             }

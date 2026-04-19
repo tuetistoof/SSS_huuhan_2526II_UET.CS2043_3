@@ -1,9 +1,18 @@
 package com.ssscloud.auction.client.controller;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.google.gson.Gson;
+import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 
+import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.dto.request.LoginRequest;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.util.JsonUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -103,78 +112,72 @@ public class LoginSignupController {
             lblError.setManaged(true);
             return;
         }
-        
-        // if (!pass.equals("MK trong db")) {
-        //     loginSuccess = false;
-        // }
 
-        //Test loading screen
         if (loading != null && loadingController != null) {
-        loading.setVisible(true);
-        loadingController.playAnimation();
-        
-        // Test thử tí rồi tắt
-        new Thread(() -> {
-            try {
-            Thread.sleep(500);
-                boolean isSuccess = true; 
+            loading.setVisible(true);
+            loadingController.playAnimation();
 
-                // quay lại UI thread để chuyển cảnh
-                javafx.application.Platform.runLater(() -> {
-                    // Tắt hoạt cảnh
-                    loadingController.stopAnimation();
-                    loading.setVisible(false);
+            new Thread(() -> {
+                try {
 
-                    //login vào home
-                    if (isSuccess) {
-                        try {
-                            Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
-                            btnLogin.getScene().setRoot(homeRoot);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                    boolean isSuccess = false;
+                    String errorMessage = "Unexpected Error";
+
+                    LoginRequest loginData = new LoginRequest(email, pass);
+                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
+
+                    String jsonRequest = JsonUtils.toJson(msg);
+                    String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
+
+                    if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
+                        isSuccess = response.isSuccess();
+                        if (!isSuccess) {
+                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
                         }
                     }
-                    else {
-                        lblError.setText("Incorrect email or password");
+
+                    // quay lại UI thread để chuyển cảnh
+                    final boolean finalSuccess = isSuccess;
+                    final String finalErrorMessage = errorMessage;
+
+                    javafx.application.Platform.runLater(() -> {
+                        // Tắt hoạt cảnh
+                        loadingController.stopAnimation();
+                        loading.setVisible(false);
+
+                        //login vào home
+                        if (finalSuccess) {
+                            try {
+                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
+                                btnLogin.getScene().setRoot(homeRoot);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        else {
+                            lblError.setText(finalErrorMessage);
+                            lblError.setVisible(true);
+                            lblError.setManaged(true);
+                        }
+                    });
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                    javafx.application.Platform.runLater(() -> {
+                        loadingController.stopAnimation();
+                        loading.setVisible(false);
+                        lblError.setText("Không thể kết nối tới Server!");
                         lblError.setVisible(true);
                         lblError.setManaged(true);
-                    }
-                });
-            }
-            catch (Exception e) {
-                e.printStackTrace();
+                    });
                 }
             }).start();
         } else {
             // Nếu nó nhảy vào đây thì m phải check lại fx:id trong file fxml và biến controller
-            System.out.println("Game me di");
+            System.out.println("Chưa sửa chèn thêm fxml vào");
         }
 
-        /*
-        Kinh nghiệm rút ra:
-        - muốn thêm loading sceen thì đầu tiên phải vào cái fxml của cảnh đang muốn thêm và add cái loading.fxml vào để lấy ra mà dùng
-        - cần chạy một luồng riêng để tạo lại cảnh ko sẽ bị đơ cho đến khi server xong tác vụ nặng như check tk
-        */
-
-        //Hết test loading screen
-        
-        // loginSuccess = true;
-        // if (loginSuccess) {
-        //     try {
-        //         Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
-        //         btnLogin.getScene().setRoot(homeRoot);
-        //     }
-        //     catch (IOException e) {
-        //         throw new RuntimeException("Where is my home.fxml?", e);
-        //     }
-        // }
-        // else {
-        //     lblError.setText("Incorrect email or password");
-        //     lblError.setVisible(true);
-        //     lblError.setManaged(true);
-        //     txtEmail.getStyleClass().add("input-error");
-        //     txtPasswordHidden.getStyleClass().add("input-error");
-        // }
     }
     @FXML
     private void clearLoginForm() {
