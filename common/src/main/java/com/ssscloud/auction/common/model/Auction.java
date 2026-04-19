@@ -16,26 +16,25 @@ import java.util.List;
  */
 public class Auction implements Subject {
     AuctionConfig auctionConfig;
+    private AuctionStatus status;
     private String sellerId;
     private String itemId;
     private long currentPrice;
-    private AuctionStatus status;
     private String highestBidderId;
     private String highestBidderName;
     private int bidCount;
     private LocalDateTime bidTime;
     private BidType bidType;
-    private String winnerId;
     private List <BidTransaction> bidHistory;
     public Auction() {
     }
     public Auction (AuctionConfig auctionConfig, String sellerId, String itemId, long currentPrice, AuctionStatus status)
     {
         this.auctionConfig = auctionConfig;
+        this.status = status;
         this.sellerId = sellerId;
         this.itemId = itemId;
         this.currentPrice = currentPrice;
-        this.status = status;
         this.highestBidderId = null;
         this.highestBidderName = null;
         this.bidCount = 0;
