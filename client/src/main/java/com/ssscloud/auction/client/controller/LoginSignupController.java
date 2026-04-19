@@ -11,6 +11,7 @@ import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.LoginRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -129,7 +130,7 @@ public class LoginSignupController {
                     String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
 
                     if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                        ApiResponse response = JsonUtils.fromJson(jsonResponse, ApiResponse.class);
+                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
                         isSuccess = response.isSuccess();
                         if (!isSuccess) {
                             errorMessage = response.getMessage(); // Lấy câu chửi từ server

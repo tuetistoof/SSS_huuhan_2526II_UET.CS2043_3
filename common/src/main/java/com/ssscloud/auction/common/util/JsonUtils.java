@@ -1,9 +1,9 @@
 package com.ssscloud.auction.common.util;
 
+import java.lang.reflect.Type;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.time.LocalDateTime;
-
 
 public final class JsonUtils {
 
@@ -28,6 +28,18 @@ public final class JsonUtils {
             return gson.fromJson(json, classOfT);
         } catch (Exception e) {
             System.err.println("Lỗi parse JSON: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public static <T> T fromJsonGeneric(String json, Type typeOfT) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return gson.fromJson(json, typeOfT);
+        } catch (Exception e) {
+            System.err.println("Lỗi parse JSON Generic: " + e.getMessage());
             return null;
         }
     }
