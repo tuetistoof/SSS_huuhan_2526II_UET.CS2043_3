@@ -7,6 +7,9 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 /**
  * send: chỉ gửi mà không chờ response(dùng cho cơ chế push: vd bidding room controller)
  * sendAndReceive: gửi và chờ response (dùng cho cơ chế req-res: vd login controller)
@@ -51,9 +54,9 @@ public class AuctionClientSocket {
         });
         t.setDaemon(true);  //thread tự tắt khi app đóng
         t.start();
-     }
+    }
     
-     public void connect(String host, int port) throws Exception{
+    public void connect(String host, int port) throws Exception{
         socket = new Socket(host, port);
         out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true);
         in  = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
@@ -61,15 +64,33 @@ public class AuctionClientSocket {
         startListenerThread();
      }
 
-     public void send(String json){
+    public void send(String json){
         if (connected && out != null){
             out.println(json); //gửi json qua socket
         }
-     }
-     public void addListener(MessageListener listener){
+    }
+
+    // 1 cái Future để chứa phản hồi đang chờ xử lí
+    private CompletableFuture<String> pendingResponse;
+
+    public String sendAndReceive(String json) {
+        try {
+            if (connected && out != null){
+                pendingResponse = new CompletableFuture<>();
+                send(json);
+                return pendingResponse.get(); // chờ luồng chạy xong lấy dữ liệu r mới trả về
+            }
+        }
+        catch (InterruptedException | ExecutionException e) {
+            System.out.println("Luồng bị gián đoạn: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public void addListener(MessageListener listener){
         listeners.add(listener);
-     }
-     public void removeListener(MessageListener listener){
+    }
+    public void removeListener(MessageListener listener){
         listeners.remove(listener);
      }
 

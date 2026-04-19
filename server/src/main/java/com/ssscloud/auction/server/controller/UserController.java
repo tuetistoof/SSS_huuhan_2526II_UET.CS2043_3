@@ -1,5 +1,42 @@
 package com.ssscloud.auction.server.controller;
 
+import com.ssscloud.auction.common.dto.request.LoginRequest;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.model.base.User;
+import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.server.dao.UserDAO;
+
 public class UserController {
-    
+    private UserDAO userDAO = new UserDAO();
+
+    public String login(Object data) {
+        try {
+            String dataJsonString = JsonUtils.toJson(data);
+            LoginRequest request = JsonUtils.fromJson(dataJsonString, LoginRequest.class);
+
+            User user = userDAO.findByEmail(request.getUsername());
+
+            if (user == null) {
+                return JsonUtils.toJson(ApiResponse.error("Account doesn't exist"));
+            }
+
+            if (!user.getPassword().equals(request.getPassword())) {
+                return JsonUtils.toJson(ApiResponse.error("Wrong password"));
+            }
+
+            UserDTO dto = new UserDTO(
+                    user.getId(),
+                    user.getUserName(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getRole()
+            );
+            return JsonUtils.toJson(ApiResponse.success(dto, "Login successful"));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return JsonUtils.toJson(ApiResponse.error("Server error: " + e.getMessage()));
+        }
+    }
 }
