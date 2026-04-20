@@ -35,7 +35,11 @@ public class ChangeManager {
 
     public static ChangeManager getInstance(){
         if (instance == null){
-            instance = new ChangeManager();
+            synchronized (ChangeManager.class) {
+                if (instance == null) {
+                    instance = new ChangeManager();
+                }
+            }
         }
         return instance;
     }
