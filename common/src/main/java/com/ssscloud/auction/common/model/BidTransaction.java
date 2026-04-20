@@ -46,8 +46,7 @@ public class BidTransaction{
         return bidTime;
     }
 
-    p
-    ublic BidType getType() {
+    public BidType getType() {
         return type;
     }
 

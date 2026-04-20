@@ -120,26 +120,28 @@ public class LoginSignupController {
             new Thread(() -> {
                 try {
 
-                    boolean isSuccess = false;
-                    String errorMessage = "Unexpected Error";
-
-                    LoginRequest loginData = new LoginRequest(email, pass);
-                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
-
-                    String jsonRequest = JsonUtils.toJson(msg);
-                    String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
-
-                    if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
-                        isSuccess = response.isSuccess();
-                        if (!isSuccess) {
-                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
-                        }
-                    }
-
-                    // quay lại UI thread để chuyển cảnh
-                    final boolean finalSuccess = isSuccess;
-                    final String finalErrorMessage = errorMessage;
+//                    boolean isSuccess = false;
+//                    String errorMessage = "Unexpected Error";
+//
+//                    LoginRequest loginData = new LoginRequest(email, pass);
+//                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
+//
+//                    String jsonRequest = JsonUtils.toJson(msg);
+//                    String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
+//
+//                    if (jsonResponse != null && !jsonResponse.isEmpty()) {
+//                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
+//                        isSuccess = response.isSuccess();
+//                        if (!isSuccess) {
+//                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
+//                        }
+//                    }
+//
+//                    // quay lại UI thread để chuyển cảnh
+//                    final boolean finalSuccess = isSuccess;
+//                    final String finalErrorMessage = errorMessage;
+                    final boolean finalSuccess = true;
+                    final String finalErrorMessage = "";
 
                     javafx.application.Platform.runLater(() -> {
                         // Tắt hoạt cảnh
@@ -149,7 +151,7 @@ public class LoginSignupController {
                         //login vào home
                         if (finalSuccess) {
                             try {
-                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
+                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
                                 btnLogin.getScene().setRoot(homeRoot);
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -177,8 +179,8 @@ public class LoginSignupController {
             // Nếu nó nhảy vào đây thì m phải check lại fx:id trong file fxml và biến controller
             System.out.println("Chưa sửa chèn thêm fxml vào");
         }
-
     }
+
     @FXML
     private void clearLoginForm() {
         txtEmail.clear(); 
