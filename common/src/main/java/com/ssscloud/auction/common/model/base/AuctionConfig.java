@@ -10,9 +10,9 @@ public class AuctionConfig extends Entity{
     private  int extendSecond;
     private String description;
     public AuctionConfig (){};
-    // ko co extendSecond
-    public AuctionConfig (String id, String name, long startPrice, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, String description){
-        super (id, name);
+    // tao moi
+    public AuctionConfig (String name, long startPrice, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, int extendSecond, String description){
+        super (name);
         this.startPrice = startPrice;
         this.minIncrement = minIncrement;
         this.startTime = startTime;
@@ -20,7 +20,7 @@ public class AuctionConfig extends Entity{
         this.extendSecond = 36;
         this.description = description;
     }
-    // co extendSecond
+    // constructor day du cho dao
     public AuctionConfig (String id, String name, long startPrice, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, int extendSecond, String description){
         super (id, name);
         this.startPrice = startPrice;
