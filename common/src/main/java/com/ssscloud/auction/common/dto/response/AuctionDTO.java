@@ -18,7 +18,7 @@ public class AuctionDTO implements Serializable {
     private String sellerName;
     private String highestBidderName;
     private int bidCount;
-    private double minIncrement;
+    private long minIncrement;
 
     public AuctionDTO() {}
 
