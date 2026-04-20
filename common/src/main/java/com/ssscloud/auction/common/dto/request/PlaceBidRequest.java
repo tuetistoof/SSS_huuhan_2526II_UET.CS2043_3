@@ -5,22 +5,32 @@ import java.io.Serializable;
 public class PlaceBidRequest implements Serializable  {
     private static final long serialVersionUID = 1L;
 
-    private Long auctionId;
-    private double bidAmount;
+    // Client gửi lên
+    private String auctionId;
+    private long bidAmount;
+ 
+    // Server inject — không nhận từ client
+    private String bidderId;
+    private String bidderUsername;
 
     public PlaceBidRequest() {}
 
-    public PlaceBidRequest(Long auctionId, double bidAmount) {
+    public PlaceBidRequest(String auctionId, long bidAmount) {
         this.auctionId = auctionId;
         this.bidAmount = bidAmount;
     }
     //getter setter
-    public Long getAuctionId() { return auctionId; }
-    public void setAuctionId(Long auctionId) { this.auctionId = auctionId; }
-
-    public double getBidAmount() { return bidAmount; }
-    public void setBidAmount(double bidAmount) { this.bidAmount = bidAmount; }
-
+    public String getAuctionId()  { return auctionId; }
+    public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
+ 
+    public long getBidAmount()    { return bidAmount; }
+    public void setBidAmount(long bidAmount) { this.bidAmount = bidAmount; }
+ 
+    public String getBidderId()   { return bidderId; }
+    public void setBidderId(String bidderId) { this.bidderId = bidderId; }
+ 
+    public String getBidderUsername() { return bidderUsername; }
+    public void setBidderUsername(String bidderUsername) { this.bidderUsername = bidderUsername; }
     @Override
     public String toString() {
         return "PlaceBidRequest{" +

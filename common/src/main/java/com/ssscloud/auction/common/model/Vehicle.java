@@ -1,25 +1,42 @@
 package com.ssscloud.auction.common.model;
 
+import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.model.base.Item;
 
 import java.time.LocalDate;
-import java.time.Period;
+import java.util.List;
 
 public class Vehicle extends Item {
+    private boolean isRepaired;
     private LocalDate purchaseDate;
-    private Period warrantyPeriod;
+    private int warrantyPeriod;
 
-    public Vehicle (String name, double basePrice, LocalDate manufacturingDate,String creator, String description){        
-        super(name, basePrice, manufacturingDate, creator, description);
+
+    public Vehicle() {} //constructor cần dùng trong factory
+    public Vehicle (String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
+        super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
+        this.isRepaired = isRepaired;
         this.purchaseDate = null;
-        this.warrantyPeriod = Period.ZERO;        
+        this.warrantyPeriod = warrantyPeriod;
     }
-    @Override
-    public double getPrice(){
-        return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    public Vehicle (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type,  List<String> imageUrl, boolean isRepaired,LocalDate purchaseDate, int warrantyPeriod){        
+        super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type,imageUrl);
+        this.isRepaired = isRepaired;
+        this.purchaseDate = purchaseDate;
+        this.warrantyPeriod = warrantyPeriod;
     }
-
+    
+    // @Override
+    // public double getPrice(){
+    //     return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    // }
     // getter setter
+    public boolean getIsRepaired(){
+        return isRepaired;
+    }
+    public void setIsRepaires(boolean isRepaired){
+        this.isRepaired = isRepaired;
+    }
     public LocalDate getPurchaseDate() {
         return purchaseDate;
     }
@@ -27,10 +44,10 @@ public class Vehicle extends Item {
         this.purchaseDate = purchaseDate;
     }
 
-    public Period getWarrantyPeriod() {
+    public int getWarrantyPeriod() {
         return warrantyPeriod;
     }
-    public void setWarrantyPeriod(Period warrantyPeriod) {
+    public void setWarrantyPeriod(int warrantyPeriod) {
         this.warrantyPeriod = warrantyPeriod;
     }
 }

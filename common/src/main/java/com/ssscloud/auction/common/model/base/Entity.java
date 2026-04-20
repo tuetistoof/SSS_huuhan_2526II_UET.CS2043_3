@@ -5,10 +5,14 @@ import java.util.UUID;
 public abstract class Entity {
     private String id;
     private String name;
+    public Entity(){}
     public Entity(String name){
         this.id = createId();
         this.name = name;
-
+    }
+    public Entity(String id, String name){
+        this.id = id;
+        this.name = name;
     }
 
     // getter setter

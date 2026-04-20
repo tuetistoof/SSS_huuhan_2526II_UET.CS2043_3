@@ -16,6 +16,14 @@ public abstract class User extends Entity{
         this.email = email;
         this.role = role;
     }
+    public User (String id, String name, String userName, String password, String email, UserRole role)
+    {
+        super (id, name);
+        this.userName = userName;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
 
     // getter setter
     // userName khong the thay doi

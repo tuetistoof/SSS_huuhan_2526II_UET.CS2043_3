@@ -1,16 +1,33 @@
 package com.ssscloud.auction.common.model;
 
+import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.model.base.Item;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class Art extends Item {
-    public Art(String name, double basePrice, LocalDate manufacturingDate,String creator, String description){
-        super(name, basePrice, manufacturingDate, creator, description);
+    private boolean certificate;
+
+    public Art() {} //dùng trong factory
+    public Art(String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean certificate){
+        super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
+        this.certificate = certificate;
     }
-    @Override
-    public double getPrice() {
-        return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    public Art(String id, String name, String sellerId,  long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type,  List<String> imageUrl, boolean certificate){
+        super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
+        this.certificate = certificate;
+    }
+
+    
+    // @Override
+    // public double getPrice() {
+    //     return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
+    // }
+
+    //getter setter
+    public boolean getCertificate(){
+        return this.certificate;
     }
 
 }
