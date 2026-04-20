@@ -49,7 +49,7 @@ CREATE TABLE `art` (
   `id` varchar(36) NOT NULL,
   `certificate` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_art_item` FOREIGN KEY (`id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_art_item` FOREIGN KEY (`id`) REFERENCES `item` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -71,28 +71,22 @@ DROP TABLE IF EXISTS `auction`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `auction` (
   `id` varchar(36) NOT NULL,
+  `status` varchar(50) NOT NULL,
   `seller_id` varchar(36) NOT NULL,
   `item_id` varchar(36) NOT NULL,
-  `start_price` bigint DEFAULT '0',
-  `current_price` bigint DEFAULT '0',
-  `min_increment` bigint DEFAULT '0',
-  `start_time` datetime NOT NULL,
-  `end_time` datetime NOT NULL,
-  `status` varchar(36) NOT NULL,
+  `current_price` bigint NOT NULL,
   `highest_bidder_id` varchar(36) DEFAULT NULL,
-  `winner_id` varchar(36) DEFAULT NULL,
-  `extend_time` int NOT NULL,
-  `description` text,
+  `highest_bidder_name` varchar(255) DEFAULT NULL,
+  `bid_time` datetime DEFAULT NULL,
+  `bid_type` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_auction_seller` (`seller_id`),
   KEY `fk_auction_item` (`item_id`),
-  KEY `fk_auction_highbidder` (`highest_bidder_id`),
-  KEY `fk_auction_winner` (`winner_id`),
-  CONSTRAINT `fk_auction_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`),
-  CONSTRAINT `fk_auction_highbidder` FOREIGN KEY (`highest_bidder_id`) REFERENCES `bidder` (`id`),
+  KEY `fk_auction_highest_bidder` (`highest_bidder_id`),
+  CONSTRAINT `fk_auction_highest_bidder` FOREIGN KEY (`highest_bidder_id`) REFERENCES `user` (`id`),
   CONSTRAINT `fk_auction_item` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`),
-  CONSTRAINT `fk_auction_seller` FOREIGN KEY (`seller_id`) REFERENCES `seller` (`id`),
-  CONSTRAINT `fk_auction_winner` FOREIGN KEY (`winner_id`) REFERENCES `bidder` (`id`)
+  CONSTRAINT `fk_auction_seller` FOREIGN KEY (`seller_id`) REFERENCES `user` (`id`),
+  CONSTRAINT `fk_auction_to_config` FOREIGN KEY (`id`) REFERENCES `auction_config` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -106,42 +100,62 @@ LOCK TABLES `auction` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `bid`
+-- Table structure for table `auction_config`
 --
 
-DROP TABLE IF EXISTS `bid`;
+DROP TABLE IF EXISTS `auction_config`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `bid` (
+CREATE TABLE `auction_config` (
   `id` varchar(36) NOT NULL,
-  `auction_id` varchar(36) NOT NULL,
-  `seller_id` varchar(36) NOT NULL,
-  `item_id` varchar(36) NOT NULL,
-  `current_price` bigint DEFAULT '0',
+  `start_price` bigint NOT NULL,
+  `min_increment` bigint NOT NULL,
   `start_time` datetime NOT NULL,
   `end_time` datetime NOT NULL,
-  `winner_id` varchar(36) DEFAULT NULL,
-  `status` varchar(36) NOT NULL,
+  `extend_second` int DEFAULT '0',
+  `description` text,
   PRIMARY KEY (`id`),
-  KEY `fk_bid_auction` (`auction_id`),
-  KEY `fk_bid_seller` (`seller_id`),
-  KEY `fk_bid_item` (`item_id`),
-  KEY `fk_bid_winner` (`winner_id`),
-  CONSTRAINT `fk_bid_auction` FOREIGN KEY (`auction_id`) REFERENCES `auction` (`id`),
-  CONSTRAINT `fk_bid_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`),
-  CONSTRAINT `fk_bid_item` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`),
-  CONSTRAINT `fk_bid_seller` FOREIGN KEY (`seller_id`) REFERENCES `seller` (`id`),
-  CONSTRAINT `fk_bid_winner` FOREIGN KEY (`winner_id`) REFERENCES `user` (`id`)
+  CONSTRAINT `fk_auction_config_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `bid`
+-- Dumping data for table `auction_config`
 --
 
-LOCK TABLES `bid` WRITE;
-/*!40000 ALTER TABLE `bid` DISABLE KEYS */;
-/*!40000 ALTER TABLE `bid` ENABLE KEYS */;
+LOCK TABLES `auction_config` WRITE;
+/*!40000 ALTER TABLE `auction_config` DISABLE KEYS */;
+/*!40000 ALTER TABLE `auction_config` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bid_transaction`
+--
+
+DROP TABLE IF EXISTS `bid_transaction`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bid_transaction` (
+  `auction_id` varchar(36) NOT NULL,
+  `bidder_id` varchar(36) NOT NULL,
+  `bidder_username` varchar(255) DEFAULT NULL,
+  `bid_amount` bigint DEFAULT NULL,
+  `bid_time` datetime NOT NULL,
+  `bid_type` varchar(50) DEFAULT NULL,
+  KEY `fk_bid_transaction_auction` (`auction_id`),
+  KEY `fk_bid_transactiond_user` (`bidder_id`),
+  CONSTRAINT `fk_bid_transaction_auction` FOREIGN KEY (`auction_id`) REFERENCES `auction` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bid_transactiond_user` FOREIGN KEY (`bidder_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bid_transaction`
+--
+
+LOCK TABLES `bid_transaction` WRITE;
+/*!40000 ALTER TABLE `bid_transaction` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bid_transaction` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -169,29 +183,29 @@ LOCK TABLES `bidder` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `eletronic`
+-- Table structure for table `electronic`
 --
 
-DROP TABLE IF EXISTS `eletronic`;
+DROP TABLE IF EXISTS `electronic`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `eletronic` (
+CREATE TABLE `electronic` (
   `id` varchar(36) NOT NULL,
   `is_repaired` tinyint(1) DEFAULT '0',
   `purchase_date` date DEFAULT NULL,
-  `warranty_period` varchar(36) DEFAULT NULL,
+  `warranty_period` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_eletronic_item` FOREIGN KEY (`id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_electronic_item` FOREIGN KEY (`id`) REFERENCES `item` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `eletronic`
+-- Dumping data for table `electronic`
 --
 
-LOCK TABLES `eletronic` WRITE;
-/*!40000 ALTER TABLE `eletronic` DISABLE KEYS */;
-/*!40000 ALTER TABLE `eletronic` ENABLE KEYS */;
+LOCK TABLES `electronic` WRITE;
+/*!40000 ALTER TABLE `electronic` DISABLE KEYS */;
+/*!40000 ALTER TABLE `electronic` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -225,16 +239,17 @@ DROP TABLE IF EXISTS `item`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item` (
-  `id` varchar(50) NOT NULL,
+  `id` varchar(36) NOT NULL,
+  `seller_id` varchar(36) DEFAULT NULL,
   `base_price` bigint DEFAULT '0',
   `manufacturing_date` date DEFAULT NULL,
   `creator` varchar(255) DEFAULT NULL,
   `description` text,
-  `seller_id` varchar(36) NOT NULL,
-  `transaction_fee` double DEFAULT '0.1',
-  `max_transaction_fee` double DEFAULT '10000',
+  `type` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_item_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`) ON DELETE CASCADE
+  KEY `fk_item_seller` (`seller_id`),
+  CONSTRAINT `fk_item_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_item_seller` FOREIGN KEY (`seller_id`) REFERENCES `seller` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -248,27 +263,27 @@ LOCK TABLES `item` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `item_image`
+-- Table structure for table `item_image_url`
 --
 
-DROP TABLE IF EXISTS `item_image`;
+DROP TABLE IF EXISTS `item_image_url`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `item_image` (
-  `id` varchar(36) DEFAULT NULL,
+CREATE TABLE `item_image_url` (
+  `item_id` varchar(36) NOT NULL,
   `image_url` varchar(255) NOT NULL,
-  KEY `fk_itemimage_item` (`id`),
-  CONSTRAINT `fk_itemimage_item` FOREIGN KEY (`id`) REFERENCES `item` (`id`) ON DELETE CASCADE
+  PRIMARY KEY (`item_id`,`image_url`),
+  CONSTRAINT `fk_itemimage_item` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `item_image`
+-- Dumping data for table `item_image_url`
 --
 
-LOCK TABLES `item_image` WRITE;
-/*!40000 ALTER TABLE `item_image` DISABLE KEYS */;
-/*!40000 ALTER TABLE `item_image` ENABLE KEYS */;
+LOCK TABLES `item_image_url` WRITE;
+/*!40000 ALTER TABLE `item_image_url` DISABLE KEYS */;
+/*!40000 ALTER TABLE `item_image_url` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -334,9 +349,9 @@ CREATE TABLE `vehicle` (
   `id` varchar(36) NOT NULL,
   `is_repaired` tinyint(1) DEFAULT '0',
   `purchase_date` date DEFAULT NULL,
-  `warranty_period` varchar(36) DEFAULT NULL,
+  `warranty_period` int DEFAULT NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_vehicle_item` FOREIGN KEY (`id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+  CONSTRAINT `fk_vehicle_item` FOREIGN KEY (`id`) REFERENCES `item` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -358,4 +373,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-12 21:07:10
+-- Dump completed on 2026-04-20 12:44:36
