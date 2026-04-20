@@ -164,10 +164,10 @@ public class Auction implements Subject {
         else return null;
     }
    
-    public List<BidTransaction> getbidTransaction() {
+    public List<BidTransaction> getBidTransaction() {
         return bidTransaction;
     }
-    public void setbidTransaction(List<BidTransaction> bidTransaction) {
+    public void setBidTransaction(List<BidTransaction> bidTransaction) {
         this.bidTransaction = bidTransaction;
     }
 
