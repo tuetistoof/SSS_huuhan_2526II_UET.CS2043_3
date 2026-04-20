@@ -48,7 +48,7 @@ public class BidTransactionDAO extends BaseDAO {
         }
     }
 
-    public BidTransaction findHighestBidder (String auctionId) {
+    public BidTransaction findHighest (String auctionId) {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
