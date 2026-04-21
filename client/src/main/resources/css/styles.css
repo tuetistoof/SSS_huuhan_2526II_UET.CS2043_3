@@ -94,11 +94,408 @@ Phần nhập liệu, nút bấm
     -fx-text-fill: #f75667;
 }
 /*
-Vào tròn loading
+Vòng tròn loading
 */
 .loading-spinner {
     -fx-fill: transparent;
     -fx-stroke: #d64556;
     -fx-stroke-width: 4;
     -fx-stroke-line-cap: round;
+}
+
+/* =========================================
+   MAIN LAYOUT — ROOT
+   ========================================= */
+.main-root {
+    -fx-background-color: #f4f4f4;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* =========================================
+   HEADER / TOP BAR
+   ========================================= */
+.top-bar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 0 20 0 16;
+    -fx-border-color: transparent transparent #ebebeb transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 52px;
+    -fx-max-height: 52px;
+}
+
+.app-logo-btn {
+    -fx-background-color: transparent;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f75667;
+    -fx-cursor: hand;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 8;
+}
+.app-logo-btn:hover {
+    -fx-background-color: #fff0f1;
+}
+
+.toggle-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 50%;
+    -fx-cursor: hand;
+    -fx-padding: 8;
+    -fx-text-fill: #555555;
+    -fx-font-size: 16px;
+}
+.toggle-btn:hover {
+    -fx-background-color: #f2f2f2;
+}
+
+.search-bar {
+    -fx-background-color: #f1f3f4;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: transparent;
+    -fx-border-width: 1.5;
+    -fx-padding: 8 16 8 16;
+    -fx-font-size: 13px;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #999999;
+}
+.search-bar:focused {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #f75667;
+}
+
+.header-balance-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #888888;
+}
+.header-balance-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.avatar-circle {
+    -fx-fill: #f75667;
+}
+.header-username {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+/* =========================================
+   SIDEBAR
+   ========================================= */
+.sidebar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 12 8 12 8;
+    -fx-border-color: transparent #ebebeb transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-min-width: 200px;
+    -fx-max-width: 200px;
+    -fx-border-color: #aaaaaa;
+}
+
+/* Nhãn nhóm trong sidebar: "Đấu giá", "Sản phẩm"... */
+.sidebar-group-label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f75667;
+    -fx-padding: 12 8 4 8;
+}
+
+/* Mỗi nav item là 1 HBox */
+.sidebar-item {
+    -fx-padding: 9 12 9 12;
+    -fx-spacing: 10;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-alignment: center-left;
+}
+.sidebar-item:hover {
+    -fx-background-color: #fff0f1;
+}
+.sidebar-item .label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #444444;
+}
+
+/* Nav item đang active */
+.sidebar-item-active {
+    -fx-background-color: #fff0f1;
+    -fx-padding: 9 12 9 12;
+    -fx-spacing: 10;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+}
+.sidebar-item-active .label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #f75667;
+    -fx-font-weight: bold;
+}
+
+/* Thanh dọc đỏ bên trái item active */
+.sidebar-item-active-bar {
+    -fx-background-color: #f75667;
+    -fx-min-width: 3px;
+    -fx-max-width: 3px;
+    -fx-background-radius: 2;
+}
+
+/* Nút đăng xuất ở đáy sidebar */
+.btn-logout {
+    -fx-background-color: transparent;
+    -fx-border-color: #f75667;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8 0 8 0;
+    -fx-max-width: infinity;
+}
+.btn-logout:hover {
+    -fx-background-color: #fff0f1;
+}
+
+/* =========================================
+   CONTENT AREA
+   ========================================= */
+.content-area {
+    -fx-background-color: #f4f4f4;
+    -fx-padding: 0;
+}
+
+/* =========================================
+   DASHBOARD — METRIC CARDS
+   ========================================= */
+.dashboard-header {
+    -fx-background-color: #f9d6d9;
+    -fx-background-radius: 12;
+    -fx-padding: 20 24 20 24;
+}
+
+.metric-card {
+    -fx-background-color: #fffaf0;
+    -fx-background-radius: 10;
+    -fx-padding: 16 20 16 20;
+    -fx-min-width: 140px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+.metric-card-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+.metric-card-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #888888;
+}
+.metric-card-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: #aaaaaa;
+}
+
+/* Nút tạo phiên đấu giá (nút đỏ góc phải dashboard) */
+.btn-primary {
+    -fx-background-color: #f75667;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 10 18 10 18;
+    -fx-cursor: hand;
+}
+.btn-primary:hover {
+    -fx-background-color: #d64556;
+}
+.btn-primary:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* =========================================
+   TAB FILTER (Tốt cả / Đang chạy / Sắp mở...)
+   ========================================= */
+.filter-tab {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #dddddd transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-text-fill: #888888;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 0;
+}
+.filter-tab:hover {
+    -fx-text-fill: #f75667;
+    -fx-border-color: transparent transparent #f75667 transparent;
+}
+.filter-tab-active {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #f75667 transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8 16 8 16;
+    -fx-background-radius: 0;
+}
+
+/* =========================================
+   TABLE / DANH SÁCH
+   ========================================= */
+.data-table {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
+    -fx-padding: 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.table-view {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: #f0f0f0;
+}
+.table-view .column-header-background {
+    -fx-background-color: #fafafa;
+}
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #ebebeb transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.table-view .column-header .label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #aaaaaa;
+    -fx-font-weight: bold;
+}
+.table-view .table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #f5f5f5 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.table-view .table-row-cell:hover {
+    -fx-background-color: #fff7f8;
+}
+.table-view .table-row-cell:selected {
+    -fx-background-color: #fff0f1;
+}
+.table-view .table-cell {
+    -fx-font-size: 13px;
+    -fx-text-fill: #333333;
+    -fx-padding: 10 12 10 12;
+}
+
+/* Empty state label */
+.empty-state-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #cccccc;
+    -fx-font-style: italic;
+}
+
+/* =========================================
+   STATUS BADGES
+   ========================================= */
+.badge-running {
+    -fx-background-color: #e8f5e9;
+    -fx-background-radius: 20;
+    -fx-padding: 3 10 3 10;
+    -fx-text-fill: #2e7d32;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.badge-upcoming {
+    -fx-background-color: #e3f2fd;
+    -fx-background-radius: 20;
+    -fx-padding: 3 10 3 10;
+    -fx-text-fill: #1565c0;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.badge-finished {
+    -fx-background-color: #f5f5f5;
+    -fx-background-radius: 20;
+    -fx-padding: 3 10 3 10;
+    -fx-text-fill: #757575;
+    -fx-font-size: 11px;
+}
+.badge-outbid {
+    -fx-background-color: #fff3e0;
+    -fx-background-radius: 20;
+    -fx-padding: 3 10 3 10;
+    -fx-text-fill: #e65100;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.badge-winning {
+    -fx-background-color: #fce4ec;
+    -fx-background-radius: 20;
+    -fx-padding: 3 10 3 10;
+    -fx-text-fill: #c62828;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* =========================================
+   AUCTION CARD (grid danh sách phiên)
+   ========================================= */
+.auction-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 8, 0, 0, 2);
+}
+.auction-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.15), 12, 0, 0, 4);
+}
+.auction-card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+}
+.auction-card-price {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f75667;
+}
+.auction-card-meta {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999999;
+}
+.auction-card-countdown {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e65100;
+    -fx-background-color: #fff3e0;
+    -fx-background-radius: 6;
+    -fx-padding: 3 8 3 8;
+}
+
+/* =========================================
+   SECTION TITLE (tiêu đề từng khu vực)
+   ========================================= */
+.section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+}
+.section-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999999;
+}
+
+/* =========================================
+   INNER CARD (card trắng bên trong content)
+   ========================================= */
+.inner-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-padding: 20 24 20 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
 }

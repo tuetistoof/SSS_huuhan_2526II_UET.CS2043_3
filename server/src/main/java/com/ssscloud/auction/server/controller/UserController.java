@@ -39,4 +39,8 @@ public class UserController {
             return JsonUtils.toJson(ApiResponse.error("Server error: " + e.getMessage()));
         }
     }
+
+    public String register(Object data) {
+        return null; // tam
+    }
 }

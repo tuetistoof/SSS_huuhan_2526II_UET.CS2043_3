@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane
+        prefWidth="1100.0"
+        prefHeight="700.0"
+        styleClass="seller-root"
+        stylesheets="@../css/seller-dashboard.css"
+        xmlns="http://javafx.com/javafx/21"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.ssscloud.auction.client.controller.SellerDashboardController">
+
+    <!-- ═══════════════ TOPBAR ═══════════════ -->
+    <top>
+        <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="12">
+            <Label text="CloudBid Seller Center" styleClass="topbar-brand"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Label fx:id="lblShopName" text="Shop: —" styleClass="topbar-shop"/>
+            <Label fx:id="lblAvatar" text="??" styleClass="avatar-circle"/>
+        </HBox>
+    </top>
+
+    <!-- ═══════════════ SIDEBAR + MAIN ═══════════════ -->
+    <center>
+        <HBox>
+
+            <!-- SIDEBAR -->
+            <VBox styleClass="sidebar" minWidth="170" maxWidth="170">
+                <Label text="Tổng quan" styleClass="nav-section"/>
+                <Button fx:id="btnDashboard" text="Dashboard" styleClass="nav-item, nav-active"
+                        maxWidth="Infinity" onAction="#showDashboard"/>
+
+                <Label text="Đấu giá" styleClass="nav-section"/>
+                <Button fx:id="btnMyAuctions" text="Phiên của tôi" styleClass="nav-item"
+                        maxWidth="Infinity" onAction="#showMyAuctions"/>
+                <Button fx:id="btnHistory" text="Lịch sử" styleClass="nav-item"
+                        maxWidth="Infinity" onAction="#showHistory"/>
+
+                <Label text="Sản phẩm" styleClass="nav-section"/>
+                <Button fx:id="btnCreate" text="+ Tạo phiên mới" styleClass="nav-item"
+                        maxWidth="Infinity" onAction="#openCreateDialog"/>
+                <Button fx:id="btnInventory" text="Kho sản phẩm" styleClass="nav-item"
+                        maxWidth="Infinity" onAction="#showInventory"/>
+
+                <Label text="Tài khoản" styleClass="nav-section"/>
+                <Button fx:id="btnProfile" text="Hồ sơ shop" styleClass="nav-item"
+                        maxWidth="Infinity" onAction="#showProfile"/>
+
+                <Pane VBox.vgrow="ALWAYS"/>
+
+                <Button text="Đăng xuất" styleClass="nav-item, nav-logout"
+                        maxWidth="Infinity" onAction="#handleLogout"/>
+            </VBox>
+
+            <!-- MAIN CONTENT -->
+            <VBox styleClass="main-content" HBox.hgrow="ALWAYS" spacing="20">
+                <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
+
+                <!-- Header row -->
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label fx:id="lblPageTitle" text="Dashboard" styleClass="page-title"/>
+                    <Pane HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Tạo phiên đấu giá" styleClass="btn-primary"
+                            onAction="#openCreateDialog"/>
+                </HBox>
+
+                <!-- Metric cards -->
+                <HBox spacing="12">
+                    <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblRunning" text="0" styleClass="metric-value, metric-green"/>
+                        <Label text="Đang chạy" styleClass="metric-label"/>
+                        <Label fx:id="lblRunningToday" text="↑ 0 hôm nay" styleClass="metric-sub metric-sub-green"/>
+                    </VBox>
+                    <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblTotal" text="0" styleClass="metric-value"/>
+                        <Label text="Tổng phiên" styleClass="metric-label"/>
+                        <Label text="tháng này" styleClass="metric-sub"/>
+                    </VBox>
+                    <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblBidCount" text="0" styleClass="metric-value"/>
+                        <Label text="Tổng lượt đấu" styleClass="metric-label"/>
+                        <Label fx:id="lblBidToday" text="↑ 0 hôm nay" styleClass="metric-sub metric-sub-green"/>
+                    </VBox>
+                    <VBox styleClass="metric-card" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblRevenue" text="—" styleClass="metric-value"/>
+                        <Label text="Giá trúng cao nhất" styleClass="metric-label"/>
+                        <Label text="phiên gần nhất" styleClass="metric-sub"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Filter tabs -->
+                <HBox styleClass="tab-bar" spacing="0">
+                    <ToggleButton fx:id="tabAll"     text="Tất cả"      styleClass="tab-btn" selected="true"  onAction="#filterAll"/>
+                    <ToggleButton fx:id="tabRunning" text="Đang chạy"   styleClass="tab-btn" selected="false" onAction="#filterRunning"/>
+                    <ToggleButton fx:id="tabOpen"    text="Sắp mở"      styleClass="tab-btn" selected="false" onAction="#filterOpen"/>
+                    <ToggleButton fx:id="tabDone"    text="Đã kết thúc" styleClass="tab-btn" selected="false" onAction="#filterFinished"/>
+                </HBox>
+
+                <!-- Table -->
+                <TableView fx:id="tblAuctions" VBox.vgrow="ALWAYS"
+                           styleClass="auction-table" placeholder="...">
+                    <columns>
+                        <TableColumn fx:id="colTitle"       text="Sản phẩm"     prefWidth="240" minWidth="160"/>
+                        <TableColumn fx:id="colCurrentPrice" text="Giá hiện tại" prefWidth="130" minWidth="100"/>
+                        <TableColumn fx:id="colBidCount"    text="Lượt bid"      prefWidth="80"  minWidth="60"/>
+                        <TableColumn fx:id="colTimeLeft"    text="Còn lại"       prefWidth="120" minWidth="80"/>
+                        <TableColumn fx:id="colStatus"      text="Trạng thái"    prefWidth="110" minWidth="90"/>
+                        <TableColumn fx:id="colActions"     text="Thao tác"      prefWidth="130" minWidth="100"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="Chưa có phiên đấu giá nào." styleClass="table-placeholder"/>
+                    </placeholder>
+                </TableView>
+
+            </VBox>
+        </HBox>
+    </center>
+
+</BorderPane>

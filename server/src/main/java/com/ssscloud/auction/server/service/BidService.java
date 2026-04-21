@@ -2,7 +2,6 @@ package com.ssscloud.auction.server.service;
 
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
-import com.ssscloud.auction.server.dao.BidDAO;
 
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.exception.*;
@@ -10,6 +9,7 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.BidType;
+import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
 /**
  * điều phối logic luồng đấu giá
@@ -27,13 +27,13 @@ public class BidService {
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
     //làm observer sau 
     private final AuctionDAO auctionDAO;
-    private final BidDAO bidDAO;
+    private final BidTransactionDAO bidTransactionDAO;
     private final AntiSnipingService antiSnipingService;
     private final AutoBidService autoBidService;
  
-    public BidService(AuctionDAO auctionDAO, BidDAO bidDAO, AntiSnipingService antiSnipingService, AutoBidService autoBidService) {
+    public BidService(AuctionDAO auctionDAO, BidTransactionDAO bidTransactionDAO, AntiSnipingService antiSnipingService, AutoBidService autoBidService) {
         this.auctionDAO     = auctionDAO;
-        this.bidDAO         = bidDAO;
+        this.bidTransactionDAO = bidTransactionDAO;
         this.antiSnipingService = antiSnipingService;
         this.autoBidService = autoBidService;
     }

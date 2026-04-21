@@ -24,38 +24,39 @@
         </HBox>
     </top>
 
+    <left>
+        <!-- SIDEBAR -->
+        <VBox styleClass="sidebar" minWidth="170" maxWidth="170">
+            <Label text="Tổng quan" styleClass="nav-section"/>
+            <Button fx:id="btnDashboard" text="Dashboard" styleClass="nav-item, nav-active"
+                    maxWidth="Infinity" onAction="#showDashboard"/>
+
+            <Label text="Đấu giá" styleClass="nav-section"/>
+            <Button fx:id="btnMyAuctions" text="Phiên của tôi" styleClass="nav-item"
+                    maxWidth="Infinity" onAction="#showMyAuctions"/>
+            <Button fx:id="btnHistory" text="Lịch sử" styleClass="nav-item"
+                    maxWidth="Infinity" onAction="#showHistory"/>
+
+            <Label text="Sản phẩm" styleClass="nav-section"/>
+            <Button fx:id="btnCreate" text="+ Tạo phiên mới" styleClass="nav-item"
+                    maxWidth="Infinity" onAction="#openCreateDialog"/>
+            <Button fx:id="btnInventory" text="Kho sản phẩm" styleClass="nav-item"
+                    maxWidth="Infinity" onAction="#showInventory"/>
+
+            <Label text="Tài khoản" styleClass="nav-section"/>
+            <Button fx:id="btnProfile" text="Hồ sơ shop" styleClass="nav-item"
+                    maxWidth="Infinity" onAction="#showProfile"/>
+
+            <Pane VBox.vgrow="ALWAYS"/>
+
+            <Button text="Đăng xuất" styleClass="nav-item, nav-logout"
+                    maxWidth="Infinity" onAction="#handleLogout"/>
+        </VBox>
+    </left>
+
     <!-- ═══════════════ SIDEBAR + MAIN ═══════════════ -->
     <center>
         <HBox>
-
-            <!-- SIDEBAR -->
-            <VBox styleClass="sidebar" minWidth="170" maxWidth="170">
-                <Label text="Tổng quan" styleClass="nav-section"/>
-                <Button fx:id="btnDashboard" text="Dashboard" styleClass="nav-item, nav-active"
-                        maxWidth="Infinity" onAction="#showDashboard"/>
-
-                <Label text="Đấu giá" styleClass="nav-section"/>
-                <Button fx:id="btnMyAuctions" text="Phiên của tôi" styleClass="nav-item"
-                        maxWidth="Infinity" onAction="#showMyAuctions"/>
-                <Button fx:id="btnHistory" text="Lịch sử" styleClass="nav-item"
-                        maxWidth="Infinity" onAction="#showHistory"/>
-
-                <Label text="Sản phẩm" styleClass="nav-section"/>
-                <Button fx:id="btnCreate" text="+ Tạo phiên mới" styleClass="nav-item"
-                        maxWidth="Infinity" onAction="#openCreateDialog"/>
-                <Button fx:id="btnInventory" text="Kho sản phẩm" styleClass="nav-item"
-                        maxWidth="Infinity" onAction="#showInventory"/>
-
-                <Label text="Tài khoản" styleClass="nav-section"/>
-                <Button fx:id="btnProfile" text="Hồ sơ shop" styleClass="nav-item"
-                        maxWidth="Infinity" onAction="#showProfile"/>
-
-                <Pane VBox.vgrow="ALWAYS"/>
-
-                <Button text="Đăng xuất" styleClass="nav-item, nav-logout"
-                        maxWidth="Infinity" onAction="#handleLogout"/>
-            </VBox>
-
             <!-- MAIN CONTENT -->
             <VBox styleClass="main-content" HBox.hgrow="ALWAYS" spacing="20">
                 <padding><Insets top="24" right="24" bottom="24" left="24"/></padding>
@@ -119,5 +120,9 @@
             </VBox>
         </HBox>
     </center>
+
+    <right>
+        <ScrollBar orientation="VERTICAL" BorderPane.alignment="CENTER" />
+    </right>
 
 </BorderPane>

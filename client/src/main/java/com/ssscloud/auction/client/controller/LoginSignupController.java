@@ -120,28 +120,28 @@ public class LoginSignupController {
             new Thread(() -> {
                 try {
 
-//                    boolean isSuccess = false;
-//                    String errorMessage = "Unexpected Error";
-//
-//                    LoginRequest loginData = new LoginRequest(email, pass);
-//                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
-//
-//                    String jsonRequest = JsonUtils.toJson(msg);
-//                    String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
-//
-//                    if (jsonResponse != null && !jsonResponse.isEmpty()) {
-//                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
-//                        isSuccess = response.isSuccess();
-//                        if (!isSuccess) {
-//                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
-//                        }
-//                    }
-//
-//                    // quay lại UI thread để chuyển cảnh
-//                    final boolean finalSuccess = isSuccess;
-//                    final String finalErrorMessage = errorMessage;
-                    final boolean finalSuccess = true;
-                    final String finalErrorMessage = "";
+                    boolean isSuccess = false;
+                    String errorMessage = "Unexpected Error";
+
+                    LoginRequest loginData = new LoginRequest(email, pass);
+                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
+
+                    String jsonRequest = JsonUtils.toJson(msg);
+                    String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
+
+                    if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
+                        isSuccess = response.isSuccess();
+                        if (!isSuccess) {
+                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
+                        }
+                    }
+
+                    // quay lại UI thread để chuyển cảnh
+                    final boolean finalSuccess = isSuccess;
+                    final String finalErrorMessage = errorMessage;
+//                    final boolean finalSuccess = true;
+//                    final String finalErrorMessage = "";
 
                     javafx.application.Platform.runLater(() -> {
                         // Tắt hoạt cảnh

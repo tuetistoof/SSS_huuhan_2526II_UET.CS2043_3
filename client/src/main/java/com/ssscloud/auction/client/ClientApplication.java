@@ -18,7 +18,7 @@ public class ClientApplication extends Application {
             Thread.sleep(2000);
         } catch (InterruptedException e) {}
         // Trong method start(), trước khi show màn hình login
-//        AuctionClientSocket.getInstance().connect("localhost", 5000);
+        AuctionClientSocket.getInstance().connect("localhost", 5000);
         SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
         

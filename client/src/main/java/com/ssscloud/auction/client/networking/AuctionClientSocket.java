@@ -44,8 +44,13 @@ public class AuctionClientSocket {
                 String line;
                 while ((line = in.readLine()) != null){
                     String json = line;
-                    for (MessageListener l : listeners) {
-                        l.onMessageReceived(json);
+                    if (pendingResponse != null && !pendingResponse.isDone()) {
+                        pendingResponse.complete(json);
+                    }
+                    else {
+                        for (MessageListener l : listeners) {
+                            l.onMessageReceived(json);
+                        }
                     }
                 }
             } catch (Exception e) {

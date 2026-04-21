@@ -1,12 +1,15 @@
 package com.ssscloud.auction.client.controller;
 
+import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.enums.UserRole;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -14,16 +17,37 @@ import javafx.util.Duration;
 public class MainLayoutController {
 
     @FXML
-    private Button btnHistory;
-
-    @FXML
-    private Button btnManageProduct;
-
-    @FXML
     private StackPane contentArea;
 
     @FXML
+    private Label lblAccountBalance;
+
+    @FXML
     private Label lblUsername;
+
+    @FXML
+    private HBox navActiveBids;
+
+    @FXML
+    private HBox navDashboard;
+
+    @FXML
+    private HBox navHistory;
+
+    @FXML
+    private HBox navMyAuctionRooms;
+
+    @FXML
+    private HBox navMyItems;
+
+    @FXML
+    private HBox navNewAuctionRoom;
+
+    @FXML
+    private HBox navWatchlist;
+
+    @FXML
+    private HBox navWonItems;
 
     @FXML
     private VBox sidebar;
@@ -31,25 +55,99 @@ public class MainLayoutController {
     private final double SIDEBAR_EXPANDED_WIDTH = 200.0;
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
+    public void initialize() {
+//        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        applyRole("BIDDER");
+    }
+
+    private void applyRole(String role) {
+        // Ẩn hết trước
+        navWonItems.setVisible(false);
+        navWonItems.setManaged(false);
+        navHistory.setVisible(false);
+        navHistory.setManaged(false);
+        navWatchlist.setVisible(false);
+        navWatchlist.setManaged(false);
+        navMyItems.setVisible(false);
+        navMyItems.setManaged(false);
+        navNewAuctionRoom.setVisible(false);
+        navNewAuctionRoom.setManaged(false);
+        lblAccountBalance.setVisible(false);
+        lblAccountBalance.setManaged(false);
+        navMyAuctionRooms.setVisible(false);
+        navMyAuctionRooms.setManaged(false);
+        navActiveBids.setVisible(false);
+        navActiveBids.setManaged(false);
+
+        // Hiện lại đúng role
+        switch (role) {
+            case "BIDDER" -> {
+                lblAccountBalance.setVisible(true);
+                lblAccountBalance.setManaged(true);
+                navWatchlist.setVisible(true);
+                navWatchlist.setManaged(true);
+                navWonItems.setVisible(true);
+                navWonItems.setManaged(true);
+                navActiveBids.setVisible(true);
+                navActiveBids.setManaged(true);
+            }
+            case "SELLER" -> {
+                navMyItems.setVisible(true);
+                navMyItems.setManaged(true);
+                navHistory.setVisible(true);
+                navHistory.setManaged(true);
+                navMyAuctionRooms.setVisible(true);
+                navMyAuctionRooms.setManaged(true);
+                navNewAuctionRoom.setVisible(true);
+                navNewAuctionRoom.setManaged(true);
+            }
+        }
+    }
+
     @FXML
-    void handleNavAuction(ActionEvent event) {
+    void handleNavActiveBids(MouseEvent event) {
 
     }
 
     @FXML
-    void handleNavHistory(ActionEvent event) {
+    void handleNavDashboard(MouseEvent event) {
 
     }
 
     @FXML
-    void handleNavHome(ActionEvent event) {
+    void handleNavHistory(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleNavMyAuctionRooms(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleNavMyItems(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleNavNewAuctionRoom(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleNavWatchlist(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleNavWonItems(MouseEvent event) {
 
     }
 
     @FXML
     void toggleSidebar(ActionEvent event) {
         Timeline timeline = new Timeline();
-        Duration duration = Duration.millis(250);
+        Duration duration = Duration.millis(150);
 
         if (isSidebarExpanded) {
             KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_COLLAPSED_WIDTH);
@@ -65,5 +163,10 @@ public class MainLayoutController {
 
         timeline.play();
         isSidebarExpanded = !isSidebarExpanded;
+    }
+
+    @FXML
+    public void handleNavUserInfo(MouseEvent event) {
+        System.out.println("Đã click vào khu vực User Info!");
     }
 }
