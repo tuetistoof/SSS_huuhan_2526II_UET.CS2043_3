@@ -1,289 +1,415 @@
-/* ═══════════════════════════════════════
-   seller-dashboard.css
-   ═══════════════════════════════════════ */
+/*
+===========================================
+  CloudBid Seller Center – styles.css
+===========================================
+*/
 
-/* Root */
+/* ── ROOT ── */
 .seller-root {
-    -fx-background-color: #f5f5f0;
+    -fx-background-color: #f0f0f0;
     -fx-font-family: "Arial";
 }
 
-/* ── Topbar ── */
+/* ── TOPBAR ── */
 .topbar {
     -fx-background-color: #ffffff;
-    -fx-border-color: #e0e0db;
-    -fx-border-width: 0 0 0.5 0;
-    -fx-padding: 12 20 12 20;
-    -fx-min-height: 52;
+    -fx-pref-height: 46px;
+    -fx-min-height: 46px;
+    -fx-border-color: #e8e8e8;
+    -fx-border-width: 0 0 1 0;
 }
-.topbar-brand {
-    -fx-font-size: 15px;
+
+.topbar-brand-bold {
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: #1a1a1a;
 }
-.topbar-shop {
-    -fx-font-size: 12px;
-    -fx-text-fill: #888780;
-}
-.avatar-circle {
-    -fx-background-color: #E6F1FB;
-    -fx-text-fill: #185FA5;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-min-width: 30;
-    -fx-min-height: 30;
-    -fx-max-width: 30;
-    -fx-max-height: 30;
-    -fx-background-radius: 15;
-    -fx-alignment: center;
+
+.topbar-brand-light {
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #666666;
 }
 
-/* ── Sidebar ── */
+.topbar-shop {
+    -fx-font-size: 13px;
+    -fx-text-fill: #555555;
+}
+
+.avatar-circle {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 14px;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-max-width: 28px;
+    -fx-max-height: 28px;
+    -fx-alignment: center;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+
+/* ── SIDEBAR ── */
 .sidebar {
     -fx-background-color: #ffffff;
-    -fx-border-color: #e0e0db;
-    -fx-border-width: 0 0.5 0 0;
-    -fx-padding: 16 0 16 0;
+    -fx-border-color: #e8e8e8;
+    -fx-border-width: 0 1 0 0;
 }
+
 .nav-section {
     -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-text-fill: #b4b2a9;
-    -fx-padding: 14 20 4 20;
+    -fx-text-fill: #aaaaaa;
+    -fx-padding: 12 16 3 16;
 }
+
 .nav-item {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-text-fill: #5f5e5a;
+    -fx-text-fill: #333333;
     -fx-font-size: 13px;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 9 20 9 20;
+    -fx-padding: 7 16 7 16;
     -fx-cursor: hand;
     -fx-background-radius: 0;
-    -fx-border-radius: 0;
 }
+
 .nav-item:hover {
-    -fx-background-color: #f5f5f0;
-    -fx-text-fill: #1a1a1a;
+    -fx-background-color: #fff0f1;
+    -fx-text-fill: #f75667;
 }
+
+/* Active item: viền đỏ trái 3px */
 .nav-active {
-    -fx-background-color: #E6F1FB;
-    -fx-text-fill: #185FA5;
+    -fx-background-color: #fff0f1;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-border-color: #185FA5 transparent transparent transparent;
-    -fx-border-width: 0 0 0 2.5;
-    -fx-padding: 9 20 9 17.5;
-}
-.nav-logout {
-    -fx-text-fill: #a32d2d;
-}
-.nav-logout:hover {
-    -fx-background-color: #fcebeb;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 7 16 7 13;
+    -fx-cursor: hand;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent transparent transparent #f75667;
+    -fx-border-width: 0 0 0 3;
 }
 
-/* ── Main content ── */
-.main-content {
-    -fx-background-color: #f5f5f0;
+/* Logout button */
+.nav-logout {
+    -fx-background-color: transparent;
+    -fx-border-color: #f75667;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+    -fx-padding: 7 0 7 0;
+    -fx-cursor: hand;
 }
+
+.nav-logout:hover {
+    -fx-background-color: #f75667;
+    -fx-text-fill: #ffffff;
+}
+
+/* ── MAIN CONTENT BACKGROUND ── */
+.main-content {
+    -fx-background-color: #f0f0f0;
+}
+
+/* ── PINK DASHBOARD CARD ──
+   Màu hồng #f2a8b0, bo góc 12px
+   Metric cards bên trong dùng #fde8e8 (hồng nhạt hơn) để tương phản
+*/
+.dashboard-card {
+    -fx-background-color: #f2a8b0;
+    -fx-background-radius: 12px;
+}
+
 .page-title {
-    -fx-font-size: 17px;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: #1a1a1a;
 }
 
-/* ── Buttons ── */
+/* ── PRIMARY BUTTON ── */
 .btn-primary {
-    -fx-background-color: #185FA5;
+    -fx-background-color: #f75667;
     -fx-text-fill: #ffffff;
     -fx-font-size: 13px;
-    -fx-padding: 8 18 8 18;
-    -fx-background-radius: 7;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-padding: 8 16 8 16;
     -fx-cursor: hand;
     -fx-border-color: transparent;
 }
-.btn-primary:hover {
-    -fx-background-color: #0C447C;
-}
-.btn-secondary {
-    -fx-background-color: #ffffff;
-    -fx-text-fill: #3d3d3a;
-    -fx-font-size: 12px;
-    -fx-padding: 5 12 5 12;
-    -fx-background-radius: 5;
-    -fx-border-color: #c8c7c0;
-    -fx-border-width: 0.5;
-    -fx-border-radius: 5;
-    -fx-cursor: hand;
-}
-.btn-secondary:hover {
-    -fx-background-color: #f5f5f0;
-}
-.btn-danger {
-    -fx-background-color: transparent;
-    -fx-text-fill: #a32d2d;
-    -fx-font-size: 12px;
-    -fx-padding: 5 12 5 12;
-    -fx-background-radius: 5;
-    -fx-border-color: #f09595;
-    -fx-border-width: 0.5;
-    -fx-border-radius: 5;
-    -fx-cursor: hand;
-}
-.btn-danger:hover {
-    -fx-background-color: #fcebeb;
+
+.btn-primary:hover  { -fx-background-color: #e0455a; }
+.btn-primary:pressed { -fx-background-color: #c73a4d; }
+
+/* ── METRIC CARDS ──
+   Nền hồng nhạt #fde8e8, viền nhẹ, bo góc 8px
+   maxHeight/minHeight được đặt từ FXML để giữ layout gọn
+*/
+.metric-card {
+    -fx-background-color: #fde8e8;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
 }
 
-/* ── Metric cards ── */
-.metric-card {
-    -fx-background-color: #ffffff;
-    -fx-background-radius: 9;
-    -fx-border-color: #e0e0db;
-    -fx-border-width: 0.5;
-    -fx-border-radius: 9;
-    -fx-padding: 14 16 14 16;
-    -fx-spacing: 3;
-}
-.metric-value {
-    -fx-font-size: 22px;
+.metric-value-green {
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
-    -fx-text-fill: #1a1a1a;
+    -fx-text-fill: #2e9e44;
 }
-.metric-green {
-    -fx-text-fill: #3B6D11;
+
+.metric-value-dash {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
 }
+
 .metric-label {
     -fx-font-size: 11px;
-    -fx-text-fill: #888780;
-}
-.metric-sub {
-    -fx-font-size: 11px;
-    -fx-text-fill: #b4b2a9;
-}
-.metric-sub-green {
-    -fx-text-fill: #3B6D11;
+    -fx-text-fill: #555555;
 }
 
-/* ── Tab bar ── */
-.tab-bar {
-    -fx-border-color: #e0e0db;
-    -fx-border-width: 0 0 0.5 0;
+.metric-sub {
+    -fx-font-size: 10px;
+    -fx-text-fill: #888888;
 }
+
+.metric-sub-green {
+    -fx-font-size: 10px;
+    -fx-text-fill: #2e9e44;
+}
+
+/* ── WHITE CONTENT AREA (tabs + table) ──
+   Nằm ngay dưới dashboard-card, nền trắng
+*/
+.content-area {
+    -fx-background-color: #ffffff;
+}
+
+/* ── TAB BAR ── */
+.tab-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e8e8e8;
+    -fx-border-width: 0 0 1 0;
+}
+
 .tab-btn {
     -fx-background-color: transparent;
-    -fx-text-fill: #888780;
-    -fx-font-size: 12px;
-    -fx-padding: 7 16 7 16;
     -fx-border-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-font-size: 13px;
+    -fx-padding: 9 16 9 16;
     -fx-background-radius: 0;
-    -fx-border-radius: 0;
     -fx-cursor: hand;
 }
+
+.tab-btn:hover {
+    -fx-text-fill: #f75667;
+    -fx-background-color: transparent;
+}
+
 .tab-btn:selected {
-    -fx-text-fill: #185FA5;
+    -fx-background-color: transparent;
+    -fx-text-fill: #f75667;
     -fx-font-weight: bold;
-    -fx-border-color: transparent transparent #185FA5 transparent;
+    -fx-border-color: transparent transparent #f75667 transparent;
     -fx-border-width: 0 0 2 0;
 }
-.tab-btn:hover {
-    -fx-text-fill: #1a1a1a;
-    -fx-background-color: #f5f5f0;
+
+/* Ẩn focus ring */
+.button:focused,
+.toggle-button:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
 
-/* ── TableView ── */
+/* ── TABLE ── */
 .auction-table {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 9;
-    -fx-border-color: #e0e0db;
-    -fx-border-width: 0.5;
-    -fx-border-radius: 9;
-}
-.auction-table .column-header-background {
-    -fx-background-color: #f5f5f0;
-    -fx-background-radius: 9 9 0 0;
-}
-.auction-table .column-header {
-    -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-size: 36;
+    -fx-table-cell-border-color: #f0f0f0;
 }
+
+.auction-table .column-header-background {
+    -fx-background-color: #ffffff;
+}
+
+.auction-table .column-header {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #eeeeee transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-size: 38px;
+}
+
 .auction-table .column-header .label {
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #888780;
+    -fx-text-fill: #555555;
     -fx-alignment: CENTER_LEFT;
     -fx-padding: 0 0 0 6;
 }
+
+.auction-table .filler {
+    -fx-background-color: #ffffff;
+}
+
 .auction-table .table-row-cell {
     -fx-background-color: #ffffff;
-    -fx-border-color: transparent transparent #f0efe8 transparent;
-    -fx-border-width: 0 0 0.5 0;
-    -fx-cell-size: 44px;
+    -fx-border-color: transparent transparent #f5f5f5 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 36px;
 }
+
+.auction-table .table-row-cell:odd {
+    -fx-background-color: #fafafa;
+}
+
+.auction-table .table-row-cell:hover {
+    -fx-background-color: #fff3f4;
+}
+
 .auction-table .table-row-cell:selected {
-    -fx-background-color: #EBF4FF;
+    -fx-background-color: #ffdde0;
 }
-.auction-table .table-row-cell:hover{
-    -fx-background-color: #fafaf7;
+
+.auction-table .table-row-cell:selected .text {
+    -fx-fill: #333333;
 }
-.auction-table .table-cell {
-    -fx-font-size: 13px;
-    -fx-text-fill: #1a1a1a;
-    -fx-padding: 0 0 0 6;
-    -fx-alignment: CENTER_LEFT;
-    -fx-border-color: transparent;
-}
+
 .table-placeholder {
-    -fx-text-fill: #b4b2a9;
     -fx-font-size: 13px;
+    -fx-text-fill: #aaaaaa;
 }
 
-/* ── Status badges ── */
-.badge-running {
-    -fx-background-color: #EAF3DE;
-    -fx-text-fill: #3B6D11;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 3 10 3 10;
-    -fx-background-radius: 10;
+/* ── SCROLLBAR ── */
+.scroll-bar:vertical {
+    -fx-pref-width: 6px;
+    -fx-background-color: transparent;
 }
-.badge-open {
-    -fx-background-color: #E6F1FB;
-    -fx-text-fill: #185FA5;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 3 10 3 10;
-    -fx-background-radius: 10;
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #dedede;
+    -fx-background-radius: 3px;
 }
-.badge-finished {
-    -fx-background-color: #F1EFE8;
-    -fx-text-fill: #5F5E5A;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 3 10 3 10;
-    -fx-background-radius: 10;
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #c0c0c0;
 }
-.badge-paid {
-    -fx-background-color: #E1F5EE;
-    -fx-text-fill: #0F6E56;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 3 10 3 10;
-    -fx-background-radius: 10;
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-opacity: 0;
 }
-.badge-canceled {
-    -fx-background-color: #FCEBEB;
-    -fx-text-fill: #A32D2D;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 3 10 3 10;
-    -fx-background-radius: 10;
+.scroll-bar .track {
+    -fx-background-color: transparent;
 }
 
-/* countdown text */
-.countdown-urgent {
-    -fx-text-fill: #854F0B;
-    -fx-font-weight: bold;
+/*
+===========================================
+  Login / Signup pages (giữ nguyên)
+===========================================
+*/
+.bg-login-signup {
+    -fx-background-image: url("../images/BPbg2.png");
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center center;
 }
-.countdown-normal {
-    -fx-text-fill: #5F5E5A;
+
+.cloud-side {
+    -fx-background-image: url("../images/frame2.png");
+    -fx-background-size: cover;
+    -fx-background-position: left center;
+}
+
+.form-white-side {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 0 15 15 0;
+    -fx-padding: 50 60 50 60;
+}
+
+.main-card {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 20, 0, 0, 10);
+    -fx-background-radius: 15px;
+}
+
+.signup-form-txt-font {
+    -fx-font-size: 18px;
+    -fx-text-fill: #333333;
+    -fx-padding: 15 0 10 0;
+}
+
+.input-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d1d1d1;
+    -fx-border-width: 1.5px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 12 15 12 15;
+    -fx-font-size: 16px;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #999999;
+}
+
+.input-field:focused {
+    -fx-border-color: #f75667;
+    -fx-background-color: #fffafa;
+    -fx-border-width: 2px;
+}
+
+.input-error {
+    -fx-border-color: #dc493a;
+    -fx-border-width: 2px;
+    -fx-background-color: #fff0f0;
+}
+
+.check-box .box {
+    -fx-background-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 3px;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #003366;
+}
+
+.btn {
+    -fx-pref-height: 50px;
+    -fx-pref-width: 350px;
+    -fx-padding: 15 50 15 50;
+    -fx-background-color: #f75667;
+    -fx-text-fill: WHITE;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.btn:pressed {
+    -fx-background-color: #d64556;
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+.link-clean {
+    -fx-focus-color: transparent;
+    -fx-text-fill: #555555;
+    -fx-underline: false;
+}
+
+.link-clean:hover {
+    -fx-text-fill: #f75667;
+}
+
+.loading-spinner {
+    -fx-fill: transparent;
+    -fx-stroke: #d64556;
+    -fx-stroke-width: 4;
+    -fx-stroke-line-cap: round;
 }

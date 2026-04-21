@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
+
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 
@@ -140,6 +140,8 @@ public class LoginSignupController {
                     // quay lại UI thread để chuyển cảnh
                     final boolean finalSuccess = isSuccess;
                     final String finalErrorMessage = errorMessage;
+//                    final boolean finalSuccess = true;
+//                    final String finalErrorMessage = "";
 
                     javafx.application.Platform.runLater(() -> {
                         // Tắt hoạt cảnh
@@ -149,7 +151,7 @@ public class LoginSignupController {
                         //login vào home
                         if (finalSuccess) {
                             try {
-                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/home.fxml"));
+                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
                                 btnLogin.getScene().setRoot(homeRoot);
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -177,8 +179,8 @@ public class LoginSignupController {
             // Nếu nó nhảy vào đây thì m phải check lại fx:id trong file fxml và biến controller
             System.out.println("Chưa sửa chèn thêm fxml vào");
         }
-
     }
+
     @FXML
     private void clearLoginForm() {
         txtEmail.clear(); 
@@ -195,6 +197,7 @@ public class LoginSignupController {
 
         chkPassword.setSelected(false); 
     }
+    
 
     @FXML
     private void handleSignUp(ActionEvent event) {

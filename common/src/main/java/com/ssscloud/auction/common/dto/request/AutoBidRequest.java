@@ -6,20 +6,20 @@ public class AutoBidRequest implements Serializable{
     //serialVersion dùng để ghi nhớ các phiên bản của Serializable
     private static final long serialVersionUID = 1L;
 
-    private Long auctionId;
-    private double maxBid;
-    private double increment;
+    private String auctionId;
+    private long maxBid;
+    private long increment;
 
     public AutoBidRequest() {}
 
-    public Long getAuctionId() { return auctionId; }
-    public void setAuctionId(Long auctionId) { this.auctionId = auctionId; }
+    public String getAuctionId() { return auctionId; }
+    public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
 
-    public double getMaxBid() { return maxBid; }
-    public void setMaxBid(double maxBid) { this.maxBid = maxBid; }
+    public long getMaxBid() { return maxBid; }
+    public void setMaxBid(long maxBid) { this.maxBid = maxBid; }
 
-    public double getIncrement() { return increment; }
-    public void setIncrement(double increment) { this.increment = increment; }
+    public long getIncrement() { return increment; }
+    public void setIncrement(long increment) { this.increment = increment; }
     
     @Override
     public String toString() {

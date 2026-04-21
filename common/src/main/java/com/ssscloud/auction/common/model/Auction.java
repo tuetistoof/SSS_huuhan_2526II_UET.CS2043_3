@@ -19,25 +19,24 @@ public class Auction implements Subject {
     private AuctionStatus status;
     private String sellerId;
     private String itemId;
-    private long currentPrice;
-    private String highestBidderId;
-    private String highestBidderName;
-    private LocalDateTime bidTime;
-    private BidType bidType;
-    private List <BidTransaction> bidHistory;
+    private List <BidTransaction> bidTransaction;
     public Auction() {
     }
-    public Auction (AuctionConfig auctionConfig, String sellerId, String itemId, long currentPrice, AuctionStatus status)
+    public Auction (AuctionConfig auctionConfig,  AuctionStatus status, String sellerId, String itemId)
     {
         this.auctionConfig = auctionConfig;
         this.status = status;
         this.sellerId = sellerId;
         this.itemId = itemId;
-        this.currentPrice = currentPrice;
-        this.highestBidderId = null;
-        this.highestBidderName = null;
-        this.bidTime = null;
-        this.bidHistory = new ArrayList<>();
+        this.bidTransaction = new ArrayList<>();
+    }
+    public Auction (AuctionConfig auctionConfig,  AuctionStatus status, String sellerId, String itemId, List <BidTransaction> bidTransaction)
+    {
+        this.auctionConfig = auctionConfig;
+        this.status = status;
+        this.sellerId = sellerId;
+        this.itemId = itemId;
+        this.bidTransaction = bidTransaction;
     }
     // set state methods
     public void start() {
@@ -66,9 +65,7 @@ public class Auction implements Subject {
 
     public void placeBid(BidTransaction bid) {
         // setState
-        this.currentPrice = bid.getBidAmount();
-        this.highestBidderId = bid.getBidderId();
-        this.bidHistory.add(bid);
+        this.bidTransaction.add(bid);
         if (this.status == AuctionStatus.OPEN) {
             this.status = AuctionStatus.RUNNING;
         }
@@ -94,10 +91,11 @@ public class Auction implements Subject {
 
     @Override
     public String toString() {
+        BidTransaction lastBidTransaction = bidTransaction.getLast();
         return "Auction{" +
                 "id=" + auctionConfig.getId() +
                 ", name='" + auctionConfig.getName() + '\'' +
-                ", currentPrice=" + currentPrice +
+                ", currentPrice=" + lastBidTransaction.getBidAmount() +
                 ", status=" + status +
                 '}';
     }
@@ -115,12 +113,14 @@ public class Auction implements Subject {
         this.itemId = itemId;
     }
     public long getCurrentPrice() {
-        return currentPrice;
+        if (!bidTransaction.isEmpty())
+        {
+            BidTransaction lastBidTransaction = bidTransaction.getLast();
+            return lastBidTransaction.getBidAmount();
+        }
+        else return 0;
     }
 
-    public void setCurrentPrice(long currentPrice) {
-        this.currentPrice = currentPrice;
-    }
 
     public AuctionStatus getStatus() {
         return status;
@@ -131,35 +131,44 @@ public class Auction implements Subject {
     }
 
     public String getHighestBidderId() {
-        return highestBidderId;
+        if (!bidTransaction.isEmpty())
+        {
+            BidTransaction lastBidTransaction = bidTransaction.getLast();
+            return lastBidTransaction.getBidderId();
+        }
+        else return null;
     }
 
-    public void setHighestBidderId(String highestBidderId) {
-        this.highestBidderId = highestBidderId;
-    }
     public String getHighestBidderName() {
-        return highestBidderName;
-    }
-    public void setHighestBidderName(String highestBidderName) {
-        this.highestBidderName = highestBidderName;
+        if (!bidTransaction.isEmpty())
+        {
+            BidTransaction lastBidTransaction = bidTransaction.getLast();
+            return lastBidTransaction.getBidderUsername();
+        }
+        else return null;
     }
     public LocalDateTime getBidTime() {
-        return bidTime;
+        if (!bidTransaction.isEmpty())
+        {
+            BidTransaction lastBidTransaction = bidTransaction.getLast();
+            return lastBidTransaction.getBidTime();
+        }
+        else return null;
     }
     public BidType getBidType() {
-        return bidType;
+        if (!bidTransaction.isEmpty())
+        {
+            BidTransaction lastBidTransaction = bidTransaction.getLast();
+            return lastBidTransaction.getType();
+        }
+        else return null;
     }
-    public void setBidType(BidType bidType) {
-        this.bidType = bidType;
+   
+    public List<BidTransaction> getBidTransaction() {
+        return bidTransaction;
     }
-    public void setBidTime(LocalDateTime bidTime) {
-        this.bidTime = bidTime;
-    }
-    public List<BidTransaction> getBidHistory() {
-        return bidHistory;
-    }
-    public void setBidHistory(List<BidTransaction> bidHistory) {
-        this.bidHistory = bidHistory;
+    public void setBidTransaction(List<BidTransaction> bidTransaction) {
+        this.bidTransaction = bidTransaction;
     }
 
 

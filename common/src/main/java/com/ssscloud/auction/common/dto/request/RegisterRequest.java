@@ -6,7 +6,7 @@ import com.ssscloud.auction.common.enums.UserRole;
 
 public class RegisterRequest implements Serializable{
     private static final long serialVersionUID = 1L;
-
+    private String name;
     private String username;
     private String password;
     private String fullName;
@@ -16,6 +16,12 @@ public class RegisterRequest implements Serializable{
     public RegisterRequest() {}
 
     // Getter & Setter
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
 
