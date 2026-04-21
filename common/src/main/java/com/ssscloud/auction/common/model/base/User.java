@@ -3,32 +3,32 @@ package com.ssscloud.auction.common.model.base;
 import com.ssscloud.auction.common.enums.UserRole;
 
 public abstract class User extends Entity{
-    private String userName;
+    private String username;
     private String password;
     private String email;
     private UserRole role;
     
-    public User (String name, String userName, String password, String email, UserRole role)
+    public User (String name, String username, String password, String email, UserRole role)
     {
         super (name);
-        this.userName = userName;
+        this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
     }
-    public User (String id, String name, String userName, String password, String email, UserRole role)
+    public User (String id, String name, String username, String password, String email, UserRole role)
     {
         super (id, name);
-        this.userName = userName;
+        this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
     }
 
     // getter setter
-    // userName khong the thay doi
+    // username khong the thay doi
     public String getUserName() {
-        return userName;
+        return username;
     }
 
     public String getPassword() {

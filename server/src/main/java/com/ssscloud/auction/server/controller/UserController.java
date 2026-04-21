@@ -1,6 +1,7 @@
 package com.ssscloud.auction.server.controller;
 
 import com.ssscloud.auction.common.dto.request.LoginRequest;
+import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.model.base.User;
@@ -15,7 +16,7 @@ public class UserController {
             String dataJsonString = JsonUtils.toJson(data);
             LoginRequest request = JsonUtils.fromJson(dataJsonString, LoginRequest.class);
 
-            User user = userDAO.findByEmail(request.getUsername());
+            User user = userDAO.findByUsername(request.getUsername());
 
             if (user == null) {
                 return JsonUtils.toJson(ApiResponse.error("Account doesn't exist"));
@@ -24,17 +25,35 @@ public class UserController {
             if (!user.getPassword().equals(request.getPassword())) {
                 return JsonUtils.toJson(ApiResponse.error("Wrong password"));
             }
-
             UserDTO dto = new UserDTO(
                     user.getId(),
                     user.getUserName(),
-                    user.getName(),
                     user.getEmail(),
-                    user.getRole()
-            );
+                    user.getRole());
             return JsonUtils.toJson(ApiResponse.success(dto, "Login successful"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return JsonUtils.toJson(ApiResponse.error("Server error: " + e.getMessage()));
         }
-        catch (Exception e) {
+    }
+
+    public String register(Object data) {
+        try {
+            String dataJsonString = JsonUtils.toJson(data);
+            RegisterRequest request = JsonUtils.fromJson(dataJsonString, RegisterRequest.class);
+
+            User user = userDAO.findByUsername(request.getUsername());
+
+            if (user == null) {
+                if (request.getRole().isBidder())
+                    user = new Seller() {
+                        request.get
+                    };
+            }
+            else{
+                return JsonUtils.toJson(ApiResponse.error("Account is exist"));
+            }
+        } catch (Exception e) {
             e.printStackTrace();
             return JsonUtils.toJson(ApiResponse.error("Server error: " + e.getMessage()));
         }

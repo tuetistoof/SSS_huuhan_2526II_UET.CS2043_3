@@ -9,7 +9,7 @@ public class AuctionDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String id;
-    private String title;
+    private String name;
     private String description;
     private long startingPrice;
     private long currentPrice;
@@ -17,18 +17,26 @@ public class AuctionDTO implements Serializable {
     private AuctionStatus status;
     private String sellerName;
     private String highestBidderName;
+<<<<<<< HEAD
+    private int bidCount;
+=======
+>>>>>>> f2782340f8d12c50bfd7c1d1cf145f3045fda1fe
     private long minIncrement;
 
-    public AuctionDTO() {}
+    public AuctionDTO() {
+    }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getName() {
+        return name;
+    }
 
     public long getStartingPrice() { return startingPrice; }
     public void setStartingPrice(long startingPrice) { this.startingPrice = startingPrice; }
@@ -36,17 +44,21 @@ public class AuctionDTO implements Serializable {
     public long getCurrentPrice() { return currentPrice; }
     public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }
 
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public AuctionStatus getStatus() { return status; }
-    public void setStatus(AuctionStatus status) { this.status = status; }
+    public double getStartingPrice() {
+        return startingPrice;
+    }
 
-    public String getSellerName() { return sellerName; }
-    public void setSellerName(String sellerName) { this.sellerName = sellerName; }
+    public void setStartingPrice(double startingPrice) {
+        this.startingPrice = startingPrice;
+    }
 
-    public String getHighestBidderName() { return highestBidderName; }
-    public void setHighestBidderName(String highestBidderName) { this.highestBidderName = highestBidderName; }
+    public double getCurrentPrice() {
+        return currentPrice;
+    }
 
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
@@ -55,7 +67,7 @@ public class AuctionDTO implements Serializable {
     public String toString() {
         return "AuctionDTO{" +
                 "id=" + id +
-                ", title='" + title + '\'' +
+                ", name='" + name + '\'' +
                 ", currentPrice=" + currentPrice +
                 ", status=" + status +
                 '}';

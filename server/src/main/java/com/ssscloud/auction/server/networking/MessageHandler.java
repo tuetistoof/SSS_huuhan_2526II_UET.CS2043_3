@@ -11,8 +11,6 @@ import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.UserController;
 
-import netscape.javascript.JSObject;
-
 public class MessageHandler {
     private Gson gson = new Gson();
     private BidController bidController;

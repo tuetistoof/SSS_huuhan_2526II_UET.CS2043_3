@@ -11,7 +11,10 @@ import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
+<<<<<<< HEAD
 import com.ssscloud.auction.server.dao.UserDAO;
+=======
+>>>>>>> 42c5dd3d08edda6bf471580830469b5cf708e15a
 import com.ssscloud.auction.server.service.AntiSnipingService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
