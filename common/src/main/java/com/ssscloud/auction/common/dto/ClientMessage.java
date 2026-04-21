@@ -21,7 +21,11 @@ public class ClientMessage implements Serializable {
         this.data   = data;
     }
 
+<<<<<<< HEAD
     // Factory methods — dùng thay constructor trực tiếp
+=======
+
+>>>>>>> Onion
     public static ClientMessage request(String action, Object data) {
         ClientMessage msg = new ClientMessage(action, data);
         msg.type = TYPE_RESPONSE;
