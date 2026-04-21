@@ -20,7 +20,7 @@ public class SignUpController {
     private Label lblError;
 
     @FXML
-    private ComboBox<String> cbRole;
+    private ComboBox<String> cbRoles;
 
     @FXML
     private Hyperlink linkLogin;
@@ -53,8 +53,7 @@ public class SignUpController {
     @FXML
     public void initialize() {
 
-        cbRole.getItems().addAll("Bidder", "Seller");
-        cbRole.getSelectionModel().selectFirst();
+        cbRoles.getItems().addAll("Bidder", "Seller");
 
         txtUserPasswordHidden.textProperty().bindBidirectional(txtUserPassword.textProperty());
         txtCFUserPasswordHidden.textProperty().bindBidirectional(txtCFUserPassword.textProperty());
