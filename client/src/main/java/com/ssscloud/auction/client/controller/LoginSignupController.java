@@ -8,6 +8,7 @@ import java.util.Map;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 
+import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.LoginRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
@@ -45,7 +46,7 @@ public class LoginSignupController {
     private Hyperlink linkSignUp;
 
     @FXML
-    private TextField txtEmail;
+    private TextField txtUsername;
 
     @FXML
     private TextField txtPassword;
@@ -69,6 +70,7 @@ public class LoginSignupController {
         lblError.setText("");
         lblError.setVisible(false);
         lblError.setManaged(false);
+        clearLoginForm();
     }
 
     @FXML
@@ -83,22 +85,22 @@ public class LoginSignupController {
     }
     @FXML
     private void handleLogin(ActionEvent event) {
-        txtEmail.getStyleClass().remove("input-error");
+        txtUsername.getStyleClass().remove("input-error");
         txtPassword.getStyleClass().remove("input-error");
         lblError.setText("");
         lblError.setVisible(false);
         lblError.setManaged(false);
         
         //lấy dữ liệu từ UI
-        String email = txtEmail.getText().trim();
+        String username = txtUsername.getText().trim();
         String pass = txtPassword.getText().trim();
         
         //validate thông tin (không gửi server nếu thông tin rỗng)
         boolean loginSuccess = false;
         boolean hasError = false;
 
-        if (email.isEmpty()) {
-            txtEmail.getStyleClass().add("input-error");
+        if (username.isEmpty()) {
+            txtUsername.getStyleClass().add("input-error");
             hasError = true;
         }
         if (pass.isEmpty()) {
@@ -119,27 +121,42 @@ public class LoginSignupController {
 
             new Thread(() -> {
                 try {
-
                     boolean isSuccess = false;
                     String errorMessage = "Unexpected Error";
+                    UserDTO userDTO = null;
 
-                    LoginRequest loginData = new LoginRequest(email, pass);
-                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
+                    LoginRequest loginData = new LoginRequest(username, pass);
+                    ClientMessage msg = ClientMessage.request("LOGIN", loginData);
 
                     String jsonRequest = JsonUtils.toJson(msg);
                     String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
-
+                    
                     if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
-                        isSuccess = response.isSuccess();
-                        if (!isSuccess) {
-                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
+                        ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+
+                        if ("LOGIN".equals(serverMsg.getAction())) {
+                            String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                            ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, ApiResponse.class);
+                            isSuccess = response.isSuccess();
+                            if (isSuccess) {
+                                userDTO = response.getData();
+                            }
+                            else {
+                                errorMessage = response.getMessage(); // Lấy câu chửi từ server
+                            }
                         }
+                        else {
+                            errorMessage = "Invalid response from server";
+                        }
+                    }
+                    else {
+                        errorMessage = "No response from server";
                     }
 
                     // quay lại UI thread để chuyển cảnh
                     final boolean finalSuccess = isSuccess;
                     final String finalErrorMessage = errorMessage;
+                    final UserDTO finalUser = userDTO;
 //                    final boolean finalSuccess = true;
 //                    final String finalErrorMessage = "";
 
@@ -151,6 +168,8 @@ public class LoginSignupController {
                         //login vào home
                         if (finalSuccess) {
                             try {
+                                SessionManager.getInstance().setCurrentUser(finalUser);
+
                                 Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
                                 btnLogin.getScene().setRoot(homeRoot);
                             } catch (IOException e) {
@@ -183,11 +202,11 @@ public class LoginSignupController {
 
     @FXML
     private void clearLoginForm() {
-        txtEmail.clear(); 
+        txtUsername.clear();
         txtPassword.clear();
         txtPasswordHidden.clear();
 
-        txtEmail.getStyleClass().remove("input-error");
+        txtUsername.getStyleClass().remove("input-error");
         txtPassword.getStyleClass().remove("input-error");
         txtPasswordHidden.getStyleClass().remove("input-error");
         
