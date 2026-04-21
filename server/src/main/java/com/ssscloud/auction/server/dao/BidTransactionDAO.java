@@ -48,6 +48,38 @@ public class BidTransactionDAO extends BaseDAO {
         }
     }
 
+    public boolean saveBidTransaction(Connection conn, BidTransaction bidTransaction) {
+        String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
+        PreparedStatement psBidTransaction = null;
+        try {
+            conn.setAutoCommit(false);
+
+            psBidTransaction = conn.prepareStatement(sqlBidTransaction);
+            psBidTransaction.setString(1, bidTransaction.getAuctionId());
+            psBidTransaction.setString(2, bidTransaction.getBidderId());
+            psBidTransaction.setString(3, bidTransaction.getBidderUsername());
+            psBidTransaction.setLong(4, bidTransaction.getBidAmount());
+            psBidTransaction.setObject(5, bidTransaction.getBidTime());
+            psBidTransaction.setString(6, bidTransaction.getType().name());
+            psBidTransaction.executeQuery();
+
+            conn.commit();
+            logger.info("da luu bidTransaction");
+            return true;
+        } catch (SQLIntegrityConstraintViolationException e) {
+            logger.warning("User name da ton tai: " + e.getMessage());
+            safelyRollback(conn);
+            return false;
+        } catch (SQLException e) {
+            logger.severe("Loi kh luu bidTransaction: " + e.getMessage());
+            safelyRollback(conn);
+            return false;
+        } finally {
+            resetAutocommit(conn);
+            closeResource(psBidTransaction);
+        }
+    }
+
     public BidTransaction findHighest (String auctionId) {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +

@@ -17,7 +17,7 @@ public class AuctionConfig extends Entity{
         this.minIncrement = minIncrement;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.extendSecond = 36;
+        this.extendSecond = extendSecond;
         this.description = description;
     }
     // constructor day du cho dao

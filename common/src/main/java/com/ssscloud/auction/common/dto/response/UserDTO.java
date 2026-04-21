@@ -4,46 +4,61 @@ import java.io.Serializable;
 
 import com.ssscloud.auction.common.enums.UserRole;
 
-public class UserDTO implements Serializable{
+public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String id;
-    private String username;
-    private String fullName;
+    private String userName;
     private String email;
     private UserRole role;
 
-    public UserDTO() {}
+    public UserDTO() {
+    }
 
-    public UserDTO(String id, String username, String fullName, String email, UserRole role) {
+    public UserDTO(String id, String userName, String email, UserRole role) {
         this.id = id;
-        this.username = username;
-        this.fullName = fullName;
+        this.userName = userName;
         this.email = email;
         this.role = role;
     }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getId() {
+        return id;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getUserName() {
+        return userName;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
 
-    public UserRole getRole() { return role; }
-    public void setRole(UserRole role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
 
     @Override
     public String toString() {
         return "UserDTO{" +
                 "id=" + id +
-                ", username='" + username + '\'' +
-                ", fullName='" + fullName + '\'' +
+                ", userName='" + userName + '\'' +
                 ", role=" + role +
                 '}';
     }

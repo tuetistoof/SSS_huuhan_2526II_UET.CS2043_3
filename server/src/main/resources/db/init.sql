@@ -74,16 +74,9 @@ CREATE TABLE `auction` (
   `status` varchar(50) NOT NULL,
   `seller_id` varchar(36) NOT NULL,
   `item_id` varchar(36) NOT NULL,
-  `current_price` bigint NOT NULL,
-  `highest_bidder_id` varchar(36) DEFAULT NULL,
-  `highest_bidder_name` varchar(255) DEFAULT NULL,
-  `bid_time` datetime DEFAULT NULL,
-  `bid_type` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_auction_seller` (`seller_id`),
   KEY `fk_auction_item` (`item_id`),
-  KEY `fk_auction_highest_bidder` (`highest_bidder_id`),
-  CONSTRAINT `fk_auction_highest_bidder` FOREIGN KEY (`highest_bidder_id`) REFERENCES `user` (`id`),
   CONSTRAINT `fk_auction_item` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`),
   CONSTRAINT `fk_auction_seller` FOREIGN KEY (`seller_id`) REFERENCES `user` (`id`),
   CONSTRAINT `fk_auction_to_config` FOREIGN KEY (`id`) REFERENCES `auction_config` (`id`) ON DELETE CASCADE
@@ -108,6 +101,7 @@ DROP TABLE IF EXISTS `auction_config`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `auction_config` (
   `id` varchar(36) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
   `start_price` bigint NOT NULL,
   `min_increment` bigint NOT NULL,
   `start_time` datetime NOT NULL,
@@ -373,4 +367,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-20 12:44:36
+-- Dump completed on 2026-04-21 13:57:07
