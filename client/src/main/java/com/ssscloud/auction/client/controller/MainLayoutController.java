@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client.controller;
 
+import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
 import javafx.animation.KeyFrame;
@@ -56,11 +57,12 @@ public class MainLayoutController {
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
     public void initialize() {
-//        UserDTO user = SessionManager.getInstance().getCurrentUser();
-        applyRole("BIDDER");
+        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        lblUsername.setText(user.getUsername());
+        applyRole(user.getRole());
     }
 
-    private void applyRole(String role) {
+    private void applyRole(UserRole role) {
         // Ẩn hết trước
         navWonItems.setVisible(false);
         navWonItems.setManaged(false);
@@ -81,7 +83,7 @@ public class MainLayoutController {
 
         // Hiện lại đúng role
         switch (role) {
-            case "BIDDER" -> {
+            case BIDDER -> {
                 lblAccountBalance.setVisible(true);
                 lblAccountBalance.setManaged(true);
                 navWatchlist.setVisible(true);
@@ -91,7 +93,7 @@ public class MainLayoutController {
                 navActiveBids.setVisible(true);
                 navActiveBids.setManaged(true);
             }
-            case "SELLER" -> {
+            case SELLER -> {
                 navMyItems.setVisible(true);
                 navMyItems.setManaged(true);
                 navHistory.setVisible(true);

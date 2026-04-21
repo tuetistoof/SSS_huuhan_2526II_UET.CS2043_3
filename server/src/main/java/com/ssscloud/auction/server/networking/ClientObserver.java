@@ -38,7 +38,7 @@ public class ClientObserver implements Observer {
             dto.setCurrentPrice(auction.getCurrentPrice());
             dto.setBidderUsername(auction.getHighestBidderName());  
 
-            List<BidTransaction> history = auction.getBidHistory();
+            List<BidTransaction> history = auction.getBidTransaction();
             if (!history.isEmpty()) {
                 BidTransaction latest = history.get(history.size() - 1);
                 dto.setBidAmount(latest.getBidAmount());

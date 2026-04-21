@@ -17,10 +17,7 @@ public class AuctionDTO implements Serializable {
     private AuctionStatus status;
     private String sellerName;
     private String highestBidderName;
-<<<<<<< HEAD
     private int bidCount;
-=======
->>>>>>> f2782340f8d12c50bfd7c1d1cf145f3045fda1fe
     private long minIncrement;
 
     public AuctionDTO() {
@@ -48,17 +45,6 @@ public class AuctionDTO implements Serializable {
         this.description = description;
     }
 
-    public double getStartingPrice() {
-        return startingPrice;
-    }
-
-    public void setStartingPrice(double startingPrice) {
-        this.startingPrice = startingPrice;
-    }
-
-    public double getCurrentPrice() {
-        return currentPrice;
-    }
 
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
