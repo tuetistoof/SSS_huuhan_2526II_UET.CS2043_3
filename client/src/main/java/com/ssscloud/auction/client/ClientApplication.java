@@ -14,6 +14,9 @@ public class ClientApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {}
         // Trong method start(), trước khi show màn hình login
         AuctionClientSocket.getInstance().connect("localhost", 5000);
         SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
@@ -28,7 +31,6 @@ public class ClientApplication extends Application {
     }
 
     public static void main(String[] args) {
-
         launch(args);
     }
 }

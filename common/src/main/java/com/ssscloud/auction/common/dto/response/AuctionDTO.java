@@ -38,21 +38,11 @@ public class AuctionDTO implements Serializable {
         return name;
     }
 
-<<<<<<< HEAD
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-=======
     public long getStartingPrice() { return startingPrice; }
     public void setStartingPrice(long startingPrice) { this.startingPrice = startingPrice; }
 
     public long getCurrentPrice() { return currentPrice; }
     public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }
->>>>>>> f2782340f8d12c50bfd7c1d1cf145f3045fda1fe
 
     public void setDescription(String description) {
         this.description = description;
@@ -70,62 +60,8 @@ public class AuctionDTO implements Serializable {
         return currentPrice;
     }
 
-<<<<<<< HEAD
-    public void setCurrentPrice(double currentPrice) {
-        this.currentPrice = currentPrice;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public AuctionStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(AuctionStatus status) {
-        this.status = status;
-    }
-
-    public String getSellerName() {
-        return sellerName;
-    }
-
-    public void setSellerName(String sellerName) {
-        this.sellerName = sellerName;
-    }
-
-    public String getHighestBidderName() {
-        return highestBidderName;
-    }
-
-    public void setHighestBidderName(String highestBidderName) {
-        this.highestBidderName = highestBidderName;
-    }
-
-    public int getBidCount() {
-        return bidCount;
-    }
-
-    public void setBidCount(int bidCount) {
-        this.bidCount = bidCount;
-    }
-
-    public double getMinIncrement() {
-        return minIncrement;
-    }
-
-    public void setMinIncrement(long minIncrement) {
-        this.minIncrement = minIncrement;
-    }
-=======
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
->>>>>>> f2782340f8d12c50bfd7c1d1cf145f3045fda1fe
 
     @Override
     public String toString() {
