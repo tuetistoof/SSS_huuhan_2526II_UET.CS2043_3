@@ -2,45 +2,50 @@ package com.ssscloud.auction.common.dto;
 
 import java.io.Serializable;
 
-/**
- * ClientMessage - Lớp wrapper dùng để gửi message từ Client lên Server
-**/
 public class ClientMessage implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String action;   // Tên hành động: LOGIN, REGISTER, PLACE_BID, CREATE_AUCTION...
-    private Object data;     // Dữ liệu đính kèm (có thể là bất kỳ DTO nào)
+    // Hai constant để AuctionClientSocket phân loại message
+    public static final String TYPE_PUSH     = "PUSH";
+    public static final String TYPE_RESPONSE = "RESPONSE";
 
-    public ClientMessage() {
-    }
+    private String action;
+    private String type;   // "PUSH" | "RESPONSE"
+    private Object data;
+
+    public ClientMessage() {}
+
     public ClientMessage(String action, Object data) {
         this.action = action;
-        this.data = data;
+        this.data   = data;
     }
 
-    // Getter & Setter
-    public String getAction() {
-        return action;
+
+    public static ClientMessage request(String action, Object data) {
+        ClientMessage msg = new ClientMessage(action, data);
+        msg.type = TYPE_RESPONSE;
+        return msg;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public static ClientMessage push(String action, Object data) {
+        ClientMessage msg = new ClientMessage(action, data);
+        msg.type = TYPE_PUSH;
+        return msg;
     }
 
-    public Object getData() {
-        return data;
-    }
+    // Getters & Setters
+    public String getAction()          { return action; }
+    public void   setAction(String a)  { this.action = a; }
 
-    public void setData(Object data) {
-        this.data = data;
-    }
+    public String getType()            { return type; }
+    public void   setType(String t)    { this.type = t; }
+
+    public Object getData()            { return data; }
+    public void   setData(Object d)    { this.data = d; }
 
     @Override
     public String toString() {
-        return "ClientMessage{" +
-                "action='" + action + '\'' +
-                ", data=" + data +
-                '}';
+        return "ClientMessage{action='" + action + "', type='" + type + "', data=" + data + '}';
     }
 }

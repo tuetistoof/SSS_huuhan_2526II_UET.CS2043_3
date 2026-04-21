@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.Gson;
+
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 
@@ -195,6 +195,7 @@ public class LoginSignupController {
 
         chkPassword.setSelected(false); 
     }
+    
 
     @FXML
     private void handleSignUp(ActionEvent event) {
