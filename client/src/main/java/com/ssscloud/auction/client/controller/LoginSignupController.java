@@ -70,6 +70,7 @@ public class LoginSignupController {
         lblError.setText("");
         lblError.setVisible(false);
         lblError.setManaged(false);
+        clearLoginForm();
     }
 
     @FXML
@@ -125,20 +126,31 @@ public class LoginSignupController {
                     UserDTO userDTO = null;
 
                     LoginRequest loginData = new LoginRequest(username, pass);
-                    ClientMessage msg = new ClientMessage("LOGIN", loginData);
+                    ClientMessage msg = ClientMessage.request("LOGIN", loginData);
 
                     String jsonRequest = JsonUtils.toJson(msg);
                     String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
-
+                    
                     if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(jsonResponse, ApiResponse.class);
-                        isSuccess = response.isSuccess();
-                        if (isSuccess) {
-                            userDTO = response.getData();
+                        ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+
+                        if ("LOGIN".equals(serverMsg.getAction())) {
+                            String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                            ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, ApiResponse.class);
+                            isSuccess = response.isSuccess();
+                            if (isSuccess) {
+                                userDTO = response.getData();
+                            }
+                            else {
+                                errorMessage = response.getMessage(); // Lấy câu chửi từ server
+                            }
                         }
                         else {
-                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
+                            errorMessage = "Invalid response from server";
                         }
+                    }
+                    else {
+                        errorMessage = "No response from server";
                     }
 
                     // quay lại UI thread để chuyển cảnh
