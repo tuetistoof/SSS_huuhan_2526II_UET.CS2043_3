@@ -2,7 +2,7 @@ package com.ssscloud.auction.server.service;
 
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
-import com.ssscloud.auction.server.dao.BidDAO;
+
 
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.exception.*;
@@ -27,11 +27,11 @@ public class BidService {
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
     //làm observer sau 
     private final AuctionDAO auctionDAO;
-    private final BidDAO bidDAO;
+    private final BidTransaction bidDAO;
     private final AntiSnipingService antiSnipingService;
     private final AutoBidService autoBidService;
  
-    public BidService(AuctionDAO auctionDAO, BidDAO bidDAO, AntiSnipingService antiSnipingService, AutoBidService autoBidService) {
+    public BidService(AuctionDAO auctionDAO, BidTransaction bidDAO, AntiSnipingService antiSnipingService, AutoBidService autoBidService) {
         this.auctionDAO     = auctionDAO;
         this.bidDAO         = bidDAO;
         this.antiSnipingService = antiSnipingService;
