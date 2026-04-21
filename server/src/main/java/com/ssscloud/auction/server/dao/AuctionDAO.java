@@ -54,7 +54,7 @@ public class AuctionDAO extends BaseDAO {
 
             BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
             for (BidTransaction bidTransaction : auction.getBidTransaction()) {
-                bidTransactionDAO.saveBidTransaction(bidTransaction);
+                bidTransactionDAO.saveBidTransaction(conn, bidTransaction);
             }
             conn.commit();
             logger.info("da luu auction: " + auction.getAuctionConfig().getName());
