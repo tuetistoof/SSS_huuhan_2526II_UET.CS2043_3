@@ -7,8 +7,16 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.ssscloud.auction.common.dto.ClientMessage;
 
 /**
  * send: chỉ gửi mà không chờ response(dùng cho cơ chế push: vd bidding room controller)
@@ -36,17 +44,28 @@ public class AuctionClientSocket {
     private PrintWriter out;      // ghi ra server
     private BufferedReader in;    // đọc từ server
     private boolean connected = false;
-    private final List<MessageListener> listeners = new ArrayList<>();
+    private final List<MessageListener> listeners = new ArrayList<>();              //dùng cho pull
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();//dùng req-res
 
-    private void startListenerThread() {   //các listener đọc push từ server
+    private void startListenerThread() {  
         Thread t = new Thread(() -> {
             try {
                 String line;
                 while ((line = in.readLine()) != null){
-                    String json = line;
-                    for (MessageListener l : listeners) {
-                        l.onMessageReceived(json);
+                    JsonObject obj = JsonParser.parseString(line).getAsJsonObject();
+                    String type = obj.has("type") ? obj.get("type").getAsString()
+                                                  : ClientMessage.TYPE_RESPONSE;
+ 
+                    if (ClientMessage.TYPE_PUSH.equalsIgnoreCase(type)) {
+                        // Push thì gửi cho listener xử lí
+                        for (MessageListener l : listeners) {
+                            l.onMessageReceived(line);
+                        }
+                    } else {
+                        // Response thì bỏ vào queue
+                        responseQueue.put(line);
                     }
+                  
                 }
             } catch (Exception e) {
                 System.out.println("Mất kết nối với Server: " + e.getMessage());
@@ -70,21 +89,16 @@ public class AuctionClientSocket {
         }
     }
 
-    // 1 cái Future để chứa phản hồi đang chờ xử lí
-    private CompletableFuture<String> pendingResponse;
-
     public String sendAndReceive(String json) {
+
+        if (!connected || out == null) return null;
         try {
-            if (connected && out != null){
-                pendingResponse = new CompletableFuture<>();
-                send(json);
-                return pendingResponse.get(); // chờ luồng chạy xong lấy dữ liệu r mới trả về
-            }
+            send(json);
+            return responseQueue.poll(5, TimeUnit.SECONDS); // chờ tối đa 5s
+        } catch (InterruptedException e) {
+            System.out.println("Bị gián đoạn khi chờ response");
+            return null;
         }
-        catch (InterruptedException | ExecutionException e) {
-            System.out.println("Luồng bị gián đoạn: " + e.getMessage());
-        }
-        return null;
     }
 
     public void addListener(MessageListener listener){
@@ -92,7 +106,8 @@ public class AuctionClientSocket {
     }
     public void removeListener(MessageListener listener){
         listeners.remove(listener);
-     }
+    }
+    public boolean isConnected() { return connected; }
 
 
 }
