@@ -15,7 +15,7 @@ import com.ssscloud.auction.common.model.base.User;
 public class UserDAO extends BaseDAO {
     public boolean saveBidder(Bidder bidder) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlUser = "INSERT INTO user (id, user_name, password, email, role) VALUES (?, ?, ?, ?, ?)";
+        String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
         String sqlBidder = "INSERT INTO bidder (id, account_balance) VALUES (?, ?)";
 
         Connection conn = null;
@@ -61,7 +61,7 @@ public class UserDAO extends BaseDAO {
 
     public boolean saveSeller(Seller seller) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlUser = "INSERT INTO user (id, user_name, password, email, role) VALUES (?, ?, ?, ?, ?)";
+        String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
         String sqlSeller = "INSERT INTO seller (id, bank_account) VALUES (?, ?)";
 
         Connection conn = null;
@@ -108,13 +108,13 @@ public class UserDAO extends BaseDAO {
     public User findByUsername(String userName) {
         String sql = "SELECT " +
                 "e.id, e.name, " +
-                "u.user_name, u.password, u.email, u.role, " +
+                "u.username, u.password, u.email, u.role, " +
                 "b.account_balance, s.bank_account " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
                 "LEFT JOIN seller s ON u.id = s.id " +
-                "WHERE u.user_name = ?";
+                "WHERE u.username = ?";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -142,7 +142,7 @@ public class UserDAO extends BaseDAO {
     public User findByEmail(String email) {
         String sql = "SELECT " +
                 "e.id, e.name, " +
-                "u.user_name, u.password, u.email, u.role, " +
+                "u.username, u.password, u.email, u.role, " +
                 "b.account_balance, s.bank_account " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
@@ -176,7 +176,7 @@ public class UserDAO extends BaseDAO {
     public User findById(String id) {
         String sql = "SELECT " +
                 "e.id, e.name, " +
-                "u.user_name, u.password, u.email, u.role, " +
+                "u.username, u.password, u.email, u.role, " +
                 "b.account_balance, s.bank_account " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
@@ -208,7 +208,7 @@ public class UserDAO extends BaseDAO {
     }
     // kiem tra ten dang nhap da ton tai chua
     public boolean existByUsername(String userName) {
-        String sql = "SELECT 1 FROM user WHERE user_name = ?";
+        String sql = "SELECT 1 FROM user WHERE username = ?";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -317,7 +317,7 @@ public class UserDAO extends BaseDAO {
     public User mapResultSetToUser(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
         String name = rs.getString("name");
-        String userName = rs.getString("user_name");
+        String userName = rs.getString("username");
         String password = rs.getString("password");
         String email = rs.getString("email");
         UserRole role = UserRole.valueOf(rs.getString("role"));
