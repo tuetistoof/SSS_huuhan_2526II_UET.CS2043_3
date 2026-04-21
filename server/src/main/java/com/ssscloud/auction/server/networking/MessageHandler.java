@@ -53,6 +53,11 @@ public class MessageHandler {
 
 
                 case "REGISTER":
+                    String responseJson = userController.register(msg.getData());
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, UserDTO.class);
+                    if (parsed != null && parsed.isSuccess() && parsed.getData() != null) {
+                        client.setSession(parsed.getData().getId(), parsed.getData().getUsername());
+                    }
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE",
                             JsonUtils.fromJson(userController.register(msg.getData()), ApiResponse.class)));
                     

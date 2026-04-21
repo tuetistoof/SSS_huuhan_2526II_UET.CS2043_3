@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollBar?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
@@ -17,17 +18,25 @@
 
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-bar">
-         <Button mnemonicParsing="false" onAction="#toggleSidebar" styleClass="toggle-button" text="---" />
-         <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="30.0" stroke="BLACK" strokeType="INSIDE" width="50.0" />
+         <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#toggleSidebar" styleClass="circular-menu-btn">
+            <graphic>
+               <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/menu-burger.png" />
+                  </image>
+               </ImageView>
+            </graphic></Button>
+         <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="50.0" />
          <Region HBox.hgrow="ALWAYS" />
          <TextField promptText="Search" styleClass="search-bar" HBox.hgrow="ALWAYS" />
-         <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+         <ImageView fitHeight="20.0" fitWidth="20.0" onMouseClicked="#handleSearching" pickOnBounds="true" preserveRatio="true">
+            <image>
+               <Image url="@../images/search.png" />
+            </image></ImageView>
          <Region HBox.hgrow="ALWAYS" />
          <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
-
-            <HBox alignment="CENTER" spacing="10">
-                <Label fx:id="lblUsername" text="name" />
-                <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" /> </HBox>
+             <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
+             <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" styleClass="avatar-circle" />
         </HBox>
     </top>
 
@@ -36,55 +45,80 @@
          <Label styleClass="sidebar-group-label" text="OVERVIEW" />
          <HBox fx:id="navDashboard" onMouseClicked="#handleNavDashboard" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/home.png" />
+                  </image></ImageView>
                <Label text="Dashboard" />
             </children>
          </HBox>
          <Label styleClass="sidebar-group-label" text="AUCTION" />
          <HBox fx:id="navActiveBids" onMouseClicked="#handleNavActiveBids" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/calendar-gavel-legal.png" />
+                  </image></ImageView>
                <Label text="Active Bids" />
             </children>
          </HBox>
          <HBox fx:id="navWatchlist" onMouseClicked="#handleNavWatchlist" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/clock.png" />
+                  </image></ImageView>
                <Label text="Watchlist" />
             </children>
          </HBox>
          <HBox fx:id="navWonItems" onMouseClicked="#handleNavWonItems" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/trophy.png" />
+                  </image></ImageView>
                <Label text="Won Items" />
             </children>
          </HBox>
          <HBox fx:id="navHistory" onMouseClicked="#handleNavHistory" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/paperclip-vertical.png" />
+                  </image></ImageView>
                <Label text="History" />
             </children>
          </HBox>
          <HBox fx:id="navMyItems" onMouseClicked="#handleNavMyItems" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/tags.png" />
+                  </image></ImageView>
                <Label text="My Items" />
             </children>
          </HBox>
          <HBox fx:id="navNewAuctionRoom" onMouseClicked="#handleNavNewAuctionRoom" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/add.png" />
+                  </image></ImageView>
                <Label text="New Auction Room" />
             </children>
          </HBox>
          <HBox fx:id="navMyAuctionRooms" onMouseClicked="#handleNavMyAuctionRooms" styleClass="sidebar-item">
             <children>
-               <ImageView fitHeight="10.0" fitWidth="10.0" pickOnBounds="true" preserveRatio="true" />
+               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/shop.png" />
+                  </image></ImageView>
                <Label text="My Auction Rooms" />
             </children>
          </HBox>
 
-                  <Region />
+                  <Region VBox.vgrow="ALWAYS" />
+         <Button maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất" />
         </VBox>
     </left>
 
