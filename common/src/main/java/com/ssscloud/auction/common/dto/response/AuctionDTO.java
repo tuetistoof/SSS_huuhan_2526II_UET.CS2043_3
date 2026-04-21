@@ -53,7 +53,7 @@ public class AuctionDTO implements Serializable {
     public void setBidCount(int bidCount) { this.bidCount = bidCount; }
 
     public double getMinIncrement(){return minIncrement;}
-    public void setMinIncrement() {this.minIncrement = minIncrement;}
+    public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
 
     @Override
     public String toString() {

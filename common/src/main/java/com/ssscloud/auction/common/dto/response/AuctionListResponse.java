@@ -16,7 +16,8 @@ public class AuctionListResponse implements Serializable {
     private long totalElements;             // Tổng số phiên đấu giá
     private boolean hasNext;                // Có trang tiếp theo không
 
-    public AuctionListResponse() {
+    public AuctionListResponse(List<AuctionDTO> auctions) {
+        this.auctions = auctions;
     }
 
     // Constructor tiện ích
