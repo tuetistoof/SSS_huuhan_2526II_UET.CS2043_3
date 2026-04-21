@@ -5,6 +5,11 @@ import com.ssscloud.auction.common.model.base.User;
 
 public class Seller extends User {
     private String bankAccount;
+    public Seller (String name, String userName, String password, String email, UserRole role)
+    {
+        super(name, userName, password, email, role);
+        this.bankAccount = null;
+    }
     public Seller (String name, String userName, String password, String email, UserRole role, String bankAccount)
     {
         super(name, userName, password, email, role);
