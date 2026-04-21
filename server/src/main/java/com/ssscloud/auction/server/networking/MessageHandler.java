@@ -44,7 +44,7 @@ public class MessageHandler {
             switch (action) {
                 case "LOGIN":
                     responseJson = userController.login(msg.getData());
-                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(response, UserDTO.class);
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, UserDTO.class);
                     if (parsed != null && parsed.isSuccess() && parsed.getData() != null) {
                         UserDTO user = parsed.getData();
                         client.setSession(user.getId(), user.getUsername());
