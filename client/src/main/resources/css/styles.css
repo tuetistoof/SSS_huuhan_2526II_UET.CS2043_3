@@ -67,6 +67,17 @@ Phần nhập liệu, nút bấm
     -fx-background-color: #003366
 }
 
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #d1d1d1; /* Màu viền xám nhạt cho đồng bộ text field */
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 2px 5px;
+}
+.combo-box:hover {
+    -fx-border-color: #f05a7e; /* Trỏ chuột vào thì viền đổi màu hồng xuyệt tông với nút Sign Up */
+}
+
 .btn {
     -fx-pref-height: 50px;
     -fx-pref-width: 350px;

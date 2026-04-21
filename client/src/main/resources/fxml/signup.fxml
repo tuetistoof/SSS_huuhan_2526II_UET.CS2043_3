@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
@@ -11,6 +12,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -28,61 +30,51 @@
                         <Font name="Gabriola" size="56.0" />
                      </font>
                   </Label>
-                  <GridPane alignment="CENTER" hgap="30.0" maxWidth="450.0" vgap="2.0" VBox.vgrow="NEVER">
-                    <columnConstraints>
-                      <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
-                      <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
-                        <ColumnConstraints />
-                    </columnConstraints>
-                    <rowConstraints>
-                        <RowConstraints minHeight="-Infinity" vgrow="NEVER" /> 
-                        <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
-                        
-                                    <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
-                        <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
-                        
-                                    <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
-                        <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
-                        
-                                    <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
-                        <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
-                        
-                                    <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
-                     </rowConstraints>
+                   <GridPane alignment="CENTER" hgap="30.0" maxWidth="450.0" vgap="2.0" VBox.vgrow="NEVER">
+                       <columnConstraints>
+                           <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+                           <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+                       </columnConstraints>
+                       <rowConstraints>
+                           <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                           <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
+                           <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                           <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
+                           <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                           <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
+                           <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                           <RowConstraints minHeight="40.0" prefHeight="40.0" vgrow="NEVER" />
+                           <RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+                           <RowConstraints minHeight="-Infinity" valignment="CENTER" vgrow="NEVER" />
+                       </rowConstraints>
+                       <children>
+                           <Label styleClass="signup-form-txt-font" text="Enter your name" />
+                           <TextField fx:id="txtFirstName" promptText="First" styleClass="input-field" GridPane.rowIndex="1" />
+                           <TextField fx:id="txtLastName" promptText="Last" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                           <Label styleClass="signup-form-txt-font" text="How can we call you?" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+                           <TextField fx:id="txtUsername" styleClass="input-field" GridPane.columnSpan="2" GridPane.rowIndex="3" />
+
+                           <Label styleClass="signup-form-txt-font" text="Enter your email" GridPane.columnSpan="2" GridPane.rowIndex="4" />
+                           <TextField fx:id="txtUserEmail" styleClass="input-field" GridPane.columnSpan="2" GridPane.rowIndex="5" />
+
+                           <Label styleClass="signup-form-txt-font" text="Create a password" GridPane.rowIndex="6" />
+                           <Label styleClass="signup-form-txt-font" text="Confirm your password" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+
+                           <TextField fx:id="txtUserPassword" styleClass="input-field" GridPane.rowIndex="7" />
+                           <PasswordField fx:id="txtUserPasswordHidden" styleClass="input-field" GridPane.rowIndex="7" />
+                           <TextField fx:id="txtCFUserPassword" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                           <PasswordField fx:id="txtCFUserPasswordHidden" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                       </children>
+                   </GridPane>
+                  <HBox alignment="CENTER">
                      <children>
-                        <Label styleClass="signup-form-txt-font" text="Enter your name" />
-                        <TextField fx:id="txtFirstName" promptText="First" styleClass="input-field" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
-                           <GridPane.margin>
-                              <Insets />
-                           </GridPane.margin>
-                        </TextField>
-                        <TextField fx:id="txtLastName" promptText="Last" styleClass="input-field" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="1">
-                           <GridPane.margin>
-                              <Insets />
-                           </GridPane.margin>
-                        </TextField>
-                        <Label styleClass="signup-form-txt-font" text="How can we call you?" GridPane.columnSpan="2" GridPane.rowIndex="2" />
-                        <TextField fx:id="txtUsername" styleClass="input-field" GridPane.columnSpan="2" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
-                           <GridPane.margin>
-                              <Insets />
-                           </GridPane.margin>
-                        </TextField>
-                        <Label styleClass="signup-form-txt-font" text="Enter your email" GridPane.columnSpan="2" GridPane.rowIndex="4" />
-                        <TextField fx:id="txtUserEmail" styleClass="input-field" GridPane.columnSpan="2" GridPane.halignment="RIGHT" GridPane.rowIndex="5">
-                           <GridPane.margin>
-                              <Insets />
-                           </GridPane.margin>
-                        </TextField>
-                        <Label styleClass="signup-form-txt-font" text="Create a password" GridPane.columnSpan="2" GridPane.rowIndex="6" />
-                        <TextField fx:id="txtUserPassword" styleClass="input-field" GridPane.rowIndex="7" />
-                        <PasswordField fx:id="txtUserPasswordHidden" styleClass="input-field" GridPane.rowIndex="7" />
-                        <Label styleClass="signup-form-txt-font" text="Confirm your password" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="6" />
-                        <TextField fx:id="txtCFUserPassword" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                        <PasswordField fx:id="txtCFUserPasswordHidden" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                           <ComboBox fx:id="cbRoles" maxWidth="1.7976931348623157E308" promptText="Role" styleClass="combo-box" />
+                        <Region prefWidth="270.0" />
+                           <CheckBox fx:id="chkPassword" mnemonicParsing="false" text="Show password" />
                      </children>
-                  </GridPane>
+                  </HBox>
                   <Label fx:id="lblError" alignment="CENTER" contentDisplay="CENTER" maxWidth="450.0" textFill="#dc493a" />
-                  <CheckBox fx:id="chkPassword" mnemonicParsing="false" text="Show password" />
                   <Button fx:id="btnSignUp" mnemonicParsing="false" onAction="#handleSignUp" styleClass="btn" text="Sign Up" />
                   <HBox alignment="CENTER" spacing="5.0">
                      <children>

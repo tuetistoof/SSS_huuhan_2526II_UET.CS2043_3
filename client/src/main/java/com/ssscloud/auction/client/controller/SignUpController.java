@@ -5,12 +5,7 @@ import com.ssscloud.auction.client.util.SceneManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 public class SignUpController {
@@ -23,6 +18,9 @@ public class SignUpController {
 
     @FXML
     private Label lblError;
+
+    @FXML
+    private ComboBox<String> cbRole;
 
     @FXML
     private Hyperlink linkLogin;
@@ -54,6 +52,10 @@ public class SignUpController {
 
     @FXML
     public void initialize() {
+
+        cbRole.getItems().addAll("Bidder", "Seller");
+        cbRole.getSelectionModel().selectFirst();
+
         txtUserPasswordHidden.textProperty().bindBidirectional(txtUserPassword.textProperty());
         txtCFUserPasswordHidden.textProperty().bindBidirectional(txtCFUserPassword.textProperty());
 
@@ -100,11 +102,6 @@ public class SignUpController {
             txtUserPasswordHidden.getStyleClass().add("input-error");
             txtCFUserPasswordHidden.getStyleClass().add("input-error");
             return;
-        }
-
-        if (!passwordCf) {
-            //private String name = txtFirstname + " " + txtLastname; 
-            //Bidder name1 = new Bidder(String name, ...)
         }
     }
 }
