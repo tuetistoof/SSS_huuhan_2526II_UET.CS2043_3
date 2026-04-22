@@ -53,12 +53,17 @@ public class MessageHandler {
 
 
                 case "REGISTER":
+                    String responseJson = userController.register(msg.getData());
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, UserDTO.class);
+                    if (parsed != null && parsed.isSuccess() && parsed.getData() != null) {
+                        client.setSession(parsed.getData().getId(), parsed.getData().getUsername());
+                    }
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE",
                             JsonUtils.fromJson(userController.register(msg.getData()), ApiResponse.class)));
                     
-                case "CREATE_AUCTION":
-                    return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
-                            JsonUtils.fromJson(auctionController.createAuction(msg.getData()), ApiResponse.class)));
+                // case "CREATE_AUCTION":
+                //     return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
+                //             JsonUtils.fromJson(auctionController.createAuction(msg.getData()), ApiResponse.class)));
 
                 case "PLACE_BID":
                     String raw = JsonUtils.toJson(msg.getData());
@@ -71,9 +76,9 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("PLACE_BID_RESPONSE",
                             JsonUtils.fromJson(bidController.placeBid(req), ApiResponse.class)));
 
-                case "AUTO_BID":
-                    return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
-                            JsonUtils.fromJson(bidController.registerAutoBid(msg.getData()), ApiResponse.class)));
+                // case "AUTO_BID":
+                //     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
+                //             JsonUtils.fromJson(bidController.registerAutoBid(msg.getData()), ApiResponse.class)));
  
                 default:
                     return JsonUtils.toJson(ClientMessage.request("ERROR",

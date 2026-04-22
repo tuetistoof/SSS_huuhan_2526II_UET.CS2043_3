@@ -8,16 +8,16 @@ public class UserDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String id;
-    private String userName;
+    private String username;
     private String email;
     private UserRole role;
 
     public UserDTO() {
     }
 
-    public UserDTO(String id, String userName, String email, UserRole role) {
+    public UserDTO(String id, String username, String email, UserRole role) {
         this.id = id;
-        this.userName = userName;
+        this.username = username;
         this.email = email;
         this.role = role;
     }
@@ -30,12 +30,12 @@ public class UserDTO implements Serializable {
         this.id = id;
     }
 
-    public String getUserName() {
-        return userName;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getEmail() {
@@ -58,7 +58,7 @@ public class UserDTO implements Serializable {
     public String toString() {
         return "UserDTO{" +
                 "id=" + id +
-                ", userName='" + userName + '\'' +
+                ", username='" + username + '\'' +
                 ", role=" + role +
                 '}';
     }

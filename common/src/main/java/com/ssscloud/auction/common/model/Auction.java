@@ -70,6 +70,8 @@ public class Auction implements Subject {
             this.status = AuctionStatus.RUNNING;
         }
 
+        
+
         // notify
         notifyObservers();
     }

@@ -2,8 +2,6 @@ package com.ssscloud.auction.client.util;
 
 import com.ssscloud.auction.common.dto.response.UserDTO;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 public class SessionManager {
     private static final SessionManager instance = new SessionManager();
     private volatile UserDTO currentUser;

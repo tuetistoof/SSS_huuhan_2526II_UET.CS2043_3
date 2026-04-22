@@ -134,12 +134,13 @@ public class LoginSignupController {
                     if (jsonResponse != null && !jsonResponse.isEmpty()) {
                         ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
 
-                        if ("LOGIN".equals(serverMsg.getAction())) {
+                        if ("LOGIN_RESPONSE".equals(serverMsg.getAction())) {
                             String responseRawData = JsonUtils.toJson(serverMsg.getData());
                             ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, ApiResponse.class);
                             isSuccess = response.isSuccess();
                             if (isSuccess) {
                                 userDTO = response.getData();
+                                // Trả về chưa hợp lí
                             }
                             else {
                                 errorMessage = response.getMessage(); // Lấy câu chửi từ server
