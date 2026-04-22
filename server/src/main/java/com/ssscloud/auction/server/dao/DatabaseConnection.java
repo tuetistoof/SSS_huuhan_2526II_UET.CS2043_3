@@ -18,7 +18,6 @@ public class DatabaseConnection {
     //singleton
     private static DatabaseConnection instance;
 
-    private Connection connection;
 
     private final HikariDataSource dataSource;
     private DatabaseConnection() throws SQLException {

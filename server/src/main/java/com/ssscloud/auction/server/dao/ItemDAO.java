@@ -17,6 +17,18 @@ import com.ssscloud.auction.common.model.Vehicle;
 import com.ssscloud.auction.common.model.base.Item;
 
 public class ItemDAO extends BaseDAO {
+    public boolean save (Item item, ItemType type){
+        switch (type){
+            case ELECTRONIC:
+                return saveElectronic((Electronic) item);
+            case ART:
+                return saveArt((Art) item);
+            case VEHICLE:
+                return saveVehicle((Vehicle) item);
+            default:
+                return false;
+        }
+    }
     public boolean saveElectronic (Electronic electronic) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO auction_config (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";

@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
  
-import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
@@ -29,7 +28,7 @@ public class ConcurrentBidManager {
         return instance;
     }
  
-    // ── Lock map ──────────────────────────────────────────────────────────────
+    //Lock map
  
     private final Map<String, ReentrantLock> auctionLocks = new ConcurrentHashMap<>();
  

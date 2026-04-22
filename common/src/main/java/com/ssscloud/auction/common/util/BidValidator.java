@@ -5,7 +5,7 @@ public class BidValidator {
         return (newBidAmount >= currentPrice + minIncrement);
     }
 
-    public static boolean isPositiveBid(double bidAmount){
+    public static boolean isPositiveBid(long bidAmount){
         return (bidAmount > 0);
     }
 

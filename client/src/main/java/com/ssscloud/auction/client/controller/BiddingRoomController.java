@@ -99,7 +99,6 @@ public class BiddingRoomController implements MessageListener{
     }
 
     @FXML   
-    // đợi phong làm xong autobid
     private void handleStartAutoBid() {
         if (txtMaxBid.getText().isEmpty() || txtIncrement.getText().isEmpty()) {
             showError("Vui lòng nhập đầy đủ thông tin Auto Bidding.");

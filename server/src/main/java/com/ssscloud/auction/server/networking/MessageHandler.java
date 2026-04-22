@@ -85,8 +85,8 @@ public class MessageHandler {
                     if (req == null) {
                         return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợp lệ"));
                     }
-                    return JsonUtils.toJson(ClientMessage.request("AUTO_BID",
-                            JsonUtils.fromJson(bidController.placeBid(req, client.getUserId(), client.getUsername()), ApiResponse.class)));
+                    return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
+                            JsonUtils.fromJson((req, client.getUserId(), client.getUsername()), ApiResponse.class)));
                 }
  
                 default: {
