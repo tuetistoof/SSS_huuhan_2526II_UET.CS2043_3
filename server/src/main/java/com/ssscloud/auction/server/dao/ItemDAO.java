@@ -219,6 +219,8 @@ public class ItemDAO extends BaseDAO {
         }
     } 
 
+    
+
     public List <Item> findBySellerId (String sellerId){
         String sql = "SELECT i.id FROM item i WHERE i.seller_id = ?";
         Connection conn = null;
@@ -289,6 +291,26 @@ public class ItemDAO extends BaseDAO {
             return null;
         } finally {
             closeResource(rs, ps);
+        }
+    }
+    public boolean deleteById(long itemId) {
+        String sql = "DELETE FROM item WHERE id = ? ";
+        PreparedStatement ps = null;
+
+        try {
+            ps = getConnection().prepareStatement(sql);
+            ps.setLong(1, itemId);
+            int rows = ps.executeUpdate();
+            if (rows == 0) {
+                logger.warning("deleteItemId id=" + itemId + " - không thể xóa ");
+            }
+            return rows > 0;
+
+        } catch (SQLException e) {
+            logger.severe("Lỗi deleteAuction id=" + itemId + ": " + e.getMessage());
+            return false;
+        } finally {
+            closeResource(ps);
         }
     }
     
