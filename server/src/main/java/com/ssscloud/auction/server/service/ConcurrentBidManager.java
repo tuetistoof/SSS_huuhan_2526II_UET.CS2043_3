@@ -61,17 +61,13 @@ public class ConcurrentBidManager {
         ReentrantLock lock = getLock(auctionId);
         lock.lock();
         try {
-            // Validate status
             if (auction.getStatus().isEnded()) {
                 throw new InvalidBidException("Phiên đấu giá đã kết thúc");
             }
  
-            // Validate thời gian: auction có thể RUNNING nhưng đã quá endTime
             if (auction.isExpired()) {
                 throw new InvalidBidException("Phiên đấu giá đã hết thời gian");
             }
- 
-            // Validate số tiền
             long minIncrement = auction.getAuctionConfig().getMinIncrement();
             if (!BidValidator.isValidBid(amount, auction.getCurrentPrice(), minIncrement)) {
                 throw new InvalidBidException(
@@ -79,7 +75,6 @@ public class ConcurrentBidManager {
                 );
             }
  
-            // Tạo bid và cập nhật state auction
             BidTransaction bid = new BidTransaction(
                 auctionId, bidderId, bidderUsername, amount, LocalDateTime.now(), type
             );

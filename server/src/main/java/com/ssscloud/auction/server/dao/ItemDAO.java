@@ -1,12 +1,10 @@
 package com.ssscloud.auction.server.dao;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -258,13 +256,7 @@ public class ItemDAO extends BaseDAO {
                 "i.seller_id, i.creator, i.description, i.type, " +
                 "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
                 "art.certificate AS art_certificate, " +
-                "elec.is_repaired AS electronic_is_repaired, elec.warranty_period AS electronic_warranty_period, " + // Dùng
-                                                                                                                     // 'elec'
-                                                                                                                     // khớp
-                                                                                                                     // với
-                                                                                                                     // JOIN
-                                                                                                                     // bên
-                                                                                                                     // dưới
+                "elec.is_repaired AS electronic_is_repaired, elec.warranty_period AS electronic_warranty_period, " +
                 "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
                 "FROM entity e " +
                 "JOIN item i ON e.id = i.id " +

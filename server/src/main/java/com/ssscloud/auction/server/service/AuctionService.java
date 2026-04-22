@@ -1,168 +1,133 @@
 package com.ssscloud.auction.server.service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionListResponse;
+import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
-import com.ssscloud.auction.common.enums.ItemStatus;
 import com.ssscloud.auction.server.dao.AuctionDAO;
-import com.ssscloud.auction.server.service.ItemService;
+import com.ssscloud.auction.server.dao.ItemDAO;
+import com.ssscloud.auction.server.factory.ItemFactory;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Logger;
+
+/**
+ * AuctionService — business logic tạo phiên đấu giá.
+ *
+ * Luồng createAuction():
+ *   1. ItemFactory.create(request, sellerId)  → Item (Art/Vehicle/Electronic)
+ *   2. ItemDAO.save*(item)                    → persist item + subtype table
+ *   3. Build AuctionConfig + Auction(OPEN)
+ *   4. AuctionDAO.saveAuction(auction)        → persist
+ *   5. scheduleClose(auction)                 → Timer tự đổi OPEN→FINISHED lúc endTime
+ *   6. Return AuctionDTO
+ */
 public class AuctionService {
-    
-    private final Map<String, Auction> activeAuctions = new ConcurrentHashMap<>();
+
+    private static final Logger logger = Logger.getLogger(AuctionService.class.getName());
+
+    private final ItemDAO    itemDAO    = new ItemDAO();
     private final AuctionDAO auctionDAO;
-    private final ItemService itemService;
-
-    public AuctionService(AuctionDAO auctionDAO, ItemService itemService){
+    public AuctionService (AuctionDAO auctionDAO)
+    {
         this.auctionDAO = auctionDAO;
-        this.itemService = itemService;
     }
+    public AuctionDTO createAuction(CreateAuctionRequest request, String sellerId) {
 
-    // Khởi tạo auction mới từ item đã tạo
-    public AuctionDTO creatAuction(CreateAuctionRequest req, String sellerId){
-        if (req.getTitle() == null || req.getTitle().isBlank())
-            throw new IllegalArgumentException("Tiêu đề không được trống");
-        if (req.getStartingPrice() <= 0)
-            throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0");
-        if (req.getEndTime() == null || req.getEndTime().isBefore(LocalDateTime.now()))
-            throw new IllegalArgumentException("Thời gian kết thúc không hợp lệ");
-        if (req.getItemId() == null || req.getItemId().isBlank())
-            throw new IllegalArgumentException("ItemId không được trống");
-
-        // Lấy item từ ItemService
-        Item item = itemService.getItem(req.getItemId());
-        if (item == null) {
-            throw new IllegalArgumentException("Không tìm thấy item: " + req.getItemId());
+        Item item;
+        try {
+            item = ItemFactory.createItem(request, sellerId);
+        } catch (IllegalArgumentException e) {
+            logger.warning("ItemFactory lỗi: " + e.getMessage());
+            return null;
         }
 
-        // Kiểm tra item có thể mở đấu giá không (phải ở DRAFT hoặc EXPIRED)
-        if (!itemService.canAuctionItem(req.getItemId())) {
-            throw new IllegalArgumentException(
-                "Chỉ có thể mở đấu giá cho items ở trạng thái DRAFT hoặc EXPIRED, " +
-                "item này ở trạng thái: " + item.getStatus().getDisplayName()
-            );
+        boolean itemSaved = saveItem(item);
+        if (!itemSaved) {
+            logger.severe("Không lưu được item: " + item.getName());
+            return null;
         }
 
-        // Tạo ID cho auction
-        String auctionId = UUID.randomUUID().toString();
+        LocalDateTime startTime = (request.getStartTime() != null)
+                ? request.getStartTime()
+                : LocalDateTime.now();
 
-        // Tạo AuctionConfig
         AuctionConfig config = new AuctionConfig(
-            auctionId,
-            req.getTitle(),
-            req.getStartingPrice(),
-            req.getMinIncrement() > 0 ? req.getMinIncrement() : calculateMinIncrement(req.getStartingPrice()),
-            LocalDateTime.now(),
-            req.getEndTime(),
-            60,
-            req.getDescription()
+                request.getName(),
+                request.getStartPrice(),
+                request.getMinIncrement(),
+                startTime,
+                request.getEndTime(),
+                36
         );
-        
-        // Tạo Auction
-        Auction auction = new Auction(config, null, sellerId, req.getItemId());
 
-        // Cập nhật status item thành AUCTIONING
-        itemService.updateItemStatus(req.getItemId(), ItemStatus.AUCTIONING);
+        Auction auction = new Auction(config, AuctionStatus.OPEN, sellerId, item.getId());
+        boolean auctionSaved = auctionDAO.saveAuction(auction);
+        if (!auctionSaved) {
+            logger.severe("Không lưu được auction: " + config.getName());
+            return null;
+        }
+        scheduleClose(auction);
 
-        // Lưu vào trong-memory store
-        activeAuctions.put(auctionId, auction);
+        logger.info("Tạo auction thành công: " + config.getId() + " - " + config.getName());
 
-        System.out.println("[Auction Service] Tạo phiên: " + auctionId + 
-                         " | Sản phẩm: " + item.getName() + 
-                         " | Loại: " + item.getType().name() +
-                         " | Item ID: " + req.getItemId());
-        
         return toDTO(auction);
     }
 
-    //Tìm kiếm theo Id;
-    public Auction getActiveAuctions(String auctionID) {
-        return activeAuctions.get(auctionID);
+    private void scheduleClose(Auction auction) {
+        LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
+        Date fireAt = Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        Timer timer = new Timer(true); // daemon = true
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    AuctionStatus current = auction.getStatus();
+                    if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
+                        auction.finish();                                        // đổi in-memory
+                        auctionDAO.updateStatus(                                 // đổi DB
+                                auction.getAuctionConfig().getId(),
+                                AuctionStatus.FINISHED);
+                        logger.info("scheduleClose: đã đóng auction "
+                                + auction.getAuctionConfig().getId());
+                    }
+                } catch (Exception e) {
+                    logger.severe("scheduleClose lỗi: " + e.getMessage());
+                }
+            }
+        }, fireAt);
     }
 
-    //Danh sách các phiên đang hoạt động dưới dạng DTO
-    public AuctionListResponse getAllActiveAuctions(){
-        List<AuctionDTO> list = new ArrayList<>();
-        for (Auction a: activeAuctions.values()){
-            list.add(toDTO(a));
+
+    private boolean saveItem(Item item) {
+        return switch (item.getType()) {
+            case "ART"        -> itemDAO.saveArt((com.ssscloud.auction.common.model.Art) item);
+            case "VEHICLE"    -> itemDAO.saveVehicle((com.ssscloud.auction.common.model.Vehicle) item);
+            case "ELECTRONIC" -> itemDAO.saveElectronic((com.ssscloud.auction.common.model.Electronic) item);
+            default -> {
+                logger.warning("Loại item không hợp lệ: " + item.getType());
+                yield false; 
         }
-
-        return new AuctionListResponse(list);
+        };
     }
 
-    //Bắt đầu phiên
-    public void startAuction(String auctionID){
-        Auction auction = requireAuction(auctionID);
-        auction.start();
-        System.out.println("[Auction Service] Bắt đầu phiên: " + auctionID);
-    }
-
-    //Kết thúc phiên
-    public void endAuction(String auctionID){
-        Auction auction = requireAuction(auctionID);
-        auction.finish();
-
-        ConcurrentBidManager.getInstance().removeLock(auctionID);
-
-        // Cập nhật status item dựa trên kết quả đấu giá
-        String itemId = auction.getItemId();
-        ItemStatus newStatus;
-        
-        if (auction.getHighestBidderName() != null && !auction.getHighestBidderName().isEmpty()) {
-            // Có người thắng → SOLD
-            newStatus = ItemStatus.SOLD;
-        } else {
-            // Chưa có lượt đấu → EXPIRED
-            newStatus = ItemStatus.EXPIRED;
-        }
-        
-        itemService.updateItemStatus(itemId, newStatus);
-
-        activeAuctions.remove(auctionID);
-
-        System.out.println("[Auction Service] Kết thúc phiên: " + auctionID + 
-                         " | Người thắng: " + auction.getHighestBidderName() + 
-                         " | Giá cuối: " + auction.getCurrentPrice() +
-                         " | Cập nhật item status: " + newStatus.getDisplayName());
-
-    }
-
-    public Auction requireAuction(String auctionID){
-        Auction auction = activeAuctions.get(auctionID);
-        if (auction == null)
-            throw new IllegalArgumentException("Không tìm thấy phiên: " + auctionID);
-        return auction;
-    }
-    //Tự động tính bước giá = 1% của giá khởi điẻm, giá sàn = 10000đ
-    private long calculateMinIncrement(long startPrice) {
-        long increment = startPrice / 100;
-        return Math.max(increment, 10_000L);
-    }
-
-    private AuctionDTO toDTO(Auction a) {
+    private AuctionDTO toDTO(Auction auction) {
+        AuctionConfig cfg = auction.getAuctionConfig();
         AuctionDTO dto = new AuctionDTO();
-        AuctionConfig cfg = a.getAuctionConfig();
         dto.setId(cfg.getId());
         dto.setName(cfg.getName());
-        dto.setDescription(cfg.getDescription());
-        dto.setStartingPrice(cfg.getStartPrice());
-        dto.setCurrentPrice(a.getCurrentPrice());
-        dto.setEndTime(cfg.getEndTime());
-        dto.setStatus(a.getStatus());
-        dto.setHighestBidderName(a.getHighestBidderName());
-        dto.setBidCount(a.getBidTransaction().size());
+        dto.setCurrentPrice(cfg.getStartPrice()); 
         dto.setMinIncrement(cfg.getMinIncrement());
+        dto.setStartTime(cfg.getStartTime());
+        dto.setEndTime(cfg.getEndTime());
+        dto.setStatus(auction.getStatus());
         return dto;
     }
-
 }

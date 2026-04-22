@@ -51,7 +51,9 @@ public class AutoBidService {
             auctionId, k -> new CopyOnWriteArrayList<>()
         );
 
-        list.removeIf(e -> e.bidderId.equals(bidderId));
+        list.removeIf(e -> e.bidderId.equals(
+            
+        ));
 
         list.add(new AutoBidEntry(bidderId, bidderUsername, (long) req.getMaxBid()));
 

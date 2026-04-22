@@ -64,10 +64,10 @@ public class MessageHandler {
                     ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType );
 
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", parsed));
-                    
-                // case "CREATE_AUCTION":
-                //     return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
-                //             JsonUtils.fromJson(auctionController.createAuction(msg.getData()), ApiResponse.class)));
+                }
+                case "CREATE_AUCTION":{
+                    return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
+                            JsonUtils.fromJson(auctionController.createAuction(msg.getData(), client.getUserId()), ApiResponse.class)));
                 }
 
                 case "PLACE_BID": {
@@ -79,15 +79,15 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("PLACE_BID_RESPONSE",
                             JsonUtils.fromJson(bidController.placeBid(req, client.getUserId(), client.getUsername()), ApiResponse.class)));
                 }
-                case "AUTO_BID":{
-                    String raw = JsonUtils.toJson(msg.getData());
-                    AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
-                    if (req == null) {
-                        return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợp lệ"));
-                    }
-                    return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
-                            JsonUtils.fromJson((req, client.getUserId(), client.getUsername()), ApiResponse.class)));
-                }
+                // case "AUTO_BID":{
+                //     String raw = JsonUtils.toJson(msg.getData());
+                //     AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
+                //     if (req == null) {
+                //         return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợp lệ"));
+                //     }
+                //     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
+                //             JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(), client.getUsername()), ApiResponse.class)));
+                // }
  
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",
