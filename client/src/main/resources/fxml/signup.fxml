@@ -90,6 +90,5 @@
          </StackPane.margin>
       </HBox>
       <fx:include fx:id="loading" source="loading.fxml" visible="false" />
-      <fx:include fx:id="response" source="signup-response.fxml" visible="false" />
    </children>
 </StackPane>

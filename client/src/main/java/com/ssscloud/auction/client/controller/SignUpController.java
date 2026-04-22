@@ -233,15 +233,11 @@ public class SignUpController {
                             alert.setHeaderText(null);
                             alert.setContentText("Registration successful! You can now log in with your new account.");
                             alert.showAndWait();
-                            try {
-                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
-                                btnSignUp.getScene().setRoot(homeRoot);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                                lblError.setText("Failed to load home screen.");
-                                lblError.setVisible(true);
-                                lblError.setManaged(true);
-                            }
+                            
+                            Scene currentScene = btnSignUp.getScene();
+                            currentScene.setRoot(SceneManager.loginScene);
+                            Stage stage = (Stage) currentScene.getWindow();
+                            stage.sizeToScene();
                             
                         } else {
                             Alert alert = new Alert(Alert.AlertType.ERROR);
