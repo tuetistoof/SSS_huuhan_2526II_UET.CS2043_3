@@ -117,11 +117,9 @@ public class CreateAuctionController{
         //4.Tạo request DTO
         CreateAuctionRequest reqDTO = new CreateAuctionRequest();
         reqDTO.setTitle(title);
-        reqDTO.setDescription(description);
         reqDTO.setStartingPrice(startingPrice);
         reqDTO.setEndTime(endTime);
         reqDTO.setMinIncrement(minIncrement);
-        reqDTO.setSellerId(session.getCurrentUser().getId()); //lấy từ session
 
         //5.Wrap trong client message
         ClientMessage msg = new ClientMessage("CREATE_AUCTION", reqDTO);
