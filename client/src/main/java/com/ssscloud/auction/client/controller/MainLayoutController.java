@@ -111,6 +111,11 @@ public class MainLayoutController {
     }
 
     @FXML
+    void handleSeaching(MouseEvent event) {
+
+    }
+
+    @FXML
     void handleNavActiveBids(MouseEvent event) {
 
     }
