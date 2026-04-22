@@ -12,7 +12,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<HBox prefHeight="600.0" prefWidth="900.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.CreateAuctionController">
+<HBox prefHeight="600.0" prefWidth="900.0" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.CreateAuctionController">
 
    <children>
       <VBox prefWidth="250.0" spacing="25.0" style="-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-width: 0 1 0 0;">
@@ -28,16 +28,12 @@
             <HBox alignment="CENTER_LEFT" spacing="10.0">
                <children>
                   <StackPane>
-                     <children>
-                        <Circle fill="#e9ecef" radius="15.0" />
-                        <Label text="1" textFill="#6c757d">
-                           <font>
-                              <Font name="System Bold" size="12.0" />
-                           </font>
-                        </Label>
-                     </children>
+                     <Circle radius="15.0" />
+                     <Label text="1" textFill="WHITE"><font><Font name="System Bold" size="12.0" /></font></Label>
                   </StackPane>
-                  <Label text="Item Info" textFill="#6c757d" />
+                  <Label text="Auction Info">
+                     <font><Font name="System Bold" size="14.0" /></font>
+                  </Label>
                </children>
             </HBox>
             
@@ -97,41 +93,23 @@
                   </HBox>
                </children>
             </VBox>
-            <VBox fx:id="step1Form1" maxWidth="500.0" spacing="15.0">
+
+            <VBox fx:id="step2Form" maxWidth="500.0" managed="false" spacing="15.0" visible="false">
                <children>
                   <Label text="Item Info">
-                     <font>
-                        <Font name="System Bold" size="24.0" />
-                     </font>
-                     <VBox.margin>
-                        <Insets bottom="10.0" />
-                     </VBox.margin>
+                     <font><Font name="System Bold" size="24.0" /></font>
+                     <VBox.margin><Insets bottom="10.0" /></VBox.margin>
                   </Label>
+                  
                   <VBox spacing="5.0">
-                     <children>
-                        <Label text="Auction name:" />
-                        <TextField fx:id="txtTitle1" prefHeight="35.0" />
-                     </children>
+                     <Label text="Item name:" />
+                     <TextField fx:id="txtItemName" prefHeight="35.0" />
                   </VBox>
-                  <VBox spacing="5.0">
-                     <children>
-                        <Label text="Time start:" />
-                        <DatePicker fx:id="dpStartDate1" maxWidth="Infinity" prefHeight="35.0" />
-                     </children>
-                  </VBox>
-                  <VBox spacing="5.0">
-                     <children>
-                        <Label text="Auction duration" />
-                        <ComboBox fx:id="cbDuration1" maxWidth="Infinity" prefHeight="35.0" promptText="Time" />
-                     </children>
-                  </VBox>
-                  <HBox alignment="BOTTOM_RIGHT" VBox.vgrow="ALWAYS">
-                     <VBox.margin>
-                        <Insets top="20.0" />
-                     </VBox.margin>
-                     <children>
-                        <Button mnemonicParsing="false" onAction="#goToStep2" prefHeight="35.0" prefWidth="120.0" style="; -fx-text-fill: white; -fx-font-weight: bold;" text="Save Info" />
-                     </children>
+                  
+                  <HBox alignment="BOTTOM_RIGHT" spacing="15.0" VBox.vgrow="ALWAYS">
+                     <VBox.margin><Insets top="20.0" /></VBox.margin>
+                     <Button mnemonicParsing="false" onAction="#goToStep1" prefHeight="35.0" prefWidth="90.0" text="Back" />
+                     <Button mnemonicParsing="false" prefHeight="35.0" prefWidth="120.0" style="; -fx-text-fill: white; -fx-font-weight: bold;" text="Next Step" />
                   </HBox>
                </children>
             </VBox>
