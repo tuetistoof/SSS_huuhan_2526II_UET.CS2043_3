@@ -69,7 +69,7 @@ public class UserController {
                         user.getUserName(),
                         user.getEmail(),
                         user.getRole());
-                return JsonUtils.toJson(ApiResponse.success(dto, "Login successful"));
+                return JsonUtils.toJson(ApiResponse.success(dto, "Register successful"));
             } else {
                 return JsonUtils.toJson(ApiResponse.error("Account is exist"));
             }

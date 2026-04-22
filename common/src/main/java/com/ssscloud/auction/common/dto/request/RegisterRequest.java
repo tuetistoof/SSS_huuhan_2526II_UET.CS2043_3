@@ -13,7 +13,14 @@ public class RegisterRequest implements Serializable{
     private String email;
     private UserRole role;        
 
-    public RegisterRequest() {}
+    public RegisterRequest(){};
+    public RegisterRequest(String name, String username, String password, String email, UserRole role) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
 
     // Getter & Setter'
     public String getName() { return name; }
@@ -31,11 +38,14 @@ public class RegisterRequest implements Serializable{
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
     
+    // check lai ho nhe
     @Override
     public String toString() {
         return "RegisterRequest{" +
-                ", name='" + name + '\'' +
-                "username='" + username + '\'' +
+                "name='" + name + '\'' +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
                 ", role=" + role +
                 '}';
     }

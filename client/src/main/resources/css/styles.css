@@ -133,6 +133,22 @@ Vòng tròn loading
     -fx-min-height: 52px;
     -fx-max-height: 52px;
 }
+/* Tút lại nút tròn material-style */
+.circular-menu-btn {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-cursor: hand;
+    -fx-padding: 10px;
+}
+.circular-menu-btn:hover {
+    -fx-background-color: #fff0f1;
+}
+
+.menu-icon {
+    -fx-icon-color: white;
+    -fx-icon-size: 24px;
+}
 
 .app-logo-btn {
     -fx-background-color: transparent;
@@ -177,21 +193,28 @@ Vòng tròn loading
 
 .header-balance-label {
     -fx-font-size: 13px;
-    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+    -fx-text-fill: #000000;
 }
 .header-balance-value {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #333333;
+    -fx-text-fill: #000000;
 }
 
 .avatar-circle {
-    -fx-fill: #f75667;
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 14px;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-max-width: 28px;
+    -fx-max-height: 28px;
 }
+
 .header-username {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #333333;
+    -fx-text-fill: #000000;
 }
 
 /* =========================================
@@ -211,7 +234,7 @@ Vòng tròn loading
 .sidebar-group-label {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-text-fill: #f75667;
+    -fx-text-fill: #dc5771;
     -fx-padding: 12 8 4 8;
 }
 
@@ -224,35 +247,30 @@ Vòng tròn loading
     -fx-background-color: transparent;
     -fx-alignment: center-left;
 }
+.sidebar-item.active {
+    -fx-background-color: #fff0f1;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 7 16 7 13;
+    -fx-cursor: hand;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent transparent transparent #f75667;
+    -fx-border-width: 0 0 0 3;
+}
 .sidebar-item:hover {
     -fx-background-color: #fff0f1;
+    -fx-text-fill: #f75667;
 }
 .sidebar-item .label {
     -fx-font-size: 14px;
     -fx-text-fill: #444444;
 }
-
-/* Nav item đang active */
-.sidebar-item-active {
-    -fx-background-color: #fff0f1;
-    -fx-padding: 9 12 9 12;
-    -fx-spacing: 10;
-    -fx-background-radius: 8;
-    -fx-cursor: hand;
-    -fx-alignment: center-left;
-}
 .sidebar-item-active .label {
     -fx-font-size: 13px;
     -fx-text-fill: #f75667;
     -fx-font-weight: bold;
-}
-
-/* Thanh dọc đỏ bên trái item active */
-.sidebar-item-active-bar {
-    -fx-background-color: #f75667;
-    -fx-min-width: 3px;
-    -fx-max-width: 3px;
-    -fx-background-radius: 2;
 }
 
 /* Nút đăng xuất ở đáy sidebar */
@@ -315,10 +333,8 @@ Vòng tròn loading
 .btn-primary {
     -fx-background-color: #f75667;
     -fx-text-fill: white;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
     -fx-background-radius: 8;
-    -fx-padding: 10 18 10 18;
+    -fx-padding: 0 18 0 18;
     -fx-cursor: hand;
 }
 .btn-primary:hover {
