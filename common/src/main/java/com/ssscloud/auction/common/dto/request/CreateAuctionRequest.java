@@ -7,34 +7,44 @@ public class CreateAuctionRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String name;
-    private long startingPrice;
+    private long startPrice;
     private long minIncrement;
-    LocalDateTime startTime;
+    private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private ItemData itemData;
+
+
 
     public CreateAuctionRequest() {}
 
 
-    public String getTitle() { return name; }
-    public void setTitle(String title) { this.name = title; }
+    public String getName() { return name; }
+    public void setName(String title) { this.name = title; }
 
-    public long getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(long startingPrice) { this.startingPrice = startingPrice; }
+    public long getStartPrice() { return startPrice; }
+    public void setStartPrice(long startPrice) { this.startPrice = startPrice; }
 
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
 
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+
+    public ItemData      getItemData()                     { return itemData; }
+    public void          setItemData(ItemData d)           { this.itemData = d; }
 
     @Override
     public String toString() {
         return "CreateAuctionRequest{" +
                 ", name='" + name + '\'' +
-                ", startingPrice=" + startingPrice +
+                ", startPrice=" + startPrice +
                 ", minIncrement=" + minIncrement +
-                ", endTime=" + endTime +
-                '}';
+                ", startTime=" + startTime +
+                ", endTime=" + endTime 
+                + ", itemData=" + itemData + '}';
     }
 
 }
