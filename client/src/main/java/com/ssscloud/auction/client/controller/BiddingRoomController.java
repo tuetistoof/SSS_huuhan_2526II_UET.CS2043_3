@@ -1,4 +1,6 @@
 package com.ssscloud.auction.client.controller;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -8,6 +10,8 @@ import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
+
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import  com.ssscloud.auction.client.networking.*;
@@ -88,7 +92,32 @@ public class BiddingRoomController implements MessageListener{
         new Thread(()-> {
             try{
                 PlaceBidRequest req = new PlaceBidRequest(currentAuction.getId(), amount);
-                socket.send(JsonUtils.toJson(ClientMessage.request("PLACE_BID", req))); //bọc trong client messag rồi qua socket client
+                String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("PLACE_BID", req)));
+                
+                if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                    ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+
+                    if ("PLACE_BID_RESPONSE".equals(serverMsg.getAction())) {
+                        String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                        Type type = new TypeToken<ApiResponse<BidDTO>>() {}.getType();
+                        ApiResponse<BidDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
+
+                        if (response != null && response.isSuccess()) {
+                            // Cập nhật UI thành công tại đây
+                            Platform.runLater(() -> {
+                                BidDTO bidResult = response.getData();
+                                // Logic cập nhật giao diện
+                            });
+
+                    } else {
+                        Platform.runLater(() -> {
+                            showError(response != null ? response.getMessage() : "Lỗi không xác định");
+                            resetPlaceBidButton();
+                        });
+                    }
+                }
+            }
+    
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     showError("Lỗi kết nối Server.");
@@ -134,8 +163,8 @@ public class BiddingRoomController implements MessageListener{
                         return;
                     }
                     // Unwrap ClientMessage wrapper
-                    ClientMessage wrapper = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                    String dataJson = JsonUtils.toJson(wrapper.getData());
+                    ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                    String dataJson = JsonUtils.toJson(serverMsg.getData());
                     ApiResponse<?> response = JsonUtils.fromJson(dataJson, ApiResponse.class);
  
                     if (response != null && response.isSuccess()) {
