@@ -36,12 +36,10 @@ public class ConcurrentBidManager {
     //tạo hashmap lưu mỗi auction có 1 ReentrantLock
     private final Map<String, ReentrantLock> auctionLocks = new ConcurrentHashMap<>();
 
-    //lấy lock của mỗi phiên, tạo mới nếu chưa có
     private ReentrantLock getLock(String auctionID){
         return auctionLocks.computeIfAbsent(auctionID, k -> new ReentrantLock());
     }
 
-    //xóa lock khi phiên kết thúc cho gọn
     public void removeLock(String auctionID){
         auctionLocks.remove(auctionID);
     }
@@ -50,7 +48,7 @@ public class ConcurrentBidManager {
         String auctionId = auction.getAuctionConfig().getId();
         ReentrantLock lock = getLock(auctionId);  //lấy lock của phiên đấy
         lock.lock();
-        try { //validate
+        try {
             if (auction.getStatus() == AuctionStatus.FINISHED
                     || auction.getStatus() == AuctionStatus.CANCELED
                     || auction.getStatus() == AuctionStatus.PAID) {

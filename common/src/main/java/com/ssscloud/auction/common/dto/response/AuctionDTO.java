@@ -10,15 +10,16 @@ public class AuctionDTO implements Serializable {
 
     private String id;
     private String name;
-    private String description;
     private long startingPrice;
-    private long currentPrice;
+    private long minIncrement;
     private LocalDateTime endTime;
+    private String description;
+    private long currentPrice;
+    
     private AuctionStatus status;
     private String sellerName;
     private String highestBidderName;
     private int bidCount;
-    private long minIncrement;
 
     public AuctionDTO() {
     }

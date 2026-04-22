@@ -98,62 +98,63 @@ public class BiddingRoomController implements MessageListener{
         }).start();
     }
 
-    // @FXML   đợi phong làm xong autobid
-    // private void handleStartAutoBid() {
-    //     if (txtMaxBid.getText().isEmpty() || txtIncrement.getText().isEmpty()) {
-    //         showError("Vui lòng nhập đầy đủ thông tin Auto Bidding.");
-    //         return;
-    //     }
-    //     long maxBid, increment;
-    //     try {
-    //         maxBid    = Long.parseLong(txtMaxBid.getText().trim());
-    //         increment = Long.parseLong(txtIncrement.getText().trim());
-    //     } catch (NumberFormatException e) {
-    //         showError("Giá tối đa hoặc bước giá không hợp lệ.");
-    //         return;
-    //     }
-    //     if (maxBid <= currentAuction.getCurrentPrice()) {
-    //         showError("Giá tối đa phải cao hơn giá hiện tại.");
-    //         return;
-    //     }
+    @FXML   
+    // đợi phong làm xong autobid
+    private void handleStartAutoBid() {
+        if (txtMaxBid.getText().isEmpty() || txtIncrement.getText().isEmpty()) {
+            showError("Vui lòng nhập đầy đủ thông tin Auto Bidding.");
+            return;
+        }
+        long maxBid, increment;
+        try {
+            maxBid    = Long.parseLong(txtMaxBid.getText().trim());
+            increment = Long.parseLong(txtIncrement.getText().trim());
+        } catch (NumberFormatException e) {
+            showError("Giá tối đa hoặc bước giá không hợp lệ.");
+            return;
+        }
+        if (maxBid <= currentAuction.getCurrentPrice()) {
+            showError("Giá tối đa phải cao hơn giá hiện tại.");
+            return;
+        }
  
-    //     btnStartAutoBid.setDisable(true);
-    //     btnStartAutoBid.setText("Đang đăng ký...");
+        btnStartAutoBid.setDisable(true);
+        btnStartAutoBid.setText("Đang đăng ký...");
  
-    //     new Thread(() -> {
-    //         try {
-    //             AutoBidRequest req = new AutoBidRequest(currentAuction.getId(), maxBid, increment, currentUserId);
-    //             String json = JsonUtils.toJson(ClientMessage.request("AUTO_BID", req));
-    //             String responseJson = socket.sendAndReceive(json); // cần biết có thành công không
+        new Thread(() -> {
+            try {
+                AutoBidRequest req = new AutoBidRequest(currentAuction.getId(), maxBid, increment);
+                String json = JsonUtils.toJson(ClientMessage.request("AUTO_BID", req));
+                String responseJson = socket.sendAndReceive(json); // cần biết có thành công không
  
-    //             Platform.runLater(() -> {
-    //                 if (responseJson == null) {
-    //                     showError("Không nhận được phản hồi từ server.");
-    //                     resetAutoBidButton();
-    //                     return;
-    //                 }
-    //                 // Unwrap ClientMessage wrapper
-    //                 ClientMessage wrapper = JsonUtils.fromJson(responseJson, ClientMessage.class);
-    //                 String dataJson = JsonUtils.toJson(wrapper.getData());
-    //                 ApiResponse<?> response = JsonUtils.fromJson(dataJson, ApiResponse.class);
+                Platform.runLater(() -> {
+                    if (responseJson == null) {
+                        showError("Không nhận được phản hồi từ server.");
+                        resetAutoBidButton();
+                        return;
+                    }
+                    // Unwrap ClientMessage wrapper
+                    ClientMessage wrapper = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                    String dataJson = JsonUtils.toJson(wrapper.getData());
+                    ApiResponse<?> response = JsonUtils.fromJson(dataJson, ApiResponse.class);
  
-    //                 if (response != null && response.isSuccess()) {
-    //                     isAutoBidding = true;
-    //                     btnStartAutoBid.setText("Auto Bidding...");
-    //                     // Nút giữ disable — AUTO_BID_STOPPED push sẽ reset lại
-    //                 } else {
-    //                     showError(response != null ? response.getMessage() : "Đăng ký Auto Bid thất bại.");
-    //                     resetAutoBidButton();
-    //                 }
-    //             });
-    //         } catch (Exception e) {
-    //             Platform.runLater(() -> {
-    //                 showError("Lỗi kết nối Server.");
-    //                 resetAutoBidButton();
-    //             });
-    //         }
-    //     }).start();
-    // }
+                    if (response != null && response.isSuccess()) {
+                        isAutoBidding = true;
+                        btnStartAutoBid.setText("Auto Bidding...");
+                        // Nút giữ disable — AUTO_BID_STOPPED push sẽ reset lại
+                    } else {
+                        showError(response != null ? response.getMessage() : "Đăng ký Auto Bid thất bại.");
+                        resetAutoBidButton();
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showError("Lỗi kết nối Server.");
+                    resetAutoBidButton();
+                });
+            }
+        }).start();
+    }
 
 
     
@@ -208,17 +209,17 @@ public class BiddingRoomController implements MessageListener{
     }
 
 
-    // ── Setters — màn hình trước inject context ───────────────────────────────
+    // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction)  { this.currentAuction  = auction; }
     public void setUserId(String userId)         { this.currentUserId   = userId; }
     public void setUserName(String userName)     { this.currentUserName = userName; }
  
-    // ── Cleanup khi rời phòng ─────────────────────────────────────────────────
+    // Cleanup khi rời phòng
     public void cleanup() {
         socket.removeListener(this);
     }
  
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    //Helpers
     private void resetPlaceBidButton() {
         btnPlaceBid.setDisable(false);
         btnPlaceBid.setText("Place Bid");
