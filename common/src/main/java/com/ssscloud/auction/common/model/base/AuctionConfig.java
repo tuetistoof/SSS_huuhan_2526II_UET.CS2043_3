@@ -3,7 +3,6 @@ package com.ssscloud.auction.common.model.base;
 import java.time.LocalDateTime;
 
 public class AuctionConfig extends Entity{
-    private long startPrice;
     private long minIncrement;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -11,9 +10,8 @@ public class AuctionConfig extends Entity{
     private String description;
     public AuctionConfig (){};
     // tao moi
-    public AuctionConfig (String name, long startPrice, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, int extendSecond, String description){
+    public AuctionConfig (String name, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, int extendSecond, String description){
         super (name);
-        this.startPrice = startPrice;
         this.minIncrement = minIncrement;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -21,9 +19,8 @@ public class AuctionConfig extends Entity{
         this.description = description;
     }
     // constructor day du cho dao
-    public AuctionConfig (String id, String name, long startPrice, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, int extendSecond, String description){
+    public AuctionConfig (String id, String name, long minIncrement, LocalDateTime startTime, LocalDateTime endTime, int extendSecond, String description){
         super (id, name);
-        this.startPrice = startPrice;
         this.minIncrement = minIncrement;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -31,12 +28,6 @@ public class AuctionConfig extends Entity{
         this.description = description;
     }
     // getter setter
-    public long getStartPrice() {
-        return startPrice;
-    }
-    public void setStartPrice(long startPrice) {
-        this.startPrice = startPrice;
-    }
     public long getMinIncrement() {
         return minIncrement;
     }

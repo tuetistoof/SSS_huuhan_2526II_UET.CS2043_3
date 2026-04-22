@@ -6,30 +6,60 @@ import java.time.LocalDateTime;
 public class CreateAuctionRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String title;
-    private String description;
-    private double startingPrice;
+    private String name;
+    private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private String description;
 
+    private String sellerId;
+    private String sellerName;
+    private String ItemId;
     public CreateAuctionRequest() {}
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public double getStartingPrice() { return startingPrice; }
-    public void setStartingPrice(double startingPrice) { this.startingPrice = startingPrice; }
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
 
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
+    public String getSellerId() {
+        return sellerId;
+    }
+    public void setItemId(String itemId) {
+        ItemId = itemId;
+    }
+    public String getSellerName() {
+        return sellerName;
+    }
+    public void setSellerName(String sellerName) {
+        this.sellerName = sellerName;
+    }
+    public String getItemId() {
+        return ItemId;
+    }
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
+
     @Override
     public String toString() {
         return "CreateAuctionRequest{" +
-                "title='" + title + '\'' +
-                ", startingPrice=" + startingPrice +
+                "name='" + name + '\'' +
+                ", startTime=" + startTime +
                 ", endTime=" + endTime +
                 '}';
     }
