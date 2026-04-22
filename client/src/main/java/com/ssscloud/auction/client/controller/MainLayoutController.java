@@ -1,5 +1,7 @@
 package com.ssscloud.auction.client.controller;
 
+import java.io.IOException;
+
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
@@ -8,6 +10,8 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -113,7 +117,21 @@ public class MainLayoutController {
 
     @FXML
     void handleNavDashboard(MouseEvent event) {
+        // updateActiveStyle(navDashboard); 
 
+        try {
+            // Load file Dashboard.fxml
+            Parent dashboardView = FXMLLoader.load(getClass().getResource("/fxml/Dashboard.fxml"));
+            
+            // Xóa sạch các màn hình cũ trong phần center đi (nếu có)
+            contentArea.getChildren().clear();
+            
+            // Nhét Dashboard vào
+            contentArea.getChildren().add(dashboardView);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -171,4 +189,27 @@ public class MainLayoutController {
     public void handleNavUserInfo(MouseEvent event) {
         System.out.println("Đã click vào khu vực User Info!");
     }
+
+    // private void updateActiveStyle(HBox activeItem) {
+    // // 1. Gom tất cả các menu HBox của ông vào 1 mảng
+    // HBox[] allNavItems = {
+    //     navDashboard, navActiveBids, navWatchlist, 
+    //     navWonItems, navHistory, navMyItems, 
+    //     navNewAuctionRoom, navMyAuctionRooms
+    // };
+
+    // // 2. Đi dọn dẹp: Xóa cái class "active" ở TẤT CẢ các menu
+    // for (HBox item : allNavItems) {
+    //     if (item != null) {
+    //         item.getStyleClass().remove("active-nav");
+    //     }
+    // }
+
+    // // 3. Highlight: Gắn class "active" cho cái menu vừa được truyền vào
+    // if (activeItem != null) {
+    //     if (!activeItem.getStyleClass().contains("active-nav")) {
+    //         activeItem.getStyleClass().add("active-nav");
+    //     }
+    // }
+    //}
 }

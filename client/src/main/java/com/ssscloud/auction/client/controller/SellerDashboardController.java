@@ -83,65 +83,65 @@ public class SellerDashboardController implements Initializable {
 
     private void setupTableColumns() {
  
-        colTitle.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getTitle()));
+        // colTitle.setCellValueFactory(c ->
+        //     new SimpleStringProperty(c.getValue().getTitle()));
  
-        colCurrentPrice.setCellValueFactory(c ->
-            new SimpleStringProperty(formatPrice(c.getValue().getCurrentPrice())));
+        // colCurrentPrice.setCellValueFactory(c ->
+        //     new SimpleStringProperty(formatPrice(c.getValue().getCurrentPrice())));
  
-        // colBidCount.setCellValueFactory(c ->
-        //     new SimpleStringProperty(c.getValue().getBidCount() + " bids"));
+        // // colBidCount.setCellValueFactory(c ->
+        // //     new SimpleStringProperty(c.getValue().getBidCount() + " bids"));
  
-        // Countdown — tính lại mỗi lần table refresh
-        colTimeLeft.setCellValueFactory(c -> {
-            AuctionDTO a = c.getValue();
-            if (a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN) {
-                return new SimpleStringProperty(formatTimeLeft(a.getEndTime()));
-            }
-            return new SimpleStringProperty("—");
-        });
-        colTimeLeft.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); setGraphic(null); return; }
-                setText(item);
-                // Tô vàng nếu dưới 10 phút
-                AuctionDTO a = getTableView().getItems().get(getIndex());
-                if (a != null && a.getEndTime() != null) {
-                    long mins = ChronoUnit.MINUTES.between(LocalDateTime.now(), a.getEndTime());
-                    if (mins < 10 && mins >= 0) {
-                        getStyleClass().removeAll("countdown-normal");
-                        getStyleClass().add("countdown-urgent");
-                    } else {
-                        getStyleClass().removeAll("countdown-urgent");
-                        getStyleClass().add("countdown-normal");
-                    }
-                }
-            }
-        });
-        // Status badge
-        colStatus.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getStatus().name()));
-        colStatus.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setGraphic(null); return; }
-                Label badge = new Label(statusLabel(item));
-                badge.getStyleClass().add(statusBadgeClass(item));
-                setGraphic(badge);
-                setText(null);
-            }
-        });
-        colActions.setCellFactory(col -> new TableCell<>() {
-            @Override protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) { setGraphic(null); return; }
-                AuctionDTO auction = getTableView().getItems().get(getIndex());
-                HBox box = buildActionButtons(auction);
-                box.setAlignment(Pos.CENTER_LEFT);
-                setGraphic(box);
-            }
-        });
+        // // Countdown — tính lại mỗi lần table refresh
+        // colTimeLeft.setCellValueFactory(c -> {
+        //     AuctionDTO a = c.getValue();
+        //     if (a.getStatus() == AuctionStatus.RUNNING || a.getStatus() == AuctionStatus.OPEN) {
+        //         return new SimpleStringProperty(formatTimeLeft(a.getEndTime()));
+        //     }
+        //     return new SimpleStringProperty("—");
+        // });
+        // colTimeLeft.setCellFactory(col -> new TableCell<>() {
+        //     @Override protected void updateItem(String item, boolean empty) {
+        //         super.updateItem(item, empty);
+        //         if (empty || item == null) { setText(null); setGraphic(null); return; }
+        //         setText(item);
+        //         // Tô vàng nếu dưới 10 phút
+        //         AuctionDTO a = getTableView().getItems().get(getIndex());
+        //         if (a != null && a.getEndTime() != null) {
+        //             long mins = ChronoUnit.MINUTES.between(LocalDateTime.now(), a.getEndTime());
+        //             if (mins < 10 && mins >= 0) {
+        //                 getStyleClass().removeAll("countdown-normal");
+        //                 getStyleClass().add("countdown-urgent");
+        //             } else {
+        //                 getStyleClass().removeAll("countdown-urgent");
+        //                 getStyleClass().add("countdown-normal");
+        //             }
+        //         }
+        //     }
+        // });
+        // // Status badge
+        // colStatus.setCellValueFactory(c ->
+        //     new SimpleStringProperty(c.getValue().getStatus().name()));
+        // colStatus.setCellFactory(col -> new TableCell<>() {
+        //     @Override protected void updateItem(String item, boolean empty) {
+        //         super.updateItem(item, empty);
+        //         if (empty || item == null) { setGraphic(null); return; }
+        //         Label badge = new Label(statusLabel(item));
+        //         badge.getStyleClass().add(statusBadgeClass(item));
+        //         setGraphic(badge);
+        //         setText(null);
+        //     }
+        // });
+        // colActions.setCellFactory(col -> new TableCell<>() {
+        //     @Override protected void updateItem(Void item, boolean empty) {
+        //         super.updateItem(item, empty);
+        //         if (empty) { setGraphic(null); return; }
+        //         AuctionDTO auction = getTableView().getItems().get(getIndex());
+        //         HBox box = buildActionButtons(auction);
+        //         box.setAlignment(Pos.CENTER_LEFT);
+        //         setGraphic(box);
+        //     }
+        // });
     }
      private HBox buildActionButtons(AuctionDTO auction) {
         HBox box = new HBox(6);
@@ -199,7 +199,7 @@ public class SellerDashboardController implements Initializable {
  
         lblRunning.setText(String.valueOf(running));
         lblTotal.setText(String.valueOf(total));
-        lblBidCount.setText(String.valueOf(bidTotal));
+        // lblBidCount.setText(String.valueOf(bidTotal));
         lblRevenue.setText(maxPrice > 0 ? formatPrice(maxPrice) : "—");
     }
  
@@ -255,17 +255,17 @@ public class SellerDashboardController implements Initializable {
     }
  
     private void handleDeleteAuction(AuctionDTO auction) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-            "Xóa phiên \"" + auction.getTitle() + "\"?",
-            ButtonType.YES, ButtonType.CANCEL);
-        confirm.setTitle("Xác nhận xóa");
-        confirm.showAndWait().ifPresent(btn -> {
-            if (btn == ButtonType.YES) {
-                // TODO: gọi server xóa, sau đó:
-                masterList.remove(auction);
-                updateMetrics();
-            }
-        });
+        // Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+        //     "Xóa phiên \"" + auction.getTitle() + "\"?",
+        //     ButtonType.YES, ButtonType.CANCEL);
+        // confirm.setTitle("Xác nhận xóa");
+        // confirm.showAndWait().ifPresent(btn -> {
+        //     if (btn == ButtonType.YES) {
+        //         // TODO: gọi server xóa, sau đó:
+        //         masterList.remove(auction);
+        //         updateMetrics();
+        //     }
+        // });
     }
 
 

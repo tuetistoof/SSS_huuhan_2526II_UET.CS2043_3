@@ -1,12 +1,11 @@
 package com.ssscloud.auction.client.controller;
 
-import java.io.IOException;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
-import com.ssscloud.auction.client.util.SessionManager;
+
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
