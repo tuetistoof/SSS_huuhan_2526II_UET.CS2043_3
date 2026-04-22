@@ -26,7 +26,7 @@ public class BidService {
     }
 
 
-    public BidDTO placeBid(PlaceBidRequest req){
+    public BidDTO placeBid(PlaceBidRequest req, String bidderId, String bidderUsername){
         if (req == null)
             throw new InvalidBidException("Request không được null");
         if (req.getAuctionId() == null || req.getAuctionId().isBlank())
@@ -43,7 +43,7 @@ public class BidService {
             throw new InvalidBidException("Người bán không thể đấu giá sản phẩm của mình");
 
 
-        BidTransaction bid = bidManager.placeBid(auction, req.getBidderId(), req.getBidderUsername(), req.getBidAmount(),   BidType.MANUAL, antiSnipingService);
+        BidTransaction bid = bidManager.placeBid(auction, bidderId, bidderUsername, req.getBidAmount(),   BidType.MANUAL, antiSnipingService);
 
         try {
             boolean saved = bidTransactionDAO.saveBidTransaction(bid);
