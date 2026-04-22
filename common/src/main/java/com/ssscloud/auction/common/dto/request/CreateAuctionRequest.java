@@ -6,23 +6,17 @@ import java.time.LocalDateTime;
 public class CreateAuctionRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String sellerId;
-    private String title;
-    private String description;
+    private String name;
     private long startingPrice;
     private long minIncrement;
+    LocalDateTime startTime;
     private LocalDateTime endTime;
 
     public CreateAuctionRequest() {}
 
-    public String getSellerId() {return sellerId;}
-    public void setSellerId(String sellerId){this.sellerId = sellerId;}
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getTitle() { return name; }
+    public void setTitle(String title) { this.name = title; }
 
     public long getStartingPrice() { return startingPrice; }
     public void setStartingPrice(long startingPrice) { this.startingPrice = startingPrice; }
@@ -36,9 +30,7 @@ public class CreateAuctionRequest implements Serializable {
     @Override
     public String toString() {
         return "CreateAuctionRequest{" +
-                "sellerId='" + sellerId + '\'' +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
+                ", name='" + name + '\'' +
                 ", startingPrice=" + startingPrice +
                 ", minIncrement=" + minIncrement +
                 ", endTime=" + endTime +
