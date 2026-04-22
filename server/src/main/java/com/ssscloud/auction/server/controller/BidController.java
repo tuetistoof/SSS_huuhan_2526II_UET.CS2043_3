@@ -14,7 +14,7 @@ public class BidController {
     }
 
     // trong messageHandler chuyển msg thô, chưa xử lí
-    public String placeBid(Object data) {
+    public String placeBid(Object data, String bidderId, String bidderUsername) {
         try {
             String raw = JsonUtils.toJson(data);
             PlaceBidRequest req = JsonUtils.fromJson(raw, PlaceBidRequest.class);
@@ -33,7 +33,7 @@ public class BidController {
                 return JsonUtils.toJson(ApiResponse.error("Số tiền đặt phải lớn hơn 0"));
             }
 
-            BidDTO result = bidService.placeBid(req);
+            BidDTO result = bidService.placeBid(req, bidderId, bidderUsername);
             return JsonUtils.toJson(ApiResponse.success(result, "Đặt giá thành công"));
 
         } catch (Exception e) {

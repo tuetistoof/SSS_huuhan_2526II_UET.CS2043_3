@@ -9,9 +9,6 @@ public class PlaceBidRequest implements Serializable  {
     private String auctionId;
     private long bidAmount;
  
-    // Server inject — không nhận từ client
-    private String bidderId;
-    private String bidderUsername;
 
     public PlaceBidRequest() {}
 
@@ -25,12 +22,6 @@ public class PlaceBidRequest implements Serializable  {
  
     public long getBidAmount()    { return bidAmount; }
     public void setBidAmount(long bidAmount) { this.bidAmount = bidAmount; }
- 
-    public String getBidderId()   { return bidderId; }
-    public void setBidderId(String bidderId) { this.bidderId = bidderId; }
- 
-    public String getBidderUsername() { return bidderUsername; }
-    public void setBidderUsername(String bidderUsername) { this.bidderUsername = bidderUsername; }
     @Override
     public String toString() {
         return "PlaceBidRequest{" +

@@ -5,8 +5,6 @@ import java.io.Serializable;
 public class AutoBidRequest implements Serializable{
     //serialVersion dùng để ghi nhớ các phiên bản của Serializable
     private static final long serialVersionUID = 1L;
-    private String userId;
-    private String username;
     private String auctionId;
     private long maxBid;
     private long increment;
@@ -21,19 +19,6 @@ public class AutoBidRequest implements Serializable{
 
     public String getAuctionId() { return auctionId; }
     public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
-
-    public String getUserId() {
-        return userId;
-    }
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-    public String getUsername() {
-        return username;
-    }
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     public long getMaxBid() { return maxBid; }
     public void setMaxBid(long maxBid) { this.maxBid = maxBid; }
