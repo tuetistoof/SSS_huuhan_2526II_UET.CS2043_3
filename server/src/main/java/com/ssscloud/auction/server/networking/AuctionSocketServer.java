@@ -13,6 +13,7 @@ import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.service.AntiSnipingService;
+import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 
@@ -28,11 +29,10 @@ public class AuctionSocketServer{
         BidTransactionDAO bidTransactionDAO = new BidTransactionDAO(); // FIX: tên đúng
         AntiSnipingService antiSnipingService = new AntiSnipingService();
         AutoBidService     autoBidService     = new AutoBidService();
- 
+        AuctionService auctionService = new AuctionService(auctionDAO);
+
         // FIX: BidService cần 4 dependency, không thể new BidService() không tham số
-        BidService bidService = new BidService(
-            auctionDAO, bidTransactionDAO, antiSnipingService, autoBidService
-        );
+        BidService bidService = new BidService(auctionService, bidTransactionDAO, antiSnipingService, autoBidService);
  
         // FIX: UserController cần userDAO; BidController cần bidService
         UserController    userCtrl    = new UserController();
