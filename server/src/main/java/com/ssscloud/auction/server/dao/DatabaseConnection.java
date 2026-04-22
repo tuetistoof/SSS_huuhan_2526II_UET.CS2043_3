@@ -9,6 +9,9 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 public class DatabaseConnection {
 
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
@@ -18,6 +21,7 @@ public class DatabaseConnection {
 
     private Connection connection;
 
+    private final HikariDataSource dataSource;
     private DatabaseConnection() throws SQLException {
         try {
             InputStream input = DatabaseConnection.class
@@ -29,7 +33,7 @@ public class DatabaseConnection {
             }
             Properties props = new Properties();
             props.load(input);
-
+            
             String url = props.getProperty("spring.datasource.url");
             String user = props.getProperty("spring.datasource.username");
             String pass = props.getProperty("spring.datasource.password");
@@ -38,12 +42,26 @@ public class DatabaseConnection {
                 throw new SQLException("thieu cau hinh DB trong application.properties (url/username/password)");
             }
 
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(url);
+            config.setUsername(user);
+            config.setPassword(pass);
             
-            // Tạo connection 1 lần duy nhất
-            this.connection = DriverManager.getConnection(url, user, pass);
-            System.out.println("Kết nối database thành công!");
-            LOGGER.info("Kết nối database thành công: " + url);
+            config.setMaximumPoolSize(18);
+            config.setMinimumIdle(3);
+            
+            config.setConnectionTimeout(30000);
+            config.setIdleTimeout(60000);
+            config.setMaxLifetime(180000);
 
+            config.setConnectionTestQuery("SELECT 1");
+
+            config.setPoolName("AuctionHikariPool");
+
+            this.dataSource = new HikariDataSource(config);
+
+            LOGGER.info("Khởi tạo HikariCP pool thành công: " + url);
+            System.out.println("Kết nối database (HikariCP) thành công!");
         } 
         catch (IOException e){
             LOGGER.log(Level.SEVERE, "Không đọc được application.properties", e);
@@ -67,20 +85,13 @@ public class DatabaseConnection {
     }
 
     public Connection getConnection() throws SQLException {
-        try {
-            if (connection == null || connection.isClosed()) {
-                LOGGER.warning("Connection bi dong hoặc null đang reconnect...");
-                synchronized (DatabaseConnection.class) {
-                    if (connection == null || connection.isClosed()) {
-                        instance = new DatabaseConnection();
-                        this.connection = instance.connection;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Loi khi kiem tra trang thai connection", e);
-            throw e;
+        return dataSource.getConnection();
+    }
+
+    public void close() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            LOGGER.info("HikariCP pool đã đóng.");
         }
-        return connection;
     }
 }
