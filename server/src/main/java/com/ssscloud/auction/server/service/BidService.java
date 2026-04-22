@@ -8,22 +8,16 @@ import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
 public class BidService {
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
-    private final AuctionService auctionService;
+    private final AuctionService auctionService = new AuctionService();
     private final BidTransactionDAO bidTransactionDAO;
     private final AntiSnipingService antiSnipingService;
     private final AutoBidService autoBidService;
-
-    public BidService(AuctionService auctionService, BidTransactionDAO bidTransactionDAO, AntiSnipingService antiSnipingService, AutoBidService autoBidService){
-        this.auctionService = auctionService;
-        this.bidTransactionDAO = bidTransactionDAO;
-        this.antiSnipingService = antiSnipingService;
-        this.autoBidService = autoBidService;
-    }
 
 
     public BidDTO placeBid(PlaceBidRequest req, String bidderId, String bidderUsername){
@@ -31,7 +25,7 @@ public class BidService {
             throw new InvalidBidException("Request không được null");
         if (req.getAuctionId() == null || req.getAuctionId().isBlank())
             throw new InvalidBidException("Thiếu auctionId");
-        if (req.getBidderId() == null || req.getBidderId().isBlank())
+        if (bidderId == null || bidderId.isBlank())
             throw new InvalidBidException("Thiếu bidderId");
         if (BidValidator.isPositiveBid(req.getBidAmount()))
             throw new InvalidBidException("Bid amount phải dương");
@@ -39,7 +33,7 @@ public class BidService {
         Auction auction = auctionService.getActiveAuctions(req.getAuctionId());
         if (auction == null)
             throw new InvalidBidException("Phiên đấu giá không tồn tại hoặc đã kết thúc: " + req.getAuctionId());
-        if (req.getBidderId().equals(auction.getSellerId()))
+        if (bidderId.equals(auction.getSellerId()))
             throw new InvalidBidException("Người bán không thể đấu giá sản phẩm của mình");
 
 
@@ -68,7 +62,8 @@ public class BidService {
 
         List<BidTransaction> history = auction.getBidTransaction();
         BidTransaction finalBid = history.isEmpty() ? bid : history.get(history.size() - 1);
- 
+    
+        ChangeManager.getInstance().notify(auction);
         return toDTO(finalBid, auction.getCurrentPrice());
     }
 

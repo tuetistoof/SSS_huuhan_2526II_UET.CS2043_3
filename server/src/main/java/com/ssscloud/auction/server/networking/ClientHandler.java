@@ -11,15 +11,14 @@ public class ClientHandler implements Runnable{
     private Socket clientSocket;
     private MessageHandler messageHandler;
 
-    public ClientHandler(Socket socket, MessageHandler messageHandler){
-        this.clientSocket = socket;
-        this.messageHandler = messageHandler;
-    }
-
     // Session của client này — được set sau khi LOGIN thành công
     private String userId;
     private String username;
     
+    public ClientHandler(Socket socket, MessageHandler messageHandler){
+        this.clientSocket = socket;
+        this.messageHandler = messageHandler;
+    }
 
     @Override
     public void run() {

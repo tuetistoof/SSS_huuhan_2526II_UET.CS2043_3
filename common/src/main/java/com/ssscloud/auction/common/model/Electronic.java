@@ -1,6 +1,5 @@
 package com.ssscloud.auction.common.model;
 
-import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.model.base.Item;
 
 import java.time.LocalDate;
@@ -12,13 +11,13 @@ public class Electronic extends Item {
     // constructor ko co 2 thuoc tinh rieng cua Electronic vi chi khi mua hang moi xuat hien trang thai day nen lat nua viet o setter
 
     public Electronic() {} // dùng trong factory
-    public Electronic (String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
-        super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
+    public Electronic (String name, String sellerId,String creator, String description, String type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
+        super(name, sellerId, creator, description, type, imageUrl);
         this.isRepaired = isRepaired;
         this.warrantyPeriod = warrantyPeriod;
     }
-    public Electronic (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
-        super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type,imageUrl);
+    public Electronic (String id, String name, String sellerId, String creator, String description, String type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
+        super(id, name, sellerId, creator, description, type,imageUrl);
         this.isRepaired = isRepaired;
         this.warrantyPeriod = warrantyPeriod;
     }

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.enums.ItemStatus;
+import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.factory.ItemFactory;
@@ -18,12 +19,9 @@ import com.ssscloud.auction.server.factory.ItemFactory;
  * Hỗ trợ CRUD và quản lý trạng thái items
  */
 public class ItemService {
-    private final ItemDAO itemDAO;
+    private final ItemDAO itemDAO = new ItemDAO();
     private final Map<String, Item> itemCache = new ConcurrentHashMap<>();
 
-    public ItemService(ItemDAO itemDAO) {
-        this.itemDAO = itemDAO;
-    }
 
     /**
      * Tạo item mới cho seller
@@ -32,11 +30,11 @@ public class ItemService {
      * @param itemType Loại item (ART, ELECTRONIC, VEHICLE)
      * @return Item vừa tạo
      */
-    public Item createItem(CreateAuctionRequest req, String sellerId, String itemType) {
+    public Item createItem(CreateAuctionRequest req, String sellerId, ItemType itemType) {
         if (req.getTitle() == null || req.getTitle().isBlank()) {
             throw new IllegalArgumentException("Tiêu đề không được trống");
         }
-        if (itemType == null || itemType.isBlank()) {
+        if (itemType == null) {
             throw new IllegalArgumentException("Loại sản phẩm không được trống");
         }
 
@@ -52,7 +50,7 @@ public class ItemService {
 
         // Lưu vào database
         if (itemDAO != null) {
-            itemDAO.save(item);
+            itemDAO.save(item, itemType);
         }
 
         System.out.println("[Item Service] Tạo item mới: " + itemId + 
@@ -96,7 +94,7 @@ public class ItemService {
 
         // Từ database nếu có
         if (itemDAO != null) {
-            List<Item> dbItems = itemDAO.findBySellerIdS(sellerId);
+            List<Item> dbItems = itemDAO.findBySellerId(sellerId);
             for (Item item : dbItems) {
                 if (!itemCache.containsKey(item.getId())) {
                     items.add(item);
@@ -115,7 +113,7 @@ public class ItemService {
      * @return List items có trạng thái tương ứng
      */
     public List<Item> getItemsByStatus(String sellerId, ItemStatus status) {
-        return getItemsBySellerIdS(sellerId).stream()
+        return itemDAO.findBySellerId(sellerId).stream()
             .filter(item -> status == item.getStatus())
             .collect(Collectors.toList());
     }

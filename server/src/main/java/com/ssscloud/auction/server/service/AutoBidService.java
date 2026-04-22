@@ -10,11 +10,20 @@ import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.util.BidValidator;
+import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
 public class AutoBidService {
     public static final int MAX_CHAIN_DEPTH = 200;
     private final Map<String, List<AutoBidEntry>> registrations = new ConcurrentHashMap<>();
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
+
+    private final BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
+
+    // public AutoBidService(BidTransactionDAO bidTransactionDAO) {
+    //     this.bidTransactionDAO = bidTransactionDAO;
+    // }
 
     public static class AutoBidEntry {
         final String bidderId;
@@ -33,7 +42,7 @@ public class AutoBidService {
     public void register(AutoBidRequest req, String bidderId, String bidderUsername){
         if (req.getAuctionId() == null)
             throw new IllegalArgumentException("Thiếu auctionId trong AutoBidRequest");
-        if (req.getMaxBid() <= 0)
+        if (BidValidator.isPositiveBid(req.getMaxBid()))
             throw new IllegalArgumentException("Maxbid bắt buộc phải lớn hơn 0");
 
         String auctionId = String.valueOf(req.getAuctionId());
@@ -67,23 +76,24 @@ public class AutoBidService {
         long currentPrice = auction.getCurrentPrice();
         long minIncrement = auction.getAuctionConfig().getMinIncrement();
         long requireAmount = currentPrice + minIncrement;
-        String leaderId = auction.getHighestBidderId();
+        String highestBidderId = auction.getHighestBidderId();
 
         AutoBidEntry best = null;
         for (AutoBidEntry entry : list){
-            if (entry.bidderId.equals(leaderId) || entry.maxBid < requireAmount) continue;
+            if (entry.bidderId.equals(highestBidderId) || entry.maxBid < requireAmount) continue;
             if (best == null)
                 best = entry;
             else if (entry.maxBid > best.maxBid)
                 best = entry;
-            else if (entry.maxBid == entry.maxBid && entry.registeredAt.isBefore(best.registeredAt))
+            else if (entry.maxBid == best.maxBid && entry.registeredAt.isBefore(best.registeredAt))
                 best = entry;
         }
 
         if (best == null) return;
 
         try {
-            bidManager.placeBid(auction, best.bidderId, best.bidderUsername, requireAmount, BidType.AUTO);
+            BidTransaction bid = bidManager.placeBid(auction, best.bidderId, best.bidderUsername, requireAmount, BidType.AUTO);
+            bidTransactionDAO.saveBidTransaction(bid);
             System.out.println("[AutoBidService] Chain [" + depth + "] " + best.bidderUsername + " đặt " + requireAmount + " | phiên: " + auctionId);
             triggerChain(auction, depth + 1);   
         } catch (InvalidBidException e) {
