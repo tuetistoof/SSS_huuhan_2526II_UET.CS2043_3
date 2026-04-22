@@ -1,18 +1,20 @@
 package com.ssscloud.auction.client.controller;
 
 import java.io.IOException;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.LoginRequest;
 import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.util.JsonUtils;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -138,11 +140,11 @@ public class SignUpController {
         boolean hasError = false;
 
         if (firstName.isEmpty()) {
-            txtUsername.getStyleClass().add("input-error");
+            txtFirstName.getStyleClass().add("input-error");
             hasError = true;
         }
         if (lastName.isEmpty()) {
-            txtUsername.getStyleClass().add("input-error");
+            txtLastName.getStyleClass().add("input-error");
             hasError = true;
         }
         if (username.isEmpty()) {
@@ -151,10 +153,6 @@ public class SignUpController {
         }
         if (email.isEmpty()) {
             txtUserEmail.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        if (username.isEmpty()) {
-            txtUsername.getStyleClass().add("input-error");
             hasError = true;
         }
         if (password.isEmpty()) {
@@ -167,7 +165,7 @@ public class SignUpController {
             txtUserPassword.getStyleClass().add("input-error");
             hasError = true;
         }
-        if (role.isEmpty()) {
+        if (role == null || role.isEmpty()) {
             hasError = true;
         }
         if (hasError == true) {
@@ -198,13 +196,14 @@ public class SignUpController {
                     if (jsonResponse != null && !jsonResponse.isEmpty()) {
                         ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
 
-                        if ("REGISTER_RESPONS".equals(serverMsg.getAction())) {
+                        if ("REGISTER_RESPONSE".equals(serverMsg.getAction())) {
                             String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                            ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, ApiResponse.class);
+
+                            Type type = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
+                            ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
                             isSuccess = response.isSuccess();
                             if (isSuccess) {
                                 userDTO = response.getData();
-                                // Trả về chưa hợp lí
                             }
                             else {
                                 errorMessage = response.getMessage(); // Lấy câu chửi từ server
@@ -222,30 +221,36 @@ public class SignUpController {
                     final boolean finalSuccess = isSuccess;
                     final String finalErrorMessage = errorMessage;
                     final UserDTO finalUser = userDTO;
-//                    final boolean finalSuccess = true;
-//                    final String finalErrorMessage = "";
 
                     javafx.application.Platform.runLater(() -> {
                         // Tắt hoạt cảnh
                         loadingController.stopAnimation();
                         loading.setVisible(false);
 
-                        //login vào home
                         if (finalSuccess) {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Success");
+                            alert.setHeaderText(null);
+                            alert.setContentText("Registration successful! You can now log in with your new account.");
+                            alert.showAndWait();
                             try {
-                                SessionManager.getInstance().setCurrentUser(finalUser);
-
                                 Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
                                 btnSignUp.getScene().setRoot(homeRoot);
                             } catch (IOException e) {
                                 e.printStackTrace();
+                                lblError.setText("Failed to load home screen.");
+                                lblError.setVisible(true);
+                                lblError.setManaged(true);
                             }
+                            
+                        } else {
+                            Alert alert = new Alert(Alert.AlertType.ERROR);
+                            alert.setTitle("Registration Failed");
+                            alert.setHeaderText(null);
+                            alert.setContentText(finalErrorMessage);
+                            alert.showAndWait();
                         }
-                        else {
-                            lblError.setText(finalErrorMessage);
-                            lblError.setVisible(true);
-                            lblError.setManaged(true);
-                        }
+                        
                     });
                 }
                 catch (Exception e) {
