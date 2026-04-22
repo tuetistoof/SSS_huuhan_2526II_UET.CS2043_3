@@ -12,6 +12,7 @@ public class CreateAuctionRequest implements Serializable {
     private long startingPrice;
     private long minIncrement;
     private LocalDateTime endTime;
+    private String itemType;  // Loại sản phẩm (ART, ELECTRONIC, VEHICLE)
 
     public CreateAuctionRequest() {}
 
@@ -33,12 +34,14 @@ public class CreateAuctionRequest implements Serializable {
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
+    public String getItemType() { return itemType; }
+    public void setItemType(String itemType) { this.itemType = itemType; }
+
     @Override
     public String toString() {
         return "CreateAuctionRequest{" +
-                "sellerId='" + sellerId + '\'' +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
+                "title='" + title + '\'' +
+                ", itemType='" + itemType + '\'' +
                 ", startingPrice=" + startingPrice +
                 ", minIncrement=" + minIncrement +
                 ", endTime=" + endTime +

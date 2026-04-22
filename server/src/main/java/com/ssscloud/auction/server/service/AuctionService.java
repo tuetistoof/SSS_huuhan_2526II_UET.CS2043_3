@@ -12,18 +12,23 @@ import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionListResponse;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
+import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.enums.ItemStatus;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.service.ItemService;
 
 public class AuctionService {
     
     private final Map<String, Auction> activeAuctions = new ConcurrentHashMap<>();
     private final AuctionDAO auctionDAO;
+    private final ItemService itemService;
 
-    public AuctionService(AuctionDAO auctionDAO){
+    public AuctionService(AuctionDAO auctionDAO, ItemService itemService){
         this.auctionDAO = auctionDAO;
+        this.itemService = itemService;
     }
 
-    // Khởi tạo auction mới
+    // Khởi tạo auction mới từ item đã tạo
     public AuctionDTO creatAuction(CreateAuctionRequest req, String sellerId){
         if (req.getTitle() == null || req.getTitle().isBlank())
             throw new IllegalArgumentException("Tiêu đề không được trống");
@@ -31,14 +36,52 @@ public class AuctionService {
             throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0");
         if (req.getEndTime() == null || req.getEndTime().isBefore(LocalDateTime.now()))
             throw new IllegalArgumentException("Thời gian kết thúc không hợp lệ");
+        if (req.getItemId() == null || req.getItemId().isBlank())
+            throw new IllegalArgumentException("ItemId không được trống");
 
-        String id = UUID.randomUUID().toString();
-        AuctionConfig config = new AuctionConfig(id, sellerId, (long) req.getStartingPrice(), calculateMinIncrement((long) req.getStartingPrice()), LocalDateTime.now(), req.getEndTime(), 60, req.getDescription());
-        Auction auction = new Auction(config, null, sellerId, id); 
+        // Lấy item từ ItemService
+        Item item = itemService.getItem(req.getItemId());
+        if (item == null) {
+            throw new IllegalArgumentException("Không tìm thấy item: " + req.getItemId());
+        }
 
-        activeAuctions.put(id, auction);
+        // Kiểm tra item có thể mở đấu giá không (phải ở DRAFT hoặc EXPIRED)
+        if (!itemService.canAuctionItem(req.getItemId())) {
+            throw new IllegalArgumentException(
+                "Chỉ có thể mở đấu giá cho items ở trạng thái DRAFT hoặc EXPIRED, " +
+                "item này ở trạng thái: " + item.getStatus().getDisplayName()
+            );
+        }
 
-        System.out.println("[Auction Service] Tạo phiên: " + id + " | " + req.getTitle());
+        // Tạo ID cho auction
+        String auctionId = UUID.randomUUID().toString();
+
+        // Tạo AuctionConfig
+        AuctionConfig config = new AuctionConfig(
+            auctionId,
+            req.getTitle(),
+            req.getStartingPrice(),
+            req.getMinIncrement() > 0 ? req.getMinIncrement() : calculateMinIncrement(req.getStartingPrice()),
+            LocalDateTime.now(),
+            req.getEndTime(),
+            60,
+            req.getDescription()
+        );
+        
+        // Tạo Auction
+        Auction auction = new Auction(config, null, sellerId, req.getItemId());
+
+        // Cập nhật status item thành AUCTIONING
+        itemService.updateItemStatus(req.getItemId(), ItemStatus.AUCTIONING);
+
+        // Lưu vào trong-memory store
+        activeAuctions.put(auctionId, auction);
+
+        System.out.println("[Auction Service] Tạo phiên: " + auctionId + 
+                         " | Sản phẩm: " + item.getName() + 
+                         " | Loại: " + item.getType().name() +
+                         " | Item ID: " + req.getItemId());
+        
         return toDTO(auction);
     }
 
@@ -71,9 +114,26 @@ public class AuctionService {
 
         ConcurrentBidManager.getInstance().removeLock(auctionID);
 
+        // Cập nhật status item dựa trên kết quả đấu giá
+        String itemId = auction.getItemId();
+        ItemStatus newStatus;
+        
+        if (auction.getHighestBidderName() != null && !auction.getHighestBidderName().isEmpty()) {
+            // Có người thắng → SOLD
+            newStatus = ItemStatus.SOLD;
+        } else {
+            // Chưa có lượt đấu → EXPIRED
+            newStatus = ItemStatus.EXPIRED;
+        }
+        
+        itemService.updateItemStatus(itemId, newStatus);
+
         activeAuctions.remove(auctionID);
 
-        System.out.println("[Aution Service] Kết thúc phiên: " + auctionID + " | Người thắng: " + auction.getHighestBidderName() + " | Giá cuối: " + auction.getCurrentPrice());
+        System.out.println("[Auction Service] Kết thúc phiên: " + auctionID + 
+                         " | Người thắng: " + auction.getHighestBidderName() + 
+                         " | Giá cuối: " + auction.getCurrentPrice() +
+                         " | Cập nhật item status: " + newStatus.getDisplayName());
 
     }
 

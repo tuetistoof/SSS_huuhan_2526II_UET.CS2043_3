@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+
+    <top>
+        <VBox style="-fx-background-color: #1976d2; -fx-text-fill: white;" spacing="10">
+            <padding>
+                <Insets top="15" right="20" bottom="15" left="20"/>
+            </padding>
+            <Label text="Thông tin sản phẩm" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: white;"/>
+            <Label text="Điền thông tin sản phẩm của bạn" style="-fx-font-size: 12; -fx-text-fill: #e0e0e0;"/>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-padding: 0;">
+            <VBox spacing="15" style="-fx-padding: 20;">
+
+                <!-- Item Type Selection -->
+                <VBox spacing="8">
+                    <Label text="* Loại sản phẩm" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <HBox spacing="15">
+                        <RadioButton text="Nghệ thuật" selected="true" style="-fx-font-size: 12;"/>
+                        <RadioButton text="Điện tử" style="-fx-font-size: 12;"/>
+                        <RadioButton text="Xe cộ" style="-fx-font-size: 12;"/>
+                    </HBox>
+                </VBox>
+
+                <Separator/>
+
+                <!-- Title -->
+                <VBox spacing="8">
+                    <Label text="* Tên sản phẩm" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <TextField promptText="VD: Tranh Picasso hiếm, iPhone 15 Pro Max..." style="-fx-font-size: 12; -fx-padding: 10;">
+                        <VBox.margin>
+                            <Insets right="20"/>
+                        </VBox.margin>
+                    </TextField>
+                </VBox>
+
+                <!-- Price -->
+                <VBox spacing="8">
+                    <Label text="* Giá khởi điểm (VNĐ)" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <TextField promptText="VD: 1000000" style="-fx-font-size: 12; -fx-padding: 10;">
+                        <VBox.margin>
+                            <Insets right="20"/>
+                        </VBox.margin>
+                    </TextField>
+                </VBox>
+
+                <!-- Creator/Author -->
+                <VBox spacing="8">
+                    <Label text="Tác giả / Nhà sản xuất" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <TextField promptText="VD: Picasso, Apple, Ferrari..." style="-fx-font-size: 12; -fx-padding: 10;">
+                        <VBox.margin>
+                            <Insets right="20"/>
+                        </VBox.margin>
+                    </TextField>
+                </VBox>
+
+                <!-- Manufacturing Date -->
+                <VBox spacing="8">
+                    <Label text="Năm sản xuất" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <DatePicker style="-fx-font-size: 12; -fx-padding: 8;">
+                        <VBox.margin>
+                            <Insets right="20"/>
+                        </VBox.margin>
+                    </DatePicker>
+                </VBox>
+
+                <!-- Description -->
+                <VBox spacing="8" VBox.vgrow="ALWAYS">
+                    <Label text="* Mô tả chi tiết" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <TextArea wrapText="true" promptText="Mô tả đầy đủ về sản phẩm: tình trạng, đặc điểm, lý do bán..." style="-fx-font-size: 12; -fx-padding: 10;" minHeight="150" VBox.vgrow="ALWAYS">
+                        <VBox.margin>
+                            <Insets right="20"/>
+                        </VBox.margin>
+                    </TextArea>
+                </VBox>
+
+                <Separator/>
+
+                <!-- Images Section -->
+                <VBox spacing="8">
+                    <Label text="Hình ảnh sản phẩm" style="-fx-font-size: 12; -fx-font-weight: bold;"/>
+                    <HBox spacing="10">
+                        <Button text="+ Thêm ảnh" style="-fx-padding: 8 15;"/>
+                        <Label text="Bạn có thể tải lên nhiều ảnh" style="-fx-text-fill: #666; -fx-font-size: 11;"/>
+                    </HBox>
+                    <HBox spacing="10" style="-fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-style: dashed; -fx-padding: 15;" minHeight="100">
+                        <Label text="[Ảnh sẽ hiển thị ở đây]" style="-fx-text-fill: #999;"/>
+                    </HBox>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <bottom>
+        <HBox spacing="10" style="-fx-padding: 15 20; -fx-background-color: #f5f5f5; -fx-border-color: #e0e0e0; -fx-border-width: 1 0 0 0;">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="❌ Hủy" style="-fx-font-size: 12; -fx-padding: 10 20;"/>
+            <Button text="✓ Lưu sản phẩm" style="-fx-font-size: 12; -fx-padding: 10 20; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;"/>
+        </HBox>
+    </bottom>
+</BorderPane>
