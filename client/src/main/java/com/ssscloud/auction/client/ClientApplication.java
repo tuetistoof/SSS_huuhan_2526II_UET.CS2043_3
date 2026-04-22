@@ -21,6 +21,7 @@ public class ClientApplication extends Application {
         AuctionClientSocket.getInstance().connect("localhost", 5000);
         SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
+        SceneManager.layoutMainRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
         
         Scene scene = new Scene(SceneManager.loginScene);
         //primaryStage.initStyle(StageStyle.UNDECORATED);

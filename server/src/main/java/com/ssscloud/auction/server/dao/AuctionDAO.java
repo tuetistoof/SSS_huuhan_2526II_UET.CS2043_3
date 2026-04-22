@@ -21,10 +21,10 @@ import com.ssscloud.auction.common.model.base.AuctionConfig;
 public class AuctionDAO extends BaseDAO {
     public boolean saveAuction(Auction auction) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlAuctionConfig = "INSERT INTO auction_config (id, name, start_price, min_increment, start_time, end_time, extend_second, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sqlAuctionConfig = "INSERT INTO auction_config (id, name, min_increment, start_time, end_time, extend_second, description) VALUES (?, ?, ?, ?, ?, ?, ?)";
         String sqlAuction = "INSERT INTO auction (id, status, seller_id, item_id) VALUES (?, ?, ?, ?)";
         Connection conn = null;
-        PreparedStatement psEntity = null, psAuctionConfig = null, psAuction = null, psBidTransaction = null;
+        PreparedStatement psEntity = null, psAuctionConfig = null, psAuction = null;
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
@@ -37,12 +37,11 @@ public class AuctionDAO extends BaseDAO {
             psAuctionConfig = conn.prepareStatement(sqlAuctionConfig);
             psAuctionConfig.setString(1, auction.getAuctionConfig().getId());
             psAuctionConfig.setString(2, auction.getAuctionConfig().getName());
-            psAuctionConfig.setLong(3, auction.getAuctionConfig().getStartPrice());
-            psAuctionConfig.setLong(4, auction.getAuctionConfig().getMinIncrement());
-            psAuctionConfig.setObject(5, auction.getAuctionConfig().getStartTime());
-            psAuctionConfig.setObject(6, auction.getAuctionConfig().getEndTime());
-            psAuctionConfig.setInt(7, auction.getAuctionConfig().getExtendSecond());
-            psAuctionConfig.setString(8, auction.getAuctionConfig().getDescription());
+            psAuctionConfig.setLong(3, auction.getAuctionConfig().getMinIncrement());
+            psAuctionConfig.setObject(4, auction.getAuctionConfig().getStartTime());
+            psAuctionConfig.setObject(5, auction.getAuctionConfig().getEndTime());
+            psAuctionConfig.setInt(6, auction.getAuctionConfig().getExtendSecond());
+            psAuctionConfig.setString(7, auction.getAuctionConfig().getDescription());
             psAuctionConfig.executeUpdate();
 
             psAuction = conn.prepareStatement(sqlAuction);
@@ -69,13 +68,13 @@ public class AuctionDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
-            closeResource(psEntity, psAuction, psAuctionConfig, psBidTransaction);
+            closeResource(psEntity, psAuction, psAuctionConfig);
         }
     }
 
     public List<Auction> findBySellerId(String sellerId) {
         String sql = "SELECT a.id, a.status, a.seller_id, a.item_id, " +
-                "ac.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, ac.description, "
+                "ac.name, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, ac.description, "
                 +
                 "b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM auction a " +
@@ -122,7 +121,7 @@ public class AuctionDAO extends BaseDAO {
 
     public Auction findByAuctionId(String id) {
         String sql = "SELECT a.id, a.status, a.seller_id, a.item_id, " +
-                "ac.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, ac.description, "
+                "ac.name, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, ac.description, "
                 +
                 "b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM auction a " +
@@ -163,7 +162,7 @@ public class AuctionDAO extends BaseDAO {
 
     public List<Auction> findByStatus(AuctionStatus status) {
         String sql = "SELECT a.id, a.status, a.seller_id, a.item_id, " +
-                "ac.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, ac.description, "
+                "ac.name, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, ac.description, "
                 +
                 "b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM auction a " +
@@ -233,7 +232,6 @@ public class AuctionDAO extends BaseDAO {
     private Auction mapResultSetToAuction(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
         String name = rs.getString("name");
-        long startPrice = rs.getLong("start_price");
         long minIncrement = rs.getLong("min_increment");
         LocalDateTime startTime = toLocalDateTime(rs.getTimestamp("start_time"));
         LocalDateTime endTime = toLocalDateTime(rs.getTimestamp("end_time"));
@@ -243,9 +241,7 @@ public class AuctionDAO extends BaseDAO {
         String sellerId = rs.getString("seller_id");
         String itemId = rs.getString("item_id");
 
-        AuctionConfig config = new AuctionConfig(
-                id, name, startPrice, minIncrement,
-                startTime, endTime, extendSecond, description);
+        AuctionConfig config = new AuctionConfig(id, name, minIncrement, startTime, endTime, extendSecond, description);
 
         return new Auction(config, status, sellerId, itemId, new ArrayList<>());
     }

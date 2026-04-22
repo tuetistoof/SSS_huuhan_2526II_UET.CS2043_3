@@ -165,14 +165,12 @@ public class LoginSignupController {
 
                         //login vào home
                         if (finalSuccess) {
-                            try {
-                                SessionManager.getInstance().setCurrentUser(finalUser);
+                            SessionManager.getInstance().setCurrentUser(finalUser);
 
-                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
-                                btnLogin.getScene().setRoot(homeRoot);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            Scene currentScene = btnLogin.getScene();
+                            currentScene.setRoot(SceneManager.layoutMainRoot);
+                            Stage stage = (Stage) currentScene.getWindow();
+                            stage.sizeToScene();
                         }
                         else {
                             lblError.setText(finalErrorMessage);
