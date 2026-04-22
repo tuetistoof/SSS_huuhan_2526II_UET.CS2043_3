@@ -9,7 +9,6 @@ public class CreateAuctionRequest implements Serializable {
     private long startPrice;
     private long minIncrement;
     private LocalDateTime startTime;
-    private LocalDateTime startTime;
     private LocalDateTime endTime;
     private ItemData itemData;
 
