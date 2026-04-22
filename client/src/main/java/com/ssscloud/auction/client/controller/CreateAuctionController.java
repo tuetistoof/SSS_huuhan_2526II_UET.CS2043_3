@@ -7,7 +7,6 @@ import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.request.ItemData;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.enums.ItemType;
 import com.ssscloud.auction.common.util.JsonUtils;
  
 import javafx.application.Platform;
