@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.ssscloud.auction.common.enums.ItemType;
+import com.ssscloud.auction.common.enums.ItemStatus;
 
 public abstract class Item extends Entity {
     // tinh theo gia viet nam nen de la long
@@ -14,6 +15,7 @@ public abstract class Item extends Entity {
     private String description;
     private ItemType type;
     private List<String> imageUrl;
+    private ItemStatus status = ItemStatus.DRAFT;  // Trạng thái mặc định là DRAFT
     // khong nen de la final de cho he thong co the sua duoc kieu v
     // he thong tinh toan tien tu dong lam tron len
     // private final double transactionFee = 0.1;
@@ -32,6 +34,7 @@ public abstract class Item extends Entity {
         this.description = description;
         this.type = type;
         this.imageUrl = imageUrl;
+        this.status = ItemStatus.DRAFT;
     }
 
     public Item(String id, String name, String sellerID, long basePrice, LocalDate manufacturingDate, String creator, String description, ItemType type, List <String> imageUrl) {
@@ -43,6 +46,19 @@ public abstract class Item extends Entity {
         this.description = description;
         this.type = type;
         this.imageUrl = imageUrl;
+        this.status = ItemStatus.DRAFT;
+    }
+
+    public Item(String id, String name, String sellerID, long basePrice, LocalDate manufacturingDate, String creator, String description, ItemType type, List <String> imageUrl, ItemStatus status) {
+        super(id, name);
+        this.sellerId = sellerID;
+        this.basePrice = basePrice;
+        this.manufacturingDate = manufacturingDate;
+        this.creator = creator;
+        this.description = description;
+        this.type = type;
+        this.imageUrl = imageUrl;
+        this.status = status;
     }
 
     // them anh xoa anh
@@ -62,6 +78,9 @@ public abstract class Item extends Entity {
 
     // getter setter
     // khong thay doi duoc nguoi ban
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
     public String getSellerId() {
         return sellerId;
     }
@@ -103,6 +122,15 @@ public abstract class Item extends Entity {
     public List<String> getImageUrl() {
         return imageUrl;
     }
+
+    public ItemStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ItemStatus status) {
+        this.status = status;
+    }
+
 
     // public double getTransactionFee() {
     //     return transactionFee;

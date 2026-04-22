@@ -12,7 +12,9 @@ import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionListResponse;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
+import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.factory.ItemFactory;
 
 public class AuctionService {
     
@@ -31,14 +33,41 @@ public class AuctionService {
             throw new IllegalArgumentException("Giá khởi điểm phải lớn hơn 0");
         if (req.getEndTime() == null || req.getEndTime().isBefore(LocalDateTime.now()))
             throw new IllegalArgumentException("Thời gian kết thúc không hợp lệ");
+        if (req.getItemType() == null || req.getItemType().isBlank())
+            throw new IllegalArgumentException("Loại sản phẩm không được trống");
 
-        String id = UUID.randomUUID().toString();
-        AuctionConfig config = new AuctionConfig(id, sellerId, (long) req.getStartingPrice(), calculateMinIncrement((long) req.getStartingPrice()), LocalDateTime.now(), req.getEndTime(), 60, req.getDescription());
-        Auction auction = new Auction(config, null, sellerId, id); 
+        // Tạo ID cho auction và item
+        String auctionId = UUID.randomUUID().toString();
+        String itemId = UUID.randomUUID().toString();
 
-        activeAuctions.put(id, auction);
+        // Tạo item bằng ItemFactory dựa trên itemType
+        Item item = ItemFactory.createItem(req, req.getItemType());
+        item.setId(itemId);
+        item.setSellerId(sellerId);
+        
+        // Tạo AuctionConfig
+        AuctionConfig config = new AuctionConfig(
+            auctionId,
+            req.getTitle(),
+            (long) req.getStartingPrice(),
+            calculateMinIncrement((long) req.getStartingPrice()),
+            LocalDateTime.now(),
+            req.getEndTime(),
+            60,
+            req.getDescription()
+        );
+        
+        // Tạo Auction
+        Auction auction = new Auction(config, null, sellerId, itemId);
 
-        System.out.println("[Auction Service] Tạo phiên: " + id + " | " + req.getTitle());
+        // Lưu vào trong-memory store
+        activeAuctions.put(auctionId, auction);
+
+        System.out.println("[Auction Service] Tạo phiên: " + auctionId + 
+                         " | Sản phẩm: " + item.getName() + 
+                         " | Loại: " + req.getItemType() +
+                         " | Item ID: " + itemId);
+        
         return toDTO(auction);
     }
 

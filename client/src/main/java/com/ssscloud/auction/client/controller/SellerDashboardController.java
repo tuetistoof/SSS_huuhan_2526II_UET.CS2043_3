@@ -84,7 +84,7 @@ public class SellerDashboardController implements Initializable {
     private void setupTableColumns() {
  
         colTitle.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getTitle()));
+            new SimpleStringProperty(c.getValue().getName()));
  
         colCurrentPrice.setCellValueFactory(c ->
             new SimpleStringProperty(formatPrice(c.getValue().getCurrentPrice())));
@@ -192,7 +192,7 @@ public class SellerDashboardController implements Initializable {
     private void updateMetrics() {
         long running  = masterList.stream().filter(a -> a.getStatus() == AuctionStatus.RUNNING).count();
         long total    = masterList.size();
-        //long bidTotal = masterList.stream().mapToLong(AuctionDTO::getBidCount).sum();
+        long bidTotal = masterList.stream().mapToLong(AuctionDTO::getBidCount).sum();
         double maxPrice = masterList.stream()
             .filter(a -> a.getStatus() == AuctionStatus.FINISHED || a.getStatus() == AuctionStatus.PAID)
             .mapToDouble(AuctionDTO::getCurrentPrice).max().orElse(0);
@@ -256,7 +256,7 @@ public class SellerDashboardController implements Initializable {
  
     private void handleDeleteAuction(AuctionDTO auction) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-            "Xóa phiên \"" + auction.getTitle() + "\"?",
+            "Xóa phiên \"" + auction.getName() + "\"?",
             ButtonType.YES, ButtonType.CANCEL);
         confirm.setTitle("Xác nhận xóa");
         confirm.showAndWait().ifPresent(btn -> {
