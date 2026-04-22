@@ -8,7 +8,6 @@ import java.util.List;
 
 public class Electronic extends Item {
     private boolean isRepaired; 
-    private LocalDate purchaseDate;
     private int warrantyPeriod;
     // constructor ko co 2 thuoc tinh rieng cua Electronic vi chi khi mua hang moi xuat hien trang thai day nen lat nua viet o setter
 
@@ -16,13 +15,11 @@ public class Electronic extends Item {
     public Electronic (String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
         super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
         this.isRepaired = isRepaired;
-        this.purchaseDate = null;
         this.warrantyPeriod = warrantyPeriod;
     }
-    public Electronic (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, LocalDate purchaseDate, int warrantyPeriod){        
+    public Electronic (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
         super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type,imageUrl);
         this.isRepaired = isRepaired;
-        this.purchaseDate = purchaseDate;
         this.warrantyPeriod = warrantyPeriod;
     }
     
@@ -48,12 +45,6 @@ public class Electronic extends Item {
     }
     public void setIsRepair(boolean isRepaired){
         this.isRepaired = isRepaired;
-    }
-    public LocalDate getPurchaseDate() {
-        return purchaseDate;
-    }
-    public void setPurchaseDate(LocalDate purchaseDate) {
-        this.purchaseDate = purchaseDate;
     }
 
     public int getWarrantyPeriod() {

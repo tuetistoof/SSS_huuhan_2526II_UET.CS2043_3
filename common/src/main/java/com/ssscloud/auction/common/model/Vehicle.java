@@ -8,7 +8,6 @@ import java.util.List;
 
 public class Vehicle extends Item {
     private boolean isRepaired;
-    private LocalDate purchaseDate;
     private int warrantyPeriod;
 
 
@@ -16,13 +15,11 @@ public class Vehicle extends Item {
     public Vehicle (String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type, List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
         super(name, sellerId, basePrice, manufacturingDate, creator, description, type, imageUrl);
         this.isRepaired = isRepaired;
-        this.purchaseDate = null;
         this.warrantyPeriod = warrantyPeriod;
     }
-    public Vehicle (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type,  List<String> imageUrl, boolean isRepaired,LocalDate purchaseDate, int warrantyPeriod){        
+    public Vehicle (String id, String name, String sellerId, long basePrice, LocalDate manufacturingDate,String creator, String description, ItemType type,  List<String> imageUrl, boolean isRepaired, int warrantyPeriod){        
         super(id, name, sellerId, basePrice, manufacturingDate, creator, description, type,imageUrl);
         this.isRepaired = isRepaired;
-        this.purchaseDate = purchaseDate;
         this.warrantyPeriod = warrantyPeriod;
     }
     
@@ -37,13 +34,6 @@ public class Vehicle extends Item {
     public void setIsRepaires(boolean isRepaired){
         this.isRepaired = isRepaired;
     }
-    public LocalDate getPurchaseDate() {
-        return purchaseDate;
-    }
-    public void setPurchaseDate(LocalDate purchaseDate) {
-        this.purchaseDate = purchaseDate;
-    }
-
     public int getWarrantyPeriod() {
         return warrantyPeriod;
     }
