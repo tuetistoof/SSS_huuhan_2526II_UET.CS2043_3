@@ -2,7 +2,6 @@ package com.ssscloud.auction.common.model;
 
 import com.ssscloud.auction.common.model.base.Item;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public class Electronic extends Item {
@@ -22,16 +21,6 @@ public class Electronic extends Item {
         this.warrantyPeriod = warrantyPeriod;
     }
     
-    // neu sân pham da sam xuat lau hon 3 nam thi giam 10%
-    // @Override
-    // public double getPrice() {
-    //     LocalDate now = LocalDate.now();
-    //     Period period = Period.between(super.getManufacturingDate(), now);
-    //     double lastPrice = super.getBasePrice();
-    //     if (period.getYears() >= 3)
-    //         lastPrice = super.getBasePrice() * 0.9;
-    //     return lastPrice + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());
-    // }
     
     public boolean checkIsRepair(){
         return isRepaired;

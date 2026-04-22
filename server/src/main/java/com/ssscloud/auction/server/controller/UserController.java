@@ -11,8 +11,11 @@ import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.UserDAO;
 
 public class UserController {
-    private UserDAO userDAO = new UserDAO();
-
+    private UserDAO userDAO;
+    public UserController (UserDAO userDAO)
+    {
+        this.userDAO = userDAO;
+    }
     public String login(Object data) {
         try {
             String dataJsonString = JsonUtils.toJson(data);

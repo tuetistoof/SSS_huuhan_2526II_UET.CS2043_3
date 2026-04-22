@@ -10,9 +10,12 @@ import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 
 public class BidController {
-    private final BidService bidService = new BidService();
-    private final AutoBidService autoBidService = new AutoBidService();
-
+    private final BidService bidService;
+    // private final AutoBidService autoBidService = new AutoBidService();
+    public BidController (BidService bidService)
+    {
+        this.bidService = bidService;
+    }
     // trong messageHandler chuyển msg thô, chưa xử lí
     public String placeBid(Object data, String bidderId, String bidderUsername) {
         try {
@@ -42,33 +45,33 @@ public class BidController {
         }
     }
 
-    public String registerAutoBid(Object data, String bidderId, String bidderUsername) {
-        try {
-            String raw = JsonUtils.toJson(data);
-            AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
+    // public String registerAutoBid(Object data, String bidderId, String bidderUsername) {
+    //     try {
+    //         String raw = JsonUtils.toJson(data);
+    //         AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
 
-            if (req == null) {
-                return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
-            }
-            // validate cơ bản
-            if (req.getAuctionId() == null || req.getAuctionId().isBlank()) {
-                return JsonUtils.toJson(ApiResponse.error("Thiếu auctionId"));
-            }
-            if (bidderId == null || bidderId.isBlank()) {
-                return JsonUtils.toJson(ApiResponse.error("Thiếu bidderId"));
-            }
-            if (BidValidator.isPositiveBid(req.getMaxBid())) {
-                return JsonUtils.toJson(ApiResponse.error("Số tiền đặt phải lớn hơn 0"));
-            }
+    //         if (req == null) {
+    //             return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
+    //         }
+    //         // validate cơ bản
+    //         if (req.getAuctionId() == null || req.getAuctionId().isBlank()) {
+    //             return JsonUtils.toJson(ApiResponse.error("Thiếu auctionId"));
+    //         }
+    //         if (bidderId == null || bidderId.isBlank()) {
+    //             return JsonUtils.toJson(ApiResponse.error("Thiếu bidderId"));
+    //         }
+    //         if (BidValidator.isPositiveBid(req.getMaxBid())) {
+    //             return JsonUtils.toJson(ApiResponse.error("Số tiền đặt phải lớn hơn 0"));
+    //         }
 
-            BidDTO result = 
+    //         BidDTO result = 
             
-            return JsonUtils.toJson(ApiResponse.success(result, "Đặt giá thành công"));
+    //         return JsonUtils.toJson(ApiResponse.success(result, "Đặt giá thành công"));
 
-        } catch (Exception e) {
-            System.err.println("[BidController] Lỗi placeBid: " + e.getMessage());
-            return JsonUtils.toJson(ApiResponse.error("Lỗi hệ thống khi đặt giá"));
-        }
-    }
+    //     } catch (Exception e) {
+    //         System.err.println("[BidController] Lỗi placeBid: " + e.getMessage());
+    //         return JsonUtils.toJson(ApiResponse.error("Lỗi hệ thống khi đặt giá"));
+    //     }
+    // }
 
 }
