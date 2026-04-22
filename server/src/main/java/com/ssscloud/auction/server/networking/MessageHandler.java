@@ -1,6 +1,8 @@
 package com.ssscloud.auction.server.networking;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -40,27 +42,35 @@ public class MessageHandler {
             //Dựa vào action để gọi Controller phù hợp
             switch (action) {
                 case "LOGIN": {
+                    // Chay logic login trong server
                     String responseJson = userController.login(msg.getData());
-                    // Inject session nếu login thành công
-                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, UserDTO.class);
+
+                    Type apiUserType  = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType );
+
                     if (parsed != null && parsed.isSuccess() && parsed.getData() != null) {
                         client.setSession(parsed.getData().getId(), parsed.getData().getUsername());
                     }
                     //wrap trong ClientMessage type=RESPONSE để AuctionClientSocket route đúng
-                    return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE",
-                            JsonUtils.fromJson(responseJson, ApiResponse.class)));
+                    return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", parsed));
                 }
 
 
-                case "REGISTER":
-                    return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE",
-                            JsonUtils.fromJson(userController.register(msg.getData()), ApiResponse.class)));
+                case "REGISTER": {
+                    // Chay logic register trong server
+                    String responseJson = userController.register(msg.getData());
+
+                    Type apiUserType  = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType );
+
+                    return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", parsed));
                     
                 // case "CREATE_AUCTION":
                 //     return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
                 //             JsonUtils.fromJson(auctionController.createAuction(msg.getData()), ApiResponse.class)));
+                }
 
-                case "PLACE_BID":
+                case "PLACE_BID": {
                     String raw = JsonUtils.toJson(msg.getData());
                     PlaceBidRequest req = JsonUtils.fromJson(raw, PlaceBidRequest.class);
                     if (req == null) {
@@ -70,14 +80,15 @@ public class MessageHandler {
                     req.setBidderUsername(client.getUsername());
                     return JsonUtils.toJson(ClientMessage.request("PLACE_BID_RESPONSE",
                             JsonUtils.fromJson(bidController.placeBid(req), ApiResponse.class)));
-
+                }
                 // case "AUTO_BID":
                 //     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
                 //             JsonUtils.fromJson(bidController.registerAutoBid(msg.getData()), ApiResponse.class)));
  
-                default:
+                default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",
                             ApiResponse.error("Action không được hỗ trợ: " + action)));
+                }
             }
 
         } catch (Exception e) {

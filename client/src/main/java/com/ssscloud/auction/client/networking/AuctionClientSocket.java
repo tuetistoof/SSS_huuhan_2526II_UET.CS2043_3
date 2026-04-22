@@ -41,10 +41,11 @@ public class AuctionClientSocket {
     }
 
     private Socket socket;
-    private PrintWriter out;      // ghi ra server
-    private BufferedReader in;    // đọc từ server
+    private PrintWriter out;
+    private BufferedReader in;
     private boolean connected = false;
-    private final List<MessageListener> listeners = new ArrayList<>();              //dùng cho pull
+    // private final List<MessageListener> listeners = new ArrayList<>();              //dùng cho pull
+    private final List<MessageListener> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();    
     private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();//dùng req-res
 
     private void startListenerThread() {  

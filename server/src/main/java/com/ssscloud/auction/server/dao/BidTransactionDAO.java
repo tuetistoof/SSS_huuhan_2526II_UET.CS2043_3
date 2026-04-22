@@ -29,7 +29,7 @@ public class BidTransactionDAO extends BaseDAO {
             psBidTransaction.setLong(4, bidTransaction.getBidAmount());
             psBidTransaction.setObject(5, bidTransaction.getBidTime());
             psBidTransaction.setString(6, bidTransaction.getType().name());
-            psBidTransaction.executeQuery();
+            psBidTransaction.executeUpdate();
 
             conn.commit();
             logger.info("da luu bidTransaction");
@@ -61,7 +61,7 @@ public class BidTransactionDAO extends BaseDAO {
             psBidTransaction.setLong(4, bidTransaction.getBidAmount());
             psBidTransaction.setObject(5, bidTransaction.getBidTime());
             psBidTransaction.setString(6, bidTransaction.getType().name());
-            psBidTransaction.executeQuery();
+            psBidTransaction.executeUpdate();
 
             conn.commit();
             logger.info("da luu bidTransaction");

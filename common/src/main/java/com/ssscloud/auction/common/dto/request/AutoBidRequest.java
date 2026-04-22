@@ -11,6 +11,12 @@ public class AutoBidRequest implements Serializable{
     private long increment;
 
     public AutoBidRequest() {}
+    public AutoBidRequest(String auctionId, long maxBid, long increment){
+        this.auctionId = auctionId;
+        this.maxBid = maxBid;
+        
+        this.increment = increment;
+    }
 
     public String getAuctionId() { return auctionId; }
     public void setAuctionId(String auctionId) { this.auctionId = auctionId; }

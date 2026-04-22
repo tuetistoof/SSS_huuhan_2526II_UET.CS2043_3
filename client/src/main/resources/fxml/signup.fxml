@@ -89,5 +89,6 @@
             <Insets bottom="60.0" left="200.0" right="200.0" top="60.0" />
          </StackPane.margin>
       </HBox>
+      <fx:include fx:id="loading" source="loading.fxml" visible="false" />
    </children>
 </StackPane>

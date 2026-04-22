@@ -21,7 +21,7 @@ public class ItemDAO extends BaseDAO {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO auction_config (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
-        String sqlElectronic = "INSERT INTO electronic (id, is_repaired, purchase_date, warranty_period) VALUES (?, ?, ?, ?)";
+        String sqlElectronic = "INSERT INTO electronic (id, is_repaired, warranty_period) VALUES (?, ?, ?)";
         Connection conn = null;
         PreparedStatement psEntity = null, psItem = null, psIemImageUrl = null, psElectronic = null;
         try {
@@ -53,8 +53,7 @@ public class ItemDAO extends BaseDAO {
             psElectronic = conn.prepareStatement(sqlElectronic);
             psElectronic.setString (1,electronic.getId());
             psElectronic.setBoolean(2, electronic.getIsRepair());
-            psElectronic.setObject(3, electronic.getPurchaseDate());
-            psElectronic.setInt(4, electronic.getWarrantyPeriod());
+            psElectronic.setInt(3, electronic.getWarrantyPeriod());
             psElectronic.executeUpdate();
 
             conn.commit();
@@ -76,7 +75,7 @@ public class ItemDAO extends BaseDAO {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
        String sqlItem = "INSERT INTO item (id, seller_id, manufacturing_date, creator, description, type) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
-        String sqlVehicle = "INSERT INTO vehicle (id, is_repaired, purchase_date, warranty_period) VALUES (?, ?, ?, ?)";
+        String sqlVehicle = "INSERT INTO vehicle (id, is_repaired, warranty_period) VALUES (?, ?, ?)";
 
         Connection conn = null;
         PreparedStatement psEntity = null, psItem = null, psIemImageUrl = null, psVehicle = null;
@@ -109,8 +108,7 @@ public class ItemDAO extends BaseDAO {
             psVehicle = conn.prepareStatement(sqlVehicle);
             psVehicle.setString (1,vehicle.getId());
             psVehicle.setBoolean(2, vehicle.getIsRepaired());
-            psVehicle.setObject(3, vehicle.getPurchaseDate());
-            psVehicle.setInt(4, vehicle.getWarrantyPeriod());
+            psVehicle.setInt(3, vehicle.getWarrantyPeriod());
             psVehicle.executeUpdate();
 
             conn.commit();
@@ -192,8 +190,8 @@ public class ItemDAO extends BaseDAO {
                     "i.seller_id, i.base_price, i.manufacturing_date, i.creator, i.decription, i.type " + 
                     "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
                     "art.certificate AS art_certificate, " + 
-                    "electronic.is_repaired AS electronic_is_repaired, electronic.purchase_date AS electronic_purchase_date, electronic.warranty_period AS electronic_warranty_period, " + 
-                    "vehicle.is_repaired AS vehicle_is_repaired, vehicle.purchase_date AS vehicle_purchase_date, vehicle.warranty_period AS vehicle_warranty_period " +
+                    "electronic.is_repaired AS electronic_is_repaired, electronic.warranty_period AS electronic_warranty_period, " + 
+                    "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
                     "FROM entity e " +
                     "JOIN item i ON e.id = i.id " +
                     "LEFT JOIN item_image img ON i.id = img.item_id " +
@@ -261,8 +259,8 @@ public class ItemDAO extends BaseDAO {
                     "i.seller_id, i.base_price, i.manufacturing_date, i.creator, i.decription, i.type " + 
                     "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
                     "art.certificate AS art_certificate, " + 
-                    "electronic.is_repaired AS electronic_is_repaired, electronic.purchase_date AS electronic_purchase_date, electronic.warranty_period AS electronic_warranty_period, " + 
-                    "vehicle.is_repaired AS vehicle_is_repaired, vehicle.purchase_date AS vehicle_purchase_date, vehicle.warranty_period AS vehicle_warranty_period " +
+                    "electronic.is_repaired AS electronic_is_repaired, electronic.warranty_period AS electronic_warranty_period, " + 
+                    "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
                     "FROM entity e " +
                     "JOIN item i ON e.id = i.id " +
                     "LEFT JOIN item_image img ON i.id = img.item_id " +
@@ -313,16 +311,14 @@ public class ItemDAO extends BaseDAO {
             }
             case VEHICLE: {
                 boolean isRepaired = rs.getBoolean("vehicle_is_repaired");
-                LocalDate purchasDate = rs.getObject("vehicle_purchase_date", LocalDate.class);
                 int warrantyPeriod = rs.getInt("vehicle_warranty_period");
-                Vehicle vehicle = new Vehicle(id, name, sellerId, basePrice, manufacturingDate, creator, decription,type, imageUrl, isRepaired, purchasDate, warrantyPeriod);
+                Vehicle vehicle = new Vehicle(id, name, sellerId, basePrice, manufacturingDate, creator, decription,type, imageUrl, isRepaired, warrantyPeriod);
                 return vehicle;
             }
             case ELECTRONIC: {
                 boolean isRepaired = rs.getBoolean("electronic_is_repaired");
-                LocalDate purchasDate = rs.getObject("electronic_purchase_date", LocalDate.class);
                 int warrantyPeriod = rs.getInt("electronic_warranty_period");
-                Electronic electronic = new Electronic(id, name, sellerId, basePrice, manufacturingDate, creator, decription,type, imageUrl, isRepaired, purchasDate, warrantyPeriod);
+                Electronic electronic = new Electronic(id, name, sellerId, basePrice, manufacturingDate, creator, decription,type, imageUrl, isRepaired, warrantyPeriod);
                 return electronic;
             }
             default:
