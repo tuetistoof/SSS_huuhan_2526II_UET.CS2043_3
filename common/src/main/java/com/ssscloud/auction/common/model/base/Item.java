@@ -14,6 +14,7 @@ public abstract class Item extends Entity {
     private String description;
     private ItemType type;
     private List<String> imageUrl;
+ // Trạng thái mặc định là DRAFT
     // khong nen de la final de cho he thong co the sua duoc kieu v
     // he thong tinh toan tien tu dong lam tron len
     // private final double transactionFee = 0.1;
@@ -62,6 +63,9 @@ public abstract class Item extends Entity {
 
     // getter setter
     // khong thay doi duoc nguoi ban
+    public void setSellerId(String sellerId) {
+        this.sellerId = sellerId;
+    }
     public String getSellerId() {
         return sellerId;
     }
@@ -103,6 +107,8 @@ public abstract class Item extends Entity {
     public List<String> getImageUrl() {
         return imageUrl;
     }
+
+
 
     // public double getTransactionFee() {
     //     return transactionFee;
