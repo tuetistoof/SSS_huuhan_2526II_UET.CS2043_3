@@ -1,10 +1,8 @@
 package com.ssscloud.auction.client.controller;
-
-import java.io.IOException;
-
+import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.response.UserDTO;
-import com.ssscloud.auction.common.enums.UserRole;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -17,7 +15,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
+
+import java.io.IOException;
+
 
 public class MainLayoutController {
 
@@ -47,6 +49,9 @@ public class MainLayoutController {
 
     @FXML
     private HBox navNewAuctionRoom;
+
+    @FXML
+    private Circle navUserInfo;
 
     @FXML
     private HBox navWatchlist;
@@ -111,6 +116,11 @@ public class MainLayoutController {
     }
 
     @FXML
+    void handleLogout(ActionEvent event) {
+
+    }
+
+    @FXML
     void handleNavActiveBids(MouseEvent event) {
 
     }
@@ -133,7 +143,6 @@ public class MainLayoutController {
             e.printStackTrace();
         }
     }
-
     @FXML
     void handleNavHistory(MouseEvent event) {
 
@@ -155,38 +164,7 @@ public class MainLayoutController {
     }
 
     @FXML
-    void handleNavWatchlist(MouseEvent event) {
-
-    }
-
-    @FXML
-    void handleNavWonItems(MouseEvent event) {
-
-    }
-
-    @FXML
-    void toggleSidebar(ActionEvent event) {
-        Timeline timeline = new Timeline();
-        Duration duration = Duration.millis(150);
-
-        if (isSidebarExpanded) {
-            KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_COLLAPSED_WIDTH);
-            KeyFrame kf = new KeyFrame(duration, kv);
-            timeline.getKeyFrames().add(kf);
-
-        } else {
-
-            KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_EXPANDED_WIDTH);
-            KeyFrame kf = new KeyFrame(duration, kv);
-            timeline.getKeyFrames().add(kf);
-        }
-
-        timeline.play();
-        isSidebarExpanded = !isSidebarExpanded;
-    }
-
-    @FXML
-    public void handleNavUserInfo(MouseEvent event) {
+    void handleNavUserInfo(MouseEvent event) {
         System.out.println("Đã click vào khu vực User Info!");
     }
 
@@ -212,4 +190,41 @@ public class MainLayoutController {
     //     }
     // }
     //}
+
+    @FXML
+    void handleNavWatchlist(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleNavWonItems(MouseEvent event) {
+
+    }
+
+    @FXML
+    void handleSearching(MouseEvent event) {
+
+    }
+
+    @FXML
+    void toggleSidebar(ActionEvent event) {
+        Timeline timeline = new Timeline();
+        Duration duration = Duration.millis(150);
+
+        if (isSidebarExpanded) {
+            KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_COLLAPSED_WIDTH);
+            KeyFrame kf = new KeyFrame(duration, kv);
+            timeline.getKeyFrames().add(kf);
+
+        } else {
+
+            KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_EXPANDED_WIDTH);
+            KeyFrame kf = new KeyFrame(duration, kv);
+            timeline.getKeyFrames().add(kf);
+        }
+
+        timeline.play();
+        isSidebarExpanded = !isSidebarExpanded;
+    }
+
 }

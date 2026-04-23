@@ -3,7 +3,6 @@ package com.ssscloud.auction.server.dao;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -19,7 +18,6 @@ public class DatabaseConnection {
     //singleton
     private static DatabaseConnection instance;
 
-    private Connection connection;
 
     private final HikariDataSource dataSource;
     private DatabaseConnection() throws SQLException {

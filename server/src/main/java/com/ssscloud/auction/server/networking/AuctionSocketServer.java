@@ -17,40 +17,36 @@ import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 
-public class AuctionSocketServer{
-    // khong dung thi tam thoi dong vao cho do an canh bao 
+public class AuctionSocketServer {
+    // khong dung thi tam thoi dong vao cho do an canh bao
     // private static final int maxThread = 1000;
     private static ExecutorService pool = Executors.newCachedThreadPool();
 
-    
     public static void main(String[] args) {
-        UserDAO           userDAO           = new UserDAO();
-        AuctionDAO        auctionDAO        = new AuctionDAO();
-        BidTransactionDAO bidTransactionDAO = new BidTransactionDAO(); // FIX: tên đúng
+        UserDAO userDAO = new UserDAO();
+        AuctionDAO auctionDAO = new AuctionDAO();
+        BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
+
         AntiSnipingService antiSnipingService = new AntiSnipingService();
-        AutoBidService     autoBidService     = new AutoBidService();
+        // AutoBidService autoBidService = new AutoBidService();
         AuctionService auctionService = new AuctionService(auctionDAO);
 
-        // FIX: BidService cần 4 dependency, không thể new BidService() không tham số
-        BidService bidService = new BidService(auctionService, bidTransactionDAO, antiSnipingService, autoBidService);
- 
-        // FIX: UserController cần userDAO; BidController cần bidService
-        UserController    userCtrl    = new UserController();
-        AuctionController auctionCtrl = new AuctionController();       // còn rỗng, viết sau
-        BidController     bidCtrl     = new BidController(bidService);
+        BidService bidService = new BidService(auctionDAO, bidTransactionDAO, antiSnipingService);
+        UserController userCtrl = new UserController(userDAO);
+
+        AuctionController auctionCtrl = new AuctionController(auctionService);
+        BidController bidCtrl = new BidController(bidService);
         MessageHandler messageHandler = new MessageHandler(userCtrl, auctionCtrl, bidCtrl);
-    
+
         System.out.println("[Server] Khởi động port 5000...");
 
         try (ServerSocket serverSocket = new ServerSocket(5000)) {
-            while(true){
+            while (true) {
                 Socket clientSocket = serverSocket.accept();
-    
-        
+
                 pool.execute(new ClientHandler(clientSocket, messageHandler));
             }
-        } 
-        catch (IOException e){
+        } catch (IOException e) {
             System.out.println(e.getMessage());
         }
     }

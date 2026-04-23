@@ -102,12 +102,11 @@ DROP TABLE IF EXISTS `auction_config`;
 CREATE TABLE `auction_config` (
   `id` varchar(36) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
-  `start_price` bigint NOT NULL,
+  `start_price` bigint DEFAULT '0',
   `min_increment` bigint NOT NULL,
   `start_time` datetime NOT NULL,
   `end_time` datetime NOT NULL,
   `extend_second` int DEFAULT '0',
-  `description` text,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_auction_config_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -173,6 +172,7 @@ CREATE TABLE `bidder` (
 
 LOCK TABLES `bidder` WRITE;
 /*!40000 ALTER TABLE `bidder` DISABLE KEYS */;
+INSERT INTO `bidder` VALUES ('8862d63e-f4ec-4b6e-9473-0137776d3be5',1000000),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5',1000000),('dd9ef995-0125-4060-8a80-b8f1895dd875',0);
 /*!40000 ALTER TABLE `bidder` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -186,7 +186,6 @@ DROP TABLE IF EXISTS `electronic`;
 CREATE TABLE `electronic` (
   `id` varchar(36) NOT NULL,
   `is_repaired` tinyint(1) DEFAULT '0',
-  `purchase_date` date DEFAULT NULL,
   `warranty_period` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_electronic_item` FOREIGN KEY (`id`) REFERENCES `item` (`id`) ON DELETE CASCADE
@@ -222,6 +221,7 @@ CREATE TABLE `entity` (
 
 LOCK TABLES `entity` WRITE;
 /*!40000 ALTER TABLE `entity` DISABLE KEYS */;
+INSERT INTO `entity` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','Tran Thi B'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','Nguyen Van A'),('dd9ef995-0125-4060-8a80-b8f1895dd875','nguyen duc tue');
 /*!40000 ALTER TABLE `entity` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -235,8 +235,6 @@ DROP TABLE IF EXISTS `item`;
 CREATE TABLE `item` (
   `id` varchar(36) NOT NULL,
   `seller_id` varchar(36) DEFAULT NULL,
-  `base_price` bigint DEFAULT '0',
-  `manufacturing_date` date DEFAULT NULL,
   `creator` varchar(255) DEFAULT NULL,
   `description` text,
   `type` varchar(50) DEFAULT NULL,
@@ -301,6 +299,7 @@ CREATE TABLE `seller` (
 
 LOCK TABLES `seller` WRITE;
 /*!40000 ALTER TABLE `seller` DISABLE KEYS */;
+INSERT INTO `seller` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','MB-9999888');
 /*!40000 ALTER TABLE `seller` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -313,12 +312,12 @@ DROP TABLE IF EXISTS `user`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user` (
   `id` varchar(36) NOT NULL,
-  `user_name` varchar(100) NOT NULL,
+  `username` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `email` varchar(150) NOT NULL,
   `role` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `user_name` (`user_name`),
+  UNIQUE KEY `user_name` (`username`),
   CONSTRAINT `fk_user_entity` FOREIGN KEY (`id`) REFERENCES `entity` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -329,6 +328,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
+INSERT INTO `user` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','tranthib','abcdef','b@gmail.com','SELLER'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','nguyenvana','123456','a@gmail.com','BIDDER'),('dd9ef995-0125-4060-8a80-b8f1895dd875','tuetistoof','tue10092007','tuenopro@gmail.com','BIDDER');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -342,7 +342,6 @@ DROP TABLE IF EXISTS `vehicle`;
 CREATE TABLE `vehicle` (
   `id` varchar(36) NOT NULL,
   `is_repaired` tinyint(1) DEFAULT '0',
-  `purchase_date` date DEFAULT NULL,
   `warranty_period` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_vehicle_item` FOREIGN KEY (`id`) REFERENCES `item` (`id`) ON DELETE CASCADE
@@ -367,4 +366,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-21 13:57:07
+-- Dump completed on 2026-04-23  5:11:33

@@ -166,11 +166,16 @@ public class LoginSignupController {
                         //login vào home
                         if (finalSuccess) {
                             SessionManager.getInstance().setCurrentUser(finalUser);
-
-                            Scene currentScene = btnLogin.getScene();
-                            currentScene.setRoot(SceneManager.layoutMainRoot);
-                            Stage stage = (Stage) currentScene.getWindow();
-                            stage.sizeToScene();
+                            try {
+                                Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
+                                btnLogin.getScene().setRoot(homeRoot);
+                            }
+                            catch (IOException e) {
+                                e.printStackTrace();
+                                lblError.setText("Không thể tải màn hình chính.");
+                                lblError.setVisible(true);
+                                lblError.setManaged(true);
+                            }
                         }
                         else {
                             lblError.setText(finalErrorMessage);

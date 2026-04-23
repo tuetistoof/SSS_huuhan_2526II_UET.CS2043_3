@@ -17,6 +17,9 @@ public abstract class Entity {
 
     // getter setter
     // Id khong the thay doi
+    public void setId(String id) {
+        this.id = id;
+    }
     public String getId() {
         return id;
     }
