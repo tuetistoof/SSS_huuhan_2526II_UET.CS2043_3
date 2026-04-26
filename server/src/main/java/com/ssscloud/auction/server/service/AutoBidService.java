@@ -42,7 +42,7 @@ public class AutoBidService {
     public void register(AutoBidRequest req, String bidderId, String bidderUsername){
         if (req.getAuctionId() == null)
             throw new IllegalArgumentException("Thiếu auctionId trong AutoBidRequest");
-        if (BidValidator.isPositiveBid(req.getMaxBid()))
+        if (!BidValidator.isPositiveBid(req.getMaxBid()))
             throw new IllegalArgumentException("Maxbid bắt buộc phải lớn hơn 0");
 
         String auctionId = String.valueOf(req.getAuctionId());
@@ -51,9 +51,8 @@ public class AutoBidService {
             auctionId, k -> new CopyOnWriteArrayList<>()
         );
 
-        list.removeIf(e -> e.bidderId.equals(
-            
-        ));
+        list.removeIf(e -> e.bidderId.equals(bidderId));
+
 
         list.add(new AutoBidEntry(bidderId, bidderUsername, (long) req.getMaxBid()));
 
