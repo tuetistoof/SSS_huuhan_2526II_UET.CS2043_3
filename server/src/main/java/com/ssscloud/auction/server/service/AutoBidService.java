@@ -59,7 +59,16 @@ public class AutoBidService {
         if (req.getAuctionId() == null || req.getAuctionId().isBlank()) 
             throw new IllegalArgumentException("Auction ID không được để trống");
 
-        String auctionId = String.valueOf(req.getAuctionId());
+        Auction auction = auctionDAO.findByAuctionId(req.getAuctionId());
+        if (auction == null || auction.getStatus().isEnded() || auction.isExpired())            
+            throw new IllegalArgumentException("Phiên đấu giá không tồn tại hoặc đã kết thúc: " + req.getAuctionId());
+        if (bidderId.equals(auction.getSellerId()))
+            throw new IllegalArgumentException("Người bán không thể đăng ký auto bid cho sản phẩm của mình");
+        if (getAutoBidCount(req.getAuctionId(), bidderId) >= MAX_AUTO_BID_PER_AUCTION)
+            throw new IllegalArgumentException("Đã đạt giới hạn đăng ký auto bid cho phiên đấu giá này");
+
+        
+        String auctionId = req.getAuctionId();
         List<AutoBidEntry> list = registrations.computeIfAbsent(auctionId, k -> new CopyOnWriteArrayList<>());
 
         list.removeIf(e -> e.bidderId.equals(bidderId));
