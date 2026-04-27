@@ -52,7 +52,7 @@ public class AutoBidService {
         );
 
         list.removeIf(e -> e.bidderId.equals(
-            
+            +
         ));
 
         list.add(new AutoBidEntry(bidderId, bidderUsername, (long) req.getMaxBid()));
