@@ -48,7 +48,6 @@ public abstract class Item extends Entity {
     public void setSellerId(String sellerId) {
         this.sellerId = sellerId;
     }
-
     public String getSellerId() {
         return sellerId;
     }

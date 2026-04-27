@@ -75,7 +75,7 @@ public class BidService {
         return toDTO(finalBid, auction.getCurrentPrice());
     }
 
-     private BidDTO toDTO(BidTransaction bid, long currentPrice) {
+    private BidDTO toDTO(BidTransaction bid, long currentPrice) {
         BidDTO dto = new BidDTO();
         dto.setAuctionId(bid.getAuctionId());
         dto.setBidderUsername(bid.getBidderUsername());

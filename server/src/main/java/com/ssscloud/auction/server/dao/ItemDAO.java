@@ -20,7 +20,7 @@ public class ItemDAO extends BaseDAO {
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlElectronic = "INSERT INTO electronic (id, is_repaired, warranty_period) VALUES (?, ?, ?)";
         Connection conn = null;
-        PreparedStatement psEntity = null, psItem = null, psIemImageUrl = null, psElectronic = null;
+        PreparedStatement psEntity = null, psItem = null, psItemImageUrl = null, psElectronic = null;
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
@@ -38,16 +38,17 @@ public class ItemDAO extends BaseDAO {
             psItem.setString(5, electronic.getType());
             psItem.executeUpdate();
 
-            psIemImageUrl = conn.prepareStatement(sqlItemImageUrl);
+            psItemImageUrl = conn.prepareStatement(sqlItemImageUrl);
             for (String url : electronic.getImageUrl()) {
-                psIemImageUrl.setString(1, electronic.getId());
-                psIemImageUrl.setString(2, url);
-                psIemImageUrl.executeUpdate();
+                psItemImageUrl.setString(1, electronic.getId());
+                psItemImageUrl.setString(2, url);
+                psItemImageUrl.addBatch();
             }
+            psItemImageUrl.executeBatch();
 
             psElectronic = conn.prepareStatement(sqlElectronic);
             psElectronic.setString(1, electronic.getId());
-            psElectronic.setBoolean(2, electronic.getIsRepair());
+            psElectronic.setBoolean(2, electronic.getIsRepaired());
             psElectronic.setInt(3, electronic.getWarrantyPeriod());
             psElectronic.executeUpdate();
 
@@ -64,7 +65,7 @@ public class ItemDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
-            closeResource(psEntity, psItem, psElectronic);
+            closeResource(psEntity, psItem, psItemImageUrl, psElectronic);
         }
     }
 
@@ -75,7 +76,7 @@ public class ItemDAO extends BaseDAO {
         String sqlVehicle = "INSERT INTO vehicle (id, is_repaired, warranty_period) VALUES (?, ?, ?)";
 
         Connection conn = null;
-        PreparedStatement psEntity = null, psItem = null, psIemImageUrl = null, psVehicle = null;
+        PreparedStatement psEntity = null, psItem = null, psItemImageUrl = null, psVehicle = null;
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
@@ -88,17 +89,18 @@ public class ItemDAO extends BaseDAO {
             psItem = conn.prepareStatement(sqlItem);
             psItem.setString(1, vehicle.getId());
             psItem.setString(2, vehicle.getSellerId());
-            psItem.setString(4, vehicle.getCreator());
+            psItem.setString(3, vehicle.getCreator());
             psItem.setString(4, vehicle.getDescription());
             psItem.setString(5, vehicle.getType());
             psItem.executeUpdate();
 
-            psIemImageUrl = conn.prepareStatement(sqlItemImageUrl);
+            psItemImageUrl = conn.prepareStatement(sqlItemImageUrl);
             for (String url : vehicle.getImageUrl()) {
-                psIemImageUrl.setString(1, vehicle.getId());
-                psIemImageUrl.setString(2, url);
-                psIemImageUrl.executeUpdate();
+                psItemImageUrl.setString(1, vehicle.getId());
+                psItemImageUrl.setString(2, url);
+                psItemImageUrl.addBatch();
             }
+            psItemImageUrl.executeBatch();
 
             psVehicle = conn.prepareStatement(sqlVehicle);
             psVehicle.setString(1, vehicle.getId());
@@ -119,7 +121,7 @@ public class ItemDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
-            closeResource(psEntity, psItem, psVehicle);
+            closeResource(psEntity, psItem, psItemImageUrl, psVehicle);
         }
     }
 
@@ -130,7 +132,7 @@ public class ItemDAO extends BaseDAO {
         String sqlArt = "INSERT INTO art (id, certificate) VALUES (?, ?)";
 
         Connection conn = null;
-        PreparedStatement psEntity = null, psItem = null, psIemImageUrl = null, psArt = null;
+        PreparedStatement psEntity = null, psItem = null, psItemImageUrl = null, psArt = null;
         try {
             conn = getConnection();
             conn.setAutoCommit(false);
@@ -148,12 +150,13 @@ public class ItemDAO extends BaseDAO {
             psItem.setString(5, art.getType());
             psItem.executeUpdate();
 
-            psIemImageUrl = conn.prepareStatement(sqlItemImageUrl);
+            psItemImageUrl = conn.prepareStatement(sqlItemImageUrl);
             for (String url : art.getImageUrl()) {
-                psIemImageUrl.setString(1, art.getId());
-                psIemImageUrl.setString(2, url);
-                psIemImageUrl.executeUpdate();
+                psItemImageUrl.setString(1, art.getId());
+                psItemImageUrl.setString(2, url);
+                psItemImageUrl.addBatch();
             }
+            psItemImageUrl.executeBatch();
 
             psArt = conn.prepareStatement(sqlArt);
             psArt.setString(1, art.getId());
@@ -173,7 +176,7 @@ public class ItemDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
-            closeResource(psEntity, psItem, psArt);
+            closeResource(psEntity, psItem, psItemImageUrl, psArt);
         }
     }
 
@@ -182,7 +185,7 @@ public class ItemDAO extends BaseDAO {
         List<Item> item = new ArrayList<>();
         String sql = "SELECT " +
                 "e.id, e.name, " +
-                "i.seller_id, i.creator, i.decription, i.type, " +
+                "i.seller_id, i.creator, i.description, i.type, " +
                 "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
                 "art.certificate AS art_certificate, " +
                 "electronic.is_repaired AS electronic_is_repaired, electronic.warranty_period AS electronic_warranty_period, "
@@ -190,7 +193,7 @@ public class ItemDAO extends BaseDAO {
                 "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
                 "FROM entity e " +
                 "JOIN item i ON e.id = i.id " +
-                "LEFT JOIN item_image img ON i.id = img.item_id " +
+                "LEFT JOIN item_image_url img ON i.id = img.item_id " +
                 "LEFT JOIN art art ON i.id = art.id " +
                 "LEFT JOIN electronic electronic ON i.id = electronic.id " +
                 "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
@@ -217,7 +220,21 @@ public class ItemDAO extends BaseDAO {
     }
 
     public List<Item> findBySellerId(String sellerId) {
-        String sql = "SELECT i.id FROM item i WHERE i.seller_id = ?";
+        String sql = "SELECT " +
+                "e.id, e.name, " +
+                "i.seller_id, i.creator, i.description, i.type, " +
+                "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
+                "art.certificate AS art_certificate, " +
+                "elec.is_repaired AS electronic_is_repaired, elec.warranty_period AS electronic_warranty_period, " +
+                "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
+                "FROM entity e " +
+                "JOIN item i ON e.id = i.id " +
+                "LEFT JOIN item_image_url img ON i.id = img.item_id " +
+                "LEFT JOIN art art ON i.id = art.id " +
+                "LEFT JOIN electronic elec ON i.id = elec.id " +
+                "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
+                "WHERE i.seller_id = ? " +
+                "GROUP BY e.id";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -228,17 +245,8 @@ public class ItemDAO extends BaseDAO {
             ps = conn.prepareStatement(sql);
             ps.setString(1, sellerId);
             rs = ps.executeQuery();
-
-            List<String> rows = new ArrayList<>();
             while (rs.next()) {
-                String id = rs.getString("id");
-                rows.add(id);
-            }
-
-            for (String row : rows) {
-                Item item = findById(row);
-                if (item != null)
-                    list.add(item);
+                list.add(mapResultSetToItem(rs));
             }
             return list;
 
@@ -260,7 +268,7 @@ public class ItemDAO extends BaseDAO {
                 "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
                 "FROM entity e " +
                 "JOIN item i ON e.id = i.id " +
-                "LEFT JOIN item_image img ON i.id = img.item_id " +
+                "LEFT JOIN item_image_url img ON i.id = img.item_id " +
                 "LEFT JOIN art art ON i.id = art.id " +
                 "LEFT JOIN electronic elec ON i.id = elec.id " +
                 "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
@@ -290,13 +298,14 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public boolean deleteById(long itemId) {
-        String sql = "DELETE FROM item WHERE id = ? ";
+    public boolean deleteById(String itemId) {
+        String sql = "DELETE FROM entity WHERE id = ? ";
+        Connection conn = null;
         PreparedStatement ps = null;
-
         try {
-            ps = getConnection().prepareStatement(sql);
-            ps.setLong(1, itemId);
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, itemId);
             int rows = ps.executeUpdate();
             if (rows == 0) {
                 logger.warning("deleteItemId id=" + itemId + " - không thể xóa ");
@@ -317,26 +326,26 @@ public class ItemDAO extends BaseDAO {
         String name = rs.getString("name");
         String sellerId = rs.getString("seller_id");
         String creator = rs.getString("creator");
-        String decription = rs.getString("decription");
+        String description = rs.getString("description");
         String type = rs.getString("type");
         List<String> imageUrl = parseStringToList(rs.getString("item_image_url"));
         switch (type) {
             case "ART": {
                 boolean certificate = rs.getBoolean("art_certificate");
-                Art art = new Art(id, name, sellerId, creator, decription, type, imageUrl, certificate);
+                Art art = new Art(id, name, sellerId, creator, description, type, imageUrl, certificate);
                 return art;
             }
             case "VEHICLE": {
                 boolean isRepaired = rs.getBoolean("vehicle_is_repaired");
                 int warrantyPeriod = rs.getInt("vehicle_warranty_period");
-                Vehicle vehicle = new Vehicle(id, name, sellerId, creator, decription, type, imageUrl, isRepaired,
+                Vehicle vehicle = new Vehicle(id, name, sellerId, creator, description, type, imageUrl, isRepaired,
                         warrantyPeriod);
                 return vehicle;
             }
             case "ELECTRONIC": {
                 boolean isRepaired = rs.getBoolean("electronic_is_repaired");
                 int warrantyPeriod = rs.getInt("electronic_warranty_period");
-                Electronic electronic = new Electronic(id, name, sellerId, creator, decription, type, imageUrl,
+                Electronic electronic = new Electronic(id, name, sellerId, creator, description, type, imageUrl,
                         isRepaired, warrantyPeriod);
                 return electronic;
             }

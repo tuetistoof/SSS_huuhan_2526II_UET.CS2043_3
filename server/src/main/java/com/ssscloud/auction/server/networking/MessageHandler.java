@@ -88,6 +88,14 @@ public class MessageHandler {
                 //     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
                 //             JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(), client.getUsername()), ApiResponse.class)));
                 // }
+
+                
+                // case "GET_AUCTIONS": {
+                //     // Route mới — AuctionListController dùng
+                //     String raw = auctionController.getAllAuctions();
+                //     ApiResponse<?> resp = JsonUtils.fromJson(raw, ApiResponse.class);
+                //     return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE", resp));
+                // }
  
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",

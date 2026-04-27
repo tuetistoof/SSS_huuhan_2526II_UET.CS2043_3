@@ -21,7 +21,7 @@ import com.ssscloud.auction.common.model.base.AuctionConfig;
 public class AuctionDAO extends BaseDAO {
     public boolean saveAuction(Auction auction) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlAuctionConfig = "INSERT INTO auction_config (id, name, start_price, min_increment, start_time, end_time, extend_second) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlAuctionConfig = "INSERT INTO auction_config (id, start_price, min_increment, start_time, end_time, extend_second) VALUES (?, ?, ?, ?, ?, ?)";
         String sqlAuction = "INSERT INTO auction (id, status, seller_id, item_id) VALUES (?, ?, ?, ?)";
         Connection conn = null;
         PreparedStatement psEntity = null, psAuctionConfig = null, psAuction = null;
@@ -36,7 +36,7 @@ public class AuctionDAO extends BaseDAO {
 
             psAuctionConfig = conn.prepareStatement(sqlAuctionConfig);
             psAuctionConfig.setString(1, auction.getAuctionConfig().getId());
-            psAuctionConfig.setString(2, auction.getAuctionConfig().getName());
+            psAuctionConfig.setLong (2, auction.getAuctionConfig().getStartPrice());
             psAuctionConfig.setLong(3, auction.getAuctionConfig().getMinIncrement());
             psAuctionConfig.setObject(4, auction.getAuctionConfig().getStartTime());
             psAuctionConfig.setObject(5, auction.getAuctionConfig().getEndTime());
