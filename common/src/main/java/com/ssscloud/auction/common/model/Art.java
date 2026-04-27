@@ -28,5 +28,8 @@ public class Art extends Item {
     public boolean getCertificate(){
         return this.certificate;
     }
+    public void setCertificate(boolean certificate){
+        this.certificate = certificate;
+    }
 
 }

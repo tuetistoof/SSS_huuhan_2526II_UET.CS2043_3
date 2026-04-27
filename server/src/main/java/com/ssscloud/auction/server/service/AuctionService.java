@@ -13,9 +13,11 @@ import com.ssscloud.auction.server.factory.ItemFactory;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * AuctionService — business logic tạo phiên đấu giá.
@@ -34,12 +36,12 @@ public class AuctionService {
 
     private final ItemDAO    itemDAO    = new ItemDAO();
     private final AuctionDAO auctionDAO;
-    public AuctionService (AuctionDAO auctionDAO)
-    {
+    public AuctionService (AuctionDAO auctionDAO){
         this.auctionDAO = auctionDAO;
     }
-    public AuctionDTO createAuction(CreateAuctionRequest request, String sellerId) {
 
+    public AuctionDTO createAuction(CreateAuctionRequest request, String sellerId) {
+        //tạo item bằng factory
         Item item;
         try {
             item = ItemFactory.createItem(request, sellerId);
@@ -47,13 +49,13 @@ public class AuctionService {
             logger.warning("ItemFactory lỗi: " + e.getMessage());
             return null;
         }
-
+        //lưu item
         boolean itemSaved = saveItem(item);
         if (!itemSaved) {
             logger.severe("Không lưu được item: " + item.getName());
             return null;
         }
-
+        //xây dựng auction config + auction
         LocalDateTime startTime = (request.getStartTime() != null)
                 ? request.getStartTime()
                 : LocalDateTime.now();
@@ -68,6 +70,7 @@ public class AuctionService {
         );
 
         Auction auction = new Auction(config, AuctionStatus.OPEN, sellerId, item.getId());
+        //lưu auction
         boolean auctionSaved = auctionDAO.saveAuction(auction);
         if (!auctionSaved) {
             logger.severe("Không lưu được auction: " + config.getName());
@@ -80,6 +83,27 @@ public class AuctionService {
         return toDTO(auction);
     }
 
+//TO_DOS: sau này sẽ bổ sung chức năng lấy danh sách phiên đấu giá
+
+    // public List<AuctionDTO> getAllAuctions() {
+    //     return auctionDAO.findAll().stream()
+    //             .map(this::toDTO)
+    //             .collect(Collectors.toList());
+    // }
+ 
+    // public List<AuctionDTO> getActiveAuctions() {
+
+    //     List<Auction> open    = auctionDAO.findByStatus(AuctionStatus.OPEN);
+    //     List<Auction> running = auctionDAO.findByStatus(AuctionStatus.RUNNING);
+    //     open.addAll(running);
+    //     return open.stream().map(this::toDTO).collect(Collectors.toList());
+    // }
+
+
+
+
+
+    //HELPERS
     private void scheduleClose(Auction auction) {
         LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
         Date fireAt = Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant());

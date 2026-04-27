@@ -71,13 +71,14 @@ public class CreateAuctionController{
  
         hideDynamicSections();
  
+        // dùng toItemType() để map tiếng Việt → key 
         cmbItemType.valueProperty().addListener((obs, old, newVal) -> {
             hideDynamicSections();
             if (newVal == null) return;
-            // switch (toItemType(newVal)) {        ko hiểu
-            //     case ART -> show(sectionArt);
-            //     case VEHICLE, ELECTRONIC -> show(sectionVehicleElectronic);
-            // }
+            switch (toItemType(newVal)) {       
+                case "ART" -> show(sectionArt);
+                case "VEHICLE", "ELECTRONIC" -> show(sectionVehicleElectronic);
+            }
         });
         txtEndTime.setPromptText("HH:mm  (vd: 18:30)");
         txtStartingPrice.setPromptText("VD: 500000");
@@ -151,13 +152,14 @@ public class CreateAuctionController{
             return;
         }
 
-  
+        String itemType = toItemType(typeStr);
         ItemData itemData = new ItemData();
-        itemData.setItemType(typeStr);
+        itemData.setItemType(itemType);
         itemData.setCreator(txtCreator.getText().trim());
 
 
-        switch (typeStr) {
+
+        switch (itemType) {
             case "ART" -> {
                 itemData.setHasCertificate(chkCertificate.isSelected());
             }
@@ -166,11 +168,12 @@ public class CreateAuctionController{
                 String wpStr = txtWarrantyPeriod.getText().trim();
                 if (!wpStr.isEmpty()) {
                     try {
-                        int wp = Integer.parseInt(wpStr);
-                        if (wp < 0) throw new NumberFormatException();
-                        itemData.setWarrantyPeriod(wp);
+                        int warrantyPeriod = Integer.parseInt(wpStr);
+                        if (warrantyPeriod < 0) throw new NumberFormatException();
+                        itemData.setWarrantyPeriod(warrantyPeriod);
                     } catch (NumberFormatException e) {
-                        showError("Thời gian bảo hành phải là số tháng không âm."); txtWarrantyPeriod.requestFocus(); return;
+                        showError("Thời gian bảo hành phải là số tháng không âm."); txtWarrantyPeriod.requestFocus(); 
+                        return;
                     }
                 }
             }
@@ -204,7 +207,7 @@ public class CreateAuctionController{
                 //nhận về, nhận cũng ở client message
                 if (jsonResponse != null && !jsonResponse.isEmpty()){
                     ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                    if ("CREATE_AUCTION".equals(serverMsg.getAction())) {
+                    if ("CREATE_AUCTION_RESPONSE".equals(serverMsg.getAction())) {
                         String rawData = JsonUtils.toJson(serverMsg.getData());
                         ApiResponse<AuctionDTO> apiResp = JsonUtils.fromJsonGeneric(rawData, ApiResponse.class);
  
@@ -228,18 +231,17 @@ public class CreateAuctionController{
             final boolean finalSuccess = isSuccess;
             final String  finalError   = errorMsg;
 
-
             //7. cập nhật UI
             Platform.runLater(() -> {
                 // Re-enable button dù thành công hay thất bại
                 btnSubmit.setDisable(false);
                 btnSubmit.setText("Tạo phiên");
-                // if (finalSuccess) {
-                //     if (onSuccessCallback != null) onSuccessCallback.run();
-                //     closeView();
-                // } else {
-                //     showError(finalError);
-                // }
+                if (finalSuccess) {
+                    if (onSuccessCallback != null) onSuccessCallback.run();
+                    closeView();
+                } else {
+                    showError(finalError);
+                }
             });
 
         }).start();
@@ -252,6 +254,15 @@ public class CreateAuctionController{
 
 
     //Helpers
+    private String toItemType(String displayValue) {
+        if (displayValue == null) return "";
+        if (displayValue.contains("Art"))        return "ART";
+        if (displayValue.contains("Vehicle")
+                || displayValue.contains("Phương tiện")) return "VEHICLE";
+        if (displayValue.contains("Electronic")
+                || displayValue.contains("Điện tử"))      return "ELECTRONIC";
+        return displayValue.toUpperCase().trim();
+    }
     private void show(VBox section) { section.setVisible(true);  section.setManaged(true); }
     private void hide(VBox section) { section.setVisible(false); section.setManaged(false); }
  
