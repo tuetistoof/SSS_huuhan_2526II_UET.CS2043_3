@@ -152,15 +152,12 @@ Vòng tròn loading
 
 .app-logo-btn {
     -fx-background-color: transparent;
-    -fx-font-size: 16px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #f75667;
     -fx-cursor: hand;
-    -fx-padding: 6 10 6 10;
+    -fx-padding: 6 10 6 5;
     -fx-background-radius: 8;
-}
-.app-logo-btn:hover {
-    -fx-background-color: #fff0f1;
 }
 
 .toggle-btn {

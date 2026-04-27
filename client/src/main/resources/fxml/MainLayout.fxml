@@ -12,7 +12,6 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.shape.Rectangle?>
 
 <BorderPane styleClass="main-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.MainLayoutController">
 
@@ -26,7 +25,16 @@
                   </image>
                </ImageView>
             </graphic></Button>
-         <Rectangle arcHeight="5.0" arcWidth="5.0" fill="DODGERBLUE" height="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="50.0" />
+         <HBox fx:id="hBoxLogo" alignment="CENTER_LEFT" onMouseClicked="#handleNavDashboard">
+            <children>
+               <ImageView fitHeight="50.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/Asset%201.png" />
+                  </image>
+               </ImageView>
+               <Label alignment="BOTTOM_LEFT" onMouseClicked="#handleDas" styleClass="app-logo-btn" text="CloudBid" />
+            </children>
+         </HBox>
          <Region HBox.hgrow="ALWAYS" />
          <TextField promptText="Search" styleClass="search-bar" HBox.hgrow="ALWAYS" />
          <ImageView fitHeight="20.0" fitWidth="20.0" onMouseClicked="#handleSearching" pickOnBounds="true" preserveRatio="true">

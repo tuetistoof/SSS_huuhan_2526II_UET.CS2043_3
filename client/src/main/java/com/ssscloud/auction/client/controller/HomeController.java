@@ -22,5 +22,4 @@ public class HomeController {
         stage.sizeToScene();
         stage.centerOnScreen();
     }
-
 }
