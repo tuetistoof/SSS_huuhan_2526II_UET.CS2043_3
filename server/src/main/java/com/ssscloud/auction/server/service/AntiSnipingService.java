@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.Duration;
 
 public class AntiSnipingService {
-    public stati void processAntiSniping(AuctionConfig auction) {
+    public static void processAntiSniping(AuctionConfig auction) {
         if (auction == null || auction.getEndTime() == null)
             return;
 

@@ -27,14 +27,14 @@ public class AuctionSocketServer {
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
 
-        // AutoBidService autoBidService = new AutoBidService();
+        AutoBidService autoBidService = new AutoBidService(bidTransactionDAO);
         AuctionService auctionService = new AuctionService(auctionDAO);
 
         BidService bidService = new BidService(auctionDAO, bidTransactionDAO);
         UserController userCtrl = new UserController(userDAO);
 
         AuctionController auctionCtrl = new AuctionController(auctionService);
-        BidController bidCtrl = new BidController(bidService);
+        BidController bidCtrl = new BidController(bidService, autoBidService);
         MessageHandler messageHandler = new MessageHandler(userCtrl, auctionCtrl, bidCtrl);
 
         System.out.println("[Server] Khởi động port 5000...");

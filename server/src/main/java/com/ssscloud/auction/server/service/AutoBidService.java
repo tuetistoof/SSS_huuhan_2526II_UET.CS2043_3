@@ -15,6 +15,7 @@ import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
 public class AutoBidService {
@@ -29,8 +30,9 @@ public class AutoBidService {
 
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
     private final BidTransactionDAO bidTransactionDAO;
-
-    public AutoBidService(BidTransactionDAO bidTransactionDAO) {
+    private final AuctionDAO auctionDAO;
+    public AutoBidService(AuctionDAO auctionDAO, BidTransactionDAO bidTransactionDAO) {
+        this.auctionDAO = auctionDAO;
         this.bidTransactionDAO = bidTransactionDAO;
     }
 
