@@ -152,13 +152,14 @@ public class CreateAuctionController{
             return;
         }
 
-  
+        String itemType = toItemType(typeStr);
         ItemData itemData = new ItemData();
-        itemData.setItemType(typeStr);
+        itemData.setItemType(itemType);
         itemData.setCreator(txtCreator.getText().trim());
 
 
-        switch (typeStr) {
+
+        switch (itemType) {
             case "ART" -> {
                 itemData.setHasCertificate(chkCertificate.isSelected());
             }
