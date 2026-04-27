@@ -14,7 +14,13 @@ public class ClientHandler implements Runnable{
     // Session của client này — được set sau khi LOGIN thành công
     private String userId;
     private String username;
-    
+
+    private PrintWriter writer;
+    /**
+     * writer là member field để mỗi client có 1 writer suốt vòng đời, 
+     * client B muốn thông báo cho client A thì cần có reference đến writer của client A để push message, 
+     * nên không thể tạo local trong run()
+    **/
     public ClientHandler(Socket socket, MessageHandler messageHandler){
         this.clientSocket = socket;
         this.messageHandler = messageHandler;
@@ -23,8 +29,8 @@ public class ClientHandler implements Runnable{
     @Override
     public void run() {
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8")); //nhận từ client về server
-            PrintWriter writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(),"UTF-8"), true); //gửi từ server lên Client
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), "UTF-8")); 
+            this.writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(),"UTF-8"), true); 
 
             String jsonFromClient;
             while((jsonFromClient = reader.readLine()) != null){
@@ -51,6 +57,7 @@ public class ClientHandler implements Runnable{
     //getter setter
     public String getUserId()   { return userId; }
     public String getUsername() { return username; }
+    public PrintWriter getWriter() { return writer; }
     public void setSession(String userId, String username) {
         this.userId   = userId;
         this.username = username;

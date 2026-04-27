@@ -32,7 +32,7 @@ public class ClientObserver implements Observer {
             if (!(subject instanceof Auction)) return;
             Auction auction = (Auction) subject;
                 
-                // Tạo BidDTO từ auction (hoặc lấy bid mới nhất)
+            // Tạo BidDTO từ auction (hoặc lấy bid mới nhất)
             BidDTO dto = new BidDTO();
             dto.setAuctionId(auction.getAuctionConfig().getId());
             dto.setCurrentPrice(auction.getCurrentPrice());
@@ -46,7 +46,7 @@ public class ClientObserver implements Observer {
                 dto.setBidType(latest.getType().name());
             }
 
-            ClientMessage pushMsg = new ClientMessage("BID_UPDATE", dto);
+            ClientMessage pushMsg = ClientMessage.push("BID_UPDATE", dto);
             synchronized (writer) {
                 writer.println(JsonUtils.toJson(pushMsg));
             }

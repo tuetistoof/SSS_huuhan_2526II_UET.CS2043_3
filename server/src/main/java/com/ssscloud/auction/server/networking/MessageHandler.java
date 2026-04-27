@@ -8,23 +8,29 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.UserController;
+import com.ssscloud.auction.server.dao.AuctionDAO;
 
 public class MessageHandler {
     private Gson gson = new Gson();
     private BidController bidController;
     private UserController userController;
     private AuctionController auctionController;
+    private AuctionDAO auctionDAO;
 
     public MessageHandler(UserController userController, 
                           AuctionController auctionController, 
-                          BidController bidController) {
+                          BidController bidController,
+                        AuctionDAO auctionDAO) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
+        this.auctionDAO = auctionDAO;
     }
 
     public String handleMessage(String jsonMessage, ClientHandler client) {
@@ -71,14 +77,16 @@ public class MessageHandler {
                 }
 
                 case "PLACE_BID": {
-                    String raw = JsonUtils.toJson(msg.getData());
-                    PlaceBidRequest req = JsonUtils.fromJson(raw, PlaceBidRequest.class);
-                    if (req == null) {
-                        return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
+                    String result = bidController.placeBid(msg.getData(), client.getUserId(), client.getUsername());
+                    ApiResponse<?> resp = JsonUtils.fromJson(result, ApiResponse.class);
+                    if (!resp.isSuccess()) {
+                        // Push lỗi về riêng client này, không broadcast
+                        client.getWriter().println(
+                        JsonUtils.toJson(ClientMessage.request("BID_ERROR", resp)));
                     }
-                    return JsonUtils.toJson(ClientMessage.request("PLACE_BID_RESPONSE",
-                            JsonUtils.fromJson(bidController.placeBid(req, client.getUserId(), client.getUsername()), ApiResponse.class)));
+                    return null;
                 }
+                
                 // case "AUTO_BID":{
                 //     String raw = JsonUtils.toJson(msg.getData());
                 //     AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
@@ -96,6 +104,28 @@ public class MessageHandler {
                 //     ApiResponse<?> resp = JsonUtils.fromJson(raw, ApiResponse.class);
                 //     return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE", resp));
                 // }
+
+                case "SUBSCRIBE_AUCTION": {
+                    // Client vào BiddingRoom — đăng ký nhận push BID_UPDATE cho auction này
+                    String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
+                    if (auctionId == null || auctionId.isBlank()) {
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
+                                ApiResponse.error("Thiếu auctionId")));
+                    }
+
+                    Auction auction = auctionDAO.findByAuctionId(auctionId);
+
+                    if (auction == null) {
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
+                                ApiResponse.error("Phiên đấu giá không tồn tại: " + auctionId)));
+                    }
+                    ClientObserver observer = new ClientObserver(client.getWriter(), client.getUserId());
+                    ChangeManager.getInstance().attach(auction, observer);
+                    System.out.println("[Server] Client " + client.getUserId() + " đã vào phòng auction " + auctionId);
+                    // return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
+                    //         ApiResponse.success(null, "Đã vào phòng đấu giá thành công")));
+                    return null;
+                }
  
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",
