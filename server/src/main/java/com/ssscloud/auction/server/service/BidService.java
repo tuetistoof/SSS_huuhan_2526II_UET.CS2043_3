@@ -12,20 +12,17 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
-import com.ssscloud.auction.server.dao.UserDAO;
 
 public class BidService {
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
     private final AuctionDAO auctionDAO;
     private final BidTransactionDAO bidTransactionDAO;
-    private final AntiSnipingService antiSnipingService;
     // private final AutoBidService autoBidService = new AutoBidService();
 
-    public BidService (AuctionDAO auctionDAO, BidTransactionDAO bidTransactionDAO, AntiSnipingService antiSnipingService)
+    public BidService (AuctionDAO auctionDAO, BidTransactionDAO bidTransactionDAO)
     {
         this.auctionDAO = auctionDAO;
         this.bidTransactionDAO = bidTransactionDAO;
-        this.antiSnipingService = antiSnipingService;
     }
 
     public BidDTO placeBid(PlaceBidRequest req, String bidderId, String bidderUsername){
@@ -45,7 +42,7 @@ public class BidService {
             throw new InvalidBidException("Người bán không thể đấu giá sản phẩm của mình");
 
 
-        BidTransaction bid = bidManager.placeBid(auction, bidderId, bidderUsername, req.getBidAmount(),   BidType.MANUAL, antiSnipingService);
+        BidTransaction bid = bidManager.placeBid(auction, bidderId, bidderUsername, req.getBidAmount(),   BidType.MANUAL);
 
         try {
             boolean saved = bidTransactionDAO.saveBidTransaction(bid);
@@ -60,13 +57,6 @@ public class BidService {
             System.err.println("[BidService] WARN: Exception khi lưu DB: " + e.getMessage()
                     + " — bid vẫn hợp lệ trong memory");
         }
-
-        // try {
-        //     autoBidService.trigger(auction);
-        // } catch (Exception e) {
-        //     System.err.println("[BidService] WARN: Auto-bid trigger lỗi: " + e.getMessage()
-        //             + " — bid MANUAL vẫn hợp lệ");
-        // }
 
         List<BidTransaction> history = auction.getBidTransaction();
         BidTransaction finalBid = history.isEmpty() ? bid : history.get(history.size() - 1);

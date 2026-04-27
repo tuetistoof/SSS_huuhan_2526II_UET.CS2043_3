@@ -69,9 +69,6 @@ public class Auction implements Subject {
         if (this.status == AuctionStatus.OPEN) {
             this.status = AuctionStatus.RUNNING;
         }
-
-        
-
         // notify
         notifyObservers();
     }
