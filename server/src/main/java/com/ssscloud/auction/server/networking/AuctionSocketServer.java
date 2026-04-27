@@ -27,11 +27,10 @@ public class AuctionSocketServer {
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
 
-        AntiSnipingService antiSnipingService = new AntiSnipingService();
         // AutoBidService autoBidService = new AutoBidService();
         AuctionService auctionService = new AuctionService(auctionDAO);
 
-        BidService bidService = new BidService(auctionDAO, bidTransactionDAO, antiSnipingService);
+        BidService bidService = new BidService(auctionDAO, bidTransactionDAO);
         UserController userCtrl = new UserController(userDAO);
 
         AuctionController auctionCtrl = new AuctionController(auctionService);

@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.Duration;
 
 public class AntiSnipingService {
-    public void processAntiSniping(AuctionConfig auction) {
+    public stati void processAntiSniping(AuctionConfig auction) {
         if (auction == null || auction.getEndTime() == null)
             return;
 
@@ -16,7 +16,7 @@ public class AntiSnipingService {
         long secondsLeft = Duration.between(currentTime, endTime).toSeconds();
 
 
-        if (secondsLeft > 0 && secondsLeft <= 30){
+        if (secondsLeft > 0 && secondsLeft <= 36){
             LocalDateTime newEndTime = endTime.plusSeconds(auction.getExtendSecond());
             auction.setEndTime(newEndTime);
             System.out.println("[Anti - Snipping] Auction " + auction.getName() + " đã được kéo dài thêm " + auction.getExtendSecond() + "s . Thời gian kết thúc: " + newEndTime);
