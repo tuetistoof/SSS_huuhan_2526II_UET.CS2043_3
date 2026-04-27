@@ -65,6 +65,7 @@ public class ItemDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psEntity, psItem, psItemImageUrl, psElectronic);
         }
     }
@@ -121,6 +122,7 @@ public class ItemDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psEntity, psItem, psItemImageUrl, psVehicle);
         }
     }
@@ -176,6 +178,7 @@ public class ItemDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psEntity, psItem, psItemImageUrl, psArt);
         }
     }
@@ -215,6 +218,7 @@ public class ItemDAO extends BaseDAO {
             logger.severe("Lỗi khi lấy danh sách Item: " + e.getMessage());
             return item;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -254,6 +258,7 @@ public class ItemDAO extends BaseDAO {
             logger.severe("Lỗi findBySellerId [" + sellerId + "]: " + e.getMessage());
             return list;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -294,6 +299,7 @@ public class ItemDAO extends BaseDAO {
             logger.severe("Loi khi tim theo id " + id + " - " + e.getMessage());
             return null;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -316,6 +322,7 @@ public class ItemDAO extends BaseDAO {
             logger.severe("Lỗi deleteAuction id=" + itemId + ": " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }

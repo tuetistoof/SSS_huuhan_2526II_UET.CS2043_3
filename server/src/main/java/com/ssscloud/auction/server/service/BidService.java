@@ -59,7 +59,7 @@ public class BidService {
         }
 
         List<BidTransaction> history = auction.getBidTransaction();
-        BidTransaction finalBid = history.isEmpty() ? bid : history.get(history.size() - 1);
+        BidTransaction finalBid = history.isEmpty() ? bid : history.getLast();
     
         ChangeManager.getInstance().notify(auction);
         return toDTO(finalBid, auction.getCurrentPrice());
@@ -74,5 +74,5 @@ public class BidService {
         dto.setBidTime(bid.getBidTime());
         dto.setBidType(bid.getType().name());
         return dto;
-     }
+    }
 }

@@ -22,14 +22,15 @@ public abstract class BaseDAO {
             }
         }
     }
-    protected void resetAutocommit (Connection conn){
+
+    protected void resetAutocommit(Connection conn) {
         if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                } catch (SQLException e) {
-                    logger.warning("Lỗi khi reset autoCommit: " + e.getMessage());
-                }
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                logger.warning("Lỗi khi reset autoCommit: " + e.getMessage());
             }
+        }
     }
 
     protected void closeResource(AutoCloseable... resource) {
@@ -44,4 +45,14 @@ public abstract class BaseDAO {
         }
     }
 
+    protected void closeConnect(Connection conn) {
+        try {
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+                logger.info("Đã đóng kết nối database.");
+            }
+        } catch (SQLException e) {
+            logger.severe("Lỗi khi đóng kết nối: " + e.getMessage());
+        }
+    }
 }

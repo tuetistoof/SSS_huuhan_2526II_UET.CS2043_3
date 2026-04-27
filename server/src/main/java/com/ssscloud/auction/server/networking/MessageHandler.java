@@ -23,10 +23,11 @@ public class MessageHandler {
     private AuctionController auctionController;
     private AuctionDAO auctionDAO;
 
-    public MessageHandler(UserController userController, 
-                          AuctionController auctionController, 
-                          BidController bidController,
-                        AuctionDAO auctionDAO) {
+    public MessageHandler(
+            AuctionDAO auctionDAO,
+            UserController userController,
+            AuctionController auctionController,
+            BidController bidController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
@@ -35,7 +36,7 @@ public class MessageHandler {
 
     public String handleMessage(String jsonMessage, ClientHandler client) {
         try {
-            //Chuyển JSON thành ClientMessage object
+            // Chuyển JSON thành ClientMessage object
             ClientMessage msg = JsonUtils.fromJson(jsonMessage, ClientMessage.class);
 
             if (msg == null || msg.getAction() == null) {
@@ -45,35 +46,37 @@ public class MessageHandler {
 
             String action = msg.getAction().toUpperCase().trim();
 
-            //Dựa vào action để gọi Controller phù hợp
+            // Dựa vào action để gọi Controller phù hợp
             switch (action) {
                 case "LOGIN": {
                     // Chay logic login trong server
                     String responseJson = userController.login(msg.getData());
 
-                    Type apiUserType  = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
-                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType );
+                    Type apiUserType = new TypeToken<ApiResponse<UserDTO>>() {
+                    }.getType();
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType);
 
                     if (parsed != null && parsed.isSuccess() && parsed.getData() != null) {
                         client.setSession(parsed.getData().getId(), parsed.getData().getUsername());
                     }
-                    //wrap trong ClientMessage type=RESPONSE để AuctionClientSocket route đúng
+                    // wrap trong ClientMessage type=RESPONSE để AuctionClientSocket route đúng
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", parsed));
                 }
-
 
                 case "REGISTER": {
                     // Chay logic register trong server
                     String responseJson = userController.register(msg.getData());
 
-                    Type apiUserType  = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
-                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType );
+                    Type apiUserType = new TypeToken<ApiResponse<UserDTO>>() {
+                    }.getType();
+                    ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType);
 
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", parsed));
                 }
-                case "CREATE_AUCTION":{
+                case "CREATE_AUCTION": {
                     return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
-                            JsonUtils.fromJson(auctionController.createAuction(msg.getData(), client.getUserId()), ApiResponse.class)));
+                            JsonUtils.fromJson(auctionController.createAuction(msg.getData(), client.getUserId()),
+                                    ApiResponse.class)));
                 }
 
                 case "PLACE_BID": {
@@ -82,27 +85,29 @@ public class MessageHandler {
                     if (!resp.isSuccess()) {
                         // Push lỗi về riêng client này, không broadcast
                         client.getWriter().println(
-                        JsonUtils.toJson(ClientMessage.request("BID_ERROR", resp)));
+                                JsonUtils.toJson(ClientMessage.request("BID_ERROR", resp)));
                     }
                     return null;
                 }
-                
+
                 // case "AUTO_BID":{
-                //     String raw = JsonUtils.toJson(msg.getData());
-                //     AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
-                //     if (req == null) {
-                //         return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợp lệ"));
-                //     }
-                //     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
-                //             JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(), client.getUsername()), ApiResponse.class)));
+                // String raw = JsonUtils.toJson(msg.getData());
+                // AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
+                // if (req == null) {
+                // return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợp
+                // lệ"));
+                // }
+                // return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
+                // JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(),
+                // client.getUsername()), ApiResponse.class)));
                 // }
 
-                
                 // case "GET_AUCTIONS": {
-                //     // Route mới — AuctionListController dùng
-                //     String raw = auctionController.getAllAuctions();
-                //     ApiResponse<?> resp = JsonUtils.fromJson(raw, ApiResponse.class);
-                //     return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE", resp));
+                // // Route mới — AuctionListController dùng
+                // String raw = auctionController.getAllAuctions();
+                // ApiResponse<?> resp = JsonUtils.fromJson(raw, ApiResponse.class);
+                // return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
+                // resp));
                 // }
 
                 case "SUBSCRIBE_AUCTION": {
@@ -123,10 +128,10 @@ public class MessageHandler {
                     ChangeManager.getInstance().attach(auction, observer);
                     System.out.println("[Server] Client " + client.getUserId() + " đã vào phòng auction " + auctionId);
                     // return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
-                    //         ApiResponse.success(null, "Đã vào phòng đấu giá thành công")));
+                    // ApiResponse.success(null, "Đã vào phòng đấu giá thành công")));
                     return null;
                 }
- 
+
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",
                             ApiResponse.error("Action không được hỗ trợ: " + action)));
@@ -134,11 +139,10 @@ public class MessageHandler {
             }
 
         } catch (Exception e) {
-            System.err.println("Lỗi xử lý message từ client: "  + e.getMessage());
+            System.err.println("Lỗi xử lý message từ client: " + e.getMessage());
             return JsonUtils.toJson(ClientMessage.request("ERROR",
                     ApiResponse.error("Lỗi hệ thống: " + e.getMessage())));
         }
     }
-
 
 }

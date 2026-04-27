@@ -67,6 +67,7 @@ public class AuctionDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psEntity, psAuction, psAuctionConfig);
         }
     }
@@ -113,6 +114,7 @@ public class AuctionDAO extends BaseDAO {
             logger.severe("Lỗi findBySellerId [" + sellerId + "]: " + e.getMessage());
             return new ArrayList<>();
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -153,6 +155,7 @@ public class AuctionDAO extends BaseDAO {
             logger.severe("Lỗi findByAuctionId [" + id + "]: " + e.getMessage());
             return null;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -199,6 +202,7 @@ public class AuctionDAO extends BaseDAO {
             logger.severe("Lỗi findByStatus [" + status.name() + "]: " + e.getMessage());
             return new ArrayList<>();
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -221,18 +225,19 @@ public class AuctionDAO extends BaseDAO {
             logger.severe("Lỗi updateStatus auctionId=" + auctionId + ": " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }
 
-    public boolean deleteById(long auctionId) {
+    public boolean deleteById(String auctionId) {
         String sql = "DELETE FROM auction WHERE id = ?";
         Connection conn = null;
         PreparedStatement ps = null;
         try {
             conn = getConnection();
             ps = conn.prepareStatement(sql);
-            ps.setLong(1, auctionId);
+            ps.setString(1, auctionId);
             int rows = ps.executeUpdate();
             if (rows == 0) {
                 logger.warning("deleteAuction id=" + auctionId + " - không thể xóa");
@@ -243,6 +248,7 @@ public class AuctionDAO extends BaseDAO {
             logger.severe("Lỗi deleteAuction id=" + auctionId + ": " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }

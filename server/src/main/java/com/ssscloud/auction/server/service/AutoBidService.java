@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
+import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
@@ -74,10 +75,9 @@ public class AutoBidService {
         list.removeIf(e -> e.bidderId.equals(bidderId));
         list.add(new AutoBidEntry(bidderId, bidderUsername, req.getMaxBid()));
 
-        System.out.println("[AutoBidService] Đăng ký auto bid: bidderId=" + bidderId + ", auctionId=" + auctionId + ", maxBid=" + req.getMaxBid());
+        
     }
 
-    // Xóa tất cả đăng ký auto bid cho một phiên đấu giá (thường gọi khi phiên đấu giá kết thúc)
     public void clearRegistration(String auctionId) {
         registrations.remove(auctionId);
         bidCounts.remove(auctionId);
@@ -189,6 +189,17 @@ public class AutoBidService {
             t.setDaemon(true);
             return t;
         }));
+    }
+
+    private BidDTO toDTO(BidTransaction bid, long currentPrice) {
+        BidDTO dto = new BidDTO();
+        dto.setAuctionId(bid.getAuctionId());
+        dto.setBidderUsername(bid.getBidderUsername());
+        dto.setBidAmount(bid.getBidAmount());
+        dto.setCurrentPrice(currentPrice);
+        dto.setBidTime(bid.getBidTime());
+        dto.setBidType(bid.getType().name());
+        return dto;
     }
 
 }
