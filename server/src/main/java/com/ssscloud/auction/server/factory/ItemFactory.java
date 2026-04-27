@@ -37,7 +37,7 @@ public class ItemFactory {
             }
             case "ELECTRONIC" -> {
                 Electronic electronic = new Electronic();
-                electronic.setIsRepair(data.isRepaired());
+                electronic.setIsRepaired(data.isRepaired());
                 electronic.setWarrantyPeriod(data.getWarrantyPeriod());
                 yield electronic;
             }
