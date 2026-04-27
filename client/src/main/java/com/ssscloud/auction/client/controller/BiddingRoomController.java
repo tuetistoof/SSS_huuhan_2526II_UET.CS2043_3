@@ -29,10 +29,6 @@ import javafx.scene.control.TextField;
  * Implement MessageListener vì đây là màn hình duy nhất cần nhận push từ server.
  * Các action nhận qua push: BID_UPDATE, AUCTION_ENDED, AUTO_BID_STOPPED.
  *
- * Luồng PLACE_BID dùng send() — fire-and-forget, không cần chờ response.
- * Server sau đó push BID_UPDATE tới tất cả client → UI update từ push đó,
- * không update từ response riêng.
- *
  * Luồng AUTO_BID dùng sendAndReceive() — cần biết ngay có đăng ký thành công
  * không để hiển thị trạng thái cho user.
  */

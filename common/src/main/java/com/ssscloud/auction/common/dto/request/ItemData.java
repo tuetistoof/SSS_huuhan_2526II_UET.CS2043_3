@@ -1,7 +1,6 @@
 package com.ssscloud.auction.common.dto.request;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -53,7 +52,7 @@ public class ItemData implements Serializable {
     @Override
     public String toString() {
         return "ItemData{name='" + name + "', creator='" + creator 
-        + "', hasCertificate=" + hasCertificate
+            + "', hasCertificate=" + hasCertificate
                + ", isRepaired=" + isRepaired 
                + ", warrantyPeriod=" + warrantyPeriod + '}';
     }

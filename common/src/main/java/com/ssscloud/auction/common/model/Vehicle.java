@@ -31,7 +31,7 @@ public class Vehicle extends Item {
     public boolean getIsRepaired(){
         return isRepaired;
     }
-    public void setIsRepaires(boolean isRepaired){
+    public void setIsRepaired(boolean isRepaired){
         this.isRepaired = isRepaired;
     }
     public int getWarrantyPeriod() {
