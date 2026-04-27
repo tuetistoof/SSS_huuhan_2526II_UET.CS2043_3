@@ -28,10 +28,10 @@ public class Electronic extends Item {
 
     // getter setter
 
-    public boolean getIsRepair(){
+    public boolean getIsRepaired(){
         return isRepaired;
     }
-    public void setIsRepair(boolean isRepaired){
+    public void setIsRepaired(boolean isRepaired){
         this.isRepaired = isRepaired;
     }
 
