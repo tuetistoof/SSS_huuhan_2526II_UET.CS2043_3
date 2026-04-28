@@ -27,36 +27,58 @@ public class ClientObserver implements Observer {
     }
 
     @Override
-    public void update(Subject subject) {       
+    public void update(Subject subject) {
         try {
             if (!(subject instanceof Auction)) return;
             Auction auction = (Auction) subject;
-                
-            // Tạo BidDTO từ auction (hoặc lấy bid mới nhất)
-            BidDTO dto = new BidDTO();
-            dto.setAuctionId(auction.getAuctionConfig().getId());
-            dto.setCurrentPrice(auction.getCurrentPrice());
-            dto.setBidderUsername(auction.getHighestBidderName());  
 
-            List<BidTransaction> history = auction.getBidTransaction();
-            if (!history.isEmpty()) {
-                BidTransaction latest = history.get(history.size() - 1);
-                dto.setBidAmount(latest.getBidAmount());
-                dto.setBidTime(latest.getBidTime());
-                dto.setBidType(latest.getType().name());
+            if (auction.getStatus() == com.ssscloud.auction.common.enums.AuctionStatus.FINISHED) {
+                pushAuctionEnded(auction);
+            } else {
+                pushBidUpdate(auction);
             }
-
-            ClientMessage pushMsg = ClientMessage.push("BID_UPDATE", dto);
-            synchronized (writer) {
-                writer.println(JsonUtils.toJson(pushMsg));
-            }
-
         } catch (Exception e) {
             System.err.println("Lỗi push đến client " + clientId + ": " + e.getMessage());
         }
     }
 
+    private void pushBidUpdate(Auction auction) {
+        BidDTO dto = new BidDTO();
+        dto.setAuctionId(auction.getAuctionConfig().getId());
+        dto.setCurrentPrice(auction.getCurrentPrice());
+        dto.setBidderUsername(auction.getHighestBidderName());
+
+        List<BidTransaction> history = auction.getBidTransaction();
+        if (!history.isEmpty()) {
+            BidTransaction latest = history.get(history.size() - 1);
+            dto.setBidAmount(latest.getBidAmount());
+            dto.setBidTime(latest.getBidTime());
+            dto.setBidType(latest.getType().name());
+        }
+
+        synchronized (writer) {
+            writer.println(JsonUtils.toJson(ClientMessage.push("BID_UPDATE", dto)));
+        }
+    }
+
+    private void pushAuctionEnded(Auction auction) {
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("auctionId",  auction.getAuctionConfig().getId());
+        payload.put("finalPrice", auction.getCurrentPrice());
+        payload.put("winner",     auction.getHighestBidderName() != null
+                                  ? auction.getHighestBidderName() : "Không có người đặt giá");
+
+        synchronized (writer) {
+            writer.println(JsonUtils.toJson(ClientMessage.push("AUCTION_ENDED", payload)));
+        }
+    }
+
     public String getClientId() {
+        return clientId;
+    }
+
+    @Override
+    public String getObserverId() {
         return clientId;
     }
 }

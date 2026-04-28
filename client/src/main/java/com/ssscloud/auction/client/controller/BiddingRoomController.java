@@ -161,6 +161,7 @@ public class BiddingRoomController implements MessageListener {
                 case "BID_ERROR":        handleBidError(root);       break;
                 case "AUCTION_ENDED":    handleAuctionEnded(root);   break;
                 case "AUTO_BID_STOPPED": handleAutoBidStopped(root); break;
+                case "SUBSCRIBE_ERROR":  handleSubscribeError(root); break;
                 default: break;
             }
         } catch (Exception e) {
@@ -210,6 +211,18 @@ public class BiddingRoomController implements MessageListener {
         resetAutoBidButton();
         showInfo("Auto Bidding đã dừng (đã đạt giá tối đa).");
     }
+    private void handleSubscribeError(JsonObject root) {
+        String message = "Không thể vào phòng đấu giá.";
+        if (root.has("data") && root.get("data").isJsonObject()) {
+            JsonObject data = root.get("data").getAsJsonObject();
+            if (data.has("message")) message = data.get("message").getAsString();
+        }
+        // Disable toàn bộ UI đấu giá vì subscribe thất bại
+        btnPlaceBid.setDisable(true);
+        btnStartAutoBid.setDisable(true);
+        txtBidAmount.setDisable(true);
+        showError(message);
+    }
 
     // ------------------------------------------------------------------
     // Setters — màn hình trước inject context
@@ -223,8 +236,7 @@ public class BiddingRoomController implements MessageListener {
     private void subscribeToAuction() {
         new Thread(() -> {
             try {
-                String json = JsonUtils.toJson(
-                        ClientMessage.request("SUBSCRIBE_AUCTION", currentAuction.getId()));
+                String json = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", currentAuction.getId()));
                 socket.send(json);
             } catch (Exception e) {
                 System.err.println("[BiddingRoom] Lỗi subscribe: " + e.getMessage());
