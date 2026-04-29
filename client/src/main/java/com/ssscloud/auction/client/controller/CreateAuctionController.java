@@ -10,8 +10,10 @@ import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
  
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
@@ -28,10 +30,22 @@ public class CreateAuctionController{
     @FXML private TextArea         txtDescription;
     @FXML private TextField        txtStartingPrice;
     @FXML private TextField        txtMinIncrement;
-    @FXML private DatePicker       dpEndDate;
+    @FXML private DatePicker       dpStartDate;
     @FXML private TextField        txtEndTime;           // "HH:mm"
- 
-    
+
+    @FXML private ComboBox<Integer>cbDuration;
+    @FXML private HBox step1Indicator;
+    @FXML private HBox step2Indicator;
+    @FXML private HBox step3Indicator;
+    @FXML private VBox step1Form;
+    @FXML private VBox step2Form;
+    @FXML private VBox step3Form;
+
+    @FXML private Label lblNum1;
+    @FXML private Label lblNum2;
+    @FXML private Label lblNum3;
+
+    @FXML private TextField        txtItemName;
     @FXML private ComboBox<String> cmbItemType;          // ART / VEHICLE / ELECTRONIC
     @FXML private TextField        txtCreator;           // tác giả / hãng sản xuất
     @FXML private DatePicker       dpManufacturingDate;  // ngày sản xuất (tuỳ chọn)
@@ -47,8 +61,11 @@ public class CreateAuctionController{
  
     @FXML private Label  lblError;
     @FXML private Button btnSubmit;
-    @FXML private Button btnCancel;
- 
+    @FXML private Button btnNext;
+    // @FXML private Button btnCancel;
+    
+    private int currentStep = 1;
+
     private final AuctionClientSocket socket  = AuctionClientSocket.getInstance();
     private final SessionManager      session = SessionManager.getInstance();
  
@@ -60,13 +77,16 @@ public class CreateAuctionController{
 
     @FXML
     public void initialize() {
+        updateWizard();
+        updateStepIndicators();
         clearError();
- 
+        cbDuration.getItems().addAll( 1, 3, 5, 7, 14, 30);
         cmbItemType.getItems().addAll(
                 "Nghệ thuật (Art)",
                 "Phương tiện (Vehicle)",
                 "Điện tử (Electronic)"
         );
+
         cmbItemType.setPromptText("-- Chọn loại sản phẩm --");
  
         hideDynamicSections();
@@ -86,15 +106,23 @@ public class CreateAuctionController{
         txtWarrantyPeriod.setPromptText("Số tháng, vd: 12");
     }
 
+    @FXML
+    public void handleNextStep(ActionEvent event) {
+        if (!validateCurrentStep()) return;
+        if (currentStep < 4) {
+            currentStep++;
+            updateWizard();
+        }
+    }
+
     @FXML 
     private void handleSubmit(){
         clearError();
-        
+       
         //1.lấy thông tin
         String name = txtTitle.getText().trim();
         String priceStr = txtStartingPrice.getText().trim().replace(".", "").replace(",", "");
         String incrStr = txtMinIncrement.getText().trim().replace(".", "").replace(",", "");
-        LocalDate endDate = dpEndDate.getValue();
         String timeStr = txtEndTime.getText().trim();
         String typeStr = cmbItemType.getValue();
  
@@ -110,7 +138,8 @@ public class CreateAuctionController{
             txtStartingPrice.requestFocus();
             return;
         }
-        long startPrice; //ktra giá bắt đầu
+        //ktra giá bắt đầu
+        long startPrice;
         try {
             startPrice = Long.parseLong(priceStr);
             if (startPrice <= 0) throw new NumberFormatException();
@@ -119,8 +148,8 @@ public class CreateAuctionController{
             txtStartingPrice.requestFocus();
             return;
         }
-
-        long minIncrement = 0; //ktra bước giá
+        //ktra bước giá
+        long minIncrement = 0;
         if (!incrStr.isEmpty()) {
             try {
                 minIncrement = Long.parseLong(incrStr);
@@ -132,10 +161,15 @@ public class CreateAuctionController{
             }
         }
         //ktra ngày giờ
-        if (endDate == null) {
-            showError("Vui lòng chọn ngày kết thúc.");
+        if (dpStartDate.getValue() == null) {
+            showError("Vui lòng chọn ngày bắt đầu.");
             return;
         }
+        if (cbDuration.getValue() == null) {
+            showError("Vui lòng chọn thời lượng phiên đấu giá.");
+            return;
+        }
+        LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
         LocalDateTime endTime;
         try {
             LocalTime lt = timeStr.isEmpty()
@@ -156,8 +190,6 @@ public class CreateAuctionController{
         ItemData itemData = new ItemData();
         itemData.setItemType(itemType);
         itemData.setCreator(txtCreator.getText().trim());
-
-
 
         switch (itemType) {
             case "ART" -> {
@@ -248,10 +280,11 @@ public class CreateAuctionController{
     }
 
     @FXML
-    private void handleCancel() { closeView(); }
-
-
-
+    public void handleCancel(ActionEvent event) {
+        if (onSuccessCallback != null) {
+            onSuccessCallback.run();
+        }
+    }
 
     //Helpers
     private String toItemType(String displayValue) {
@@ -281,8 +314,93 @@ public class CreateAuctionController{
         lblError.setVisible(false);
         lblError.setManaged(false);
     }
+
+    private void updateWizard() {
+        clearError();
+        hide(step1Form);
+        hide(step2Form);
+        hide(step3Form);
+
+        // Gọi hàm thắp sáng cột bên trái
+        updateStepIndicators();
+
+        // Xử lý Form ở giữa và Nút bấm
+        switch (currentStep) {
+            case 1 -> {
+                show(step1Form);
+                if (btnNext != null) btnNext.setVisible(true);
+                if (btnSubmit != null) btnSubmit.setVisible(false);
+            }
+            case 2 -> {
+                show(step2Form);
+                if (btnNext != null) btnNext.setVisible(true);
+                if (btnSubmit != null) btnSubmit.setVisible(false);
+            }
+            case 3 -> {
+                show(step3Form);
+                if (btnNext != null) btnNext.setVisible(false);
+                if (btnSubmit != null) btnSubmit.setVisible(true);
+            }
+        }
+    }
+
+    private void updateStepIndicators() { 
+        // 1. Lột sạch class "step-row-active" để reset về màu xám
+        if (step1Indicator != null) step1Indicator.getStyleClass().remove("step-row-active");
+        if (step2Indicator != null) step2Indicator.getStyleClass().remove("step-row-active");
+        if (step3Indicator != null) step3Indicator.getStyleClass().remove("step-row-active");
+
+        // 2. Reset lại số (phòng khi user ấn lùi bước)
+        if (lblNum1 != null) lblNum1.setText("1");
+        if (lblNum2 != null) lblNum2.setText("2");
+        if (lblNum3 != null) lblNum3.setText("3");
+
+        // 3. Áp dụng màu đỏ và đổi thành dấu tích (✓) cho các bước đã qua
+        if (currentStep >= 1 && step1Indicator != null) {
+            step1Indicator.getStyleClass().add("step-row-active");
+            if (currentStep > 1 && lblNum1 != null) lblNum1.setText("✓");
+        }
+        if (currentStep >= 2 && step2Indicator != null) {
+            step2Indicator.getStyleClass().add("step-row-active");
+            if (currentStep > 2 && lblNum2 != null) lblNum2.setText("✓");
+        }
+        if (currentStep >= 3 && step3Indicator != null) {
+            step3Indicator.getStyleClass().add("step-row-active");
+            // Bước 3 là cuối cùng nên con số 3 giữ nguyên, không biến thành tích nữa
+        }
+    }
+
+    //ham nay dang loi vcl
     private void closeView() {
-        if (btnCancel.getScene() != null && btnCancel.getScene().getWindow() != null)
-            btnCancel.getScene().getWindow().hide();
+        if (btnSubmit.getScene() != null && btnSubmit.getScene().getWindow() != null)
+            btnSubmit.getScene().getWindow().hide();
+    }
+
+    private boolean validateCurrentStep() {
+        clearError();
+        switch (currentStep) {
+            case 1 -> {
+                if (txtTitle.getText().trim().isEmpty()) {
+                    showError("Tên phiên đấu giá không được để trống.");
+                    txtTitle.requestFocus();
+                    return false;
+                }
+                if (dpStartDate.getValue() == null) {
+                    showError("Vui lòng chọn ngày bắt đầu.");
+                    return false;
+                }
+                if (cbDuration.getValue() == null) {
+                    showError("Vui lòng chọn thời lượng.");
+                    return false;
+                }
+            }
+            case 2 -> {
+                if (cmbItemType.getValue() == null) {
+                    showError("Vui lòng chọn loại sản phẩm.");
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

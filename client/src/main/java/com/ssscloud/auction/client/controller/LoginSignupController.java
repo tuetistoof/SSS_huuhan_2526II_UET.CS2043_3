@@ -95,7 +95,6 @@ public class LoginSignupController {
         String pass = txtPassword.getText().trim();
         
         //validate thông tin (không gửi server nếu thông tin rỗng)
-        boolean loginSuccess = false;
         boolean hasError = false;
 
         if (username.isEmpty()) {
@@ -107,13 +106,13 @@ public class LoginSignupController {
             txtPassword.getStyleClass().add("input-error");
             hasError = true;
         }
-        if (hasError == true) {
+        if (hasError) {
             lblError.setText("Missing required infomation.");
             lblError.setVisible(true);
             lblError.setManaged(true);
             return;
         }
-
+        btnLogin.setDisable(true);
         if (loading != null && loadingController != null) {
             loading.setVisible(true);
             loadingController.playAnimation();

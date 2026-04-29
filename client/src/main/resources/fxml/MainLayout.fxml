@@ -32,7 +32,7 @@
                      <Image url="@../images/Asset%201.png" />
                   </image>
                </ImageView>
-               <Label alignment="BOTTOM_LEFT" onMouseClicked="#handleDas" styleClass="app-logo-btn" text="CloudBid" />
+               <Label alignment="BOTTOM_LEFT" styleClass="app-logo-btn" text="CloudBid" />
             </children>
          </HBox>
          <Region HBox.hgrow="ALWAYS" />
@@ -50,24 +50,24 @@
 
     <left>
         <VBox fx:id="sidebar" prefWidth="200.0" spacing="5" styleClass="sidebar">
-         <Label styleClass="sidebar-group-label" text="OVERVIEW" />
+         <Label fx:id="lblOverview" styleClass="sidebar-group-label" text="OVERVIEW" />
          <HBox fx:id="navDashboard" onMouseClicked="#handleNavDashboard" styleClass="sidebar-item">
             <children>
                <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
                   <image>
                      <Image url="@../images/home.png" />
                   </image></ImageView>
-               <Label text="Dashboard" />
+               <Label fx:id="lblSidebarTitleDB" text="Dashboard" />
             </children>
          </HBox>
-         <Label styleClass="sidebar-group-label" text="AUCTION" />
+         <Label fx:id="lblAuction" styleClass="sidebar-group-label" text="AUCTION" />
          <HBox fx:id="navActiveBids" onMouseClicked="#handleNavActiveBids" styleClass="sidebar-item">
             <children>
                <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
                   <image>
                      <Image url="@../images/calendar-gavel-legal.png" />
                   </image></ImageView>
-               <Label text="Active Bids" />
+               <Label fx:id="lblSidebarTitleAB" text="Active Bids" />
             </children>
          </HBox>
          <HBox fx:id="navWatchlist" onMouseClicked="#handleNavWatchlist" styleClass="sidebar-item">
@@ -76,7 +76,7 @@
                   <image>
                      <Image url="@../images/clock.png" />
                   </image></ImageView>
-               <Label text="Watchlist" />
+               <Label fx:id="lblSidebarTitleW" text="Watchlist" />
             </children>
          </HBox>
          <HBox fx:id="navWonItems" onMouseClicked="#handleNavWonItems" styleClass="sidebar-item">
@@ -85,7 +85,7 @@
                   <image>
                      <Image url="@../images/trophy.png" />
                   </image></ImageView>
-               <Label text="Won Items" />
+               <Label fx:id="lblSidebarTitleWI" text="Won Items" />
             </children>
          </HBox>
          <HBox fx:id="navHistory" onMouseClicked="#handleNavHistory" styleClass="sidebar-item">
@@ -94,7 +94,7 @@
                   <image>
                      <Image url="@../images/paperclip-vertical.png" />
                   </image></ImageView>
-               <Label text="History" />
+               <Label fx:id="lblSidebarTitleH" text="History" />
             </children>
          </HBox>
          <HBox fx:id="navMyItems" onMouseClicked="#handleNavMyItems" styleClass="sidebar-item">
@@ -103,7 +103,7 @@
                   <image>
                      <Image url="@../images/tags.png" />
                   </image></ImageView>
-               <Label text="My Items" />
+               <Label fx:id="lblSidebarTitleMI" text="My Items" />
             </children>
          </HBox>
          <HBox fx:id="navNewAuctionRoom" onMouseClicked="#handleNavNewAuctionRoom" styleClass="sidebar-item">
@@ -112,7 +112,7 @@
                   <image>
                      <Image url="@../images/add.png" />
                   </image></ImageView>
-               <Label text="New Auction Room" />
+               <Label fx:id="lblSidebarTitleNAR" text="New Auction Room" />
             </children>
          </HBox>
          <HBox fx:id="navMyAuctionRooms" onMouseClicked="#handleNavMyAuctionRooms" styleClass="sidebar-item">
@@ -121,12 +121,19 @@
                   <image>
                      <Image url="@../images/shop.png" />
                   </image></ImageView>
-               <Label text="My Auction Rooms" />
+               <Label fx:id="lblSidebarTitleMAR" text="My Auction Rooms" />
             </children>
          </HBox>
 
                   <Region VBox.vgrow="ALWAYS" />
-         <Button maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất" />
+         <Button maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất">
+            <graphic>
+               <ImageView fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                  <image>
+                     <Image url="@../images/logout.png" />
+                  </image>
+               </ImageView>
+            </graphic></Button>
         </VBox>
     </left>
 
