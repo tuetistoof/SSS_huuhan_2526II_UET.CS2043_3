@@ -10,6 +10,7 @@ import com.ssscloud.auction.common.util.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.*;
+import com.ssscloud.auction.client.util.SessionManager;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -17,6 +18,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 
 public class BiddingRoomController implements MessageListener {
 
@@ -35,6 +37,9 @@ public class BiddingRoomController implements MessageListener {
     @FXML private TextField txtIncrement;
     @FXML private Button    btnStartAutoBid;
 
+    @FXML private StackPane rootPane;
+
+
     private boolean    isAutoBidding  = false;
     private AuctionDTO currentAuction;
 
@@ -43,10 +48,6 @@ public class BiddingRoomController implements MessageListener {
     public void initialize() {
         socket.addListener(this);
     }
-
-    // ------------------------------------------------------------------
-    // Manual bid
-    // ------------------------------------------------------------------
 
     @FXML
     private void handlePlaceBid() {
@@ -81,10 +82,6 @@ public class BiddingRoomController implements MessageListener {
         // Không chờ response — nếu thành công server push BID_UPDATE đến tất cả client trong phiên
         // Nếu thất bại server push BID_ERROR về riêng client này → handleServerPush() xử lý
     }
-
-    // ------------------------------------------------------------------
-    // Auto bid
-    // ------------------------------------------------------------------
 
     @FXML
     private void handleStartAutoBid() {
@@ -142,10 +139,6 @@ public class BiddingRoomController implements MessageListener {
         }).start();
     }
 
-    // ------------------------------------------------------------------
-    // Server push
-    // ------------------------------------------------------------------
-
     @Override
     public void onMessageReceived(String jsonMessage) {
         Platform.runLater(() -> handleServerPush(jsonMessage));
@@ -175,11 +168,16 @@ public class BiddingRoomController implements MessageListener {
 
         long currentPrice = data.has("currentPrice") ? data.get("currentPrice").getAsLong() : 0;
         String bidderUsername = data.has("bidderUsername") ? data.get("bidderUsername").getAsString() : "";
-
+        String bidType = data.has("bidType") ? data.get("bidType").getAsString(): "MANUAL";
         lblCurrentPrice.setText(String.format("%,d VND", currentPrice));
         lblBidderName.setText(bidderUsername);
         currentAuction.setCurrentPrice(currentPrice);
         resetPlaceBidButton();
+        String myUsername = SessionManager.getInstance().getCurrentUser() != null ? SessionManager.getInstance().getCurrentUser().getUsername() : "";
+ 
+        if ("MANUAL".equals(bidType) && myUsername.equals(bidderUsername) && rootPane != null) {
+            BidSuccessToastController.show(rootPane, currentAuction.getName(), currentPrice);
+        }
     }
 
     private void handleBidError(JsonObject root) {
@@ -211,6 +209,7 @@ public class BiddingRoomController implements MessageListener {
         resetAutoBidButton();
         showInfo("Auto Bidding đã dừng (đã đạt giá tối đa).");
     }
+
     private void handleSubscribeError(JsonObject root) {
         String message = "Không thể vào phòng đấu giá.";
         if (root.has("data") && root.get("data").isJsonObject()) {
@@ -224,9 +223,6 @@ public class BiddingRoomController implements MessageListener {
         showError(message);
     }
 
-    // ------------------------------------------------------------------
-    // Setters — màn hình trước inject context
-    // ------------------------------------------------------------------
 
     public void setAuction(AuctionDTO auction) {
         this.currentAuction = auction;
@@ -248,10 +244,8 @@ public class BiddingRoomController implements MessageListener {
         socket.removeListener(this);
     }
 
-    // ------------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------------
 
+    //Helpers
     private void resetPlaceBidButton() {
         btnPlaceBid.setDisable(false);
         btnPlaceBid.setText("Place Bid");
