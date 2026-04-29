@@ -44,6 +44,7 @@ public class BidTransactionDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psBidTransaction);
         }
     }
@@ -63,7 +64,6 @@ public class BidTransactionDAO extends BaseDAO {
             psBidTransaction.setString(6, bidTransaction.getType().name());
             psBidTransaction.executeUpdate();
 
-            conn.commit();
             logger.info("da luu bidTransaction");
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
@@ -75,7 +75,6 @@ public class BidTransactionDAO extends BaseDAO {
             safelyRollback(conn);
             return false;
         } finally {
-            resetAutocommit(conn);
             closeResource(psBidTransaction);
         }
     }
@@ -107,6 +106,7 @@ public class BidTransactionDAO extends BaseDAO {
             logger.severe("Lỗi findByAuctionId auctionId=" + auctionId + ": " + e.getMessage());
             return null;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -137,6 +137,7 @@ public class BidTransactionDAO extends BaseDAO {
             logger.severe("Lỗi findByBidderId auctionId=" + bidderId + ": " + e.getMessage());
             return list;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -167,6 +168,7 @@ public class BidTransactionDAO extends BaseDAO {
             logger.severe("Lỗi findByAuctionId auctionId=" + auctionId + ": " + e.getMessage());
             return list;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }

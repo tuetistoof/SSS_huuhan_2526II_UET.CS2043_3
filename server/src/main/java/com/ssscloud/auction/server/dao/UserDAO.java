@@ -55,6 +55,7 @@ public class UserDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psEntity, psUser, psBidder);
         }
     }
@@ -101,6 +102,7 @@ public class UserDAO extends BaseDAO {
             return false;
         } finally {
             resetAutocommit(conn);
+            closeConnect(conn);
             closeResource(psEntity, psUser, psSeller);
         }
     }
@@ -135,6 +137,7 @@ public class UserDAO extends BaseDAO {
             logger.info("Loi khi tim theo userName: " + userName + " - " + e.getMessage());
             return null;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -169,6 +172,7 @@ public class UserDAO extends BaseDAO {
             logger.info("Loi khi tim theo userName: " + email + " - " + e.getMessage());
             return null;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -203,6 +207,7 @@ public class UserDAO extends BaseDAO {
             logger.severe("Loi khi tim theo id " + id + " - " + e.getMessage());
             return null;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -224,6 +229,7 @@ public class UserDAO extends BaseDAO {
             logger.severe("Lỗi existsByUsername: " + userName + " - " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(rs, ps);
         }
     }
@@ -247,6 +253,7 @@ public class UserDAO extends BaseDAO {
             logger.severe("Lỗi update password id: " + id + " - " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }
@@ -268,6 +275,7 @@ public class UserDAO extends BaseDAO {
             logger.severe("Lỗi update email id: " + id + " - " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }
@@ -289,6 +297,7 @@ public class UserDAO extends BaseDAO {
             logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }
@@ -310,6 +319,7 @@ public class UserDAO extends BaseDAO {
             logger.severe("Lỗi bank account blance id: " + id + " - " + e.getMessage());
             return false;
         } finally {
+            closeConnect(conn);
             closeResource(ps);
         }
     }
