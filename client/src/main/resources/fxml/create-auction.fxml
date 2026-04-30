@@ -17,7 +17,7 @@
 <StackPane prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: f2f2f2;" styleClass="wizard-shell" stylesheets="@../css/create-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.CreateAuctionController">
     <children>
         
-        <HBox maxHeight="650.0" maxWidth="850.0" styleClass="wizard-shell">
+        <HBox maxHeight="750.0" maxWidth="950.0" styleClass="wizard-shell">
             <children>
 
                 <VBox prefWidth="320.0" spacing="25.0" styleClass="wizard-nav">
@@ -70,50 +70,54 @@
                         </HBox>
                     </children>
                 </VBox>
-
+      
                 <VBox spacing="15.0" HBox.hgrow="ALWAYS">
                     <padding>
                         <Insets bottom="40.0" left="50.0" right="50.0" top="50.0" />
                     </padding>
                     <children>
                         
-                        <StackPane alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+                              <StackPane alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
                             <children>
                                 
-                                <VBox fx:id="step1Form" spacing="15.0">
+                                      <VBox fx:id="step1Form" spacing="15.0">
                                     <children>
                                         <Label styleClass="wizard-nav-title" text="Auction Info" />
                                         <VBox spacing="5.0">
                                             <Label text="Auction name:">
                                     <font>
                                        <Font size="14.0" />
-                                    </font></Label>
+                                    </font>
+                                 </Label>
                                             <TextField fx:id="txtTitle" prefHeight="40.0" promptText="Enter auction name..." styleClass="wizard-input" />
                                         </VBox>
                                         <VBox spacing="5.0">
                                             <Label text="Time start:">
                                     <font>
                                        <Font size="14.0" />
-                                    </font></Label>
+                                    </font>
+                                 </Label>
                                             <DatePicker fx:id="dpStartDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
                                         </VBox>
                                         <VBox spacing="5.0">
                                             <Label text="Auction duration:">
                                     <font>
                                        <Font size="14.0" />
-                                    </font></Label>
+                                    </font>
+                                 </Label>
                                             <ComboBox fx:id="cbDuration" maxWidth="Infinity" prefHeight="40.0" promptText="Select days" styleClass="wizard-input" />
                                         </VBox>
                                         <VBox spacing="5.0">
                                             <Label text="End time:">
                                     <font>
                                        <Font size="14.0" />
-                                    </font></Label>
+                                    </font>
+                                 </Label>
                                             <TextField fx:id="txtEndTime" prefHeight="40.0" promptText="HH:mm  (vd: 18:30)" styleClass="wizard-input" />
                                         </VBox>
                                     </children>
                                 </VBox>
-
+      
                                 <VBox fx:id="step2Form" spacing="15.0" visible="false">
                                     <children>
                                         <Label styleClass="wizard-nav-title" text="Item Info" />
@@ -122,35 +126,39 @@
                                                 <Label text="Item type:">
                                        <font>
                                           <Font size="14.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                                 <ComboBox fx:id="cmbItemType" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
                                             </VBox>
                                             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                                                 <Label text="Item name:">
                                        <font>
                                           <Font size="14.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                                 <TextField fx:id="txtItemName" prefHeight="40.0" styleClass="wizard-input" />
                                             </VBox>
                                         </HBox>
                                         
-                                        <HBox spacing="15.0">
+                                              <HBox spacing="15.0">
                                             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                                                 <Label text="Creator:">
                                        <font>
                                           <Font size="14.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                                 <TextField fx:id="txtCreator" prefHeight="40.0" styleClass="wizard-input" />
                                             </VBox>
                                             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                                                 <Label text="Manufacturing date (optional):">
                                        <font>
                                           <Font size="14.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                                 <DatePicker fx:id="dpManufacturingDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
                                             </VBox>
                                         </HBox>
-
+      
                                         <HBox spacing="20.0">
                                             <VBox fx:id="sectionArt">
                                                 <CheckBox fx:id="chkCertificate" text="Has Certificate" />
@@ -161,29 +169,32 @@
                                                     <Label text="Warranty period (months):">
                                           <font>
                                              <Font size="14.0" />
-                                          </font></Label>
+                                          </font>
+                                       </Label>
                                                     <TextField fx:id="txtWarrantyPeriod" prefHeight="40.0" styleClass="wizard-input" />
                                                 </VBox>
                                                 <VBox spacing="5.0">
                                                     <Label text="Purchase date:">
                                           <font>
                                              <Font size="14.0" />
-                                          </font></Label>
+                                          </font>
+                                       </Label>
                                                     <DatePicker fx:id="dpPurchaseDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
                                                 </VBox>
                                             </VBox>
                                         </HBox>
-
+      
                                         <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                                             <Label text="Description:">
                                     <font>
                                        <Font size="14.0" />
-                                    </font></Label>
+                                    </font>
+                                 </Label>
                                             <TextArea fx:id="txtDescription" prefHeight="80.0" styleClass="wizard-input" />
                                         </VBox>
                                     </children>
                                 </VBox>
-
+      
                                 <VBox fx:id="step3Form" spacing="15.0" visible="false">
                                     <children>
                                         <Label styleClass="auction-card-title" text="Pricing &amp; Bidding" />
@@ -192,30 +203,33 @@
                                                 <Label text="Start price:">
                                        <font>
                                           <Font size="14.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                                 <TextField fx:id="txtStartingPrice" prefHeight="40.0" styleClass="wizard-input" />
                                             </VBox>
                                             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                                                 <Label text="Min increment:">
                                        <font>
                                           <Font size="14.0" />
-                                       </font></Label>
+                                       </font>
+                                    </Label>
                                                 <TextField fx:id="txtMinIncrement" prefHeight="40.0" styleClass="wizard-input" />
                                             </VBox>
                                         </HBox>
                                     </children>
                                 </VBox>
                                 
-                            </children>
+                                  </children>
                         </StackPane>
                         
-                        <Region VBox.vgrow="ALWAYS" />
+                              <Region VBox.vgrow="ALWAYS" />
                         <Label fx:id="lblError" style="-fx-font-weight: bold;" text="" textFill="#f75667">
                      <font>
                         <Font size="14.0" />
-                     </font></Label>
+                     </font>
+                  </Label>
                         
-                        <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                              <HBox alignment="CENTER_RIGHT" spacing="10.0">
                             <children>
                                 <Button fx:id="btnCancel" onAction="#handleCancel" prefHeight="40.0" prefWidth="100.0" styleClass="btn-wizard-secondary" text="Cancel" />
                                 <Button fx:id="btnNext" onAction="#handleNextStep" prefHeight="40.0" prefWidth="120.0" styleClass="btn-wizard-primary" text="Next step" />
@@ -223,7 +237,7 @@
                             </children>
                         </HBox>
                         
-                    </children>
+                          </children>
                 </VBox>
                 
             </children>

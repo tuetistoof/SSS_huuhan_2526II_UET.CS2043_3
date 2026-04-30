@@ -8,6 +8,7 @@ import com.ssscloud.auction.common.dto.request.ItemData;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.util.SessionManager;
  
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -20,6 +21,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 //TO_DO: chưa làm handleCancle với chuyển màn
@@ -125,8 +129,18 @@ public class CreateAuctionController{
         String incrStr = txtMinIncrement.getText().trim().replace(".", "").replace(",", "");
         String timeStr = txtEndTime.getText().trim();
         String typeStr = cmbItemType.getValue();
- 
 
+        if (dpStartDate.getValue() == null) {
+            showError("Vui lòng chọn ngày bắt đầu.");
+            return;
+        }
+        LocalDate startDate = dpStartDate.getValue();
+        if (cbDuration.getValue() == null) {
+            showError("Vui lòng chọn thời lượng phiên đấu giá.");
+            return;
+        }
+        LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
+        
         //2.validate
         if (name.isEmpty()) {
             showError("Tên phiên đấu giá không được để trống.");
@@ -160,16 +174,14 @@ public class CreateAuctionController{
                 return;
             }
         }
+        
         //ktra ngày giờ
-        if (dpStartDate.getValue() == null) {
-            showError("Vui lòng chọn ngày bắt đầu.");
+        LocalDateTime startTime = startDate.atStartOfDay();
+        if (startTime.isBefore(LocalDateTime.now().plusMinutes(5))) {
+            showError("Thời gian bắt đầu phải cách hiện tại ít nhất 5 phút.");
             return;
         }
-        if (cbDuration.getValue() == null) {
-            showError("Vui lòng chọn thời lượng phiên đấu giá.");
-            return;
-        }
-        LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
+
         LocalDateTime endTime;
         try {
             LocalTime lt = timeStr.isEmpty()
@@ -185,11 +197,16 @@ public class CreateAuctionController{
             showError("Thời gian kết thúc phải cách hiện tại ít nhất 5 phút.");
             return;
         }
-
+        //set tam de demo
+        List<String> urls = new ArrayList<>(Arrays.asList("https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg"));
         String itemType = toItemType(typeStr);
         ItemData itemData = new ItemData();
-        itemData.setItemType(itemType);
+        itemData.setName(txtItemName.getText().trim());
         itemData.setCreator(txtCreator.getText().trim());
+        itemData.setDescription(txtDescription.getText().trim());
+        itemData.setItemType(itemType);
+        itemData.setImageUrls(urls);
+
 
         switch (itemType) {
             case "ART" -> {
@@ -220,10 +237,11 @@ public class CreateAuctionController{
         CreateAuctionRequest reqDTO = new CreateAuctionRequest();
         reqDTO.setName(name);
         reqDTO.setStartPrice(startPrice);
-        reqDTO.setEndTime(endTime);
-        reqDTO.setStartTime(null);      //chưa lấy start time
         reqDTO.setMinIncrement(minIncrement);
+        reqDTO.setStartTime(startTime);
+        reqDTO.setEndTime(endTime);
         reqDTO.setItemData(itemData);
+        reqDTO.setSellerId(SessionManager.getInstance().getCurrentUser().getId());
 
         //5.Wrap trong client message
         ClientMessage msg = new ClientMessage("CREATE_AUCTION", reqDTO);
@@ -270,7 +288,6 @@ public class CreateAuctionController{
                 btnSubmit.setText("Tạo phiên");
                 if (finalSuccess) {
                     if (onSuccessCallback != null) onSuccessCallback.run();
-                    closeView();
                 } else {
                     showError(finalError);
                 }

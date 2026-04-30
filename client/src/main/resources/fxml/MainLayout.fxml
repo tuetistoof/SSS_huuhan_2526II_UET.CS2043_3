@@ -126,7 +126,7 @@
          </HBox>
 
                   <Region VBox.vgrow="ALWAYS" />
-         <Button maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất">
+         <Button fx:id="btnLogOut" maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất">
             <graphic>
                <ImageView fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                   <image>

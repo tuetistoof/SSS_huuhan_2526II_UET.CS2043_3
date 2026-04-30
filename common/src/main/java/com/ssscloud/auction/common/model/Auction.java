@@ -9,6 +9,7 @@ import com.ssscloud.auction.common.observer.Subject;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Entity đại diện cho một phiên đấu giá
@@ -170,5 +171,18 @@ public class Auction implements Subject {
         this.bidTransaction = bidTransaction;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Auction auction = (Auction) o;
+        // So sánh dựa trên ID duy nhất trong AuctionConfig
+        return Objects.equals(this.getAuctionConfig().getId(), 
+                             auction.getAuctionConfig().getId());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getAuctionConfig().getId());
+    }
 }

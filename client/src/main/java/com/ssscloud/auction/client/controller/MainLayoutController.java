@@ -155,13 +155,13 @@ public class MainLayoutController {
     @FXML
     void handleNavNewAuctionRoom(MouseEvent event) {
         updateActiveStyle(navNewAuctionRoom); 
-
+        FXMLLoader loader = new FXMLLoader();
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
+            loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
             Parent createAuctionView = loader.load();
             CreateAuctionController controller = loader.getController();
             controller.setOnSuccessCallback(() -> {
-                handleNavDashboard(null); 
+                loadBiddingRoom();
             });
 
             contentArea.getChildren().clear();
@@ -170,6 +170,25 @@ public class MainLayoutController {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Lỗi load file create-auction.fxml");
+        }
+    }
+
+    private void loadBiddingRoom() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml")); 
+            Parent biddingRoomView = loader.load();
+
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(biddingRoomView);
+            
+            // (Nâng cao) Chỗ này sau lấy controller của BiddingRoom 
+            // để bơm ID phòng hoặc Dữ liệu phòng vào
+            // BiddingRoomController bidCtrl = loader.getController();
+            // bidCtrl.setAuctionData(newAuctionData);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi load file bidding-room.fxml");
         }
     }
 
