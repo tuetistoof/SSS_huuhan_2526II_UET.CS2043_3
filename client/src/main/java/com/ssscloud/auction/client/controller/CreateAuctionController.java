@@ -1,5 +1,7 @@
 package com.ssscloud.auction.client.controller;
- 
+
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -8,7 +10,6 @@ import com.ssscloud.auction.common.dto.request.ItemData;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
-import com.ssscloud.auction.client.util.SessionManager;
  
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -152,6 +153,11 @@ public class CreateAuctionController{
             txtStartingPrice.requestFocus();
             return;
         }
+        if (typeStr == null || typeStr.isEmpty()) {
+            showError("Vui lòng chọn loại sản phẩm.");
+            cmbItemType.requestFocus();
+            return;
+        }
         //ktra giá bắt đầu
         long startPrice;
         try {
@@ -176,10 +182,14 @@ public class CreateAuctionController{
         }
         
         //ktra ngày giờ
-        LocalDateTime startTime = startDate.atStartOfDay();
-        if (startTime.isBefore(LocalDateTime.now().plusMinutes(5))) {
-            showError("Thời gian bắt đầu phải cách hiện tại ít nhất 5 phút.");
+        LocalDateTime startTime;
+        if (startDate.isEqual(LocalDate.now())) {
+            startTime = LocalDateTime.now();
+        } else if (startDate.isBefore(LocalDate.now())) {
+            showError("Ngày bắt đầu không được nằm trong quá khứ.");
             return;
+        } else {
+            startTime = startDate.atStartOfDay();
         }
 
         LocalDateTime endTime;
@@ -241,11 +251,13 @@ public class CreateAuctionController{
         reqDTO.setStartTime(startTime);
         reqDTO.setEndTime(endTime);
         reqDTO.setItemData(itemData);
-        reqDTO.setSellerId(SessionManager.getInstance().getCurrentUser().getId());
+        reqDTO.setSellerId(session.getCurrentUser().getId());
 
         //5.Wrap trong client message
         ClientMessage msg = new ClientMessage("CREATE_AUCTION", reqDTO);
         String JsonRequest = JsonUtils.toJson(msg);
+        // AI recommend: có thể cần msg.setType("REQUEST")
+
         //6. Gửi qua socket thì gửi thread riêng không gửi luông tong UI thread
         new Thread(() -> {
             boolean isSuccess = false;
@@ -259,13 +271,13 @@ public class CreateAuctionController{
                     ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
                     if ("CREATE_AUCTION_RESPONSE".equals(serverMsg.getAction())) {
                         String rawData = JsonUtils.toJson(serverMsg.getData());
-                        ApiResponse<AuctionDTO> apiResp = JsonUtils.fromJsonGeneric(rawData, ApiResponse.class);
+                        Type type = new TypeToken<ApiResponse<AuctionDTO>>(){}.getType();
+                        ApiResponse<AuctionDTO> apiResp = JsonUtils.fromJsonGeneric(rawData, type);
  
                         isSuccess = apiResp.isSuccess();
                         if (isSuccess) {
                             // Double-parse vì Gson đọc data thành LinkedTreeMap
-                            String auctionJson = JsonUtils.toJson(apiResp.getData());
-                            newAuction = JsonUtils.fromJson(auctionJson, AuctionDTO.class);
+                            newAuction = apiResp.getData();
                         } else {
                             errorMsg = apiResp.getMessage();
                         }
