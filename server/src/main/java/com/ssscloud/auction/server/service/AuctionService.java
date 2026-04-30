@@ -6,6 +6,7 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.factory.ItemFactory;
@@ -13,11 +14,9 @@ import com.ssscloud.auction.server.factory.ItemFactory;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * AuctionService — business logic tạo phiên đấu giá.
@@ -116,11 +115,9 @@ public class AuctionService {
                     AuctionStatus current = auction.getStatus();
                     if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
                         auction.finish();                                        // đổi in-memory
-                        auctionDAO.updateStatus(                                 // đổi DB
-                                auction.getAuctionConfig().getId(),
-                                AuctionStatus.FINISHED);
-                        logger.info("scheduleClose: đã đóng auction "
-                                + auction.getAuctionConfig().getId());
+                        auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
+                        logger.info("scheduleClose: đã đóng auction "+ auction.getAuctionConfig().getId());
+                        ChangeManager.getInstance().notify(auction);
                     }
                 } catch (Exception e) {
                     logger.severe("scheduleClose lỗi: " + e.getMessage());
