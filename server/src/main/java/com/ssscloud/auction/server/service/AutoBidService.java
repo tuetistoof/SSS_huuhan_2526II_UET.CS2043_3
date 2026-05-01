@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.service;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.BidType;
+import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -44,10 +45,15 @@ public class AutoBidService {
         if (req.getIncrement() > req.getMaxBid())
             throw new IllegalArgumentException("Increment không được lớn hơn MaxBid");
 
-        Auction auction = auctionDAO.findByAuctionId(req.getAuctionId());
-        if (auction == null || auction.getStatus().isEnded() || auction.isExpired())
-            throw new IllegalArgumentException(
-                    "Phiên đấu giá không tồn tại hoặc đã kết thúc: " + req.getAuctionId());
+        Auction auction = AuctionRegistry.getInstance().get(req.getAuctionId());
+        if (auction == null)
+        {
+            auction = auctionDAO.findByAuctionId(req.getAuctionId());
+            if (auction == null)
+                throw new InvalidBidException("Phiên đấu giá không tồn tại: " + req.getAuctionId());
+            if (!auction.getStatus().isEnded() && !auction.isExpired())
+                AuctionRegistry.getInstance().register(auction);
+        }
         if (bidderId.equals(auction.getSellerId()))
             throw new IllegalArgumentException(
                     "Người bán không thể đăng ký auto bid cho sản phẩm của mình");

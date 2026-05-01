@@ -33,11 +33,21 @@ public class ConcurrentBidManager {
     private BidTransactionDAO bidTransactionDAO;
     private AutoBidService    autoBidService;
 
-    public void init(BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService) {
-        this.bidTransactionDAO = bidTransactionDAO;
-        this.autoBidService    = autoBidService;
+    private ConcurrentBidManager(BidTransactionDAO dao, AutoBidService service) {
+        this.bidTransactionDAO = dao;
+        this.autoBidService = service;
     }
 
+    public static ConcurrentBidManager initialize(BidTransactionDAO dao, AutoBidService service) {
+        if (instance == null) {
+            synchronized (ConcurrentBidManager.class) {
+                if (instance == null) {
+                    instance = new ConcurrentBidManager(dao, service);
+                }
+            }
+        }
+        return instance;
+    }
     private final Map<String, BlockingQueue<BidTask>> queues = new ConcurrentHashMap<>();
     private final Map<String, Thread> workers = new ConcurrentHashMap<>();
     

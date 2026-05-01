@@ -27,7 +27,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
-public class AuctionRoomController {
+public class AuctionRoomController implements MessageListener{
 
     @FXML private Button btnAutoToggle;
     @FXML private Button btnBack;

@@ -6,7 +6,6 @@ import java.lang.reflect.Type;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
-import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -15,6 +14,7 @@ import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.service.AuctionRegistry;
 
 public class MessageHandler {
     private Gson gson = new Gson();
@@ -22,7 +22,6 @@ public class MessageHandler {
     private UserController userController;
     private AuctionController auctionController;
     private AuctionDAO auctionDAO;
-
     public MessageHandler(
             AuctionDAO auctionDAO,
             UserController userController,
@@ -120,8 +119,8 @@ public class MessageHandler {
                         return null;
                     }
 
-                    Auction auction = auctionDAO.findByAuctionId(auctionId);
-
+                    Auction auction = AuctionRegistry.getInstance().get(auctionId);
+                    if (auction == null) auction = auctionDAO.findByAuctionId(auctionId); 
                     if (auction == null) {
                         client.getWriter().println(JsonUtils.toJson(
                                 ClientMessage.push("SUBSCRIBE_ERROR",

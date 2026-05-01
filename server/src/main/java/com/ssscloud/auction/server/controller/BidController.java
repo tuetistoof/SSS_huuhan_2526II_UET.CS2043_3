@@ -13,11 +13,12 @@ import com.ssscloud.auction.server.service.BidService;
 public class BidController {
     private final BidService bidService;
     private final AutoBidService autoBidService;
-    public BidController (BidService bidService, AutoBidService autoBidService)
-    {
+
+    public BidController(BidService bidService, AutoBidService autoBidService) {
         this.bidService = bidService;
         this.autoBidService = autoBidService;
     }
+
     public String placeBid(Object data, String bidderId, String bidderUsername) {
         try {
             String raw = JsonUtils.toJson(data);
@@ -48,7 +49,7 @@ public class BidController {
             autoBidService.register(req, bidderId, bidderUsername);
             return null; // submit vào queue thành công — không cần response
 
-        } catch (InvalidBidException e) {
+        } catch (IllegalArgumentException e) {
             return JsonUtils.toJson(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             System.err.println("[BidController] Lỗi: " + e.getMessage());

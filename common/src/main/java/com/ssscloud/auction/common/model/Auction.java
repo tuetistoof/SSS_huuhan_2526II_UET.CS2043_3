@@ -117,7 +117,7 @@ public class Auction implements Subject {
             BidTransaction lastBidTransaction = bidTransaction.getLast();
             return lastBidTransaction.getBidAmount();
         }
-        else return 0;
+        else return auctionConfig.getStartPrice();
     }
 
 

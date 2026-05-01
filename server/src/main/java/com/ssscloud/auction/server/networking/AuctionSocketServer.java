@@ -36,7 +36,7 @@ public class AuctionSocketServer {
         AuctionController auctionCtrl = new AuctionController(auctionService);
         
         BidController bidCtrl = new BidController(bidService, autoBidService);
-        ConcurrentBidManager.getInstance().init(bidTransactionDAO, autoBidService);
+        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
         MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl);
 
         System.out.println("[Server] Khởi động port 5000...");

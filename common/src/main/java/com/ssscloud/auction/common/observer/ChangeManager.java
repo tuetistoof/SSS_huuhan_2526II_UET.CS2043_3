@@ -48,14 +48,8 @@ public class ChangeManager {
         registry.computeIfAbsent(subject, k -> new CopyOnWriteArrayList<>()).add(observer); // kiểm tra có list observer chưa không thì tạo thêm
     }
 
-    public void detach(Subject subject, Observer observer){
-        List<Observer> observers = registry.get(subject); //tìm list observer
-        if (observers != null) {
-            observers.remove(observer); //remove khỏi list
-            if (observers.isEmpty()) {
-                registry.remove(subject);
-            } //nếu list rỗng thig xóa hỏi map
-        }
+    public void detachByAdmin(Subject subject){ // admin
+        registry.remove(subject);
     }
 
     /**

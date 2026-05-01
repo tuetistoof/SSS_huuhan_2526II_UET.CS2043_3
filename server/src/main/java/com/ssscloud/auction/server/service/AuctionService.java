@@ -13,10 +13,6 @@ import com.ssscloud.auction.server.factory.ItemFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Logger;
 
 /**
@@ -115,6 +111,7 @@ public class AuctionService {
                         if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
                             auction.finish();
                             auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
+                            AuctionRegistry.getInstance().remove(auction.getAuctionConfig().getId());
                             ChangeManager.getInstance().notify(auction);
                             logger.info("scheduleClose: đóng auction " + auction.getAuctionConfig().getId());
                         }
