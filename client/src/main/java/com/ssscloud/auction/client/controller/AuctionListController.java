@@ -50,10 +50,6 @@ public class AuctionListController implements MessageListener {
         loadAuctions();
     }
 
-    // ------------------------------------------------------------------
-    // Setup
-    // ------------------------------------------------------------------
-
     private void setupTable() {
         colName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
@@ -69,10 +65,6 @@ public class AuctionListController implements MessageListener {
             txtSearch.textProperty().addListener((obs, old, newVal) -> filterList(newVal));
         }
     }
-
-    // ------------------------------------------------------------------
-    // Load dữ liệu
-    // ------------------------------------------------------------------
 
     private void loadAuctions() {
         if (lblStatus != null) lblStatus.setText("Đang tải...");
@@ -136,29 +128,58 @@ public class AuctionListController implements MessageListener {
         }
     }
 
-    // ------------------------------------------------------------------
-    // MessageListener — nhận realtime update từ server (Bid events)
-    // ------------------------------------------------------------------
-
     @Override
     public void onMessageReceived(String json) {
         try {
             ClientMessage msg = JsonUtils.fromJson(json, ClientMessage.class);
-            if (msg == null) return;
+            if (msg == null || msg.getAction() == null) return;
 
-            // Khi có bid mới → refresh list để cập nhật currentPrice
-            if ("PLACE_BID_RESPONSE".equals(msg.getAction())
-                    || "BID_UPDATE".equals(msg.getAction())) {
-                loadAuctions();
+            switch (msg.getAction()) {
+                case "BID_UPDATE" -> {
+                    // Cập nhật thẳng currentPrice vào item trong list — không cần round trip server
+                    String dataJson = JsonUtils.toJson(msg.getData());
+                    com.ssscloud.auction.common.dto.response.BidDTO bid =
+                            JsonUtils.fromJson(dataJson, com.ssscloud.auction.common.dto.response.BidDTO.class);
+                    if (bid == null || bid.getAuctionId() == null) return;
+
+                    Platform.runLater(() -> {
+                        for (AuctionDTO a : masterList) {
+                            if (bid.getAuctionId().equals(a.getId())) {
+                                a.setCurrentPrice(bid.getCurrentPrice());
+                                break;
+                            }
+                        }
+                        // Refresh TableView vì ObservableList không detect thay đổi field bên trong
+                        tblAuctions.refresh();
+                    });
+                }
+                case "AUCTION_ENDED" -> {
+                    // Đổi status thành FINISHED trong list
+                    String dataJson = JsonUtils.toJson(msg.getData());
+                    com.google.gson.JsonObject obj =
+                            com.google.gson.JsonParser.parseString(dataJson).getAsJsonObject();
+                    String auctionId = obj.has("auctionId") ? obj.get("auctionId").getAsString() : null;
+                    if (auctionId == null) return;
+
+                    Platform.runLater(() -> {
+                        for (AuctionDTO a : masterList) {
+                            if (auctionId.equals(a.getId())) {
+                                a.setStatus(com.ssscloud.auction.common.enums.AuctionStatus.FINISHED);
+                                break;
+                            }
+                        }
+                        tblAuctions.refresh();
+                    });
+                }
             }
         } catch (Exception e) {
             // Bỏ qua lỗi parse để không crash UI
         }
     }
 
-    // ------------------------------------------------------------------
-    // FXML Actions
-    // ------------------------------------------------------------------
+    public void cleanup() {
+        socket.removeListener(this);
+    }
 
     @FXML
     private void handleRefresh() {

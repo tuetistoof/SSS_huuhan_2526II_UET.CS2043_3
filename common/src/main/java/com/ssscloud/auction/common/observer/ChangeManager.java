@@ -58,6 +58,17 @@ public class ChangeManager {
         }
     }
 
+    /**
+     * Detach observer theo clientId — dùng khi client rời phòng (UNSUBSCRIBE_AUCTION).
+     * ClientObserver không expose ra ngoài nên cần method này thay vì gọi detach() trực tiếp.
+     */
+    public void detachByClientId(Subject subject, String clientId) {
+        List<Observer> observers = registry.get(subject);
+        if (observers == null || clientId == null) return;
+        observers.removeIf(o -> clientId.equals(o.getObserverId()));
+        if (observers.isEmpty()) registry.remove(subject);
+    }
+
     public void notify(Subject subject){
         List<Observer> observers = registry.get(subject);
         if (observers == null || observers.isEmpty()) return;
@@ -72,5 +83,3 @@ public class ChangeManager {
         }
     }
 }
-
-

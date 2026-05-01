@@ -6,7 +6,7 @@ public class AuctionConfig extends Entity{
     private long startPrice;
     private long minIncrement;
     private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private volatile LocalDateTime endTime; // volatile để đảm bảo thread-safe khi cập nhật endTime trong antisnipping
     private  int extendSecond;
     public AuctionConfig (){};
     // tao moi

@@ -6,10 +6,12 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.factory.ItemFactory;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -100,29 +102,40 @@ public class AuctionService {
 
 
     //HELPERS
-    private void scheduleClose(Auction auction) {
-        LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
-        Date fireAt = Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant());
 
-        Timer timer = new Timer(true); // daemon = true
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
+    private void scheduleClose(Auction auction) {
+        Thread closer = new Thread(() -> {
+            while (true) {
                 try {
-                    AuctionStatus current = auction.getStatus();
-                    if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
-                        auction.finish();                                        // đổi in-memory
-                        auctionDAO.updateStatus(                                 // đổi DB
-                                auction.getAuctionConfig().getId(),
-                                AuctionStatus.FINISHED);
-                        logger.info("scheduleClose: đã đóng auction "
-                                + auction.getAuctionConfig().getId());
+                    LocalDateTime end = auction.getAuctionConfig().getEndTime();
+                    long remaining = Duration.between(LocalDateTime.now(), end).toMillis();
+
+                    if (remaining <= 0) {
+                        AuctionStatus current = auction.getStatus();
+                        if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
+                            auction.finish();
+                            auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
+                            ChangeManager.getInstance().notify(auction);
+                            logger.info("scheduleClose: đóng auction " + auction.getAuctionConfig().getId());
+                        }
+                        break;
                     }
+
+                    Thread.sleep(Math.min(remaining, 1000));    // ngủ tối đa 1s để check lại, tránh sleep quá lâu khi có antisnipping
+
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
                 } catch (Exception e) {
                     logger.severe("scheduleClose lỗi: " + e.getMessage());
+                    break;
                 }
             }
-        }, fireAt);
+        
+        });
+        closer.setDaemon(true);
+        closer.setName("auction-closer-" + auction.getAuctionConfig().getId());
+        closer.start();
     }
 
 

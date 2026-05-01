@@ -9,7 +9,9 @@ import javafx.animation.Timeline;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.Parent;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -23,44 +25,35 @@ import java.io.IOException;
 
 public class MainLayoutController {
 
-    @FXML
-    private StackPane contentArea;
+    @FXML private StackPane contentArea;
+    
+    @FXML private HBox hBoxLogo;
 
-    @FXML
-    private Label lblAccountBalance;
+    @FXML private Label lblSidebarTitleAB;
+    @FXML private Label lblSidebarTitleDB;
+    @FXML private Label lblSidebarTitleH;
+    @FXML private Label lblSidebarTitleMAR;
+    @FXML private Label lblSidebarTitleMI;
+    @FXML private Label lblSidebarTitleNAR;
+    @FXML private Label lblSidebarTitleW;
+    @FXML private Label lblSidebarTitleWI;
+    @FXML private Label lblAccountBalance;
+    @FXML private Label lblUsername;
+    @FXML private Label lblOverview;
+    @FXML private Label lblAuction;
 
-    @FXML
-    private Label lblUsername;
+    @FXML private HBox navActiveBids;
+    @FXML private HBox navDashboard;
+    @FXML private HBox navHistory;
+    @FXML private HBox navMyAuctionRooms;
+    @FXML private HBox navMyItems;
+    @FXML private HBox navNewAuctionRoom;
+    @FXML private Circle navUserInfo;
+    @FXML private HBox navWatchlist;
+    @FXML private HBox navWonItems;
+    @FXML private Button btnLogOut;
 
-    @FXML
-    private HBox navActiveBids;
-
-    @FXML
-    private HBox navDashboard;
-
-    @FXML
-    private HBox navHistory;
-
-    @FXML
-    private HBox navMyAuctionRooms;
-
-    @FXML
-    private HBox navMyItems;
-
-    @FXML
-    private HBox navNewAuctionRoom;
-
-    @FXML
-    private Circle navUserInfo;
-
-    @FXML
-    private HBox navWatchlist;
-
-    @FXML
-    private HBox navWonItems;
-
-    @FXML
-    private VBox sidebar;
+    @FXML private VBox sidebar;
     private boolean isSidebarExpanded = true;
     private final double SIDEBAR_EXPANDED_WIDTH = 200.0;
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
@@ -69,6 +62,7 @@ public class MainLayoutController {
         UserDTO user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
         applyRole(user.getRole());
+        handleNavDashboard(null);
     }
 
     private void applyRole(UserRole role) {
@@ -127,7 +121,7 @@ public class MainLayoutController {
 
     @FXML
     void handleNavDashboard(MouseEvent event) {
-        // updateActiveStyle(navDashboard); 
+        updateActiveStyle(navDashboard); 
 
         try {
             // Load file Dashboard.fxml
@@ -160,7 +154,23 @@ public class MainLayoutController {
 
     @FXML
     void handleNavNewAuctionRoom(MouseEvent event) {
+        updateActiveStyle(navNewAuctionRoom); 
 
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
+            Parent createAuctionView = loader.load();
+            CreateAuctionController controller = loader.getController();
+            controller.setOnSuccessCallback(() -> {
+                handleNavDashboard(null); 
+            });
+
+            contentArea.getChildren().clear();
+            contentArea.getChildren().add(createAuctionView);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi load file create-auction.fxml");
+        }
     }
 
     @FXML
@@ -168,28 +178,27 @@ public class MainLayoutController {
         System.out.println("Đã click vào khu vực User Info!");
     }
 
-    // private void updateActiveStyle(HBox activeItem) {
-    // // 1. Gom tất cả các menu HBox của ông vào 1 mảng
-    // HBox[] allNavItems = {
-    //     navDashboard, navActiveBids, navWatchlist, 
-    //     navWonItems, navHistory, navMyItems, 
-    //     navNewAuctionRoom, navMyAuctionRooms
-    // };
+    private void updateActiveStyle(HBox activeItem) {
 
-    // // 2. Đi dọn dẹp: Xóa cái class "active" ở TẤT CẢ các menu
-    // for (HBox item : allNavItems) {
-    //     if (item != null) {
-    //         item.getStyleClass().remove("active-nav");
-    //     }
-    // }
+        HBox[] allNavItems = {
+            navDashboard, navActiveBids, navWatchlist, 
+            navWonItems, navHistory, navMyItems, 
+            navNewAuctionRoom, navMyAuctionRooms
+        };
 
-    // // 3. Highlight: Gắn class "active" cho cái menu vừa được truyền vào
-    // if (activeItem != null) {
-    //     if (!activeItem.getStyleClass().contains("active-nav")) {
-    //         activeItem.getStyleClass().add("active-nav");
-    //     }
-    // }
-    //}
+        // 2. Đi dọn dẹp: Xóa cái class "active" ở TẤT CẢ các menu
+        for (HBox item : allNavItems) {
+            if (item != null) {
+                item.getStyleClass().remove("active-nav");
+            }
+        }
+
+        if (activeItem != null) {
+            if (!activeItem.getStyleClass().contains("active-nav")) {
+                activeItem.getStyleClass().add("active-nav");
+            }
+        }
+    }
 
     @FXML
     void handleNavWatchlist(MouseEvent event) {
@@ -211,16 +220,39 @@ public class MainLayoutController {
         Timeline timeline = new Timeline();
         Duration duration = Duration.millis(150);
 
+        double targetWidth = isSidebarExpanded ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
+
+        KeyValue kvPref = new KeyValue(sidebar.prefWidthProperty(), targetWidth);
+        KeyValue kvMin = new KeyValue(sidebar.minWidthProperty(), targetWidth);
+        KeyValue kvMax = new KeyValue(sidebar.maxWidthProperty(), targetWidth);
+
+        KeyFrame kf = new KeyFrame(duration, kvPref, kvMin, kvMax);
+        timeline.getKeyFrames().add(kf);
+
+        Label[] navLabels = {
+            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleH,
+            lblSidebarTitleMAR, lblSidebarTitleMI, lblSidebarTitleNAR,
+            lblSidebarTitleW, lblSidebarTitleWI
+        };
+
         if (isSidebarExpanded) {
-            KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_COLLAPSED_WIDTH);
-            KeyFrame kf = new KeyFrame(duration, kv);
-            timeline.getKeyFrames().add(kf);
-
+            for (Label lbl : navLabels) {
+                lbl.setVisible(false);
+                lbl.setManaged(false);
+            }
+            lblOverview.setText("");
+            lblAuction.setText("");
+            btnLogOut.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         } else {
-
-            KeyValue kv = new KeyValue(sidebar.prefWidthProperty(), SIDEBAR_EXPANDED_WIDTH);
-            KeyFrame kf = new KeyFrame(duration, kv);
-            timeline.getKeyFrames().add(kf);
+            timeline.setOnFinished(e -> {
+                for (Label lbl : navLabels) {
+                    lbl.setVisible(true);
+                    lbl.setManaged(true);
+                }
+                lblOverview.setText("OVERVIEW"); 
+                lblAuction.setText("AUCTION");
+                btnLogOut.setContentDisplay(ContentDisplay.LEFT);
+            });
         }
 
         timeline.play();

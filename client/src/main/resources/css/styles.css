@@ -114,6 +114,26 @@ Vòng tròn loading
     -fx-stroke-line-cap: round;
 }
 
+.create-auction-form {
+    -fx-background-color: white; 
+    -fx-background-radius: 12; 
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 0);
+}
+.side-auction-form {
+    -fx-border-color: #f75667;
+    -fx-border-width: 2.5px;
+    -fx-border-radius: 12;
+}
+
+.active-step .circle {
+    -fx-fill: #f75667;
+    -fx-background-color: #f75667;
+}
+.active-step .label {
+    -fx-text-fill: #f75667;
+    -fx-font-weight: bold;
+}
+
 /* =========================================
    MAIN LAYOUT — ROOT
    ========================================= */
@@ -152,15 +172,12 @@ Vòng tròn loading
 
 .app-logo-btn {
     -fx-background-color: transparent;
-    -fx-font-size: 16px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #f75667;
     -fx-cursor: hand;
-    -fx-padding: 6 10 6 10;
+    -fx-padding: 6 10 6 5;
     -fx-background-radius: 8;
-}
-.app-logo-btn:hover {
-    -fx-background-color: #fff0f1;
 }
 
 .toggle-btn {
@@ -236,6 +253,7 @@ Vòng tròn loading
     -fx-font-weight: bold;
     -fx-text-fill: #dc5771;
     -fx-padding: 12 8 4 8;
+    -fx-border-color: transparent transparent #dc5771 transparent;
 }
 
 /* Mỗi nav item là 1 HBox */
@@ -247,9 +265,8 @@ Vòng tròn loading
     -fx-background-color: transparent;
     -fx-alignment: center-left;
 }
-.sidebar-item.active {
+.sidebar-item.active-nav {
     -fx-background-color: #fff0f1;
-    -fx-text-fill: #f75667;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
@@ -267,7 +284,7 @@ Vòng tròn loading
     -fx-font-size: 14px;
     -fx-text-fill: #444444;
 }
-.sidebar-item-active .label {
+.sidebar-item.active-nav .label {
     -fx-font-size: 13px;
     -fx-text-fill: #f75667;
     -fx-font-weight: bold;
@@ -362,7 +379,7 @@ Vòng tròn loading
     -fx-text-fill: #f75667;
     -fx-border-color: transparent transparent #f75667 transparent;
 }
-.filter-tab-active {
+/* .filter-tab-active {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent #f75667 transparent;
     -fx-border-width: 0 0 2 0;
@@ -372,7 +389,7 @@ Vòng tròn loading
     -fx-cursor: hand;
     -fx-padding: 8 16 8 16;
     -fx-background-radius: 0;
-}
+} */
 
 /* =========================================
    TABLE / DANH SÁCH

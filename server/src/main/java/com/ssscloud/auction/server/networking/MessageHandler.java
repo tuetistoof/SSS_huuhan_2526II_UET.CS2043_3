@@ -85,7 +85,7 @@ public class MessageHandler {
                     if (!resp.isSuccess()) {
                         // Push lỗi về riêng client này, không broadcast
                         client.getWriter().println(
-                                JsonUtils.toJson(ClientMessage.request("BID_ERROR", resp)));
+                                JsonUtils.toJson(ClientMessage.push("BID_ERROR", resp)));
                     }
                     return null;
                 }
@@ -113,21 +113,24 @@ public class MessageHandler {
                     // Client vào BiddingRoom — đăng ký nhận push BID_UPDATE cho auction này
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
                     if (auctionId == null || auctionId.isBlank()) {
-                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
-                                ApiResponse.error("Thiếu auctionId")));
+                        // Dùng .push() để lỗi đi vào listeners (handleServerPush),
+                        client.getWriter().println(JsonUtils.toJson(
+                                ClientMessage.push("SUBSCRIBE_ERROR",
+                                        ApiResponse.error("Thiếu auctionId"))));
+                        return null;
                     }
 
                     Auction auction = auctionDAO.findByAuctionId(auctionId);
 
                     if (auction == null) {
-                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
-                                ApiResponse.error("Phiên đấu giá không tồn tại: " + auctionId)));
+                        client.getWriter().println(JsonUtils.toJson(
+                                ClientMessage.push("SUBSCRIBE_ERROR",
+                                        ApiResponse.error("Phiên đấu giá không tồn tại: " + auctionId))));
+                        return null;
                     }
                     ClientObserver observer = new ClientObserver(client.getWriter(), client.getUserId());
                     ChangeManager.getInstance().attach(auction, observer);
                     System.out.println("[Server] Client " + client.getUserId() + " đã vào phòng auction " + auctionId);
-                    // return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_RESPONSE",
-                    // ApiResponse.success(null, "Đã vào phòng đấu giá thành công")));
                     return null;
                 }
 

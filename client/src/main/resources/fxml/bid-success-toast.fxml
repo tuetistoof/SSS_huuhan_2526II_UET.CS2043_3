@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.ssscloud.auction.client.controller.BidSuccessToastController"
+           styleClass="toast-root"
+           pickOnBounds="false">
+
+    <VBox styleClass="toast-card" maxWidth="320.0" pickOnBounds="true">
+
+        <!-- ── Header: icon + tiêu đề + nút đóng ── -->
+        <HBox styleClass="toast-header" alignment="CENTER_LEFT" spacing="10.0">
+            <padding><Insets top="14.0" right="14.0" bottom="10.0" left="14.0"/></padding>
+
+            <!-- Icon vòng tròn check -->
+            <StackPane styleClass="toast-icon-wrap">
+                <Circle styleClass="toast-icon-circle" radius="14.0"/>
+                <Label text="✓" styleClass="toast-icon-check"/>
+            </StackPane>
+
+            <VBox HBox.hgrow="ALWAYS" spacing="1.0">
+                <Label text="Đặt giá thành công!" styleClass="toast-title"/>
+                <Label fx:id="lblAuctionName" text="Phiên đấu giá" styleClass="toast-subtitle"
+                       maxWidth="200.0" wrapText="false"/>
+            </VBox>
+
+            <Button fx:id="btnClose" text="✕" styleClass="toast-close-btn"
+                    onAction="#handleClose"/>
+        </HBox>
+
+        <!-- ── Body: giá đặt ── -->
+        <HBox styleClass="toast-body" alignment="CENTER_LEFT" spacing="8.0">
+            <padding><Insets top="0.0" right="14.0" bottom="10.0" left="14.0"/></padding>
+            <Label text="Giá đặt:" styleClass="toast-label"/>
+            <Label fx:id="lblBidAmount" text="0 ₫" styleClass="toast-amount"/>
+        </HBox>
+
+        <!-- ── Progress bar tự đóng ── -->
+        <ProgressBar fx:id="progressBar" styleClass="toast-progress"
+                     progress="1.0" maxWidth="Infinity" prefHeight="3.0"/>
+    </VBox>
+
+</StackPane>
