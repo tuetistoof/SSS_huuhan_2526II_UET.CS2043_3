@@ -98,7 +98,7 @@ public class UserService {
     }
 
     private UserDTO toDTO(User user){
-        return new UserDTO(user.getId(), user.getName(), user.getEmail(), user.getRole());
+        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole());
     }
 
     public static class AuthenticationException extends RuntimeException {
