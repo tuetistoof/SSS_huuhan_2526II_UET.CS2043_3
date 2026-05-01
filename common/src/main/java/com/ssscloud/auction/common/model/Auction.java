@@ -69,8 +69,6 @@ public class Auction implements Subject {
         if (this.status == AuctionStatus.OPEN) {
             this.status = AuctionStatus.RUNNING;
         }
-        // notify
-        notifyObservers();
     }
 
     @Override
@@ -90,14 +88,16 @@ public class Auction implements Subject {
 
     @Override
     public String toString() {
-        BidTransaction lastBidTransaction = bidTransaction.getLast();
+        long currentPrice = bidTransaction.isEmpty() //điều kiện kiểm tra
+            ? auctionConfig.getStartPrice()     //nếu đúng
+            : bidTransaction.getLast().getBidAmount(); // nếu sai
         return "Auction{" +
                 "id=" + auctionConfig.getId() +
                 ", name='" + auctionConfig.getName() + '\'' +
-                ", currentPrice=" + lastBidTransaction.getBidAmount() +
+                ", currentPrice=" + currentPrice +
                 ", status=" + status +
                 '}';
-    }
+}
     // getter setter
     public AuctionConfig getAuctionConfig() {
         return auctionConfig;
