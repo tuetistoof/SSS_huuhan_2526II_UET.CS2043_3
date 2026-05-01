@@ -1,5 +1,7 @@
 package com.ssscloud.auction.client.controller;
- 
+
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -20,6 +22,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 //TO_DO: chưa làm handleCancle với chuyển màn
@@ -125,8 +130,18 @@ public class CreateAuctionController{
         String incrStr = txtMinIncrement.getText().trim().replace(".", "").replace(",", "");
         String timeStr = txtEndTime.getText().trim();
         String typeStr = cmbItemType.getValue();
- 
 
+        if (dpStartDate.getValue() == null) {
+            showError("Vui lòng chọn ngày bắt đầu.");
+            return;
+        }
+        LocalDate startDate = dpStartDate.getValue();
+        if (cbDuration.getValue() == null) {
+            showError("Vui lòng chọn thời lượng phiên đấu giá.");
+            return;
+        }
+        LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
+        
         //2.validate
         if (name.isEmpty()) {
             showError("Tên phiên đấu giá không được để trống.");
@@ -136,6 +151,11 @@ public class CreateAuctionController{
         if (priceStr.isEmpty()) {
             showError("Giá khởi điểm không được để trống.");
             txtStartingPrice.requestFocus();
+            return;
+        }
+        if (typeStr == null || typeStr.isEmpty()) {
+            showError("Vui lòng chọn loại sản phẩm.");
+            cmbItemType.requestFocus();
             return;
         }
         //ktra giá bắt đầu
@@ -160,16 +180,18 @@ public class CreateAuctionController{
                 return;
             }
         }
+        
         //ktra ngày giờ
-        if (dpStartDate.getValue() == null) {
-            showError("Vui lòng chọn ngày bắt đầu.");
+        LocalDateTime startTime;
+        if (startDate.isEqual(LocalDate.now())) {
+            startTime = LocalDateTime.now();
+        } else if (startDate.isBefore(LocalDate.now())) {
+            showError("Ngày bắt đầu không được nằm trong quá khứ.");
             return;
+        } else {
+            startTime = startDate.atStartOfDay();
         }
-        if (cbDuration.getValue() == null) {
-            showError("Vui lòng chọn thời lượng phiên đấu giá.");
-            return;
-        }
-        LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
+
         LocalDateTime endTime;
         try {
             LocalTime lt = timeStr.isEmpty()
@@ -185,11 +207,16 @@ public class CreateAuctionController{
             showError("Thời gian kết thúc phải cách hiện tại ít nhất 5 phút.");
             return;
         }
-
+        //set tam de demo
+        List<String> urls = new ArrayList<>(Arrays.asList("https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg"));
         String itemType = toItemType(typeStr);
         ItemData itemData = new ItemData();
-        itemData.setItemType(itemType);
+        itemData.setName(txtItemName.getText().trim());
         itemData.setCreator(txtCreator.getText().trim());
+        itemData.setDescription(txtDescription.getText().trim());
+        itemData.setItemType(itemType);
+        itemData.setImageUrls(urls);
+
 
         switch (itemType) {
             case "ART" -> {
@@ -220,14 +247,17 @@ public class CreateAuctionController{
         CreateAuctionRequest reqDTO = new CreateAuctionRequest();
         reqDTO.setName(name);
         reqDTO.setStartPrice(startPrice);
-        reqDTO.setEndTime(endTime);
-        reqDTO.setStartTime(null);      //chưa lấy start time
         reqDTO.setMinIncrement(minIncrement);
+        reqDTO.setStartTime(startTime);
+        reqDTO.setEndTime(endTime);
         reqDTO.setItemData(itemData);
+        reqDTO.setSellerId(session.getCurrentUser().getId());
 
         //5.Wrap trong client message
         ClientMessage msg = new ClientMessage("CREATE_AUCTION", reqDTO);
         String JsonRequest = JsonUtils.toJson(msg);
+        // AI recommend: có thể cần msg.setType("REQUEST")
+
         //6. Gửi qua socket thì gửi thread riêng không gửi luông tong UI thread
         new Thread(() -> {
             boolean isSuccess = false;
@@ -241,13 +271,13 @@ public class CreateAuctionController{
                     ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
                     if ("CREATE_AUCTION_RESPONSE".equals(serverMsg.getAction())) {
                         String rawData = JsonUtils.toJson(serverMsg.getData());
-                        ApiResponse<AuctionDTO> apiResp = JsonUtils.fromJsonGeneric(rawData, ApiResponse.class);
+                        Type type = new TypeToken<ApiResponse<AuctionDTO>>(){}.getType();
+                        ApiResponse<AuctionDTO> apiResp = JsonUtils.fromJsonGeneric(rawData, type);
  
                         isSuccess = apiResp.isSuccess();
                         if (isSuccess) {
                             // Double-parse vì Gson đọc data thành LinkedTreeMap
-                            String auctionJson = JsonUtils.toJson(apiResp.getData());
-                            newAuction = JsonUtils.fromJson(auctionJson, AuctionDTO.class);
+                            newAuction = apiResp.getData();
                         } else {
                             errorMsg = apiResp.getMessage();
                         }
@@ -270,7 +300,6 @@ public class CreateAuctionController{
                 btnSubmit.setText("Tạo phiên");
                 if (finalSuccess) {
                     if (onSuccessCallback != null) onSuccessCallback.run();
-                    closeView();
                 } else {
                     showError(finalError);
                 }
@@ -371,10 +400,10 @@ public class CreateAuctionController{
     }
 
     //ham nay dang loi vcl
-    private void closeView() {
-        if (btnSubmit.getScene() != null && btnSubmit.getScene().getWindow() != null)
-            btnSubmit.getScene().getWindow().hide();
-    }
+    // private void closeView() {
+    //     if (btnSubmit.getScene() != null && btnSubmit.getScene().getWindow() != null)
+    //         btnSubmit.getScene().getWindow().hide();
+    // }
 
     private boolean validateCurrentStep() {
         clearError();

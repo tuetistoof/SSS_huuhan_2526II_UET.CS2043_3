@@ -5,7 +5,9 @@ import java.util.UUID;
 public abstract class Entity {
     private String id;
     private String name;
-    public Entity(){}
+    public Entity(){
+        this.id = createId();
+    }
     public Entity(String name){
         this.id = createId();
         this.name = name;

@@ -138,7 +138,9 @@ public class LoginSignupController {
                             ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
                             isSuccess = response.isSuccess();
                             if (isSuccess) {
+                                SessionManager.getInstance().setCurrentUser(response.getData());
                                 userDTO = response.getData();
+                                System.out.println("CHECK SESSION ID: " + SessionManager.getInstance().getCurrentUser().getId());
                             }
                             else {
                                 errorMessage = response.getMessage(); // Lấy câu chửi từ server

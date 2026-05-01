@@ -17,10 +17,11 @@ public class AuctionController {
         this.auctionService = auctionService;
     }
 
-    public String createAuction(Object data, String sellerId){
+    // public String createAuction(Object data, String sellerId){
+    public String createAuction(String rawDataJson, String sellerId) {
         try {
-            String json = JsonUtils.toJson(data);
-            CreateAuctionRequest request = JsonUtils.fromJson(json, CreateAuctionRequest.class);
+            // String json = JsonUtils.toJson(rawDataJson);
+            CreateAuctionRequest request = JsonUtils.fromJson(rawDataJson, CreateAuctionRequest.class);
             // Validate
             if (request == null) {
                 return JsonUtils.toJson(ApiResponse.error("Dữ liệu request không hợp lệ"));

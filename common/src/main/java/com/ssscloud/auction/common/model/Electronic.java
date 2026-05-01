@@ -26,6 +26,11 @@ public class Electronic extends Item {
         return isRepaired;
     }
 
+    @Override
+    public String getType() {
+        return "ELECTRONIC";
+    }
+
     // getter setter
 
     public boolean getIsRepaired(){

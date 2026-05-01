@@ -23,6 +23,10 @@ public class Vehicle extends Item {
         this.warrantyPeriod = warrantyPeriod;
     }
     
+    @Override
+    public String getType() {
+        return "VEHICLE";
+    }
     // @Override
     // public double getPrice(){
     //     return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());

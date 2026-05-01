@@ -1,5 +1,6 @@
 package com.ssscloud.auction.common.model.base;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Item extends Entity {
@@ -8,7 +9,7 @@ public abstract class Item extends Entity {
     private String creator;
     private String description;
     private String type;
-    private List<String> imageUrl;
+    private List<String> imageUrl = new ArrayList<>();
     public Item() {
     } // dùng trong factory
 
@@ -68,6 +69,9 @@ public abstract class Item extends Entity {
         this.description = description;
     }
 
+    public void setType(String type) {
+        this.type = type;
+    }
     public String getType() {
         return type;
     }

@@ -73,9 +73,20 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", parsed));
                 }
                 case "CREATE_AUCTION": {
+                    // return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
+                    //         JsonUtils.fromJson(auctionController.createAuction(msg.getData(), client.getUserId()),
+                    //                 ApiResponse.class)));
+                    
+                    // 1. Ép chuỗi jsonMessage gốc thành JSON Object, rồi moi cái ruột "data" ra dạng String
+                    com.google.gson.JsonObject rootObj = com.google.gson.JsonParser.parseString(jsonMessage).getAsJsonObject();
+                    String rawDataJson = rootObj.get("data").toString();
+
+                    // 2. Truyền cái rawDataJson (kiểu String) đó vào controller thay vì msg.getData() (kiểu Object)
+                    String controllerResponse = auctionController.createAuction(rawDataJson, client.getUserId());
+                    
+                    // 3. Đóng gói trả lời lại cho Client
                     return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
-                            JsonUtils.fromJson(auctionController.createAuction(msg.getData(), client.getUserId()),
-                                    ApiResponse.class)));
+                            JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 
                 case "PLACE_BID": {
@@ -119,8 +130,13 @@ public class MessageHandler {
                         return null;
                     }
 
+<<<<<<< HEAD
                     Auction auction = AuctionRegistry.getInstance().get(auctionId);
                     if (auction == null) auction = auctionDAO.findByAuctionId(auctionId); 
+=======
+                    Auction auction = com.ssscloud.auction.server.util.AuctionRegistry.getInstance().getLiveAuction(auctionId);
+
+>>>>>>> 7b374c238650d128ac1ffe8d8ee7bb6288ac0b21
                     if (auction == null) {
                         client.getWriter().println(JsonUtils.toJson(
                                 ClientMessage.push("SUBSCRIBE_ERROR",

@@ -11,6 +11,7 @@ public class CreateAuctionRequest implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private ItemData itemData;
+    private String sellerId;
 
 
 
@@ -35,6 +36,9 @@ public class CreateAuctionRequest implements Serializable {
     public ItemData      getItemData()                     { return itemData; }
     public void          setItemData(ItemData d)           { this.itemData = d; }
 
+    public String        getSellerId()                     { return sellerId; }
+    public void          setSellerId(String sellerId)      { this.sellerId = sellerId; }
+
     @Override
     public String toString() {
         return "CreateAuctionRequest{" +
@@ -43,7 +47,8 @@ public class CreateAuctionRequest implements Serializable {
                 ", minIncrement=" + minIncrement +
                 ", startTime=" + startTime +
                 ", endTime=" + endTime 
-                + ", itemData=" + itemData + '}';
+                + ", itemData=" + itemData + 
+                ", sellerId='" + sellerId + '}';
     }
 
 }

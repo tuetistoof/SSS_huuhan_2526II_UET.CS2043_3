@@ -18,7 +18,10 @@ public class Art extends Item {
         this.certificate = certificate;
     }
 
-    
+    @Override
+    public String getType() {
+        return "ART";
+    }
     // @Override
     // public double getPrice() {
     //     return super.getBasePrice() + Math.max (super.getBasePrice() * super.getTransactionFee(), super.getMaxTransactionFee());

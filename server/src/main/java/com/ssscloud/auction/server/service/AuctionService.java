@@ -69,7 +69,12 @@ public class AuctionService {
             logger.severe("Không lưu được auction: " + config.getName());
             return null;
         }
+<<<<<<< HEAD
         AuctionRegistry.getInstance().register(auction);
+=======
+        com.ssscloud.auction.server.util.AuctionRegistry.getInstance().register(auction);
+
+>>>>>>> 7b374c238650d128ac1ffe8d8ee7bb6288ac0b21
         scheduleClose(auction);
 
         logger.info("Tạo auction thành công: " + config.getId() + " - " + config.getName());
