@@ -6,6 +6,8 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionListResponse;
+import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;
@@ -16,6 +18,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * AuctionListController — hiển thị danh sách phiên đấu giá đang mở.
@@ -39,9 +42,14 @@ public class AuctionListController implements MessageListener {
     @FXML private TextField                          txtSearch;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private final ObservableList<AuctionDTO> masterList  = FXCollections.observableArrayList();
-    private final ObservableList<AuctionDTO> displayList = FXCollections.observableArrayList();
+    private final ObservableList<AuctionDTO> masterList  = FXCollections.observableArrayList(); // Lưu toàn bộ dữ liệu gốc để filter/search
+    private final ObservableList<AuctionDTO> displayList = FXCollections.observableArrayList(); // Dùng làm items cho TableView, sẽ được filter từ masterList
 
+    private Consumer<AuctionDTO> onOpenAuction;
+ 
+    public void setOnOpenAuction(Consumer<AuctionDTO> callback) {
+        this.onOpenAuction = callback;
+    }
     @FXML
     public void initialize() {
         setupTable();
@@ -58,6 +66,16 @@ public class AuctionListController implements MessageListener {
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
         tblAuctions.setItems(displayList);
         tblAuctions.setPlaceholder(new Label("Chưa có phiên đấu giá nào đang mở."));
+        // Double-click vào row để mở BiddingRoom
+        tblAuctions.setRowFactory(tv -> {
+            javafx.scene.control.TableRow<AuctionDTO> row = new javafx.scene.control.TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty() && onOpenAuction != null) {
+                    onOpenAuction.accept(row.getItem());
+                }
+            });
+            return row;
+        });
     }
 
     private void setupSearch() {
@@ -138,8 +156,7 @@ public class AuctionListController implements MessageListener {
                 case "BID_UPDATE" -> {
                     // Cập nhật thẳng currentPrice vào item trong list — không cần round trip server
                     String dataJson = JsonUtils.toJson(msg.getData());
-                    com.ssscloud.auction.common.dto.response.BidDTO bid =
-                            JsonUtils.fromJson(dataJson, com.ssscloud.auction.common.dto.response.BidDTO.class);
+                    BidDTO bid = JsonUtils.fromJson(dataJson, com.ssscloud.auction.common.dto.response.BidDTO.class);
                     if (bid == null || bid.getAuctionId() == null) return;
 
                     Platform.runLater(() -> {
@@ -164,7 +181,7 @@ public class AuctionListController implements MessageListener {
                     Platform.runLater(() -> {
                         for (AuctionDTO a : masterList) {
                             if (auctionId.equals(a.getId())) {
-                                a.setStatus(com.ssscloud.auction.common.enums.AuctionStatus.FINISHED);
+                                a.setStatus(AuctionStatus.FINISHED);
                                 break;
                             }
                         }

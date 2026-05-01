@@ -118,6 +118,11 @@ public class MessageHandler {
                 // return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
                 // resp));
                 // }
+                case "GET_AUCTIONS": {
+                    String result = auctionController.getActiveAuctions();
+                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(result, ApiResponse.class)));
+                }
 
                 case "SUBSCRIBE_AUCTION": {
                     // Client vào BiddingRoom — đăng ký nhận push BID_UPDATE cho auction này
@@ -130,13 +135,8 @@ public class MessageHandler {
                         return null;
                     }
 
-<<<<<<< HEAD
-                    Auction auction = AuctionRegistry.getInstance().get(auctionId);
-                    if (auction == null) auction = auctionDAO.findByAuctionId(auctionId); 
-=======
                     Auction auction = com.ssscloud.auction.server.util.AuctionRegistry.getInstance().getLiveAuction(auctionId);
 
->>>>>>> 7b374c238650d128ac1ffe8d8ee7bb6288ac0b21
                     if (auction == null) {
                         client.getWriter().println(JsonUtils.toJson(
                                 ClientMessage.push("SUBSCRIBE_ERROR",

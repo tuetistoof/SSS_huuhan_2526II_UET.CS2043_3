@@ -1,6 +1,7 @@
 package com.ssscloud.auction.client.controller;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.client.util.SessionManager;
+import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 
 import javafx.animation.KeyFrame;
@@ -58,6 +59,8 @@ public class MainLayoutController {
     private final double SIDEBAR_EXPANDED_WIDTH = 200.0;
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
+    private Object currentController = null;
+
     public void initialize() {
         UserDTO user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
@@ -108,7 +111,21 @@ public class MainLayoutController {
             }
         }
     }
+    //__CLEANUP___
 
+    private void cleanupCurrentController() {
+        if (currentController == null) return;
+        if      (currentController instanceof BiddingRoomController  c) c.cleanup();
+        else if (currentController instanceof AuctionListController  c) c.cleanup();
+        currentController = null;
+    }
+ 
+    private void clearContent() {
+        cleanupCurrentController();
+        contentArea.getChildren().clear();
+    }
+
+    //__NAVIGATION__
     @FXML
     void handleLogout(ActionEvent event) {
 
@@ -144,6 +161,19 @@ public class MainLayoutController {
 
     @FXML
     void handleNavMyAuctionRooms(MouseEvent event) {
+        updateActiveStyle(navMyAuctionRooms);
+        clearContent();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-list.fxml"));
+            Parent view = loader.load();
+            AuctionListController ctrl = loader.getController();
+            ctrl.setOnOpenAuction(this::loadBiddingRoom);
+            currentController = ctrl;
+            contentArea.getChildren().add(view);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -155,13 +185,15 @@ public class MainLayoutController {
     @FXML
     void handleNavNewAuctionRoom(MouseEvent event) {
         updateActiveStyle(navNewAuctionRoom); 
+        clearContent();
+
         FXMLLoader loader = new FXMLLoader();
         try {
             loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
             Parent createAuctionView = loader.load();
             CreateAuctionController controller = loader.getController();
-            controller.setOnSuccessCallback(() -> {
-                loadBiddingRoom();
+            controller.setOnSuccessCallback(newAuction -> {
+                loadBiddingRoom(newAuction);
             });
 
             contentArea.getChildren().clear();
@@ -170,6 +202,22 @@ public class MainLayoutController {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Lỗi load file create-auction.fxml");
+        }
+    }
+    public void loadBiddingRoom(AuctionDTO auction) {
+        if (auction == null) { handleNavDashboard(null); return; }
+        updateActiveStyle(null);
+        clearContent();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
+            Parent view = loader.load();
+            BiddingRoomController ctrl = loader.getController();
+            ctrl.setAuction(auction);                          // inject dữ liệu phòng
+            ctrl.setOnSuccessCallback(() -> handleNavMyAuctionRooms(null)); // Back → auction list
+            currentController = ctrl;
+            contentArea.getChildren().add(view);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

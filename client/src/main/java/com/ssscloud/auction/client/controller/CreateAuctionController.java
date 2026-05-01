@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 //TO_DO: chưa làm handleCancle với chuyển màn
@@ -74,9 +75,9 @@ public class CreateAuctionController{
     private final AuctionClientSocket socket  = AuctionClientSocket.getInstance();
     private final SessionManager      session = SessionManager.getInstance();
  
-    private Runnable onSuccessCallback;
+    private Consumer<AuctionDTO> onSuccessCallback;
  
-    public void setOnSuccessCallback(Runnable callback) {
+    public void setOnSuccessCallback(Consumer<AuctionDTO> callback) {
         this.onSuccessCallback = callback;
     }
 
@@ -277,7 +278,8 @@ public class CreateAuctionController{
                         isSuccess = apiResp.isSuccess();
                         if (isSuccess) {
                             // Double-parse vì Gson đọc data thành LinkedTreeMap
-                            newAuction = apiResp.getData();
+                            String auctionJson = JsonUtils.toJson(apiResp.getData());
+                            newAuction = JsonUtils.fromJson(auctionJson, AuctionDTO.class);
                         } else {
                             errorMsg = apiResp.getMessage();
                         }
@@ -292,6 +294,7 @@ public class CreateAuctionController{
             }
             final boolean finalSuccess = isSuccess;
             final String  finalError   = errorMsg;
+            final AuctionDTO finalAuction = newAuction;
 
             //7. cập nhật UI
             Platform.runLater(() -> {
@@ -299,7 +302,7 @@ public class CreateAuctionController{
                 btnSubmit.setDisable(false);
                 btnSubmit.setText("Tạo phiên");
                 if (finalSuccess) {
-                    if (onSuccessCallback != null) onSuccessCallback.run();
+                    if (onSuccessCallback != null) onSuccessCallback.accept(finalAuction);
                 } else {
                     showError(finalError);
                 }
@@ -311,7 +314,7 @@ public class CreateAuctionController{
     @FXML
     public void handleCancel(ActionEvent event) {
         if (onSuccessCallback != null) {
-            onSuccessCallback.run();
+            onSuccessCallback.accept(null);  // null = user huỷ, không có auction
         }
     }
 

@@ -111,7 +111,9 @@ public class SellerDashboadController {
  
             CreateAuctionController controller = loader.getController();
             // Khi nào người dùng tạo phiên đấu giá thành công, hãy tự động chạy hàm loadMyAuctions ở cửa sổ chính
-            controller.setOnSuccessCallback(this::loadMyAuctions); //this::loadMyAuctions là lấy method loadMyAuctions làm tham số
+            //controller.setOnSuccessCallback(this::loadMyAuctions); //this::loadMyAuctions là lấy method loadMyAuctions làm tham số
+            controller.setOnSuccessCallback(auction -> loadMyAuctions());
+
  
             Stage modal = new Stage();
             modal.setTitle("Tạo phiên đấu giá mới");

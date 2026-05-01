@@ -13,7 +13,9 @@ import com.ssscloud.auction.server.factory.ItemFactory;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * AuctionService — business logic tạo phiên đấu giá.
@@ -69,12 +71,8 @@ public class AuctionService {
             logger.severe("Không lưu được auction: " + config.getName());
             return null;
         }
-<<<<<<< HEAD
-        AuctionRegistry.getInstance().register(auction);
-=======
         com.ssscloud.auction.server.util.AuctionRegistry.getInstance().register(auction);
 
->>>>>>> 7b374c238650d128ac1ffe8d8ee7bb6288ac0b21
         scheduleClose(auction);
 
         logger.info("Tạo auction thành công: " + config.getId() + " - " + config.getName());
@@ -90,13 +88,13 @@ public class AuctionService {
     //             .collect(Collectors.toList());
     // }
  
-    // public List<AuctionDTO> getActiveAuctions() {
+    public List<AuctionDTO> getActiveAuctions() {
 
-    //     List<Auction> open    = auctionDAO.findByStatus(AuctionStatus.OPEN);
-    //     List<Auction> running = auctionDAO.findByStatus(AuctionStatus.RUNNING);
-    //     open.addAll(running);
-    //     return open.stream().map(this::toDTO).collect(Collectors.toList());
-    // }
+        List<Auction> open    = auctionDAO.findByStatus(AuctionStatus.OPEN);
+        List<Auction> running = auctionDAO.findByStatus(AuctionStatus.RUNNING);
+        open.addAll(running);
+        return open.stream().map(this::toDTO).collect(Collectors.toList());
+    }
 
 
 

@@ -69,17 +69,17 @@ public class AuctionController {
     // /**
     //  * Trả về các auction đang active (OPEN / RUNNING).
     //  */
-    // public String getActiveAuctions() {
-    //     try {
-    //         List<AuctionDTO> auctions = auctionService.getActiveAuctions();
-    //         AuctionListResponse response = new AuctionListResponse(auctions);
-    //         return JsonUtils.toJson(ApiResponse.success(response,
-    //                 "Lấy danh sách thành công (" + auctions.size() + " phiên đang mở)"));
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //         return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
-    //     }
-    // }
+    public String getActiveAuctions() {
+        try {
+            List<AuctionDTO> auctions = auctionService.getActiveAuctions();
+            AuctionListResponse response = new AuctionListResponse(auctions);
+            return JsonUtils.toJson(ApiResponse.success(response,
+                    "Lấy danh sách thành công (" + auctions.size() + " phiên đang mở)"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
+        }
+    }
 
 }
 
