@@ -90,17 +90,16 @@ public class MessageHandler {
                     return null;
                 }
 
-                // case "AUTO_BID":{
-                // String raw = JsonUtils.toJson(msg.getData());
-                // AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
-                // if (req == null) {
-                // return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợp
-                // lệ"));
-                // }
-                // return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
-                // JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(),
-                // client.getUsername()), ApiResponse.class)));
-                // }
+                case "AUTO_BID":{
+                String raw = JsonUtils.toJson(msg.getData());
+                AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
+                if (req == null) {
+                return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợplệ"));
+                }
+                return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
+                JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(),
+                client.getUsername()), ApiResponse.class)));
+                }
 
                 // case "GET_AUCTIONS": {
                 // // Route mới — AuctionListController dùng

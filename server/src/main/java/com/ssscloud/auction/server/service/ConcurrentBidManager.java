@@ -102,7 +102,6 @@ public class ConcurrentBidManager {
             return;
         }
 
-        // Tạo bid và cập nhật state
         BidTransaction bid = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                 task.bidAmount, LocalDateTime.now(), task.type);
         auction.placeBid(bid);
