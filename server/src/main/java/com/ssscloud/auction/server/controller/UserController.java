@@ -64,7 +64,8 @@ public class UserController {
                                     request.getUsername(),
                                     request.getPassword(),
                                     request.getEmail(),
-                                    request.getRole());
+                                    request.getRole(),
+                                    request.getBankAccount());
                     userDAO.saveSeller((Seller) user);
                 }
                 UserDTO dto = new UserDTO(

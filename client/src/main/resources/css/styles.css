@@ -253,7 +253,7 @@ Vòng tròn loading
     -fx-font-weight: bold;
     -fx-text-fill: #dc5771;
     -fx-padding: 12 8 4 8;
-    -fx-border-color: transparent transparent #dc5771 transparent;
+    -fx-border-color: transparent transparent transparent transparent;
 }
 
 /* Mỗi nav item là 1 HBox */

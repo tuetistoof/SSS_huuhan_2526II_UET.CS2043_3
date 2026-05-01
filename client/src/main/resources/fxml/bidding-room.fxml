@@ -54,9 +54,9 @@
                      <children>
                         <HBox alignment="CENTER">
                            <children>
-                              <Button fx:id="btnBackImage" mnemonicParsing="false" onAction="#handleBackImage" styleClass="br-product-btn-change-image" text="&lt;" />
+                              <Button fx:id="btnBackImage" mnemonicParsing="false" onAction="#navBackImage" styleClass="br-product-btn-change-image" text="&lt;" />
                               <ImageView pickOnBounds="true" preserveRatio="true" />
-                              <Button fx:id="btnFrontImage" mnemonicParsing="false" onAction="#handleFrontImage" styleClass="br-product-btn-change-image" text="&gt;" />
+                              <Button fx:id="btnFrontImage" mnemonicParsing="false" onAction="#navFrontImage" styleClass="br-product-btn-change-image" text="&gt;" />
                            </children>
                         </HBox>
                      </children>

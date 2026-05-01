@@ -11,7 +11,8 @@ public class RegisterRequest implements Serializable{
     private String username;
     private String password;
     private String email;
-    private UserRole role;        
+    private UserRole role;    
+    private String bankAccount;    
 
     public RegisterRequest(){};
     public RegisterRequest(String name, String username, String password, String email, UserRole role) {
@@ -20,6 +21,15 @@ public class RegisterRequest implements Serializable{
         this.password = password;
         this.email = email;
         this.role = role;
+    }
+
+     public RegisterRequest(String name, String username, String password, String email, UserRole role, String bankAccount) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.bankAccount = bankAccount;
     }
 
     // Getter & Setter'
@@ -38,16 +48,23 @@ public class RegisterRequest implements Serializable{
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
     
+    public String getBankAccount() { return bankAccount; }
+    public void setBankAccount(String bankAccount) { this.bankAccount = bankAccount; }
     // check lai ho nhe
     @Override
     public String toString() {
-        return "RegisterRequest{" +
-                "name='" + name + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", email='" + email + '\'' +
-                ", role=" + role +
-                '}';
+        String result =  "RegisterRequest{" +
+                        "name='" + name + '\'' +
+                        ", username='" + username + '\'' +
+                        ", password='" + password + '\'' +
+                        ", email='" + email + '\'' +
+                        ", role=" + role;
+
+        if (bankAccount != null && !bankAccount.trim().isEmpty()) {
+                result += ", bankAccount='" + bankAccount + '\'';
+        }
+
+        return result + '}';
     }
 }
 

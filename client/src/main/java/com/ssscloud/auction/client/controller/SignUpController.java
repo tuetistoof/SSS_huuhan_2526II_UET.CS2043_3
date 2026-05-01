@@ -34,6 +34,9 @@ public class SignUpController {
     private Label lblError;
 
     @FXML
+    private Label lblBankAccount;
+
+    @FXML
     private ComboBox<String> cbRoles;
 
     @FXML
@@ -58,6 +61,9 @@ public class SignUpController {
     private TextField txtCFUserPassword;
 
     @FXML
+    private TextField txtBankAccount;
+
+    @FXML
     private PasswordField txtCFUserPasswordHidden;
 
     @FXML
@@ -71,6 +77,10 @@ public class SignUpController {
 
     @FXML
     public void initialize() {
+        lblBankAccount.managedProperty().bind(lblBankAccount.visibleProperty());
+        txtBankAccount.managedProperty().bind(txtBankAccount.visibleProperty());
+        lblBankAccount.setVisible(false);
+        txtBankAccount.setVisible(false);
 
         cbRoles.getItems().addAll("Bidder", "Seller");
 
@@ -134,45 +144,36 @@ public class SignUpController {
         String email = txtUserEmail.getText().trim();
         String password = txtUserPassword.getText().trim();
         String cfPassword = txtCFUserPassword.getText().trim();
+        String bankAccount = txtBankAccount.getText().trim();
         String role = cbRoles.getValue();
 
         boolean hasError = false;
-
-        if (firstName.isEmpty()) {
-            txtFirstName.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        if (lastName.isEmpty()) {
-            txtLastName.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        if (username.isEmpty()) {
-            txtUsername.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        if (email.isEmpty()) {
-            txtUserEmail.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        if (password.isEmpty()) {
-            txtUserPassword.getStyleClass().add("input-error");
-            txtUserPassword.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        if (cfPassword.isEmpty()) {
-            txtCFUserPassword.getStyleClass().add("input-error");
-            txtUserPassword.getStyleClass().add("input-error");
-            hasError = true;
+        TextField[] requiredFields = {txtFirstName, txtLastName, txtUsername, txtUserEmail, txtUserPassword, txtCFUserPassword};
+        for (TextField field : requiredFields) {
+            if (field.getText().trim().isEmpty()) {
+                field.getStyleClass().add("input-error");
+                hasError = true;
+            }
+            else {
+                field.getStyleClass().remove("input-error");
+            }
         }
         if (role == null || role.isEmpty()) {
             hasError = true;
         }
-        if (hasError == true) {
-            lblError.setText("Missing required infomation.");
+        if ("Seller".equals(role) && bankAccount.isEmpty()) {
+            txtBankAccount.getStyleClass().add("input-error");
+            hasError = true;
+        }
+        else {
+            txtBankAccount.getStyleClass().remove("input-error");
+        }
+         if (hasError == true) {
+            lblError.setText("Missing required information.");
             lblError.setVisible(true);
             lblError.setManaged(true);
             return;
-        }
+        }       
 
         if (loading != null && loadingController != null) {
             loading.setVisible(true);
@@ -184,9 +185,13 @@ public class SignUpController {
                     String errorMessage = "Unexpected Error";
                     UserDTO userDTO = null;
                     UserRole roleSelected = UserRole.valueOf(role.toUpperCase());
-
-                    RegisterRequest registerData = new RegisterRequest(name, username, password, email, roleSelected);
-
+                    RegisterRequest registerData;
+                    if (roleSelected == UserRole.SELLER) {
+                        registerData = new RegisterRequest(name, username, password, email, roleSelected, bankAccount);
+                    }
+                    else {
+                        registerData = new RegisterRequest(name, username, password, email, roleSelected);
+                    }
                     ClientMessage msg = ClientMessage.request("REGISTER", registerData);
 
                     String jsonRequest = JsonUtils.toJson(msg);
@@ -262,6 +267,19 @@ public class SignUpController {
         } else {
             // Nếu nó nhảy vào đây thì m phải check lại fx:id trong file fxml và biến controller
             System.out.println("Chưa sửa chèn thêm fxml vào");
+        }
+    }
+
+    public void handleRoleChange(ActionEvent event) {
+         switch(cbRoles.getValue()) {
+            case "Bidder":
+                lblBankAccount.setVisible(false);
+                txtBankAccount.setVisible(false);
+                break;
+            case "Seller":
+                lblBankAccount.setVisible(true);
+                txtBankAccount.setVisible(true);
+                break;
         }
     }
 }

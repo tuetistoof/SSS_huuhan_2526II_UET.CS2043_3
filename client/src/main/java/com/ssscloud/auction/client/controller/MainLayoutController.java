@@ -221,7 +221,7 @@ public class MainLayoutController {
 
     @FXML
     void handleNavWatchlist(MouseEvent event) {
-
+        
     }
 
     @FXML
@@ -277,5 +277,4 @@ public class MainLayoutController {
         timeline.play();
         isSidebarExpanded = !isSidebarExpanded;
     }
-
 }

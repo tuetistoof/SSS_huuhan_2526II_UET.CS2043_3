@@ -81,6 +81,12 @@ public class BiddingRoomController implements MessageListener{
     private String currentUserId;
     private String currentUserName;
 
+    private Runnable onSuccessCallback;
+ 
+    public void setOnSuccessCallback(Runnable callback) {
+        this.onSuccessCallback = callback;
+    }
+    
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     public void initialize() {
@@ -153,7 +159,9 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleBack(ActionEvent event) {
-
+        if (onSuccessCallback != null) {
+            onSuccessCallback.run();
+        }
     }
 
     @FXML
@@ -326,5 +334,13 @@ public class BiddingRoomController implements MessageListener{
         alert.showAndWait();
     }
 
+    @FXML
+    void navBackImage(ActionEvent event) {
 
+    }
+
+    @FXML
+    void navFrontImage(ActionEvent event) {
+
+    }
 }

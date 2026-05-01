@@ -400,10 +400,10 @@ public class CreateAuctionController{
     }
 
     //ham nay dang loi vcl
-    private void closeView() {
-        if (btnSubmit.getScene() != null && btnSubmit.getScene().getWindow() != null)
-            btnSubmit.getScene().getWindow().hide();
-    }
+    // private void closeView() {
+    //     if (btnSubmit.getScene() != null && btnSubmit.getScene().getWindow() != null)
+    //         btnSubmit.getScene().getWindow().hide();
+    // }
 
     private boolean validateCurrentStep() {
         clearError();
