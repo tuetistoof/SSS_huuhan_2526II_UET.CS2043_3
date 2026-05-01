@@ -17,7 +17,7 @@ public class Seller extends User {
     }
     public Seller (String id, String name, String username, String password, String email, UserRole role, String bankAccount)
     {
-        super(name, username, password, email, role);
+        super(id, name, username, password, email, role);
         this.bankAccount = bankAccount;
     }
     //getter setter
