@@ -1,6 +1,7 @@
 package com.ssscloud.auction.client.controller;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.time.format.DateTimeFormatter;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
@@ -16,15 +17,23 @@ import com.google.gson.JsonParser;
 import  com.ssscloud.auction.client.networking.*;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class BiddingRoomController implements MessageListener{
@@ -61,7 +70,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private Label lblStatusBadge;
     @FXML private Label lblTimer;
 
-    @FXML private ListView<?> listViewBidHistory;
+    @FXML private ListView<BidDTO> listViewBidHistory;
 
     @FXML private VBox panelChart;
     @FXML private VBox panelHistory;
@@ -87,11 +96,76 @@ public class BiddingRoomController implements MessageListener{
         this.onSuccessCallback = callback;
     }
     
+    private final ObservableList<BidDTO> bidHistory = FXCollections.observableArrayList(); //cập nhập list view tự động
+    
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     public void initialize() {
-            socket.addListener(this);
+        socket.addListener(this);
+        setupBidHistoryList();
     }
+    private void setupBidHistoryList() {
+        listViewBidHistory.setItems(bidHistory);    //listView.setItems() sẽ tự động cập nhật khi bidHistory thay đổi
+        listViewBidHistory.setPlaceholder(new Label("Chưa có lịch sử đặt giá nào.")); //listView placeholder khi không có dữ liệu
+        listViewBidHistory.setCellFactory(lv -> new BidHistoryCell()); // thêm cell 
+    }
+    private static class BidHistoryCell extends ListCell<BidDTO> { //custom cell để hiển thị 
+        private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+        //LAYOUT NODES
+        private final HBox root = new HBox(10);
+        private final Label badgeLabel = new Label(); //manual hoặc auto
+
+        private final VBox nameTimeBox = new VBox(2);
+        private final Label nameLabel  = new Label();
+        private final Label timeLabel  = new Label();
+        private final Region spacer = new Region();
+        private final Label amountLabel = new Label();
+        BidHistoryCell() {
+            // Căn giữa theo trục dọc để badge và số tiền thẳng hàng với tên
+            root.setAlignment(Pos.CENTER_LEFT);
+            root.setPadding(new Insets(4, 0, 4, 0));
+ 
+            nameTimeBox.getChildren().addAll(nameLabel, timeLabel);
+            nameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222222;");
+
+            timeLabel.getStyleClass().add("br-bid-time");     // font nhỏ, màu xám
+            amountLabel.getStyleClass().add("br-bid-amount"); // đậm, màu #72243E
+ 
+            // Spacer phải grow để chiếm hết khoảng trống còn lại
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+ 
+            // Xếp theo thứ tự: badge | tên+giờ | spacer | số tiền
+            root.getChildren().addAll(badgeLabel, nameTimeBox, spacer, amountLabel);
+        }
+        @Override
+        protected void updateItem(BidDTO bid, boolean empty) {
+            // PHẢI gọi super trước — JavaFX cần xử lý nội bộ trước khi ta override
+            super.updateItem(bid, empty);
+ 
+            if (empty || bid == null) {
+                setGraphic(null);
+                return;
+            }
+
+            //điền dữ liệu
+            String type = bid.getBidType(); // "AUTO" hoặc "MANUAL"
+            if ("AUTO".equalsIgnoreCase(type)) {
+                badgeLabel.setText("Auto");
+                badgeLabel.getStyleClass().setAll("br-bid-type-auto");
+            } else {
+                badgeLabel.setText("Manual");
+                badgeLabel.getStyleClass().setAll("br-bid-type-manual");
+            }
+            nameLabel.setText(bid.getBidderUsername() != null ? bid.getBidderUsername() : "—"); //bidder name
+            timeLabel.setText(bid.getBidTime() != null? bid.getBidTime().format(TIME_FMT) : "");//bid time
+            amountLabel.setText(String.format("%,d ₫", bid.getBidAmount())); //bid amount
+            setGraphic(root);
+        }
+    }
+
+
+
 
     @FXML
     private void handlePlaceBid(ActionEvent event) {
@@ -166,11 +240,23 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleSwitchToAuto(ActionEvent event) {
+        formManual.setVisible(false);
+        formManual.setManaged(false);
+        formAuto.setVisible(true);
+        formAuto.setManaged(true);
+        btnTabAuto.getStyleClass().setAll("br-tab-active");
+        btnTabManual.getStyleClass().setAll("br-tab");
 
     }
 
     @FXML
     void handleSwitchToManual(ActionEvent event) {
+        formAuto.setVisible(false);
+        formAuto.setManaged(false);
+        formManual.setVisible(true);
+        formManual.setManaged(true);
+        btnTabManual.getStyleClass().setAll("br-tab-active");
+        btnTabAuto.getStyleClass().setAll("br-tab");
 
     }
 
@@ -181,11 +267,49 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleTabHistory(ActionEvent event) {
+        // Hiện panel lịch sử, ẩn các panel khác
+        panelChart.setVisible(false);
+        panelChart.setManaged(false);
+        panelInfo.setVisible(false);
+        panelInfo.setManaged(false);
+        panelHistory.setVisible(true);
+        panelHistory.setManaged(true);
+
+        // Cập nhật trạng thái tab button
+         tabBtnHistory.getStyleClass().setAll("br-tab-active");
+        tabBtnChart.getStyleClass().setAll("br-tab");
+        tabBtnInfo.getStyleClass().setAll("br-tab");
 
     }
 
     @FXML
     void handleTabInfo(ActionEvent event) {
+        panelHistory.setVisible(false);
+        panelHistory.setManaged(false);
+        panelChart.setVisible(false);
+        panelChart.setManaged(false);
+        panelInfo.setVisible(true);
+        panelInfo.setManaged(true);
+
+        tabBtnInfo.getStyleClass().setAll("br-tab-active");
+        tabBtnHistory.getStyleClass().setAll("br-tab");
+        tabBtnChart.getStyleClass().setAll("br-tab");
+
+        if (currentAuction == null) return;
+
+        infoName.setText(currentAuction.getName() != null ? currentAuction.getName() : "—");
+        infoSeller.setText(currentAuction.getSellerName() != null ? currentAuction.getSellerName() : "—");
+        infoStartPrice.setText(String.format("%,d ₫", currentAuction.getCurrentPrice()));
+        infoMinIncrement.setText(String.format("%,d ₫", currentAuction.getMinIncrement()));
+        java.time.format.DateTimeFormatter dtFmt =
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+ 
+        infoStartTime.setText(currentAuction.getStartTime() != null
+                ? currentAuction.getStartTime().format(dtFmt) : "—");
+ 
+        infoEndTime.setText(currentAuction.getEndTime() != null
+                ? currentAuction.getEndTime().format(dtFmt) : "—");
+
 
     }
 
@@ -273,10 +397,9 @@ public class BiddingRoomController implements MessageListener{
         if (bid == null) return;
  
         lblCurrentPrice.setText(String.format("%,d VND", bid.getCurrentPrice()));
-        // lblBidderName.setText(bid.getBidderUsername());
- 
-        // Đồng bộ local state
+        
         currentAuction.setCurrentPrice(bid.getCurrentPrice());
+        bidHistory.add(0, bid); // Thêm bid mới lên đầu list
         resetPlaceBidButton();
     }
     private void handleAuctionEnded(JsonObject root) {
