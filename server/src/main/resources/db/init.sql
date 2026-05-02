@@ -172,7 +172,7 @@ CREATE TABLE `bidder` (
 
 LOCK TABLES `bidder` WRITE;
 /*!40000 ALTER TABLE `bidder` DISABLE KEYS */;
-INSERT INTO `bidder` VALUES ('8862d63e-f4ec-4b6e-9473-0137776d3be5',1000000),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5',1000000),('dd9ef995-0125-4060-8a80-b8f1895dd875',0);
+INSERT INTO `bidder` VALUES ('75f54bbc-17e1-42b3-a5df-efd7d4bd0ec0',0),('8862d63e-f4ec-4b6e-9473-0137776d3be5',1000000),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5',1000000),('dd9ef995-0125-4060-8a80-b8f1895dd875',0);
 /*!40000 ALTER TABLE `bidder` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -221,7 +221,7 @@ CREATE TABLE `entity` (
 
 LOCK TABLES `entity` WRITE;
 /*!40000 ALTER TABLE `entity` DISABLE KEYS */;
-INSERT INTO `entity` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','Tran Thi B'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','Nguyen Van A'),('dd9ef995-0125-4060-8a80-b8f1895dd875','nguyen duc tue');
+INSERT INTO `entity` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','Tran Thi B'),('75f54bbc-17e1-42b3-a5df-efd7d4bd0ec0','nguyen duc tue tue'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','Nguyen Van A'),('dd9ef995-0125-4060-8a80-b8f1895dd875','nguyen duc tue');
 /*!40000 ALTER TABLE `entity` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -328,7 +328,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','tranthib','abcdef','b@gmail.com','SELLER'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','nguyenvana','123456','a@gmail.com','BIDDER'),('dd9ef995-0125-4060-8a80-b8f1895dd875','tuetistoof','tue10092007','tuenopro@gmail.com','BIDDER');
+INSERT INTO `user` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','tranthib','abcdef','b@gmail.com','SELLER'),('75f54bbc-17e1-42b3-a5df-efd7d4bd0ec0','TUE','tue','nana','BIDDER'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','nguyenvana','123456','a@gmail.com','BIDDER'),('dd9ef995-0125-4060-8a80-b8f1895dd875','tuetistoof','tue10092007','tuenopro@gmail.com','BIDDER');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -366,4 +366,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-23  5:11:33
+-- Dump completed on 2026-05-02 16:21:46

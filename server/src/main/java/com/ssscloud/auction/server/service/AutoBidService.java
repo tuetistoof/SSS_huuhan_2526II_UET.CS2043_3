@@ -6,9 +6,12 @@ import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.Bidder;
+import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.UserDAO;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,9 +31,10 @@ public class AutoBidService {
 
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();;
     private final AuctionDAO auctionDAO;
-
-    public AutoBidService(AuctionDAO auctionDAO) {
+    private final UserDAO userDAO;
+    public AutoBidService(AuctionDAO auctionDAO, UserDAO userDAO) {
         this.auctionDAO = auctionDAO;
+        this.userDAO = userDAO;
     }
 
     public void register(AutoBidRequest req, String bidderId, String bidderUsername) {
@@ -60,7 +64,11 @@ public class AutoBidService {
         if (getAutoBidCount(req.getAuctionId(), bidderId) >= MAX_AUTO_BID_PER_AUCTION)
             throw new IllegalArgumentException(
                     "Đã đạt giới hạn " + MAX_AUTO_BID_PER_AUCTION + " lần auto bid cho phiên này");
-
+        User bidder = userDAO.findById(bidderId);
+        if (!(bidder instanceof Bidder b))
+            throw new IllegalArgumentException("Người dùng không phải bidder");
+        if (b.getAccountBalance() < req.getMaxBid())
+            throw new InvalidBidException("Số dư tài khoản không đủ để đặt giá");
         List<AutoBidEntry> entries = registrationsByAuction.computeIfAbsent(
                 req.getAuctionId(), k -> new CopyOnWriteArrayList<>());
         entries.removeIf(e -> e.bidderId.equals(bidderId));
