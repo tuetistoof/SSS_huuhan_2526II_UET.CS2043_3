@@ -111,13 +111,14 @@ public class MessageHandler {
                 client.getUsername()), ApiResponse.class)));
                 }
 
-                // case "GET_AUCTIONS": {
-                // // Route mới — AuctionListController dùng
-                // String raw = auctionController.getAllAuctions();
-                // ApiResponse<?> resp = JsonUtils.fromJson(raw, ApiResponse.class);
-                // return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
-                // resp));
-                // }
+                case "GET_MY_AUCTIONS": {
+                    // Seller lấy danh sách auction của chính mình
+                    String result = auctionController.getMyAuctions(client.getUserId());
+                    return JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(result, ApiResponse.class)));
+                }
+
+              
                 case "GET_AUCTIONS": {
                     String result = auctionController.getActiveAuctions();
                     return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
