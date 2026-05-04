@@ -31,7 +31,7 @@ import java.util.List;
 
 
 //TO_DOS: sau này sẽ bổ sung chức năng refresh thủ công, xem chi tiết phiên đấu giá, xóa/sửa phiên đấu giá (nếu chưa có ai đặt giá)
-public class SellerDashboadController {
+public class SellerDashboardController {
  
     @FXML private TableView<AuctionDTO>         tblMyAuctions;
     @FXML private TableColumn<AuctionDTO, String> colName;

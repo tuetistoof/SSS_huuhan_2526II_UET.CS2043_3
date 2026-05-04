@@ -12,7 +12,6 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.shape.Line?>
 
 <BorderPane styleClass="main-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.MainLayoutController">
 
@@ -44,6 +43,7 @@
             </image></ImageView>
          <Region HBox.hgrow="ALWAYS" />
          <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
+         <Button mnemonicParsing="false" onAction="#handleDeposite" prefHeight="30.0" styleClass="btn-primary" text="Deposite" />
              <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
              <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" styleClass="avatar-circle" />
         </HBox>
@@ -52,7 +52,6 @@
     <left>
         <VBox fx:id="sidebar" prefWidth="200.0" spacing="5" styleClass="sidebar">
          <Label fx:id="lblOverview" styleClass="sidebar-group-label" text="OVERVIEW" />
-         <Line endX="75.09291076660156" startX="-100.0" stroke="#dc5771" />
          <HBox fx:id="navDashboard" onMouseClicked="#handleNavDashboard" styleClass="sidebar-item">
             <children>
                <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
@@ -63,7 +62,6 @@
             </children>
          </HBox>
          <Label fx:id="lblAuction" styleClass="sidebar-group-label" text="AUCTION" />
-         <Line endX="75.09291076660156" startX="-100.0" stroke="#dc5771" />
          <HBox fx:id="navActiveBids" onMouseClicked="#handleNavActiveBids" styleClass="sidebar-item">
             <children>
                <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">

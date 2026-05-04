@@ -10,6 +10,10 @@ public final class JsonUtils {
     // Tạo một Gson duy nhất để dùng chung toàn dự án
     private static final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()) // Hỗ trợ LocalDateTime
+            
+            // Sửa lỗi LocalDate
+            .registerTypeAdapter(java.time.LocalDate.class, (com.google.gson.JsonSerializer<java.time.LocalDate>) (src, type, ctx) -> new com.google.gson.JsonPrimitive(src.toString()))
+            .registerTypeAdapter(java.time.LocalDate.class, (com.google.gson.JsonDeserializer<java.time.LocalDate>) (json, type, ctx) -> java.time.LocalDate.parse(json.getAsString()))
             .create();
     private JsonUtils() {}
 

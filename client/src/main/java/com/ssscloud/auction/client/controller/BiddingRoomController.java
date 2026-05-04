@@ -13,7 +13,7 @@ import com.ssscloud.auction.common.util.JsonUtils;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import  com.ssscloud.auction.client.networking.*;
+import com.ssscloud.auction.client.networking.*;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;

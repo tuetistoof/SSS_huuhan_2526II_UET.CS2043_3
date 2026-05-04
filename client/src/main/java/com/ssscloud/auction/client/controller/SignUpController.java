@@ -22,58 +22,27 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
+// Cần thêm check xem đúng định dạng gmail hay ko
+
 public class SignUpController {
 
-    @FXML
-    private Button btnSignUp;
-
-    @FXML
-    private CheckBox chkPassword;
-
-    @FXML
-    private Label lblError;
-
-    @FXML
-    private Label lblBankAccount;
-
-    @FXML
-    private ComboBox<String> cbRoles;
-
-    @FXML
-    private Hyperlink linkLogin;
-
-    @FXML
-    private TextField txtFirstName;
-
-    @FXML
-    private TextField txtLastName;
-
-    @FXML
-    private TextField txtUsername;
-
-    @FXML
-    private TextField txtUserEmail;
-    
-    @FXML
-    private TextField txtUserPassword;
-
-    @FXML
-    private TextField txtCFUserPassword;
-
-    @FXML
-    private TextField txtBankAccount;
-
-    @FXML
-    private PasswordField txtCFUserPasswordHidden;
-
-    @FXML
-    private PasswordField txtUserPasswordHidden;
-
-    @FXML
-    private Parent loading; // Giao diện của khung loading
-
-    @FXML
-    private LoadingController loadingController;
+    @FXML private Button btnSignUp;
+    @FXML private CheckBox chkPassword;
+    @FXML private Label lblError;
+    @FXML private Label lblBankAccount;
+    @FXML private ComboBox<String> cbRoles;
+    @FXML private Hyperlink linkLogin;
+    @FXML private TextField txtFirstName;
+    @FXML private TextField txtLastName;
+    @FXML private TextField txtUsername;
+    @FXML private TextField txtUserEmail;
+    @FXML private TextField txtUserPassword;
+    @FXML private TextField txtCFUserPassword;
+    @FXML private TextField txtBankAccount;
+    @FXML private PasswordField txtCFUserPasswordHidden;
+    @FXML private PasswordField txtUserPasswordHidden;
+    @FXML private Parent loading; // Giao diện của khung loading
+    @FXML private LoadingController loadingController;
 
     @FXML
     public void initialize() {
@@ -107,34 +76,57 @@ public class SignUpController {
 
     @FXML
     void handleSignUp(ActionEvent event) {
-        // mỗi một cục này nên cho vào 1 class khác nhau
-        // Check pass
         boolean passwordCf = false;
-
-        // Giấu password + error msg
-        txtUserPasswordHidden.getStyleClass().remove("input-error");
-        txtUserPassword.getStyleClass().remove("input-error");
-
-        txtCFUserPasswordHidden.getStyleClass().remove("input-error");
-        txtCFUserPassword.getStyleClass().remove("input-error");
+        boolean hasError = false;
 
         lblError.setText("");
         lblError.setVisible(false);
         lblError.setManaged(false);
-
-        if (txtUserPassword.getText().equals(txtCFUserPassword.getText())) {
-            passwordCf = true;
+        //xóa hiệu ứng nhập sai
+        TextField[] allFields = {txtFirstName, txtLastName, txtUsername, txtUserEmail, txtUserPassword, txtCFUserPassword, txtBankAccount, txtUserPasswordHidden, txtCFUserPasswordHidden};
+        for (TextField field : allFields) {
+            field.getStyleClass().remove("input-error");
         }
-        else {
-            lblError.setText("The entered passwords do not match. Please try again.");
-            lblError.setVisible(true);
-            lblError.setManaged(true);
+
+        //check có thiếu dữ kiện ko
+        TextField[] requiredFields = {txtFirstName, txtLastName, txtUsername, txtUserEmail, txtUserPassword, txtCFUserPassword};
+        for (TextField field : requiredFields) {
+            if (field.getText().trim().isEmpty()) {
+                field.getStyleClass().add("input-error");
+                hasError = true;
+            }
+        }
+
+        String role = cbRoles.getValue();
+        String bankAccount = txtBankAccount.getText().trim();
+
+        if (role == null || role.isEmpty()) {
+            hasError = true;
+        } else if ("Seller".equals(role) && bankAccount.isEmpty()) {
+            txtBankAccount.getStyleClass().add("input-error");
+            hasError = true;
+        }
+
+        if (hasError) {
+            showErrorMsg("Missing required information.");
+        return;
+        }
+
+        //check pass
+        String password = txtUserPassword.getText().trim();
+        String cfPassword = txtCFUserPassword.getText().trim();
+
+        if (password.equals(cfPassword)) {
+            passwordCf = true;
+        } else {
+            showErrorMsg("The entered passwords do not match. Please try again.");
 
             txtUserPasswordHidden.getStyleClass().add("input-error");
             txtCFUserPasswordHidden.getStyleClass().add("input-error");
+            txtUserPassword.getStyleClass().add("input-error");
+            txtCFUserPassword.getStyleClass().add("input-error");
             return;
         }
-        // Hết check pass
 
         // Lấy dữ liệu từ UI
         String firstName = txtFirstName.getText().trim();
@@ -142,132 +134,98 @@ public class SignUpController {
         String name = firstName + " " + lastName;
         String username = txtUsername.getText().trim();
         String email = txtUserEmail.getText().trim();
-        String password = txtUserPassword.getText().trim();
-        String cfPassword = txtCFUserPassword.getText().trim();
-        String bankAccount = txtBankAccount.getText().trim();
-        String role = cbRoles.getValue();
 
-        boolean hasError = false;
-        TextField[] requiredFields = {txtFirstName, txtLastName, txtUsername, txtUserEmail, txtUserPassword, txtCFUserPassword};
-        for (TextField field : requiredFields) {
-            if (field.getText().trim().isEmpty()) {
-                field.getStyleClass().add("input-error");
-                hasError = true;
-            }
-            else {
-                field.getStyleClass().remove("input-error");
-            }
-        }
-        if (role == null || role.isEmpty()) {
-            hasError = true;
-        }
-        if ("Seller".equals(role) && bankAccount.isEmpty()) {
-            txtBankAccount.getStyleClass().add("input-error");
-            hasError = true;
-        }
-        else {
-            txtBankAccount.getStyleClass().remove("input-error");
-        }
-         if (hasError == true) {
-            lblError.setText("Missing required information.");
-            lblError.setVisible(true);
-            lblError.setManaged(true);
-            return;
-        }       
+        UserRole roleSelected = UserRole.valueOf(role.toUpperCase());
+        RegisterRequest registerData = (roleSelected == UserRole.SELLER)
+            ? new RegisterRequest(name, username, password, email, roleSelected, bankAccount)
+            : new RegisterRequest(name, username, password, email, roleSelected);
 
+        sendRegisterRequest(registerData);
+    }
+
+    public void sendRegisterRequest(RegisterRequest registerData) {
         if (loading != null && loadingController != null) {
             loading.setVisible(true);
             loadingController.playAnimation();
+        } else {
+            System.out.println("chưa chèn thêm loading");
+        }
 
-            new Thread(() -> {
-                try {
-                    boolean isSuccess = false;
-                    String errorMessage = "Unexpected Error";
-                    UserDTO userDTO = null;
-                    UserRole roleSelected = UserRole.valueOf(role.toUpperCase());
-                    RegisterRequest registerData;
-                    if (roleSelected == UserRole.SELLER) {
-                        registerData = new RegisterRequest(name, username, password, email, roleSelected, bankAccount);
-                    }
-                    else {
-                        registerData = new RegisterRequest(name, username, password, email, roleSelected);
-                    }
-                    ClientMessage msg = ClientMessage.request("REGISTER", registerData);
+        new Thread(() -> {
+            try {
+                boolean isSuccess = false;
+                String errorMessage = "Unexpected Error";
+                UserDTO userDTO = null;
+                ClientMessage msg = ClientMessage.request("REGISTER", registerData);
 
-                    String jsonRequest = JsonUtils.toJson(msg);
-                    String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
-                    
-                    if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                        ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+                String jsonRequest = JsonUtils.toJson(msg);
+                String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
+                
+                if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                    ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
 
-                        if ("REGISTER_RESPONSE".equals(serverMsg.getAction())) {
-                            String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                    if ("REGISTER_RESPONSE".equals(serverMsg.getAction())) {
+                        String responseRawData = JsonUtils.toJson(serverMsg.getData());
 
-                            Type type = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
-                            ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-                            isSuccess = response.isSuccess();
-                            if (isSuccess) {
-                                userDTO = response.getData();
-                            }
-                            else {
-                                errorMessage = response.getMessage(); // Lấy câu chửi từ server
-                            }
+                        Type type = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
+                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
+                        isSuccess = response.isSuccess();
+                        if (isSuccess) {
+                            userDTO = response.getData();
                         }
                         else {
-                            errorMessage = "Invalid response from server";
+                            errorMessage = response.getMessage(); // Lấy câu chửi từ server
                         }
                     }
                     else {
-                        errorMessage = "No response from server";
+                        errorMessage = "Invalid response from server";
                     }
+                }
+                else {
+                    errorMessage = "No response from server";
+                }
 
-                    // quay lại UI thread để chuyển cảnh
-                    final boolean finalSuccess = isSuccess;
-                    final String finalErrorMessage = errorMessage;
-                    final UserDTO finalUser = userDTO;
+                // quay lại UI thread để chuyển cảnh
+                final boolean finalSuccess = isSuccess;
+                final String finalErrorMessage = errorMessage;
+                final UserDTO finalUser = userDTO;
 
-                    javafx.application.Platform.runLater(() -> {
-                        // Tắt hoạt cảnh
-                        loadingController.stopAnimation();
-                        loading.setVisible(false);
+                javafx.application.Platform.runLater(() -> {
+                    // Tắt hoạt cảnh
+                    loadingController.stopAnimation();
+                    loading.setVisible(false);
 
-                        if (finalSuccess) {
-                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                            alert.setTitle("Success");
-                            alert.setHeaderText(null);
-                            alert.setContentText("Registration successful! You can now log in with your new account.");
-                            alert.showAndWait();
-                            
-                            Scene currentScene = btnSignUp.getScene();
-                            currentScene.setRoot(SceneManager.loginScene);
-                            Stage stage = (Stage) currentScene.getWindow();
-                            stage.sizeToScene();
-                            
-                        } else {
-                            Alert alert = new Alert(Alert.AlertType.ERROR);
-                            alert.setTitle("Registration Failed");
-                            alert.setHeaderText(null);
-                            alert.setContentText(finalErrorMessage);
-                            alert.showAndWait();
-                        }
+                    if (finalSuccess) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Success");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Registration successful! You can now log in with your new account.");
+                        alert.showAndWait();
                         
-                    });
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                    javafx.application.Platform.runLater(() -> {
-                        loadingController.stopAnimation();
-                        loading.setVisible(false);
-                        lblError.setText("Không thể kết nối tới Server!");
-                        lblError.setVisible(true);
-                        lblError.setManaged(true);
-                    });
-                }
-            }).start();
-        } else {
-            // Nếu nó nhảy vào đây thì m phải check lại fx:id trong file fxml và biến controller
-            System.out.println("Chưa sửa chèn thêm fxml vào");
-        }
+                        Scene currentScene = btnSignUp.getScene();
+                        currentScene.setRoot(SceneManager.loginScene);
+                        Stage stage = (Stage) currentScene.getWindow();
+                        stage.sizeToScene();
+                        
+                    } else {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Registration Failed");
+                        alert.setHeaderText(null);
+                        alert.setContentText(finalErrorMessage);
+                        alert.showAndWait();
+                    }
+                    
+                });
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    loadingController.stopAnimation();
+                    loading.setVisible(false);
+                    showErrorMsg("Không thể kết nối tới Server!");
+                });
+            }
+        }).start();
     }
 
     public void handleRoleChange(ActionEvent event) {
@@ -281,5 +239,11 @@ public class SignUpController {
                 txtBankAccount.setVisible(true);
                 break;
         }
+    }
+
+    private void showErrorMsg(String msg) {
+        lblError.setText(msg);
+        lblError.setVisible(true);
+        lblError.setManaged(true);
     }
 }

@@ -61,6 +61,12 @@ public class MainLayoutController {
 
     private Object currentController = null;
 
+    private Runnable onSuccessCallback;
+ 
+    public void setOnSuccessCallback(Runnable callback) {
+        this.onSuccessCallback = callback;
+    }
+
     public void initialize() {
         UserDTO user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
@@ -137,15 +143,27 @@ public class MainLayoutController {
     }
 
     @FXML
+    void handleDeposite(ActionEvent event) {
+
+    }
+
+    @FXML
     void handleNavDashboard(MouseEvent event) {
         updateActiveStyle(navDashboard); 
-
         try {
-            // Load file Dashboard.fxml
-            Parent dashboardView = FXMLLoader.load(getClass().getResource("/fxml/Dashboard.fxml"));
-            
-            // Xóa sạch các màn hình cũ trong phần center đi (nếu có)
             contentArea.getChildren().clear();
+            String fxmlPath = "";
+            switch (SessionManager.getInstance().getCurrentUser().getRole()) {
+                case BIDDER:
+                    fxmlPath = "/fxml/BidderDashboard.fxml";
+                    break;
+                case SELLER:
+                    fxmlPath = "/fxml/SellerDashboard.fxml";
+                    break;
+            }
+            
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent dashboardView = loader.load();
             
             // Nhét Dashboard vào
             contentArea.getChildren().add(dashboardView);

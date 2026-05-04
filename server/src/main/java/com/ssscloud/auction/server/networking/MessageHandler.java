@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AuctionListResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
@@ -83,10 +85,10 @@ public class MessageHandler {
 
                     // 2. Truyền cái rawDataJson (kiểu String) đó vào controller thay vì msg.getData() (kiểu Object)
                     String controllerResponse = auctionController.createAuction(rawDataJson, client.getUserId());
-                    
                     // 3. Đóng gói trả lời lại cho Client
-                    return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
-                            JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                    Type auctionResponseType = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
+                    ApiResponse<AuctionDTO> auctionResp = JsonUtils.fromJsonGeneric(controllerResponse, auctionResponseType);
+                    return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",auctionResp));
                 }
 
                 case "PLACE_BID": {
@@ -100,28 +102,22 @@ public class MessageHandler {
                     return null;
                 }
 
-                case "AUTO_BID":{
-                String raw = JsonUtils.toJson(msg.getData());
-                AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
-                if (req == null) {
-                return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợplệ"));
-                }
-                return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
-                JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(),
-                client.getUsername()), ApiResponse.class)));
+                case "AUTO_BID": {
+                    String raw = JsonUtils.toJson(msg.getData());
+                    AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
+                    if (req == null) {
+                        return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợplệ"));
+                    }
+                    return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
+                    JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(),
+                    client.getUsername()), ApiResponse.class)));
                 }
 
-                // case "GET_AUCTIONS": {
-                // // Route mới — AuctionListController dùng
-                // String raw = auctionController.getAllAuctions();
-                // ApiResponse<?> resp = JsonUtils.fromJson(raw, ApiResponse.class);
-                // return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
-                // resp));
-                // }
                 case "GET_AUCTIONS": {
                     String result = auctionController.getActiveAuctions();
-                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",
-                        JsonUtils.fromJson(result, ApiResponse.class)));
+                    Type auctionListResponseType = new TypeToken<ApiResponse<AuctionListResponse>>() {}.getType();
+                    ApiResponse<AuctionListResponse> auctionListResponse = JsonUtils.fromJsonGeneric(result, auctionListResponseType);
+                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",auctionListResponse));
                 }
 
                 case "SUBSCRIBE_AUCTION": {
