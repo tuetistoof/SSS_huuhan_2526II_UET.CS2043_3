@@ -3,9 +3,7 @@ package com.ssscloud.auction.server.controller;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.exception.InvalidBidException;
-import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
@@ -26,9 +24,8 @@ public class BidController {
 
             if (req == null)
                 return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
-
             bidService.placeBid(req, bidderId, bidderUsername);
-            return null; // submit vào queue thành công — không cần response
+            return null; 
 
         } catch (InvalidBidException e) {
             return JsonUtils.toJson(ApiResponse.error(e.getMessage()));
@@ -47,7 +44,7 @@ public class BidController {
                 return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
 
             autoBidService.register(req, bidderId, bidderUsername);
-            return null; // submit vào queue thành công — không cần response
+            return null;
 
         } catch (IllegalArgumentException e) {
             return JsonUtils.toJson(ApiResponse.error(e.getMessage()));

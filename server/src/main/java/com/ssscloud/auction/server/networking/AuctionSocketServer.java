@@ -27,8 +27,8 @@ public class AuctionSocketServer {
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
 
-        AutoBidService autoBidService = new AutoBidService(auctionDAO);
-        BidService bidService = new BidService(auctionDAO);
+        AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
+        BidService bidService = new BidService(auctionDAO, userDAO);
         
         UserController userCtrl = new UserController(userDAO);
 
