@@ -62,7 +62,7 @@ public class SellerDashboardController {
     private void loadMyAuctions() {
         lblStatus.setText("Đang tải...");
         //send and receive, wrap trong ClientMessage để server route đúng controller + action
-        ClientMessage msg = new ClientMessage("GET_AUCTIONS", null);
+        ClientMessage msg = new ClientMessage("GET_MY_AUCTIONS", null);
         String jsonRequest = JsonUtils.toJson(msg);
  
         new Thread(() -> {
@@ -72,7 +72,7 @@ public class SellerDashboardController {
                 String jsonResponse = socket.sendAndReceive(jsonRequest);
                 if (jsonResponse != null) {
                     ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                    if ("GET_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
+                    if ("GET_MY_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
                         String rawData = JsonUtils.toJson(serverMsg.getData());
                         ApiResponse<?> resp = JsonUtils.fromJson(rawData, ApiResponse.class);
                         if (resp.isSuccess()) {
