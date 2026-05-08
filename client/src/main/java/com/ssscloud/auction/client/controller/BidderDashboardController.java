@@ -35,10 +35,10 @@ public class BidderDashboardController {
     @FXML private ToggleButton tabVehicles;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>();
-    private Consumer<AuctionDTO> onOpenBidRoomHandler;
+    private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
+    private Consumer<AuctionDisplayInfoDTO> onOpenBidRoomHandler;
 
-    public void setOnOpenBidRoom(Consumer<AuctionDTO> handler) {
+    public void setOnOpenBidRoom(Consumer<AuctionDisplayInfoDTO> handler) {
         this.onOpenBidRoomHandler = handler;
     }
 
@@ -47,17 +47,17 @@ public class BidderDashboardController {
         fetchActiveAuctions();
     }
 
-    public void loadAuctionsToDashboard(List<AuctionDTO> auctionsFromDB) {
+    public void loadAuctionsToDashboard(List<AuctionDisplayInfoDTO> auctionsFromDB) {
         // Xóa sạch dữ liệu cũ trước khi nạp mới
         auctionContainer.getChildren().clear();
 
-        for (AuctionDTO auction : auctionsFromDB) {
+        for (AuctionDisplayInfoDTO auctionInfo : auctionsFromDB) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-card.fxml"));
                 Node card = loader.load();
                 
                 AuctionCardController cardCtrl = loader.getController();
-                cardCtrl.setAuctionData(auction, this.onOpenBidRoomHandler); 
+                cardCtrl.setAuctionDisplayData(auctionInfo, this.onOpenBidRoomHandler); 
 
                 auctionContainer.getChildren().add(card);
                 
@@ -71,7 +71,7 @@ public class BidderDashboardController {
         this.allAuctionsDisplayInfo = dataFromServer;
         filterAuctions("ALL"); // Mặc định mở lên là hiện tất cả
     }
-   
+    // đang lỗi phải sửa do mới dùng DTo khác
     public void filterAuctions(String categoryType) {
         List<AuctionDisplayInfoDTO> filteredList;
 
@@ -82,10 +82,10 @@ public class BidderDashboardController {
             // Dùng Stream lọc ra những món đồ khớp với Category
             filteredList = allAuctionsDisplayInfo.stream()
                 .filter(auction -> {
-                    if (auction.getItemData() == null || auction.getItemData().getItemType() == null) {
+                    if (auction.getItemType() == null) {
                         return false;
                     }
-                    return auction.getItemData().getItemType().equals(categoryType);
+                    return auction.getItemName().equals(categoryType);
                 })
                 .toList();
         }
@@ -112,8 +112,8 @@ public class BidderDashboardController {
 
                 if (response != null && response.isSuccess()) {
                     AuctionListResponse listResponse = response.getData();
-                    List<AuctionDTO> auctions = listResponse.getAuctions();
-                    updateDashboard(auctions);
+                    List<AuctionDisplayInfoDTO> auctionInfo = listResponse.getAuctions();
+                    updateDashboard(auctionInfo);
                 }
             } else {
                 Platform.runLater(() -> {
@@ -122,8 +122,8 @@ public class BidderDashboardController {
             }
         }
     }
-
-    public void updateDashboard(List<AuctionDTO> auctions) {
+    // hàm ném mấy cái card lên
+    public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
         Platform.runLater(() -> {
             initData(auctions); // có auction nào thỏa mãn thì ném tất vô
         });

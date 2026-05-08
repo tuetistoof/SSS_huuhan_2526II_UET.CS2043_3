@@ -9,7 +9,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 
 public class AuctionCardController {
 
@@ -20,28 +20,33 @@ public class AuctionCardController {
     @FXML private Label lblSellerUsername;
     @FXML private VBox auctionCard;
 
-    public void setAuctionData(AuctionDTO auction, Consumer<AuctionDTO> onClickListener) {
+    public void setAuctionDisplayData(AuctionDisplayInfoDTO auctionInfo, Consumer<AuctionDisplayInfoDTO> onClickListener) {
         String finalImageURL = "https://i.pinimg.com/736x/14/dd/b1/14ddb197526f8ca30d420c750f32d36c.jpg";
+        String auctionName = "Không rõ tên";
         String itemName = "Không rõ tên hàng";
         String SellerUsername = "Không rõ người bán";
-        if (auction.getItemData() != null) {
-            itemName = auction.getItemData().getName();
+        if (auctionInfo.getAuctionName() != null) {
+            auctionName = auctionInfo.getAuctionName();
+        }
+        if (auctionInfo.getSellerUsername() != null) {
+            SellerUsername = auctionInfo.getSellerUsername();
+        }
+        if (auctionInfo.getItemName() != null) {
+            itemName = auctionInfo.getItemName();
 
-            if (auction.getItemData().getImageUrls() != null && !auction.getItemData().getImageUrls().isEmpty()) {
-                finalImageURL = auction.getItemData().getImageUrls().get(0);
+            if (auctionInfo.getImageUrl() != null && !auctionInfo.getImageUrl().isEmpty()) {
+                finalImageURL = auctionInfo.getImageUrl().get(0);
             } else {
-                System.out.println("Cảnh báo: Phòng đấu giá " + auction.getId() + " đang bị NULL dữ liệu hàng hóa!");
+                System.out.println("Cảnh báo: Phòng đấu giá " + auctionInfo.getId() + " đang bị NULL dữ liệu hàng hóa!");
             }
         }
 
         java.text.DecimalFormat formatter = new java.text.DecimalFormat("#,###");
-        lblCurrentPrice.setText(formatter.format(auction.getCurrentPrice()) + " VND");
+        lblCurrentPrice.setText(formatter.format(auctionInfo.getCurrentPrice()) + " VND");
 
-        lblItemName.setText(auction.getName() + " " + itemName);
-        lblEndTime.setText(formatTimeLeft(auction.getEndTime()));
-        if (auction.getSellerName() != null) {
-            SellerUsername = auction.getSellerName();
-        }
+        lblItemName.setText(auctionName + " " + itemName);
+        lblEndTime.setText(formatTimeLeft(auctionInfo.getEndTime()));
+       
         lblSellerUsername.setText(SellerUsername);
 
         Image image = new Image(finalImageURL, true);
@@ -60,7 +65,7 @@ public class AuctionCardController {
 
         auctionCard.setOnMouseClicked(event -> {
             if (onClickListener != null) {
-                onClickListener.accept(auction);
+                onClickListener.accept(auctionInfo);
             }
         });
     }
