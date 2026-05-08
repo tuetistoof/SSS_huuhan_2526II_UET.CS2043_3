@@ -60,6 +60,7 @@ public class MainLayoutController {
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
     private Object currentController = null;
+    private UserDTO user;
 
     private Runnable onSuccessCallback;
  
@@ -68,7 +69,7 @@ public class MainLayoutController {
     }
 
     public void initialize() {
-        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
         applyRole(user.getRole());
         handleNavDashboard(null);
@@ -153,7 +154,7 @@ public class MainLayoutController {
         try {
             contentArea.getChildren().clear();
             String fxmlPath = "";
-            switch (SessionManager.getInstance().getCurrentUser().getRole()) {
+            switch (user.getRole()) {
                 case BIDDER:
                     fxmlPath = "/fxml/BidderDashboard.fxml";
                     break;
@@ -236,25 +237,6 @@ public class MainLayoutController {
             contentArea.getChildren().add(view);
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private void loadBiddingRoom() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml")); 
-            Parent biddingRoomView = loader.load();
-
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(biddingRoomView);
-            
-            // (Nâng cao) Chỗ này sau lấy controller của BiddingRoom 
-            // để bơm ID phòng hoặc Dữ liệu phòng vào
-            // BiddingRoomController bidCtrl = loader.getController();
-            // bidCtrl.setAuctionData(newAuctionData);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load file bidding-room.fxml");
         }
     }
 

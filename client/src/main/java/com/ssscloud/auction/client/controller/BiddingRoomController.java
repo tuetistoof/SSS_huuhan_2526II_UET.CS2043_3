@@ -190,45 +190,11 @@ public class BiddingRoomController implements MessageListener{
         }
 
         txtManualBid.clear();
-        btnPlaceBid.setDisable(true);
-        btnPlaceBid.setText("Đang xử lý..."); 
-        
-        new Thread(()-> {
-            try{
-                PlaceBidRequest req = new PlaceBidRequest(currentAuction.getId(), amount);
-                String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("PLACE_BID", req)));
-                
-                if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                    ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+        // btnPlaceBid.setDisable(true);
+        // btnPlaceBid.setText("Đang xử lý..."); 
+        PlaceBidRequest req = new PlaceBidRequest(currentAuction.getId(), amount);
+        socket.send(JsonUtils.toJson(ClientMessage.request("PLACE_BID", req)));
 
-                    if ("PLACE_BID_RESPONSE".equals(serverMsg.getAction())) {
-                        String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                        Type type = new TypeToken<ApiResponse<BidDTO>>() {}.getType();
-                        ApiResponse<BidDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-
-                        if (response != null && response.isSuccess()) {
-                            // Cập nhật UI thành công tại đây
-                            Platform.runLater(() -> {
-                                BidDTO bidResult = response.getData();
-                                // Logic cập nhật giao diện
-                            });
-
-                    } else {
-                        Platform.runLater(() -> {
-                            showError(response != null ? response.getMessage() : "Lỗi không xác định");
-                            resetPlaceBidButton();
-                        });
-                    }
-                }
-            }
-    
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    showError("Lỗi kết nối Server.");
-                    resetPlaceBidButton();
-                });
-            }
-        }).start();
     }
 
     @FXML
@@ -381,6 +347,7 @@ public class BiddingRoomController implements MessageListener{
  
             switch (action.toUpperCase()) {
                 case "BID_UPDATE":       handleBidUpdate(root);       break;
+                case "BID_ERROR":        handleBidError(root);        break;
                 case "AUCTION_ENDED":    handleAuctionEnded(root);    break;
                 case "AUTO_BID_STOPPED": handleAutoBidStopped(root);  break;
                 default:
@@ -400,6 +367,18 @@ public class BiddingRoomController implements MessageListener{
         
         currentAuction.setCurrentPrice(bid.getCurrentPrice());
         bidHistory.add(0, bid); // Thêm bid mới lên đầu list
+        resetPlaceBidButton();
+    }
+
+    private void handleBidError(JsonObject root) {
+        String message = "Đặt giá thất bại.";
+        if (root.has("data") && root.get("data").isJsonObject()) {
+            JsonObject data = root.get("data").getAsJsonObject();
+            if (data.has("message")) {
+                message = data.get("message").getAsString();
+            }
+        }
+        showError(message);
         resetPlaceBidButton();
     }
     private void handleAuctionEnded(JsonObject root) {

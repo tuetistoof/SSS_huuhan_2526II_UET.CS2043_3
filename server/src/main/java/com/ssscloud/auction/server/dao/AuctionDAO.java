@@ -219,6 +219,7 @@ public class AuctionDAO extends BaseDAO {
                 "FROM auction a " +
                 "JOIN auction_config ac ON a.id = ac.id " +
                 "JOIN user u ON a.seller_id = u.id " +
+                "JOIN item i ON a.item_id = i.id " +
                 "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
                 "LEFT JOIN ( " +
                 "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
@@ -226,7 +227,7 @@ public class AuctionDAO extends BaseDAO {
                 "    WHERE b2.auction_id = b1.auction_id) " +
                 ") AS last_bid ON last_bid.auction_id = a.id " +
                 "WHERE a.status = 'RUNNING' " +
-                "GROUP BY a.id, ac.name, ac.end_time, u.username, ac.start_price, last_bid.bid_amount";
+                "GROUP BY a.id, ac.name, ac.end_time, u.username, i.name, i.item_type ac.start_price, last_bid.bid_amount";
 
         Connection conn = null;
         PreparedStatement ps = null;
@@ -246,6 +247,8 @@ public class AuctionDAO extends BaseDAO {
                 AuctionDisplayInfoDTO dto = new AuctionDisplayInfoDTO(
                         rs.getString("id"),
                         rs.getString("auction_name"),
+                        rs.getString("item_name"),
+                        rs.getString("item_type"),
                         rs.getLong("current_price"),
                         rs.getObject("end_time", LocalDateTime.class),
                         rs.getString("seller_username"),

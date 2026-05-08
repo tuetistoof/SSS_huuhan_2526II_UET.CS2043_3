@@ -7,14 +7,22 @@ public class AuctionDisplayInfoDTO {
     private String id;
     private String auctionName;
     private String itemName;
+<<<<<<< HEAD
+=======
+    private String itemType;
+>>>>>>> 82eda9beafeec1c0bdd7c394439e040650cf9b7c
     private Long currentPrice;
     private LocalDateTime endTime;
     private String sellerUsername;
     private List <String> imageUrl;
-    public AuctionDisplayInfoDTO (String id, String auctionName, long currentPrice, LocalDateTime endTime,String sellerUsername, List <String> imageUrl)
+
+
+    public AuctionDisplayInfoDTO (String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List <String> imageUrl)
     {
         this.id = id;
         this.auctionName = auctionName;
+        this.itemName = itemName;
+        this.itemType = itemType;
         this.currentPrice = currentPrice;
         this.endTime = endTime;
         this.sellerUsername = sellerUsername;
@@ -31,6 +39,18 @@ public class AuctionDisplayInfoDTO {
     }
     public void setAuctionName(String auctionName) {
         this.auctionName = auctionName;
+    }
+    public String getItemName() {
+        return itemName;
+    }
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+    public String getItemType() {
+        return itemType;
+    }
+    public void setItemType(String itemType) {
+        this.itemType = itemType;
     }
     public Long getCurrentPrice() {
         return currentPrice;

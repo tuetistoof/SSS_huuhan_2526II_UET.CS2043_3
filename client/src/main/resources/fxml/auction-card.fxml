@@ -4,15 +4,15 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="200.0" styleClass="main-card" stylesheets="@../css/auction-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.AuctionCardController">
+<VBox fx:id="auctionCard" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="300.0" styleClass="main-card" stylesheets="@../css/auction-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.AuctionCardController">
    <children>
-      <ImageView fx:id="imgItem" fitHeight="150.0" fitWidth="220.0" pickOnBounds="true" preserveRatio="true" styleClass="auction-image" />
+      <ImageView fx:id="imgItem" fitHeight="200.0" fitWidth="220.0" pickOnBounds="true" preserveRatio="true" styleClass="auction-image" />
       <VBox>
          <children>
-            <Label fx:id="lblAuctionName" styleClass="auction-title" text="Auction name" />
-            <Label fx:id="lblItemName" styleClass="auction-description" text="Item name" />
+            <Label fx:id="lblItemName" styleClass="auction-title" text="Auction + Item name" wrapText="true" />
             <Label fx:id="lblCurrentPrice" styleClass="auction-description" text="Current Price" />
-            <Label fx:id="lblSellerName" styleClass="auction-description" text="Seller name" />
+            <Label fx:id="lblEndTime" styleClass="auction-description" text="Endtime" />
+            <Label fx:id="lblSellerUsername" layoutX="10.0" layoutY="103.0" styleClass="auction-description" text="Seller ussername" />
          </children>
       </VBox>
    </children>
