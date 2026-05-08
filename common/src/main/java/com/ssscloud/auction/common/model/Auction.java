@@ -176,7 +176,6 @@ public class Auction implements Subject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Auction auction = (Auction) o;
-        // So sánh dựa trên ID duy nhất trong AuctionConfig
         return Objects.equals(this.getAuctionConfig().getId(), 
                              auction.getAuctionConfig().getId());
     }
