@@ -22,14 +22,14 @@
 }
 
 .auction-title {
-    -fx-font-size: 18px;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #333333;
     -fx-padding: 10px 15px 5px 15px;
 }
 
 .auction-description {
-    -fx-font-size: 14px;
+    -fx-font-size: 18px;
     -fx-text-fill: #666666;
     -fx-padding: 5px 15px 10px 15px;
 }

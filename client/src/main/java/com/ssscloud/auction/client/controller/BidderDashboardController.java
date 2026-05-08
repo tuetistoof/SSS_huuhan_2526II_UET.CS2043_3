@@ -1,9 +1,10 @@
 package com.ssscloud.auction.client.controller;
+
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
@@ -33,13 +34,17 @@ public class BidderDashboardController {
     @FXML private ToggleButton tabVehicles;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
+    private List<AuctionDTO> allAuctions = new ArrayList<>();
+    private Consumer<AuctionDTO> onOpenBidRoomHandler;
+
+    public void setOnOpenBidRoom(Consumer<AuctionDTO> handler) {
+        this.onOpenBidRoomHandler = handler;
+    }
 
     @FXML
     public void initialize() {
         fetchActiveAuctions();
     }
-
-    private List<AuctionDTO> allAuctions = new ArrayList<>();
 
     public void loadAuctionsToDashboard(List<AuctionDTO> auctionsFromDB) {
         // Xóa sạch dữ liệu cũ trước khi nạp mới
@@ -51,7 +56,7 @@ public class BidderDashboardController {
                 Node card = loader.load();
                 
                 AuctionCardController cardCtrl = loader.getController();
-                cardCtrl.setAuctionData(auction); 
+                cardCtrl.setAuctionData(auction, this.onOpenBidRoomHandler); 
 
                 auctionContainer.getChildren().add(card);
                 
@@ -86,25 +91,10 @@ public class BidderDashboardController {
         loadAuctionsToDashboard(filteredList);
         // Cập nhật giao diện với danh sách đã lọc
     }
-    @FXML 
-    void filterAll(ActionEvent event) {
-        filterAuctions("ALL");
-    }
-
-    @FXML
-    void filterElectronics(ActionEvent event) {
-        filterAuctions("ELECTRONIC");
-    }
-
-    @FXML
-    void filterArts(ActionEvent event) {
-        filterAuctions("ART");
-    }
-
-    @FXML
-    void filterVehicles(ActionEvent event) {
-        filterAuctions("VEHICLE");
-    }
+    @FXML void filterAll(ActionEvent event) { filterAuctions("ALL"); }
+    @FXML void filterElectronics(ActionEvent event) { filterAuctions("ELECTRONIC"); }
+    @FXML void filterArts(ActionEvent event) { filterAuctions("ART"); }
+    @FXML void filterVehicles(ActionEvent event) { filterAuctions("VEHICLE"); }
 
     public void fetchActiveAuctions() {
         GetAuctionsRequest req = new GetAuctionsRequest();

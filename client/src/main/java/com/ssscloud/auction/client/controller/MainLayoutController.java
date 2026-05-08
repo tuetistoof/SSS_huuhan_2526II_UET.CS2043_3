@@ -239,25 +239,6 @@ public class MainLayoutController {
         }
     }
 
-    private void loadBiddingRoom() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml")); 
-            Parent biddingRoomView = loader.load();
-
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(biddingRoomView);
-            
-            // (Nâng cao) Chỗ này sau lấy controller của BiddingRoom 
-            // để bơm ID phòng hoặc Dữ liệu phòng vào
-            // BiddingRoomController bidCtrl = loader.getController();
-            // bidCtrl.setAuctionData(newAuctionData);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load file bidding-room.fxml");
-        }
-    }
-
     @FXML
     void handleNavUserInfo(MouseEvent event) {
         System.out.println("Đã click vào khu vực User Info!");
