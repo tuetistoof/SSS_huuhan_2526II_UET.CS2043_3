@@ -2,6 +2,7 @@ package com.ssscloud.auction.server.service;
 
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
@@ -94,18 +95,12 @@ public class AuctionService {
                 .map(this::toDTO)   //chuyển Stream<Auction> thành Stream<AuctionDTO>
                 .collect(Collectors.toList());  //chuyển Stream<AuctionDTO> thành List<AuctionDTO>
     }
- 
- 
-    public List<AuctionDTO> getActiveAuctions() {
 
-        List<Auction> open    = auctionDAO.findByStatus(AuctionStatus.OPEN);
-        List<Auction> running = auctionDAO.findByStatus(AuctionStatus.RUNNING);
-        open.addAll(running);
-        return open.stream().map(this::toDTO).collect(Collectors.toList());
+ 
+ 
+    public List<AuctionDisplayInfoDTO> getActiveAuctions() {
+        return auctionDAO.findActiveAuctions();
     }
-
-
-
 
 
     //HELPERS

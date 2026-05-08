@@ -5,7 +5,8 @@ import java.util.List;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionListResponse;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AuctionService;
 /**
@@ -72,8 +73,8 @@ public class AuctionController {
     
     public String getActiveAuctions() {
         try {
-            List<AuctionDTO> auctions = auctionService.getActiveAuctions();
-            AuctionListResponse response = new AuctionListResponse(auctions);
+            List<AuctionDisplayInfoDTO> auctions = auctionService.getActiveAuctions();
+            ListResponse <AuctionDisplayInfoDTO> response = new ListResponse<>(auctions);
             return JsonUtils.toJson(ApiResponse.success(response,
                     "Lấy danh sách thành công (" + auctions.size() + " phiên đang mở)"));
         } catch (Exception e) {
@@ -87,7 +88,7 @@ public class AuctionController {
                 return JsonUtils.toJson(ApiResponse.error("Thiếu sellerId"));
             }
             List<AuctionDTO> auctions = auctionService.getMyAuctions(sellerId);
-            AuctionListResponse response = new AuctionListResponse(auctions);
+            ListResponse <AuctionDTO> response = new ListResponse<>(auctions);
             return JsonUtils.toJson(ApiResponse.success(response,
                     "Lấy danh sách thành công (" + auctions.size() + " phiên)"));
         } catch (Exception e) {
