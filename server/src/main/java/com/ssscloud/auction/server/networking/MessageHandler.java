@@ -113,6 +113,14 @@ public class MessageHandler {
                     client.getUsername()), ApiResponse.class)));
                 }
 
+                case "GET_MY_AUCTIONS": {
+                    // Seller lấy danh sách auction của chính mình
+                    String result = auctionController.getMyAuctions(client.getUserId());
+                    return JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(result, ApiResponse.class)));
+                }
+
+              
                 case "GET_AUCTIONS": {
                     String result = auctionController.getActiveAuctions();
                     Type auctionListResponseType = new TypeToken<ApiResponse<AuctionListResponse>>() {}.getType();

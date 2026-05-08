@@ -87,6 +87,14 @@ public class AuctionService {
     //             .map(this::toDTO)
     //             .collect(Collectors.toList());
     // }
+
+    public List<AuctionDTO> getMyAuctions(String sellerId) {
+        return auctionDAO.findBySellerId(sellerId)
+                .stream()   //chuyển List<Auction> thành Stream<Auction>
+                .map(this::toDTO)   //chuyển Stream<Auction> thành Stream<AuctionDTO>
+                .collect(Collectors.toList());  //chuyển Stream<AuctionDTO> thành List<AuctionDTO>
+    }
+ 
  
     public List<AuctionDTO> getActiveAuctions() {
 

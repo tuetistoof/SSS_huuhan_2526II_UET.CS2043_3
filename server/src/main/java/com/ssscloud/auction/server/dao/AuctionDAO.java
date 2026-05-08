@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
@@ -36,7 +38,7 @@ public class AuctionDAO extends BaseDAO {
 
             psAuctionConfig = conn.prepareStatement(sqlAuctionConfig);
             psAuctionConfig.setString(1, auction.getAuctionConfig().getId());
-            psAuctionConfig.setLong (2, auction.getAuctionConfig().getStartPrice());
+            psAuctionConfig.setLong(2, auction.getAuctionConfig().getStartPrice());
             psAuctionConfig.setLong(3, auction.getAuctionConfig().getMinIncrement());
             psAuctionConfig.setObject(4, auction.getAuctionConfig().getStartTime());
             psAuctionConfig.setObject(5, auction.getAuctionConfig().getEndTime());
@@ -132,7 +134,7 @@ public class AuctionDAO extends BaseDAO {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        Auction auction = null; 
+        Auction auction = null;
 
         try {
             conn = getConnection();
@@ -200,6 +202,61 @@ public class AuctionDAO extends BaseDAO {
 
         SQLException e) {
             logger.severe("Lỗi findByStatus [" + status.name() + "]: " + e.getMessage());
+            return new ArrayList<>();
+        } finally {
+            closeConnect(conn);
+            closeResource(rs, ps);
+        }
+    }
+
+    public List<AuctionDisplayInfoDTO> findActiveAuctions() {
+        String sql = "SELECT " +
+                " a.id, " +
+                " ac.name AS auction_name, ac.end_time, " +
+                " u.username AS seller_username, " +
+                " COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " +
+                " GROUP_CONCAT(img.image_url SEPARATOR ', ') AS image_url " +
+                "FROM auction a " +
+                "JOIN auction_config ac ON a.id = ac.id " +
+                "JOIN user u ON a.seller_id = u.id " +
+                "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
+                "LEFT JOIN ( " +
+                "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
+                "    WHERE b1.bid_time = ( SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
+                "    WHERE b2.auction_id = b1.auction_id) " +
+                ") AS last_bid ON last_bid.auction_id = a.id " +
+                "WHERE a.status = 'RUNNING' " +
+                "GROUP BY a.id, ac.name, ac.end_time, u.username, ac.start_price, last_bid.bid_amount";
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            List<AuctionDisplayInfoDTO> result = new ArrayList<>();
+            while (rs.next()) {
+                String imageUrlRaw = rs.getString("image_url");
+                List<String> imageUrls = (imageUrlRaw != null)
+                        ? List.of(imageUrlRaw.split(", "))
+                        : new ArrayList<>();
+
+                AuctionDisplayInfoDTO dto = new AuctionDisplayInfoDTO(
+                        rs.getString("id"),
+                        rs.getString("auction_name"),
+                        rs.getLong("current_price"),
+                        rs.getObject("end_time", LocalDateTime.class),
+                        rs.getString("seller_username"),
+                        imageUrls);
+                result.add(dto);
+            }
+
+            return result;
+
+        } catch (SQLException e) {
+            logger.severe("Lỗi findActiveAuctions: " + e.getMessage());
             return new ArrayList<>();
         } finally {
             closeConnect(conn);
