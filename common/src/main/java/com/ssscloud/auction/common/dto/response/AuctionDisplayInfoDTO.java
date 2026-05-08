@@ -6,6 +6,7 @@ import java.util.List;
 public class AuctionDisplayInfoDTO {
     private String id;
     private String auctionName;
+    private String itemName;
     private Long currentPrice;
     private LocalDateTime endTime;
     private String sellerUsername;

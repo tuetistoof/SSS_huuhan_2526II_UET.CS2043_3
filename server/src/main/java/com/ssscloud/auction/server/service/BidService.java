@@ -47,8 +47,6 @@ public class BidService {
             throw new IllegalArgumentException("Người dùng không phải bidder");
         if (b.getAccountBalance() < req.getBidAmount())
             throw new InvalidBidException("Số dư tài khoản không đủ để đặt giá");
-
-
         bidManager.submitBid(auction, bidderId, bidderUsername, req.getBidAmount(), BidType.MANUAL);
     }
 }
