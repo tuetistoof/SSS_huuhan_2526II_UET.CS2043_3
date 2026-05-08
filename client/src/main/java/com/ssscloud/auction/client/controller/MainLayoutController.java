@@ -60,6 +60,7 @@ public class MainLayoutController {
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
     private Object currentController = null;
+    private UserDTO user;
 
     private Runnable onSuccessCallback;
  
@@ -68,7 +69,7 @@ public class MainLayoutController {
     }
 
     public void initialize() {
-        UserDTO user = SessionManager.getInstance().getCurrentUser();
+        user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
         applyRole(user.getRole());
         handleNavDashboard(null);
@@ -153,7 +154,7 @@ public class MainLayoutController {
         try {
             contentArea.getChildren().clear();
             String fxmlPath = "";
-            switch (SessionManager.getInstance().getCurrentUser().getRole()) {
+            switch (user.getRole()) {
                 case BIDDER:
                     fxmlPath = "/fxml/BidderDashboard.fxml";
                     break;

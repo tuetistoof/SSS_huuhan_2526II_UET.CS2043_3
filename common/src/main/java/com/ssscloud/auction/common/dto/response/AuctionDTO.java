@@ -21,8 +21,6 @@ public class AuctionDTO implements Serializable {
     private String highestBidderName;
     private int bidCount;
 
-    private ItemDTO item;
-
     public AuctionDTO() {
     }
 
@@ -100,9 +98,7 @@ public class AuctionDTO implements Serializable {
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
 
-    public ItemDTO getItemData() {return item;}
-    public void setItemData(ItemDTO item) {this.item = item;}
-
+    
     @Override
     public String toString() {
         return "AuctionDTO{" +

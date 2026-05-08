@@ -10,6 +10,7 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.AuctionListResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -34,7 +35,7 @@ public class BidderDashboardController {
     @FXML private ToggleButton tabVehicles;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private List<AuctionDTO> allAuctions = new ArrayList<>();
+    private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>();
     private Consumer<AuctionDTO> onOpenBidRoomHandler;
 
     public void setOnOpenBidRoom(Consumer<AuctionDTO> handler) {
@@ -66,20 +67,20 @@ public class BidderDashboardController {
         }
     }
 
-    public void initData(List<AuctionDTO> dataFromServer) {
-        this.allAuctions = dataFromServer;
+    public void initData(List<AuctionDisplayInfoDTO> dataFromServer) {
+        this.allAuctionsDisplayInfo = dataFromServer;
         filterAuctions("ALL"); // Mặc định mở lên là hiện tất cả
     }
    
     public void filterAuctions(String categoryType) {
-        List<AuctionDTO> filteredList;
+        List<AuctionDisplayInfoDTO> filteredList;
 
         if (categoryType.equals("ALL")) {
-            filteredList = allAuctions; // Lấy full kho
+            filteredList = allAuctionsDisplayInfo; // Lấy full kho
         } 
         else {
             // Dùng Stream lọc ra những món đồ khớp với Category
-            filteredList = allAuctions.stream()
+            filteredList = allAuctionsDisplayInfo.stream()
                 .filter(auction -> {
                     if (auction.getItemData() == null || auction.getItemData().getItemType() == null) {
                         return false;
