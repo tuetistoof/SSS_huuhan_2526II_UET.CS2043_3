@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
@@ -214,12 +213,14 @@ public class AuctionDAO extends BaseDAO {
                 " a.id, " +
                 " ac.name AS auction_name, ac.end_time, " +
                 " u.username AS seller_username, " +
+                " e.name AS item_name, i.type AS item_type, " +
                 " COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " +
                 " GROUP_CONCAT(img.image_url SEPARATOR ', ') AS image_url " +
                 "FROM auction a " +
                 "JOIN auction_config ac ON a.id = ac.id " +
                 "JOIN user u ON a.seller_id = u.id " +
                 "JOIN item i ON a.item_id = i.id " +
+                "JOIN entity e ON i.id = e.id " +
                 "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
                 "LEFT JOIN ( " +
                 "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
@@ -227,7 +228,7 @@ public class AuctionDAO extends BaseDAO {
                 "    WHERE b2.auction_id = b1.auction_id) " +
                 ") AS last_bid ON last_bid.auction_id = a.id " +
                 "WHERE a.status = 'RUNNING' " +
-                "GROUP BY a.id, ac.name, ac.end_time, u.username, i.name, i.item_type ac.start_price, last_bid.bid_amount";
+                "GROUP BY a.id, ac.name, ac.end_time, u.username, e.name, i.type, ac.start_price, last_bid.bid_amount";
 
         Connection conn = null;
         PreparedStatement ps = null;

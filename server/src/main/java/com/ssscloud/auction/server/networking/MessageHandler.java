@@ -3,9 +3,12 @@ package com.ssscloud.auction.server.networking;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.List;
+
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionListResponse;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
@@ -116,16 +119,13 @@ public class MessageHandler {
                 case "GET_MY_AUCTIONS": {
                     // Seller lấy danh sách auction của chính mình
                     String result = auctionController.getMyAuctions(client.getUserId());
-                    return JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS_RESPONSE",
-                        JsonUtils.fromJson(result, ApiResponse.class)));
+                    
                 }
 
-              
-                case "GET_AUCTIONS": {
+                case "GET_ACTIVE_AUCTIONS": {
                     String result = auctionController.getActiveAuctions();
-                    Type auctionListResponseType = new TypeToken<ApiResponse<AuctionListResponse>>() {}.getType();
-                    ApiResponse<AuctionListResponse> auctionListResponse = JsonUtils.fromJsonGeneric(result, auctionListResponseType);
-                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS_RESPONSE",auctionListResponse));
+                    return JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(result, ApiResponse.class)));
                 }
 
                 case "SUBSCRIBE_AUCTION": {

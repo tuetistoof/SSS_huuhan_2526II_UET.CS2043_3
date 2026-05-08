@@ -5,7 +5,8 @@ import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionListResponse;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -102,8 +103,8 @@ public class AuctionListController implements MessageListener {
                         ApiResponse<?> resp = JsonUtils.fromJson(rawData, ApiResponse.class);
                         if (resp.isSuccess()) {
                             String listJson = JsonUtils.toJson(resp.getData());
-                            AuctionListResponse listResp = JsonUtils.fromJson(listJson, AuctionListResponse.class);
-                            auctions = listResp.getAuctions();
+                            ListResponse <AuctionDisplayInfoDTO> listResp = JsonUtils.fromJson(listJson, ListResponse.class);
+                            auctions = listResp.getData();
                         } else {
                             error = resp.getMessage();
                         }
