@@ -5,7 +5,7 @@ import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionListResponse;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
  
 import javafx.application.Platform;
@@ -77,8 +77,8 @@ public class SellerDashboardController {
                         ApiResponse<?> resp = JsonUtils.fromJson(rawData, ApiResponse.class);
                         if (resp.isSuccess()) {
                             String listJson = JsonUtils.toJson(resp.getData());
-                            AuctionListResponse listResp = JsonUtils.fromJson(listJson, AuctionListResponse.class);
-                            auctions = listResp.getAuctions();
+                            ListResponse<AuctionDTO> listResp = JsonUtils.fromJson(listJson, ListResponse.class, AuctionDTO.class);
+                            auctions = listResp.getData();
                         } else {
                             error = resp.getMessage();
                         }

@@ -36,6 +36,19 @@ public final class JsonUtils {
         }
     }
 
+    public static <T> T fromJson(String json, Class<?> rawType, Class<?>... parameterTypes) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            // Tạo kiểu Type lồng nhau từ các class truyền vào
+            java.lang.reflect.Type type = com.google.gson.internal.$Gson$Types.newParameterizedTypeWithOwner(null, rawType, parameterTypes);
+            return gson.fromJson(json, type);
+        } catch (Exception e) {
+            System.err.println("Lỗi parse JSON Generic: " + e.getMessage());
+            return null;
+        }
+    }
     public static <T> T fromJsonGeneric(String json, Type typeOfT) {
         if (json == null || json.trim().isEmpty()) {
             return null;

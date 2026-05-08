@@ -9,10 +9,8 @@ import java.util.function.Consumer;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
-import com.ssscloud.auction.common.dto.response.AuctionListResponse;
-import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 
@@ -51,13 +49,13 @@ public class BidderDashboardController {
         // Xóa sạch dữ liệu cũ trước khi nạp mới
         auctionContainer.getChildren().clear();
 
-        for (AuctionDisplayInfoDTO auctionInfo : auctionsFromDB) {
+        for (AuctionDisplayInfoDTO auction : auctionsFromDB) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-card.fxml"));
                 Node card = loader.load();
                 
                 AuctionCardController cardCtrl = loader.getController();
-                cardCtrl.setAuctionDisplayData(auctionInfo, this.onOpenBidRoomHandler); 
+                cardCtrl.setAuctionDisplayData(auction, this.onOpenBidRoomHandler); 
 
                 auctionContainer.getChildren().add(card);
                 
@@ -99,21 +97,21 @@ public class BidderDashboardController {
 
     public void fetchActiveAuctions() {
         GetAuctionsRequest req = new GetAuctionsRequest();
-        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS", req)));
+        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", req)));
         System.out.println(jsonResponse);
         
         if (jsonResponse != null && !jsonResponse.isEmpty()) {
             ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
             
-            if ("GET_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
+            if ("GET_ACTIVE_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
                 String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<AuctionListResponse>>() {}.getType();
-                ApiResponse<AuctionListResponse> response = JsonUtils.fromJsonGeneric(responseRawData, type);
+                Type type = new TypeToken<ApiResponse<ListResponse <AuctionDisplayInfoDTO>>>() {}.getType();
+                ApiResponse<ListResponse <AuctionDisplayInfoDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
 
                 if (response != null && response.isSuccess()) {
-                    AuctionListResponse listResponse = response.getData();
-                    List<AuctionDisplayInfoDTO> auctionInfo = listResponse.getAuctions();
-                    updateDashboard(auctionInfo);
+                    ListResponse <AuctionDisplayInfoDTO> listResponse = response.getData();
+                    List<AuctionDisplayInfoDTO> auctions = listResponse.getData();
+                    updateDashboard(auctions);
                 }
             } else {
                 Platform.runLater(() -> {
@@ -122,7 +120,6 @@ public class BidderDashboardController {
             }
         }
     }
-    // hàm ném mấy cái card lên
     public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
         Platform.runLater(() -> {
             initData(auctions); // có auction nào thỏa mãn thì ném tất vô
