@@ -7,10 +7,7 @@ public class AuctionDisplayInfoDTO {
     private String id;
     private String auctionName;
     private String itemName;
-<<<<<<< HEAD
-=======
     private String itemType;
->>>>>>> 82eda9beafeec1c0bdd7c394439e040650cf9b7c
     private Long currentPrice;
     private LocalDateTime endTime;
     private String sellerUsername;
