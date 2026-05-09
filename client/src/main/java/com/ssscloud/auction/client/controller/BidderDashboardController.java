@@ -9,10 +9,8 @@ import java.util.function.Consumer;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 
@@ -35,10 +33,10 @@ public class BidderDashboardController {
     @FXML private ToggleButton tabVehicles;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>();
-    private Consumer<AuctionDTO> onOpenBidRoomHandler;
+    private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
+    private Consumer<AuctionDisplayInfoDTO> onOpenBidRoomHandler;
 
-    public void setOnOpenBidRoom(Consumer<AuctionDTO> handler) {
+    public void setOnOpenBidRoom(Consumer<AuctionDisplayInfoDTO> handler) {
         this.onOpenBidRoomHandler = handler;
     }
 
@@ -57,7 +55,7 @@ public class BidderDashboardController {
                 Node card = loader.load();
                 
                 AuctionCardController cardCtrl = loader.getController();
-                cardCtrl.setAuctionData(auction, this.onOpenBidRoomHandler); 
+                cardCtrl.setAuctionDisplayData(auction, this.onOpenBidRoomHandler); 
 
                 auctionContainer.getChildren().add(card);
                 
@@ -71,7 +69,7 @@ public class BidderDashboardController {
         this.allAuctionsDisplayInfo = dataFromServer;
         filterAuctions("ALL"); // Mặc định mở lên là hiện tất cả
     }
-   
+    // đang lỗi phải sửa do mới dùng DTo khác
     public void filterAuctions(String categoryType) {
         List<AuctionDisplayInfoDTO> filteredList;
 
@@ -82,10 +80,10 @@ public class BidderDashboardController {
             // Dùng Stream lọc ra những món đồ khớp với Category
             filteredList = allAuctionsDisplayInfo.stream()
                 .filter(auction -> {
-                    if (auction.getItemData() == null || auction.getItemData().getItemType() == null) {
+                    if (auction.getItemType() == null) {
                         return false;
                     }
-                    return auction.getItemData().getItemType().equals(categoryType);
+                    return auction.getItemName().equals(categoryType);
                 })
                 .toList();
         }
@@ -122,7 +120,6 @@ public class BidderDashboardController {
             }
         }
     }
-
     public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
         Platform.runLater(() -> {
             initData(auctions); // có auction nào thỏa mãn thì ném tất vô
