@@ -1,12 +1,23 @@
 package com.ssscloud.auction.client.controller;
+
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SessionManager;
+import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -53,14 +64,18 @@ public class MainLayoutController {
     @FXML private HBox navWatchlist;
     @FXML private HBox navWonItems;
     @FXML private Button btnLogOut;
-
     @FXML private VBox sidebar;
+    @FXML private Parent loading; // Giao diện của khung loading
+    @FXML private LoadingController loadingController;
+
     private boolean isSidebarExpanded = true;
     private final double SIDEBAR_EXPANDED_WIDTH = 200.0;
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
     private Object currentController = null;
     private UserDTO user;
+
+    private AuctionClientSocket socket =  AuctionClientSocket.getInstance();
 
     private Runnable onSuccessCallback;
  
@@ -150,21 +165,20 @@ public class MainLayoutController {
 
     @FXML
     void handleNavDashboard(MouseEvent event) {
-        updateActiveStyle(navDashboard); 
+        updateActiveStyle(navDashboard);
+        clearContent();
         try {
             contentArea.getChildren().clear();
-            String fxmlPath = "";
-            switch (user.getRole()) {
-                case BIDDER:
-                    fxmlPath = "/fxml/BidderDashboard.fxml";
-                    break;
-                case SELLER:
-                    fxmlPath = "/fxml/SellerDashboard.fxml";
-                    break;
-            }
+            String fxmlPath = (user.getRole() == UserRole.BIDDER) ? "/fxml/BidderDashboard.fxml" : "/fxml/SellerDashboard.fxml";
             
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent dashboardView = loader.load();
+
+            if (user.getRole() == UserRole.BIDDER) {
+                BidderDashboardController ctrl = loader.getController();
+                ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                currentController = ctrl;
+            }
             
             // Nhét Dashboard vào
             contentArea.getChildren().add(dashboardView);
@@ -186,7 +200,7 @@ public class MainLayoutController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-list.fxml"));
             Parent view = loader.load();
             AuctionListController ctrl = loader.getController();
-            ctrl.setOnOpenAuction(this::loadBiddingRoom);
+            // ctrl.setOnOpenAuction(this::loadAuctionList);
             currentController = ctrl;
             contentArea.getChildren().add(view);
 
@@ -212,7 +226,21 @@ public class MainLayoutController {
             Parent createAuctionView = loader.load();
             CreateAuctionController controller = loader.getController();
             controller.setOnSuccessCallback(newAuction -> {
-                loadBiddingRoom(newAuction);
+                updateActiveStyle(null);
+                clearContent();
+                try {
+                    FXMLLoader roomLoader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
+                    Parent view = roomLoader.load();
+
+                    BiddingRoomController ctrl = roomLoader.getController();
+                    ctrl.setAuction(newAuction); 
+                    ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); 
+                    
+                    currentController = ctrl;
+                    contentArea.getChildren().add(view);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             });
 
             contentArea.getChildren().clear();
@@ -223,20 +251,55 @@ public class MainLayoutController {
             System.err.println("Lỗi load file create-auction.fxml");
         }
     }
-    public void loadBiddingRoom(AuctionDTO auction) {
-        if (auction == null) { handleNavDashboard(null); return; }
-        updateActiveStyle(null);
-        clearContent();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-            Parent view = loader.load();
-            BiddingRoomController ctrl = loader.getController();
-            ctrl.setAuction(auction);                          // inject dữ liệu phòng
-            ctrl.setOnSuccessCallback(() -> handleNavMyAuctionRooms(null)); // Back → auction list
-            currentController = ctrl;
-            contentArea.getChildren().add(view);
-        } catch (IOException e) {
-            e.printStackTrace();
+
+    public void loadBiddingRoom(AuctionDisplayInfoDTO basicInfo) {
+        if (basicInfo == null) { 
+            handleNavDashboard(null);
+            return;
+        }
+        if (loading != null && loadingController != null) {
+            loading.setVisible(true);
+            loadingController.playAnimation();
+        } else {
+            System.out.println("Chưa sửa chèn thêm fxml vào");
+            return;
+        }
+
+        GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
+        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
+        
+        AuctionDTO fullAuctionData = null;
+
+        if (jsonResponse != null && !jsonResponse.isEmpty()) {
+            ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+            if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
+                String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
+                ApiResponse<AuctionDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
+
+                if (response != null && response.isSuccess()) {
+                    fullAuctionData = response.getData();
+                }
+            }
+        }
+        if (fullAuctionData != null) {
+            updateActiveStyle(null);
+            clearContent();
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
+                Parent view = loader.load();
+
+                BiddingRoomController ctrl = loader.getController();
+                ctrl.setAuction(fullAuctionData);                          // inject dữ liệu phòng
+                ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); // Back → dashboard
+                
+                currentController = ctrl;
+                contentArea.getChildren().add(view);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Không lấy được Data phòng");
         }
     }
 

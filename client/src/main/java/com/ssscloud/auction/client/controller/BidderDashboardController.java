@@ -21,6 +21,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.application.Platform;
 
 public class BidderDashboardController {
@@ -31,6 +32,8 @@ public class BidderDashboardController {
     @FXML private ToggleButton tabArts;
     @FXML private ToggleButton tabElectronnics;
     @FXML private ToggleButton tabVehicles;
+    @FXML private Parent loading; // Giao diện của khung loading
+    @FXML private LoadingController loadingController;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
     private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
@@ -120,6 +123,7 @@ public class BidderDashboardController {
             }
         }
     }
+
     public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
         Platform.runLater(() -> {
             initData(auctions); // có auction nào thỏa mãn thì ném tất vô
