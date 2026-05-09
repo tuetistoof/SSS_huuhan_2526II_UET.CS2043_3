@@ -1,6 +1,4 @@
 package com.ssscloud.auction.client.controller;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
 import java.time.format.DateTimeFormatter;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -84,7 +82,9 @@ public class BiddingRoomController implements MessageListener{
     @FXML private TextField txtManualBid;
     @FXML private TextField txtMaxBid;
 
-    private boolean isAutoBidding = false;      
+    private boolean isAutoBidding = false;   
+    private long autoBidMaxBid = 0;    
+
     //inject từ màn hình trước
     private AuctionDTO currentAuction;
     private String currentUserId;
@@ -349,7 +349,6 @@ public class BiddingRoomController implements MessageListener{
                 case "BID_UPDATE":       handleBidUpdate(root);       break;
                 case "BID_ERROR":        handleBidError(root);        break;
                 case "AUCTION_ENDED":    handleAuctionEnded(root);    break;
-                case "AUTO_BID_STOPPED": handleAutoBidStopped(root);  break;
                 default:
                     // Action khác không liên quan đến màn hình này — bỏ qua
                     break;
@@ -363,11 +362,28 @@ public class BiddingRoomController implements MessageListener{
         BidDTO bid = JsonUtils.fromJson(JsonUtils.toJson(root.get("data")), BidDTO.class);
         if (bid == null) return;
  
-        lblCurrentPrice.setText(String.format("%,d VND", bid.getCurrentPrice()));
-        
+        // Cập nhật UI
+        lblCurrentPrice.setText(String.format("%,d ₫", bid.getCurrentPrice()));
+        if (bid.getBidderUsername() != null) lblLeaderName.setText(bid.getBidderUsername());
         currentAuction.setCurrentPrice(bid.getCurrentPrice());
-        bidHistory.add(0, bid); // Thêm bid mới lên đầu list
+        bidHistory.add(0, bid);
+        lblBidCount.setText(String.valueOf(bidHistory.size()));
         resetPlaceBidButton();
+ 
+        // Tự check trạng thái auto bid — không cần server push riêng
+        if (isAutoBidding) {
+            boolean iAmWinning  = currentUserId.equals(bid.getHighestBidderId());
+            boolean canStillBid = autoBidMaxBid >= bid.getCurrentPrice()
+                                + currentAuction.getMinIncrement();
+ 
+            if (!iAmWinning && !canStillBid) {
+                // Hết hạn mức → reset tự động
+                isAutoBidding = false;
+                autoBidMaxBid = 0;
+                resetAutoBidButton();
+                showInfo("Auto Bid đã dừng — đã đạt giá tối đa.");
+            }
+        }
     }
 
     private void handleBidError(JsonObject root) {
@@ -393,11 +409,7 @@ public class BiddingRoomController implements MessageListener{
  
         showInfo("Phiên đấu giá đã kết thúc. Người thắng: " + winner);
     }
-    private void handleAutoBidStopped(JsonObject root) {
-        isAutoBidding = false;
-        resetAutoBidButton();
-        showInfo("Auto Bidding đã dừng (đã đạt giá tối đa).");
-    }
+
 
     // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction)  { this.currentAuction  = auction; }

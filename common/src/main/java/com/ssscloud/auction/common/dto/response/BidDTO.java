@@ -8,6 +8,7 @@ public class BidDTO implements Serializable {
 
     private String auctionId;
     private String bidderUsername;
+    private String highestBidderId;
     private long bidAmount;
     private long currentPrice; 
     private LocalDateTime bidTime;
@@ -20,6 +21,9 @@ public class BidDTO implements Serializable {
  
     public String getBidderUsername() { return bidderUsername; }
     public void setBidderUsername(String bidderUsername) { this.bidderUsername = bidderUsername; }
+ 
+    public String getHighestBidderId() { return highestBidderId; }
+    public void setHighestBidderId(String highestBidderId) { this.highestBidderId = highestBidderId; }
  
     public long getBidAmount() { return bidAmount; }
     public void setBidAmount(long bidAmount) { this.bidAmount = bidAmount; }
@@ -37,6 +41,7 @@ public class BidDTO implements Serializable {
     public String toString() {
         return "BidDTO{auctionId='" + auctionId
                 + "', bidder='" + bidderUsername
+                + "', highestBidderId='" + highestBidderId + '\''
                 + "', amount=" + bidAmount
                 + ", currentPrice=" + currentPrice
                 + ", type=" + bidType
