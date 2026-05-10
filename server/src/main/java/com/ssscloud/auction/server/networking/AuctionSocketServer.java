@@ -35,7 +35,7 @@ public class AuctionSocketServer {
         AuctionService auctionService = new AuctionService(auctionDAO);
         AuctionController auctionCtrl = new AuctionController(auctionService);
         
-        BidController bidCtrl = new BidController(bidService, autoBidService);
+        BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
         MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl);
 

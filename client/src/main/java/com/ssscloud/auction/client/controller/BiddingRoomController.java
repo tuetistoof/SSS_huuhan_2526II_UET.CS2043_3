@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client.controller;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
@@ -15,6 +16,8 @@ import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.*;
 
 import javafx.application.Platform;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -169,10 +172,16 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     private void handlePlaceBid(ActionEvent event) {
-        String amountText = txtManualBid.getText();
-        long amount = Long.parseLong(amountText);
-        if (amountText.isEmpty()) {
+         String amountText = txtManualBid.getText().trim(); 
+        if (amountText.isEmpty()) {                        // check trước
             showError("Vui lòng nhập số tiền muốn đặt.");
+            return;
+        }
+        long amount;
+        try {
+            amount = Long.parseLong(amountText);           // parse sau
+        } catch (NumberFormatException e) {
+            showError("Số tiền không hợp lệ.");
             return;
         }
         if (amount <= 0){
@@ -190,8 +199,8 @@ public class BiddingRoomController implements MessageListener{
         }
 
         txtManualBid.clear();
-        // btnPlaceBid.setDisable(true);
-        // btnPlaceBid.setText("Đang xử lý..."); 
+        btnPlaceBid.setDisable(true);
+        btnPlaceBid.setText("Đang xử lý..."); 
         PlaceBidRequest req = new PlaceBidRequest(currentAuction.getId(), amount);
         socket.send(JsonUtils.toJson(ClientMessage.request("PLACE_BID", req)));
 
@@ -369,7 +378,17 @@ public class BiddingRoomController implements MessageListener{
         bidHistory.add(0, bid);
         lblBidCount.setText(String.valueOf(bidHistory.size()));
         resetPlaceBidButton();
- 
+        // Nếu có gia hạn thời gian, cập nhật luôn
+        if (bid.getNewEndTime() != null && bid.getNewEndTime().isAfter(currentAuction.getEndTime())) {
+            currentAuction.setEndTime(bid.getNewEndTime());
+            DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            if (infoEndTime != null){
+                infoEndTime.setText(bid.getNewEndTime().format(dtFmt));
+            }
+            if (lblTimer != null){
+                lblTimer.setText("Gia hạn đến: "+ bid.getNewEndTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+            }
+        }
         // Tự check trạng thái auto bid — không cần server push riêng
         if (isAutoBidding) {
             boolean iAmWinning  = currentUserId.equals(bid.getHighestBidderId());
@@ -412,9 +431,56 @@ public class BiddingRoomController implements MessageListener{
 
 
     // Setters — màn hình trước inject context 
-    public void setAuction(AuctionDTO auction)  { this.currentAuction  = auction; }
+    public void setAuction(AuctionDTO auction)  { 
+        this.currentAuction  = auction; 
+        loadBidHistory(); 
+        subcribeToAuction();
+    }
     public void setUserId(String userId)         { this.currentUserId   = userId; }
     public void setUserName(String userName)     { this.currentUserName = userName; }
+
+    private void loadBidHistory(){
+        if (currentAuction == null) return;
+        new Thread(() -> {
+            try {
+                String json = JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY", currentAuction.getId()));
+                String responseJson = socket.sendAndReceive(json);
+                if (responseJson == null) return;
+                // Unwrap ClientMessage wrapper
+                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                if (!"GET_BID_HISTORY_RESPONSE".equals(serverMsg.getAction())) return;
+                String rawData = JsonUtils.toJson(serverMsg.getData());
+                Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
+                ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
+                if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
+
+                //Double-parsed
+                String listJson = JsonUtils.toJson(apiResponse.getData());
+                Type listType = new TypeToken<List<BidDTO>>(){}.getType();
+                List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
+                if (historyList == null) return;
+                Platform.runLater(() -> {
+                    bidHistory.setAll(historyList);
+                    lblBidCount.setText(String.valueOf(historyList.size()));
+                });
+            } catch (Exception e) {
+                System.err.println("Lỗi tải lịch sử đặt giá: " + e.getMessage());
+            }
+        }).start();
+
+    }
+
+    private void subcribeToAuction(){
+        if (currentAuction == null) return;
+        new Thread(() -> {
+            try {
+                String json = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", currentAuction.getId()));
+                socket.send(json);
+            } catch (Exception e) {
+                System.err.println("Lỗi đăng ký nhận push: " + e.getMessage());
+            }
+        }).start();
+    }
  
     // Cleanup khi rời phòng
     public void cleanup() {

@@ -98,14 +98,19 @@ public class AuctionDTO implements Serializable {
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
 
-    
     @Override
     public String toString() {
         return "AuctionDTO{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", currentPrice=" + currentPrice +
-                ", status=" + status +
-                '}';
-    }
+            "id='"                + id                + '\'' +
+            ", name='"            + name              + '\'' +
+            ", currentPrice="     + currentPrice      +
+            ", minIncrement="     + minIncrement      +
+            ", status="           + status            +
+            ", sellerName='"      + sellerName        + '\'' +
+            ", highestBidder='"   + highestBidderName + '\'' +
+            ", bidCount="         + bidCount          +
+            ", startTime="        + startTime         +
+            ", endTime="          + endTime           +
+            '}';
+}
 }

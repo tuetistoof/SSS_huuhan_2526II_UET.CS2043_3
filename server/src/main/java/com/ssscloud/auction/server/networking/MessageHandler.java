@@ -128,14 +128,20 @@ public class MessageHandler {
                         JsonUtils.fromJson(result, ApiResponse.class)));
                 }
 
+                case "GET_BID_HISTORY": {   //lịch sử đặt bid của auction
+                    String result = bidController.getBidHistory(msg.getData());
+                    com.ssscloud.auction.common.dto.response.ApiResponse<?> resp =
+                            com.ssscloud.auction.common.util.JsonUtils.fromJson(result,
+                                    com.ssscloud.auction.common.dto.response.ApiResponse.class);
+                    return JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY_RESPONSE", resp));
+                }
+
                 case "SUBSCRIBE_AUCTION": {
                     // Client vào BiddingRoom — đăng ký nhận push BID_UPDATE cho auction này
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
                     if (auctionId == null || auctionId.isBlank()) {
                         // Dùng .push() để lỗi đi vào listeners (handleServerPush),
-                        client.getWriter().println(JsonUtils.toJson(
-                                ClientMessage.push("SUBSCRIBE_ERROR",
-                                        ApiResponse.error("Thiếu auctionId"))));
+                        client.getWriter().println(JsonUtils.toJson(ClientMessage.push("SUBSCRIBE_ERROR",ApiResponse.error("Thiếu auctionId"))));
                         return null;
                     }
 

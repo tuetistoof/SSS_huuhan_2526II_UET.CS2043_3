@@ -76,4 +76,10 @@ public class ChangeManager {
             }
         }
     }
+    public boolean hasObserver(Subject subject, String observerId) {
+        List<Observer> observers = registry.get(subject);
+        if (observers == null) return false;
+        return observers.stream().anyMatch(o -> observerId.equals(o.getObserverId()));
+    }
+
 }

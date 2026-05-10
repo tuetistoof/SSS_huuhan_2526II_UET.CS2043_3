@@ -12,6 +12,7 @@ public class BidDTO implements Serializable {
     private long bidAmount;
     private long currentPrice; 
     private LocalDateTime bidTime;
+    private LocalDateTime newEndTime; // Thời gian kết thúc mới sau khi đặt giá (nếu có gia hạn)
     private String bidType; 
 
     public BidDTO() {}
@@ -34,6 +35,9 @@ public class BidDTO implements Serializable {
     public LocalDateTime getBidTime() { return bidTime; }
     public void setBidTime(LocalDateTime bidTime) { this.bidTime = bidTime; }
  
+    public LocalDateTime getNewEndTime() { return newEndTime; }
+    public void setNewEndTime(LocalDateTime newEndTime) { this.newEndTime = newEndTime; }
+ 
     public String getBidType() { return bidType; }
     public void setBidType(String bidType) { this.bidType = bidType; }
  
@@ -44,6 +48,7 @@ public class BidDTO implements Serializable {
                 + "', highestBidderId='" + highestBidderId + '\''
                 + "', amount=" + bidAmount
                 + ", currentPrice=" + currentPrice
+                + ", newEndTime=" + newEndTime
                 + ", type=" + bidType
                 + ", time=" + bidTime + '}';
     }

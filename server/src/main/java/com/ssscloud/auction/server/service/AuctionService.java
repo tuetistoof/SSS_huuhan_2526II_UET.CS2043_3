@@ -159,11 +159,13 @@ public class AuctionService {
         AuctionDTO dto = new AuctionDTO();
         dto.setId(cfg.getId());
         dto.setName(cfg.getName());
-        dto.setCurrentPrice(cfg.getStartPrice()); 
+        dto.setCurrentPrice(auction.getCurrentPrice());       
         dto.setMinIncrement(cfg.getMinIncrement());
         dto.setStartTime(cfg.getStartTime());
         dto.setEndTime(cfg.getEndTime());
         dto.setStatus(auction.getStatus());
+        dto.setBidCount(auction.getBidTransaction().size());
+        dto.setHighestBidderName(auction.getHighestBidderName());
         return dto;
     }
 }
