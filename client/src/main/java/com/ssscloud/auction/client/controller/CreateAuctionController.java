@@ -54,6 +54,13 @@ public class CreateAuctionController{
     @FXML private TextField        txtItemName;
     @FXML private ComboBox<String> cmbItemType;          // ART / VEHICLE / ELECTRONIC
     @FXML private TextField        txtCreator;           // tác giả / hãng sản xuất
+    
+    @FXML private TextField        txtUrl1;
+    @FXML private TextField        txtUrl2;
+    @FXML private TextField        txtUrl3;
+    @FXML private TextField        txtUrl4;
+    @FXML private TextField        txtUrl5;
+
     @FXML private DatePicker       dpManufacturingDate;  // ngày sản xuất (tuỳ chọn)
  
     
@@ -209,7 +216,19 @@ public class CreateAuctionController{
             return;
         }
         //set tam de demo
-        List<String> urls = new ArrayList<>(Arrays.asList("https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg"));
+        String urlIfNone = "https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg";
+        List<String> urls = new ArrayList<>(Arrays.asList());
+        TextField[] urlFields = {txtUrl1, txtUrl2, txtUrl3, txtUrl4, txtUrl5};
+        for (TextField tf : urlFields) {
+            String link = tf.getText().trim();
+            if(!link.isEmpty()) {
+                urls.add(link);
+            }
+        }
+        if (urls.isEmpty()) {
+            urls.add(urlIfNone); 
+        }
+   
         String itemType = toItemType(typeStr);
         ItemData itemData = new ItemData();
         itemData.setName(txtItemName.getText().trim());
@@ -217,7 +236,6 @@ public class CreateAuctionController{
         itemData.setDescription(txtDescription.getText().trim());
         itemData.setItemType(itemType);
         itemData.setImageUrls(urls);
-
 
         switch (itemType) {
             case "ART" -> {
@@ -370,7 +388,10 @@ public class CreateAuctionController{
             }
             case 3 -> {
                 show(step3Form);
-                if (btnNext != null) btnNext.setVisible(false);
+                if (btnNext != null) {
+                    btnNext.setVisible(false);
+                    btnNext.setManaged(false);
+                }
                 if (btnSubmit != null) btnSubmit.setVisible(true);
             }
         }

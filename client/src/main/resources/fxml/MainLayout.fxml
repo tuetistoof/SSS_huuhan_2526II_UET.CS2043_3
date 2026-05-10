@@ -13,135 +13,151 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane styleClass="main-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.MainLayoutController">
-
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-bar">
-         <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#toggleSidebar" styleClass="circular-menu-btn">
-            <graphic>
-               <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+<StackPane styleClass="main-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.MainLayoutController">
+   <children>
+      <BorderPane stylesheets="@../css/styles.css">
+      
+          <top>
+              <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-bar">
+               <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#toggleSidebar" styleClass="circular-menu-btn">
+                  <graphic>
+                     <ImageView fitHeight="25.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/menu-burger.png" />
+                        </image>
+                     </ImageView>
+                  </graphic>
+               </Button>
+               <HBox fx:id="hBoxLogo" alignment="CENTER_LEFT" onMouseClicked="#handleNavDashboard">
+                  <children>
+                     <ImageView fitHeight="50.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/Asset%201.png" />
+                        </image>
+                     </ImageView>
+                     <Label alignment="BOTTOM_LEFT" styleClass="app-logo-btn" text="CloudBid" />
+                  </children>
+               </HBox>
+               <Region HBox.hgrow="ALWAYS" />
+               <TextField promptText="Search" styleClass="search-bar" HBox.hgrow="ALWAYS" />
+               <ImageView fitHeight="20.0" fitWidth="20.0" onMouseClicked="#handleSearching" pickOnBounds="true" preserveRatio="true">
                   <image>
-                     <Image url="@../images/menu-burger.png" />
+                     <Image url="@../images/search.png" />
                   </image>
                </ImageView>
-            </graphic></Button>
-         <HBox fx:id="hBoxLogo" alignment="CENTER_LEFT" onMouseClicked="#handleNavDashboard">
-            <children>
-               <ImageView fitHeight="50.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/Asset%201.png" />
-                  </image>
-               </ImageView>
-               <Label alignment="BOTTOM_LEFT" styleClass="app-logo-btn" text="CloudBid" />
-            </children>
-         </HBox>
-         <Region HBox.hgrow="ALWAYS" />
-         <TextField promptText="Search" styleClass="search-bar" HBox.hgrow="ALWAYS" />
-         <ImageView fitHeight="20.0" fitWidth="20.0" onMouseClicked="#handleSearching" pickOnBounds="true" preserveRatio="true">
-            <image>
-               <Image url="@../images/search.png" />
-            </image></ImageView>
-         <Region HBox.hgrow="ALWAYS" />
-         <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
-         <Button mnemonicParsing="false" onAction="#handleDeposite" prefHeight="30.0" styleClass="btn-primary" text="Deposite" />
-             <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
-             <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" styleClass="avatar-circle" />
-        </HBox>
-    </top>
-
-    <left>
-        <VBox fx:id="sidebar" prefWidth="200.0" spacing="5" styleClass="sidebar">
-         <Label fx:id="lblOverview" styleClass="sidebar-group-label" text="OVERVIEW" />
-         <HBox fx:id="navDashboard" onMouseClicked="#handleNavDashboard" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/home.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleDB" text="Dashboard" />
-            </children>
-         </HBox>
-         <Label fx:id="lblAuction" styleClass="sidebar-group-label" text="AUCTION" />
-         <HBox fx:id="navActiveBids" onMouseClicked="#handleNavActiveBids" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/calendar-gavel-legal.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleAB" text="Active Bids" />
-            </children>
-         </HBox>
-         <HBox fx:id="navWatchlist" onMouseClicked="#handleNavWatchlist" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/clock.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleW" text="Watchlist" />
-            </children>
-         </HBox>
-         <HBox fx:id="navWonItems" onMouseClicked="#handleNavWonItems" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/trophy.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleWI" text="Won Items" />
-            </children>
-         </HBox>
-         <HBox fx:id="navHistory" onMouseClicked="#handleNavHistory" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/paperclip-vertical.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleH" text="History" />
-            </children>
-         </HBox>
-         <HBox fx:id="navMyItems" onMouseClicked="#handleNavMyItems" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/tags.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleMI" text="My Items" />
-            </children>
-         </HBox>
-         <HBox fx:id="navNewAuctionRoom" onMouseClicked="#handleNavNewAuctionRoom" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/add.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleNAR" text="New Auction Room" />
-            </children>
-         </HBox>
-         <HBox fx:id="navMyAuctionRooms" onMouseClicked="#handleNavMyAuctionRooms" styleClass="sidebar-item">
-            <children>
-               <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/shop.png" />
-                  </image></ImageView>
-               <Label fx:id="lblSidebarTitleMAR" text="My Auction Rooms" />
-            </children>
-         </HBox>
-
-                  <Region VBox.vgrow="ALWAYS" />
-         <Button fx:id="btnLogOut" maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất">
-            <graphic>
-               <ImageView fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../images/logout.png" />
-                  </image>
-               </ImageView>
-            </graphic></Button>
-        </VBox>
-    </left>
-
-    <center>
-        <StackPane fx:id="contentArea" />
-    </center>
-   <right>
-      <ScrollBar orientation="VERTICAL" BorderPane.alignment="CENTER" />
-   </right>
-</BorderPane>
+               <Region HBox.hgrow="ALWAYS" />
+               <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
+               <Button mnemonicParsing="false" onAction="#handleDeposite" prefHeight="30.0" styleClass="btn-primary" text="Deposite" />
+                   <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
+                   <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" styleClass="avatar-circle" />
+              </HBox>
+          </top>
+      
+          <left>
+              <VBox fx:id="sidebar" prefWidth="200.0" spacing="5" styleClass="sidebar">
+               <Label fx:id="lblOverview" styleClass="sidebar-group-label" text="OVERVIEW" />
+               <HBox fx:id="navDashboard" onMouseClicked="#handleNavDashboard" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/home.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleDB" text="Dashboard" />
+                  </children>
+               </HBox>
+               <Label fx:id="lblAuction" styleClass="sidebar-group-label" text="AUCTION" />
+               <HBox fx:id="navActiveBids" onMouseClicked="#handleNavActiveBids" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/calendar-gavel-legal.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleAB" text="Active Bids" />
+                  </children>
+               </HBox>
+               <HBox fx:id="navWatchlist" onMouseClicked="#handleNavWatchlist" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/clock.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleW" text="Watchlist" />
+                  </children>
+               </HBox>
+               <HBox fx:id="navWonItems" onMouseClicked="#handleNavWonItems" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/trophy.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleWI" text="Won Items" />
+                  </children>
+               </HBox>
+               <HBox fx:id="navHistory" onMouseClicked="#handleNavHistory" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/paperclip-vertical.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleH" text="History" />
+                  </children>
+               </HBox>
+               <HBox fx:id="navMyItems" onMouseClicked="#handleNavMyItems" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/tags.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleMI" text="My Items" />
+                  </children>
+               </HBox>
+               <HBox fx:id="navNewAuctionRoom" onMouseClicked="#handleNavNewAuctionRoom" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/add.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleNAR" text="New Auction Room" />
+                  </children>
+               </HBox>
+               <HBox fx:id="navMyAuctionRooms" onMouseClicked="#handleNavMyAuctionRooms" styleClass="sidebar-item">
+                  <children>
+                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/shop.png" />
+                        </image>
+                     </ImageView>
+                     <Label fx:id="lblSidebarTitleMAR" text="My Auction Rooms" />
+                  </children>
+               </HBox>
+      
+                        <Region VBox.vgrow="ALWAYS" />
+               <Button fx:id="btnLogOut" maxWidth="Infinity" onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất">
+                  <graphic>
+                     <ImageView fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                           <Image url="@../images/logout.png" />
+                        </image>
+                     </ImageView>
+                  </graphic>
+               </Button>
+              </VBox>
+          </left>
+      
+          <center>
+              <StackPane fx:id="contentArea" />
+          </center>
+         <right>
+            <ScrollBar orientation="VERTICAL" BorderPane.alignment="CENTER" />
+         </right>
+      </BorderPane>
+      <fx:include fx:id="loading" source="loading.fxml" visible="false" />
+   </children>
+</StackPane>

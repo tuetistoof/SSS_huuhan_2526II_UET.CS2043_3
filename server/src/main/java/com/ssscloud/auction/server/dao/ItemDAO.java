@@ -375,4 +375,46 @@ public class ItemDAO extends BaseDAO {
         }
         return result;
     }
+
+    public boolean updateItemImages(String itemId, List<String> newUrls) {
+        String sqlDelete = "DELETE FROM item_image_url WHERE item_id = ?";
+        String sqlInsert = "INSERT INTO item_image_url (item_id, image_url) VALUES (?, ?)";
+
+        Connection conn = null;
+        PreparedStatement psDelete = null;
+        PreparedStatement psInsert = null;
+
+        try {
+            conn = getConnection();
+            conn.setAutoCommit(false); // Bắt đầu Transaction
+            //Xóa ảnh cũ
+            psDelete = conn.prepareStatement(sqlDelete);
+            psDelete.setString(1, itemId);
+            psDelete.executeUpdate();
+
+            //Nhét mới
+            if (newUrls != null && !newUrls.isEmpty()) {
+                psInsert = conn.prepareStatement(sqlInsert);
+                for (String url : newUrls) {
+                    psInsert.setString(1, itemId);
+                    psInsert.setString(2, url);
+                    psInsert.addBatch();
+                }
+                psInsert.executeBatch(); // Chạy 1 phát insert tất cả
+            }
+
+            conn.commit();
+            logger.info("Đã cập nhật ảnh thành công cho Item ID: " + itemId);
+            return true;
+
+        } catch (SQLException e) {
+            safelyRollback(conn);
+            logger.severe("Lỗi updateItemImages cho Item [" + itemId + "]: " + e.getMessage());
+            return false;
+        } finally {
+            resetAutocommit(conn);
+            closeConnect(conn);
+            closeResource(psDelete, psInsert);
+        }
+    }
 }

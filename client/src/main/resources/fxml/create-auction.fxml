@@ -183,6 +183,17 @@
                                                 </VBox>
                                             </VBox>
                                         </HBox>
+                              <VBox spacing="10.0" styleClass="image-url-container">
+                                 <children>
+                                    <Label fx:id="lblImageUrls" text="Image URLs (Max 5 images)" />
+                                    <TextField fx:id="txtUrl1" promptText="Primary Image URL (Required)" styleClass="url-input-field" />
+                                    <TextField fx:id="txtUrl2" layoutX="10.0" layoutY="28.0" promptText="Image URL 2 (Optional)" styleClass="url-input-field" />
+                                    <TextField fx:id="txtUrl3" layoutX="10.0" layoutY="53.0" promptText="Image URL 3 (Optional)" styleClass="url-input-field" />
+                                    <TextField fx:id="txtUrl4" layoutX="10.0" layoutY="79.0" promptText="Image URL 4 (Optional)" styleClass="url-input-field" />
+                                    <TextField fx:id="txtUrl5" layoutX="10.0" layoutY="104.0" promptText="Image URL 5 (Optional" styleClass="url-input-field" />
+                                    <Label layoutX="10.0" layoutY="10.0" styleClass="noti-label" text="* Note: The primary image will be used as the thumbnail on the Dashboard" />
+                                 </children>
+                              </VBox>
       
                                         <VBox spacing="5.0" VBox.vgrow="ALWAYS">
                                             <Label text="Description:">
@@ -230,11 +241,11 @@
                   </Label>
                         
                               <HBox alignment="CENTER_RIGHT" spacing="10.0">
-                            <children>
+                     <children>
                                 <Button fx:id="btnCancel" onAction="#handleCancel" prefHeight="40.0" prefWidth="100.0" styleClass="btn-wizard-secondary" text="Cancel" />
                                 <Button fx:id="btnNext" onAction="#handleNextStep" prefHeight="40.0" prefWidth="120.0" styleClass="btn-wizard-primary" text="Next step" />
                                 <Button fx:id="btnSubmit" onAction="#handleSubmit" prefHeight="40.0" prefWidth="120.0" styleClass="btn-wizard-primary" text="Submit" visible="false" />
-                            </children>
+                     </children>
                         </HBox>
                         
                           </children>

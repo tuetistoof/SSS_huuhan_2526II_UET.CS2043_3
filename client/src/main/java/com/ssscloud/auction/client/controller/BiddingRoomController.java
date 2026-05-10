@@ -264,7 +264,7 @@ public class BiddingRoomController implements MessageListener{
         if (currentAuction == null) return;
 
         infoName.setText(currentAuction.getName() != null ? currentAuction.getName() : "—");
-        infoSeller.setText(currentAuction.getSellerName() != null ? currentAuction.getSellerName() : "—");
+        infoSeller.setText(currentAuction.getUserDTO().getUsername() != null ? currentAuction.getUserDTO().getUsername() : "—");
         infoStartPrice.setText(String.format("%,d ₫", currentAuction.getCurrentPrice()));
         infoMinIncrement.setText(String.format("%,d ₫", currentAuction.getMinIncrement()));
         java.time.format.DateTimeFormatter dtFmt =
@@ -448,6 +448,6 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleFollowRoom(ActionEvent event) {
-        
+
     }
 }

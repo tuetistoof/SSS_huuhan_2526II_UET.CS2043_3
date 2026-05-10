@@ -275,7 +275,7 @@ public class MainLayoutController {
             loading.setVisible(true);
             loadingController.playAnimation();
         } else {
-            System.out.println("Chưa sửa chèn thêm fxml vào");
+            System.out.println("Chưa sửa chèn thêm fxml vào 1");
             return;
         }
 

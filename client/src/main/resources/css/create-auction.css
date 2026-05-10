@@ -240,3 +240,32 @@
     -fx-text-fill: #666666;
     -fx-padding: 0 0 4 0;
 }
+
+.image-url-container {
+    -fx-padding: 15;
+    -fx-background-color: #FFF9FB;
+    -fx-background-radius: 10;
+    -fx-border-color: #EAD1DC;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.url-input-field {
+    -fx-background-color: white;
+    -fx-border-color: #EAD1DC;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 5;
+    -fx-font-size: 13px;
+    -fx-prompt-text-fill: #adb5bd;
+}
+
+.url-input-field:focused {
+    -fx-border-color: #CE5A82;
+    -fx-border-width: 0 0 2 0;
+}
+
+.noti-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9c3d5c;
+    -fx-font-style: italic;
+}

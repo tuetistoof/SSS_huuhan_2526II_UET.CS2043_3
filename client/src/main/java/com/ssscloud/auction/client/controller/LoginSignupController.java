@@ -176,7 +176,11 @@ public class LoginSignupController {
                         SessionManager.getInstance().setCurrentUser(finalUser);
                         try {
                             Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
-                            btnLogin.getScene().setRoot(homeRoot);
+                            Stage stage = (Stage) btnLogin.getScene().getWindow();
+                             stage.setMaximized(true);
+
+                            stage.getScene().setRoot(homeRoot);
+                            stage.centerOnScreen();
                         }
                         catch (IOException e) {
                             e.printStackTrace();

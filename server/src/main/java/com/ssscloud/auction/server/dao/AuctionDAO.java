@@ -288,7 +288,7 @@ public class AuctionDAO extends BaseDAO {
                 "    WHERE b1.bid_time = ( SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
                 "    WHERE b2.auction_id = b1.auction_id) " +
                 ") AS last_bid ON last_bid.auction_id = a.id " +
-                "WHERE a.status = 'RUNNING' " +
+                "WHERE a.status = 'OPEN' " +
                 "GROUP BY a.id, ac.name, ac.end_time, u.username, e.name, i.type, ac.start_price, last_bid.bid_amount";
 
         Connection conn = null;

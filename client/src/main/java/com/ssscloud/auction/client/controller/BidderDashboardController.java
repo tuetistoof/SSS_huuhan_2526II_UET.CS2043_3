@@ -45,7 +45,97 @@ public class BidderDashboardController {
 
     @FXML
     public void initialize() {
-        fetchActiveAuctions();
+        new Thread(() -> {
+            fetchActiveAuctions();
+        }).start();
+    }
+
+    public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
+        Platform.runLater(() -> {
+            initData(auctions); // có auction nào thỏa mãn thì ném tất vô
+        });
+    }
+
+    public void initData(List<AuctionDisplayInfoDTO> dataFromServer) {
+        this.allAuctionsDisplayInfo = dataFromServer;
+        handleTabSelection("ALL"); // Mặc định mở lên là hiện tất cả
+    }
+
+    public void fetchActiveAuctions() {
+        GetAuctionsRequest req = new GetAuctionsRequest();
+        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", req)));
+        System.out.println(jsonResponse);
+        
+        if (jsonResponse != null && !jsonResponse.isEmpty()) {
+            ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+            
+            if ("GET_ACTIVE_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
+                String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                Type type = new TypeToken<ApiResponse<ListResponse <AuctionDisplayInfoDTO>>>() {}.getType();
+                ApiResponse<ListResponse <AuctionDisplayInfoDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
+                if (response != null && response.isSuccess()) {
+                    ListResponse <AuctionDisplayInfoDTO> listResponse = response.getData();
+                    updateDashboard(listResponse.getData());
+                }
+            } else {
+                Platform.runLater(() -> {
+                    lblPageTitle.setText("Không có phòng đấu giá nào cả");
+                });
+            }
+        }
+    }
+
+    @FXML void filterAll(ActionEvent event) { handleTabSelection("ALL"); }
+    @FXML void filterElectronics(ActionEvent event) { handleTabSelection("CATEGORY"); }
+    @FXML void filterArts(ActionEvent event) { handleTabSelection("CATEGORY"); }
+    @FXML void filterVehicles(ActionEvent event) { handleTabSelection("CATEGORY"); }
+
+    private void handleTabSelection(String actionType) {
+        switch (actionType) {
+            case "ALL":
+
+                tabAll.setSelected(true);
+                tabElectronnics.setSelected(false);
+                tabArts.setSelected(false);
+                tabVehicles.setSelected(false);
+                break;
+
+            case "CATEGORY":
+                tabAll.setSelected(false);
+                
+                if (!tabElectronnics.isSelected() && !tabArts.isSelected() && !tabVehicles.isSelected()) {
+                    tabAll.setSelected(true);
+                }
+                break;
+                
+            default:
+                System.out.println("Lỗi: Không nhận diện được hành động lọc!");
+                break;
+        }
+
+        // Xử lý xong phần sáng/tối của nút thì gọi thằng đệ đi lọc Data
+        applyFilters(); 
+    }
+
+    public void applyFilters() {
+        if (tabAll.isSelected()) {
+            loadAuctionsToDashboard(allAuctionsDisplayInfo);
+            return;
+        }
+
+        List<String> activeCategories = new ArrayList<>();
+        if (tabElectronnics.isSelected()) activeCategories.add("ELECTRONIC");
+        if (tabArts.isSelected()) activeCategories.add("ART");
+        if (tabVehicles.isSelected()) activeCategories.add("VEHICLE");
+
+        List<AuctionDisplayInfoDTO> filteredList = allAuctionsDisplayInfo.stream()
+            .filter(auctioncard -> {
+                if (auctioncard.getItemType() == null) return false;
+                return activeCategories.contains(String.valueOf(auctioncard.getItemType()));
+            })
+            .toList();
+
+        loadAuctionsToDashboard(filteredList);
     }
 
     public void loadAuctionsToDashboard(List<AuctionDisplayInfoDTO> auctionsFromDB) {
@@ -66,66 +156,5 @@ public class BidderDashboardController {
                 e.printStackTrace();
             }
         }
-    }
-
-    public void initData(List<AuctionDisplayInfoDTO> dataFromServer) {
-        this.allAuctionsDisplayInfo = dataFromServer;
-        filterAuctions("ALL"); // Mặc định mở lên là hiện tất cả
-    }
-    // đang lỗi phải sửa do mới dùng DTo khác
-    public void filterAuctions(String categoryType) {
-        List<AuctionDisplayInfoDTO> filteredList;
-
-        if (categoryType.equals("ALL")) {
-            filteredList = allAuctionsDisplayInfo; // Lấy full kho
-        } 
-        else {
-            // Dùng Stream lọc ra những món đồ khớp với Category
-            filteredList = allAuctionsDisplayInfo.stream()
-                .filter(auction -> {
-                    if (auction.getItemType() == null) {
-                        return false;
-                    }
-                    return auction.getItemName().equals(categoryType);
-                })
-                .toList();
-        }
-        loadAuctionsToDashboard(filteredList);
-        // Cập nhật giao diện với danh sách đã lọc
-    }
-    @FXML void filterAll(ActionEvent event) { filterAuctions("ALL"); }
-    @FXML void filterElectronics(ActionEvent event) { filterAuctions("ELECTRONIC"); }
-    @FXML void filterArts(ActionEvent event) { filterAuctions("ART"); }
-    @FXML void filterVehicles(ActionEvent event) { filterAuctions("VEHICLE"); }
-
-    public void fetchActiveAuctions() {
-        GetAuctionsRequest req = new GetAuctionsRequest();
-        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", req)));
-        System.out.println(jsonResponse);
-        
-        if (jsonResponse != null && !jsonResponse.isEmpty()) {
-            ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-            
-            if ("GET_ACTIVE_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
-                String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<ListResponse <AuctionDisplayInfoDTO>>>() {}.getType();
-                ApiResponse<ListResponse <AuctionDisplayInfoDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-                if (response != null && response.isSuccess()) {
-                    ListResponse <AuctionDisplayInfoDTO> listResponse = response.getData();
-                    List<AuctionDisplayInfoDTO> auctions = listResponse.getData();
-                    updateDashboard(auctions);
-                }
-            } else {
-                Platform.runLater(() -> {
-                    lblPageTitle.setText("Không có phòng đấu giá nào cả");
-                });
-            }
-        }
-    }
-
-    public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
-        Platform.runLater(() -> {
-            initData(auctions); // có auction nào thỏa mãn thì ném tất vô
-        });
     }
 }
