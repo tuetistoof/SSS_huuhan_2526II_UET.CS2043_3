@@ -8,9 +8,11 @@ public class BidDTO implements Serializable {
 
     private String auctionId;
     private String bidderUsername;
+    private String highestBidderId;
     private long bidAmount;
     private long currentPrice; 
     private LocalDateTime bidTime;
+    private LocalDateTime newEndTime; // Thời gian kết thúc mới sau khi đặt giá (nếu có gia hạn)
     private String bidType; 
 
     public BidDTO() {}
@@ -21,6 +23,9 @@ public class BidDTO implements Serializable {
     public String getBidderUsername() { return bidderUsername; }
     public void setBidderUsername(String bidderUsername) { this.bidderUsername = bidderUsername; }
  
+    public String getHighestBidderId() { return highestBidderId; }
+    public void setHighestBidderId(String highestBidderId) { this.highestBidderId = highestBidderId; }
+ 
     public long getBidAmount() { return bidAmount; }
     public void setBidAmount(long bidAmount) { this.bidAmount = bidAmount; }
  
@@ -30,6 +35,9 @@ public class BidDTO implements Serializable {
     public LocalDateTime getBidTime() { return bidTime; }
     public void setBidTime(LocalDateTime bidTime) { this.bidTime = bidTime; }
  
+    public LocalDateTime getNewEndTime() { return newEndTime; }
+    public void setNewEndTime(LocalDateTime newEndTime) { this.newEndTime = newEndTime; }
+ 
     public String getBidType() { return bidType; }
     public void setBidType(String bidType) { this.bidType = bidType; }
  
@@ -37,8 +45,10 @@ public class BidDTO implements Serializable {
     public String toString() {
         return "BidDTO{auctionId='" + auctionId
                 + "', bidder='" + bidderUsername
+                + "', highestBidderId='" + highestBidderId + '\''
                 + "', amount=" + bidAmount
                 + ", currentPrice=" + currentPrice
+                + ", newEndTime=" + newEndTime
                 + ", type=" + bidType
                 + ", time=" + bidTime + '}';
     }
