@@ -19,6 +19,7 @@ import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.service.AuctionRegistry;
 
 public class MessageHandler {
@@ -27,15 +28,18 @@ public class MessageHandler {
     private UserController userController;
     private AuctionController auctionController;
     private AuctionDAO auctionDAO;
+    private WatchlistDAO watchlistDAO;
     public MessageHandler(
             AuctionDAO auctionDAO,
             UserController userController,
             AuctionController auctionController,
-            BidController bidController) {
+            BidController bidController,
+            WatchlistDAO watchlistDAO) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.auctionDAO = auctionDAO;
+        this.watchlistDAO = watchlistDAO;
     }
 
     public String handleMessage(String jsonMessage, ClientHandler client) {
@@ -157,6 +161,34 @@ public class MessageHandler {
                     ChangeManager.getInstance().attach(auction, observer);
                     System.out.println("[Server] Client " + client.getUserId() + " đã vào phòng auction " + auctionId);
                     return null;
+                }
+                case "WATCH_AUCTION": {
+                    String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
+                    boolean added = watchlistDAO.add(client.getUserId(), auctionId);
+                    return JsonUtils.toJson(ClientMessage.request("WATCH_RESPONSE",
+                        added ? ApiResponse.success(null, "Đã thêm vào Watch List")
+                        : ApiResponse.error("Không thể thêm Watch List")));
+                }
+ 
+                case "UNWATCH_AUCTION": {
+                    String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
+                    boolean removed = watchlistDAO.remove(client.getUserId(), auctionId);
+                    return JsonUtils.toJson(ClientMessage.request("UNWATCH_RESPONSE",
+                        removed ? ApiResponse.success(null, "Đã xóa khỏi Watch List")
+                        : ApiResponse.error("Không thể xóa Watch List")));
+                }
+ 
+                case "GET_WATCHLIST": {
+                    List<String> auctionIds = watchlistDAO.findAuctionIdsByUser(client.getUserId());
+                    return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
+                        ApiResponse.success(auctionIds, "OK")));
+                }
+ 
+                case "CHECK_WATCHING": {
+                    String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
+                    boolean watching = watchlistDAO.isWatching(client.getUserId(), auctionId);
+                    return JsonUtils.toJson(ClientMessage.request("CHECK_WATCHING_RESPONSE",
+                        ApiResponse.success(watching, "OK")));  
                 }
 
                 default: {

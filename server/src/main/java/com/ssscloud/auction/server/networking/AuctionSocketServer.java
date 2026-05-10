@@ -12,10 +12,12 @@ import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 import com.ssscloud.auction.server.service.ConcurrentBidManager;
+import com.ssscloud.auction.server.service.NotificationService;
 
 public class AuctionSocketServer {
     // khong dung thi tam thoi dong vao cho do an canh bao
@@ -31,13 +33,15 @@ public class AuctionSocketServer {
         BidService bidService = new BidService(auctionDAO, userDAO);
         
         UserController userCtrl = new UserController(userDAO);
-
         AuctionService auctionService = new AuctionService(auctionDAO);
         AuctionController auctionCtrl = new AuctionController(auctionService);
-        
         BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
+        WatchlistDAO watchlistDAO = new WatchlistDAO();
+
+        NotificationService.getInstance().init(new WatchlistDAO());
+        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, watchlistDAO);
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl);
+
 
         System.out.println("[Server] Khởi động port 5000...");
 

@@ -85,6 +85,8 @@ public class BiddingRoomController implements MessageListener{
     @FXML private TextField txtManualBid;
     @FXML private TextField txtMaxBid;
 
+    private boolean isWatching = false;
+
     private boolean isAutoBidding = false;   
     private long autoBidMaxBid = 0;    
 
@@ -344,6 +346,7 @@ public class BiddingRoomController implements MessageListener{
             }
         }).start();
     }
+    
 
     public void onMessageReceived(String jsonMessage){
             Platform.runLater(()-> handleServerPush(jsonMessage));
