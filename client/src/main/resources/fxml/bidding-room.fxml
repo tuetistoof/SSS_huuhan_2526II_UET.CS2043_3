@@ -42,6 +42,7 @@
           </HBox>
         </VBox>
         <Button fx:id="btnBack" onAction="#handleBack" styleClass="br-btn-back" text="← Quay lại" />
+            <Button fx:id="btnFollow" mnemonicParsing="false" onAction="#handleFollowRoom" styleClass="br-btn-follow" text="Follow" />
       </HBox>
 
       <!-- ═══════════════════════════════════════════

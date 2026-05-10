@@ -1,0 +1,60 @@
+/* ── Khung Popup Nạp Tiền ── */
+.deposit-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(206, 90, 130, 0.2), 15, 0, 0, 8);
+}
+
+/* ── Tiêu đề ── */
+.deposit-title {
+    -fx-text-fill: #CE5A82; /* Màu hồng trà xịn xò */
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* ── Ô nhập tiền ── */
+.deposit-field {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #EAD1DC; /* Viền hồng siêu nhạt */
+    -fx-background-color: #FFF9FB; /* Nền hơi hồng phớt */
+    -fx-padding: 10;
+    -fx-font-size: 15px;
+}
+.deposit-field:focused {
+    -fx-border-color: #CE5A82; /* Đậm lên khi click vào */
+    -fx-background-color: white;
+}
+
+/* ── NÚT XÁC NHẬN (Màu Hồng Đậm - Nổi bật) ── */
+.btn-deposit-confirm {
+    -fx-background-color: #CE5A82;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-padding: 10 25;
+    -fx-effect: dropshadow(three-pass-box, rgba(206, 90, 130, 0.4), 8, 0, 0, 3);
+}
+.btn-deposit-confirm:hover {
+    -fx-background-color: #B84D70;
+}
+
+/* ── NÚT HỦY BỎ (Màu Xám Trung Tính - Chìm xuống) ── */
+.btn-deposit-cancel {
+    -fx-background-color: transparent;
+    -fx-border-color: #adb5bd;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #6c757d;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 10 25;
+}
+.btn-deposit-cancel:hover {
+    -fx-background-color: #f8f9fa;
+    -fx-text-fill: #343a40;
+    -fx-border-color: #343a40;
+}

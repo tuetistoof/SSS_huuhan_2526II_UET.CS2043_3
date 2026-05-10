@@ -68,19 +68,25 @@
 
 .br-btn-back {
     -fx-background-color: transparent;
-    -fx-border-color: #D4537E;
-    -fx-border-width: 0.5;
+    -fx-border-color: #6c757d;
+    -fx-border-width: 1;
     -fx-border-radius: 8;
     -fx-background-radius: 8;
-    -fx-text-fill: #D4537E;
+    -fx-text-fill: #495057;
     -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-padding: 7 14 7 14;
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
+    -fx-padding: 6 15 6 15;
 }
+
 .br-btn-back:hover {
-    -fx-background-color: #FBEAF0;
+    -fx-background-color: rgba(108, 117, 125, 0.1);
+    -fx-text-fill: #212529; 
+    -fx-border-color: #495057;
+}
+
+.br-btn-back:pressed {
+    -fx-background-color: rgba(108, 117, 125, 0.2);
 }
 
 /* ── White card (dùng chung cho cả 2 cột + card dưới) ── */
@@ -394,4 +400,26 @@
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: #222222;
+}
+
+/* ── Nút theo dõi ── */.br-btn-follow {
+    -fx-background-color: white;
+    -fx-border-color: #CE5A82;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #CE5A82;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 6 17 6 17;
+    -fx-effect: dropshadow(three-pass-box, rgba(206, 90, 130, 0.15), 5, 0, 0, 2);
+}
+
+.br-btn-follow:hover {
+    -fx-background-color: #FDF1F5;
+}
+
+.br-btn-follow:pressed {
+    -fx-background-color: #F8DDE6;
 }

@@ -445,4 +445,9 @@ public class BiddingRoomController implements MessageListener{
     void navFrontImage(ActionEvent event) {
 
     }
+
+    @FXML
+    void handleFollowRoom(ActionEvent event) {
+        
+    }
 }

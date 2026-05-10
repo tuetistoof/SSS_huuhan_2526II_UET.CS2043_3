@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
@@ -23,6 +24,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
@@ -30,6 +32,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -160,7 +163,18 @@ public class MainLayoutController {
 
     @FXML
     void handleDeposite(ActionEvent event) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("/fxml/DepositeCard.fxml"));
+            Scene scene = new Scene(root);
 
+            Stage depositStage = new Stage();
+            depositStage.setTitle("Nạp tiền vào tài khoản");
+            depositStage.setScene(scene);
+            depositStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            depositStage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
