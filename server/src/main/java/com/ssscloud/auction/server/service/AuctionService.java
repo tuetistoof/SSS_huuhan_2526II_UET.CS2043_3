@@ -3,6 +3,8 @@ package com.ssscloud.auction.server.service;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.ItemDTO;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
@@ -10,6 +12,7 @@ import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
+import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.factory.ItemFactory;
 
 import java.time.Duration;
@@ -22,25 +25,29 @@ import java.util.stream.Collectors;
  * AuctionService — business logic tạo phiên đấu giá.
  *
  * Luồng createAuction():
- *   1. ItemFactory.create(request, sellerId)  → Item (Art/Vehicle/Electronic)
- *   2. ItemDAO.save*(item)                    → persist item + subtype table
- *   3. Build AuctionConfig + Auction(OPEN)
- *   4. AuctionDAO.saveAuction(auction)        → persist
- *   5. scheduleClose(auction)                 → Timer tự đổi OPEN→FINISHED lúc endTime
- *   6. Return AuctionDTO
+ * 1. ItemFactory.create(request, sellerId) → Item (Art/Vehicle/Electronic)
+ * 2. ItemDAO.save*(item) → persist item + subtype table
+ * 3. Build AuctionConfig + Auction(OPEN)
+ * 4. AuctionDAO.saveAuction(auction) → persist
+ * 5. scheduleClose(auction) → Timer tự đổi OPEN→FINISHED lúc endTime
+ * 6. Return AuctionDTO
  */
 public class AuctionService {
 
     private static final Logger logger = Logger.getLogger(AuctionService.class.getName());
 
-    private final ItemDAO    itemDAO    = new ItemDAO();
     private final AuctionDAO auctionDAO;
-    public AuctionService (AuctionDAO auctionDAO){
+    private final UserService userService;
+    private final ItemService itemService;
+
+    public AuctionService(AuctionDAO auctionDAO, UserService userService, ItemService itemService) {
         this.auctionDAO = auctionDAO;
+        this.userService = userService;
+        this.itemService = itemService;
     }
 
     public AuctionDTO createAuction(CreateAuctionRequest request, String sellerId) {
-        //tạo item bằng factory
+        // tạo item bằng factory
         Item item;
         try {
             item = ItemFactory.createItem(request, sellerId);
@@ -48,7 +55,7 @@ public class AuctionService {
             logger.warning("ItemFactory lỗi: " + e.getMessage());
             return null;
         }
-        boolean itemSaved = saveItem(item);
+        boolean itemSaved = itemService.saveItem(item);
         if (!itemSaved) {
             logger.severe("Không lưu được item: " + item.getName());
             return null;
@@ -63,8 +70,7 @@ public class AuctionService {
                 request.getMinIncrement(),
                 startTime,
                 request.getEndTime(),
-                36
-        );
+                36);
 
         Auction auction = new Auction(config, AuctionStatus.OPEN, sellerId, item.getId());
         boolean auctionSaved = auctionDAO.saveAuction(auction);
@@ -81,29 +87,50 @@ public class AuctionService {
         return toDTO(auction);
     }
 
-//TO_DOS: sau này sẽ bổ sung chức năng lấy danh sách phiên đấu giá
+    // TO_DOS: sau này sẽ bổ sung chức năng lấy danh sách phiên đấu giá
 
     // public List<AuctionDTO> getAllAuctions() {
-    //     return auctionDAO.findAll().stream()
-    //             .map(this::toDTO)
-    //             .collect(Collectors.toList());
+    // return auctionDAO.findAll().stream()
+    // .map(this::toDTO)
+    // .collect(Collectors.toList());
     // }
 
-    public List<AuctionDTO> getMyAuctions(String sellerId) {
-        return auctionDAO.findBySellerId(sellerId)
-                .stream()   //chuyển List<Auction> thành Stream<Auction>
-                .map(this::toDTO)   //chuyển Stream<Auction> thành Stream<AuctionDTO>
-                .collect(Collectors.toList());  //chuyển Stream<AuctionDTO> thành List<AuctionDTO>
+    public AuctionDTO getAuctionById(String auctionId) {
+        Auction auction = auctionDAO.findByAuctionId(auctionId);
+        UserDTO userDTO = userService.getByUserId(auction.getSellerId());
+        ItemDTO itemDTO = itemService.getItemById(auction.getItemId());
+        return toDTO(auction, userDTO, itemDTO);
     }
 
- 
- 
+    public List<AuctionDisplayInfoDTO> getMyAuctions(String sellerId) {
+        return auctionDAO.findSellerAuction(sellerId);
+    }
+
     public List<AuctionDisplayInfoDTO> getActiveAuctions() {
         return auctionDAO.findActiveAuctions();
     }
 
+    // HELPERS
 
-    //HELPERS
+    private AuctionDTO toDTO(Auction auction, UserDTO userDTO, ItemDTO itemDTO) {
+        AuctionDTO auctionDTO = new AuctionDTO();
+
+        auctionDTO.setId(auction.getAuctionConfig().getId());
+        auctionDTO.setName(auction.getAuctionConfig().getName());
+        auctionDTO.setMinIncrement(auction.getAuctionConfig().getMinIncrement());
+        auctionDTO.setStartTime(auction.getAuctionConfig().getStartTime());
+        auctionDTO.setEndTime(auction.getAuctionConfig().getEndTime());
+        auctionDTO.setStatus(auction.getStatus());
+
+        auctionDTO.setUserDTO(userDTO);
+        auctionDTO.setItemDTO(itemDTO);
+
+        auctionDTO.setCurrentPrice(auction.getCurrentPrice());
+        auctionDTO.setHighestBidderName(auction.getHighestBidderName());
+        auctionDTO.setBidCount(auction.getBidCount());
+
+        return auctionDTO;
+    }
 
     private void scheduleClose(Auction auction) {
         Thread closer = new Thread(() -> {
@@ -124,7 +151,8 @@ public class AuctionService {
                         break;
                     }
 
-                    Thread.sleep(Math.min(remaining, 1000));    // ngủ tối đa 1s để check lại, tránh sleep quá lâu khi có antisnipping
+                    Thread.sleep(Math.min(remaining, 1000)); // ngủ tối đa 1s để check lại, tránh sleep quá lâu khi có
+                                                             // antisnipping
 
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -134,36 +162,10 @@ public class AuctionService {
                     break;
                 }
             }
-        
+
         });
         closer.setDaemon(true);
         closer.setName("auction-closer-" + auction.getAuctionConfig().getId());
         closer.start();
-    }
-
-
-    private boolean saveItem(Item item) {
-        return switch (item.getType()) {
-            case "ART"        -> itemDAO.saveArt((com.ssscloud.auction.common.model.Art) item);
-            case "VEHICLE"    -> itemDAO.saveVehicle((com.ssscloud.auction.common.model.Vehicle) item);
-            case "ELECTRONIC" -> itemDAO.saveElectronic((com.ssscloud.auction.common.model.Electronic) item);
-            default -> {
-                logger.warning("Loại item không hợp lệ: " + item.getType());
-                yield false; 
-        }
-        };
-    }
-
-    private AuctionDTO toDTO(Auction auction) {
-        AuctionConfig cfg = auction.getAuctionConfig();
-        AuctionDTO dto = new AuctionDTO();
-        dto.setId(cfg.getId());
-        dto.setName(cfg.getName());
-        dto.setCurrentPrice(cfg.getStartPrice()); 
-        dto.setMinIncrement(cfg.getMinIncrement());
-        dto.setStartTime(cfg.getStartTime());
-        dto.setEndTime(cfg.getEndTime());
-        dto.setStatus(auction.getStatus());
-        return dto;
     }
 }

@@ -12,10 +12,11 @@ import com.ssscloud.auction.server.dao.UserDAO;
 
 public class UserController {
     private UserDAO userDAO;
-    public UserController (UserDAO userDAO)
-    {
+
+    public UserController(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
+
     public String login(Object data) {
         try {
             String dataJsonString = JsonUtils.toJson(data);
@@ -52,20 +53,20 @@ public class UserController {
             if (user == null) {
                 if (request.getRole().isBidder()) {
                     user = new Bidder(
-                                    request.getName(),
-                                    request.getUsername(),
-                                    request.getPassword(),
-                                    request.getEmail(),
-                                    request.getRole());
+                            request.getName(),
+                            request.getUsername(),
+                            request.getPassword(),
+                            request.getEmail(),
+                            request.getRole());
                     userDAO.saveBidder((Bidder) user);
                 } else {
                     user = new Seller(
-                                    request.getName(),
-                                    request.getUsername(),
-                                    request.getPassword(),
-                                    request.getEmail(),
-                                    request.getRole(),
-                                    request.getBankAccount());
+                            request.getName(),
+                            request.getUsername(),
+                            request.getPassword(),
+                            request.getEmail(),
+                            request.getRole(),
+                            request.getBankAccount());
                     userDAO.saveSeller((Seller) user);
                 }
                 UserDTO dto = new UserDTO(

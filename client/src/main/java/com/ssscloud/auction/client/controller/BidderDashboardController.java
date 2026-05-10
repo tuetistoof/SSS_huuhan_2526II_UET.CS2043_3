@@ -107,7 +107,6 @@ public class BidderDashboardController {
                 String responseRawData = JsonUtils.toJson(serverMsg.getData());
                 Type type = new TypeToken<ApiResponse<ListResponse <AuctionDisplayInfoDTO>>>() {}.getType();
                 ApiResponse<ListResponse <AuctionDisplayInfoDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-
                 if (response != null && response.isSuccess()) {
                     ListResponse <AuctionDisplayInfoDTO> listResponse = response.getData();
                     List<AuctionDisplayInfoDTO> auctions = listResponse.getData();

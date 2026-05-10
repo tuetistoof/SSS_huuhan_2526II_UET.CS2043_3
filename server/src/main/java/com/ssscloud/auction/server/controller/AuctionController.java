@@ -3,10 +3,13 @@ package com.ssscloud.auction.server.controller;
 import java.util.List;
 
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
+import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
+import com.ssscloud.auction.common.exception.InvalidBidException;
+import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AuctionService;
 /**
@@ -87,8 +90,8 @@ public class AuctionController {
             if (sellerId == null || sellerId.isBlank()) {
                 return JsonUtils.toJson(ApiResponse.error("Thiếu sellerId"));
             }
-            List<AuctionDTO> auctions = auctionService.getMyAuctions(sellerId);
-            ListResponse <AuctionDTO> response = new ListResponse<>(auctions);
+            List<AuctionDisplayInfoDTO> auctions = auctionService.getMyAuctions(sellerId);
+            ListResponse <AuctionDisplayInfoDTO> response = new ListResponse<>(auctions);
             return JsonUtils.toJson(ApiResponse.success(response,
                     "Lấy danh sách thành công (" + auctions.size() + " phiên)"));
         } catch (Exception e) {
@@ -96,7 +99,25 @@ public class AuctionController {
             return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
         }
     }
-
+    
+    public String getAuctionById(Object data) {
+        try {
+            String raw = JsonUtils.toJson(data);
+            String auctionId = JsonUtils.fromJson(raw, String.class);
+            if (auctionId == null || auctionId.isBlank()) {
+                return JsonUtils.toJson(ApiResponse.error("Thiếu auctionId"));
+            }
+            AuctionDTO response = auctionService.getAuctionById(auctionId);
+            return JsonUtils.toJson(ApiResponse.success(response,
+                    "Lấy auction thành công "));
+        } catch (InvalidBidException e) {
+            return JsonUtils.toJson(ApiResponse.error(e.getMessage()));
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
+        }
+    }
 }
 
     
