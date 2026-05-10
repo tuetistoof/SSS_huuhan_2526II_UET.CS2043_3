@@ -14,12 +14,14 @@ import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 import com.ssscloud.auction.server.service.ConcurrentBidManager;
 import com.ssscloud.auction.server.service.ItemService;
 import com.ssscloud.auction.server.service.UserService;
+import com.ssscloud.auction.server.service.NotificationService;
 
 public class AuctionSocketServer {
     // khong dung thi tam thoi dong vao cho do an canh bao
@@ -37,7 +39,6 @@ public class AuctionSocketServer {
         
         UserService userService = new UserService(userDAO);
         UserController userCtrl = new UserController(userDAO);
-        
         BidController bidCtrl = new BidController(bidService, autoBidService);
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
         
@@ -45,8 +46,12 @@ public class AuctionSocketServer {
         ItemController itemCtrl = new ItemController(itemDAO);
 
         AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService);
-        AuctionController auctionCtrl = new AuctionController(auctionService);
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl);
+        WatchlistDAO watchlistDAO = new WatchlistDAO();
+
+        NotificationService.getInstance().init(new WatchlistDAO());
+        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionService, bidCtrl, itemCtrl, watchlistDAO);
+        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
+
 
         System.out.println("[Server] Khởi động port 5000...");
 

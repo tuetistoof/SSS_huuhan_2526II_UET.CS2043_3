@@ -147,6 +147,7 @@ public class AuctionService {
                             auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
                             AuctionRegistry.getInstance().remove(auction.getAuctionConfig().getId());
                             ChangeManager.getInstance().notify(auction);
+                            NotificationService.getInstance().notifyAuctionEnded(auction);
                             logger.info("scheduleClose: đóng auction " + auction.getAuctionConfig().getId());
                         }
                         break;

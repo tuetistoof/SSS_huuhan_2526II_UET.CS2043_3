@@ -22,7 +22,9 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.scene.control.Button;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ContentDisplay;
@@ -32,7 +34,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
+<<<<<<< HEAD
 import javafx.stage.Stage;
+=======
+import javafx.stage.Popup;
+>>>>>>> a636f662ec6cae34d09666bb85afa0e06f0a6828
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -67,6 +73,13 @@ public class MainLayoutController {
     @FXML private HBox navWatchlist;
     @FXML private HBox navWonItems;
     @FXML private Button btnLogOut;
+
+    @FXML private Label lblBellBadge;
+    @FXML private Button btnBell;
+    private NotificationController notificationController; 
+    private Popup notifPopup;
+    private Parent notifPopupRoot; // root đã load sẵn từ fxml, tái sử dụng cho mọi lần show/hide
+
     @FXML private VBox sidebar;
     @FXML private Parent loading; // Giao diện của khung loading
     @FXML private LoadingController loadingController;
@@ -90,7 +103,34 @@ public class MainLayoutController {
         user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
         applyRole(user.getRole());
+        initNotification();
         handleNavDashboard(null);
+    }
+    private void initNotification() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/notification-popup.fxml"));
+            notifPopupRoot = loader.load(); 
+            notificationController = loader.getController();
+            notificationController.init(this::navigateToAuction);
+            // Gắn badge listener: mỗi lần badge thay đổi → cập nhật lblBellBadge
+            notificationController.setBadgeListener(count -> {
+                if (lblBellBadge != null) {
+                    lblBellBadge.setText(count > 0 ? String.valueOf(count) : "");
+                    lblBellBadge.setVisible(count > 0);
+                    lblBellBadge.setManaged(count > 0);
+                }
+            });
+        } catch (IOException e) {
+            System.err.println("Không load được notification-popup.fxml: " + e.getMessage());
+        }
+    }
+    // Khi user click vào 1 notification, sẽ gọi callback này với auctionId tương ứng
+    private void navigateToAuction(String auctionId) {
+        // Tìm AuctionDTO từ danh sách đang hiển thị hoặc tạo dummy để navigate
+        AuctionDTO dummy = new AuctionDTO();
+        dummy.setId(auctionId);
+        loadBiddingRoom(dummy);
     }
 
     private void applyRole(UserRole role) {
@@ -152,7 +192,31 @@ public class MainLayoutController {
 
     //__NAVIGATION__
     @FXML
+    void handleBell(ActionEvent event) {
+        if (notificationController == null || notifPopupRoot == null) return;
+        if (notifPopup != null && notifPopup.isShowing()) {
+            notifPopup.hide();
+            return;
+        }
+         if (notifPopup == null) {
+            notifPopup = new javafx.stage.Popup();
+            notifPopup.setAutoHide(true);    
+            notifPopup.setAutoFix(true);     
+            notifPopup.getContent().add(notifPopupRoot);
+        }
+ 
+        // Tính tọa độ từ bell.localToScreen() — căn lề phải với nút chuông
+        Node bell = (Node) event.getSource();
+        Bounds b = bell.localToScreen(bell.getBoundsInLocal());
+        double popupWidth = 340;
+        double x = b.getMaxX() - popupWidth;   // căn lề phải
+        double y = b.getMaxY() + 6;            // sát bên dưới nút
+ 
+        notifPopup.show(bell.getScene().getWindow(), x, y);
+    }
+    @FXML
     void handleLogout(ActionEvent event) {
+        if (notificationController != null) notificationController.destroy();
 
     }
 

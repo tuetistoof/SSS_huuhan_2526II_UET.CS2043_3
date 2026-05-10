@@ -7,6 +7,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import com.ssscloud.auction.server.service.SessionRegistry;
+
 public class ClientHandler implements Runnable{
     private Socket clientSocket;
     private MessageHandler messageHandler;
@@ -45,6 +47,9 @@ public class ClientHandler implements Runnable{
             System.out.println("Client đã ngắt kết nối");
         } 
         finally {
+            if (userId != null) {
+                SessionRegistry.getInstance().unregister(userId);
+            }
             try {
                 this.clientSocket.close();
             } 
@@ -61,6 +66,7 @@ public class ClientHandler implements Runnable{
     public void setSession(String userId, String username) {
         this.userId   = userId;
         this.username = username;
+        SessionRegistry.getInstance().register(userId, this.writer);
     }
 }
 
