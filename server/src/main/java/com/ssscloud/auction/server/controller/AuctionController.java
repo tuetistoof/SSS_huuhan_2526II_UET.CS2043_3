@@ -55,21 +55,7 @@ public class AuctionController {
                 return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
         }
     }
-
-//TO_DOS: sau này sẽ bổ sung chức năng lấy danh sách phiên đấu giá
-
-    // public String getAllAuctions() {
-    //     try {
-    //         List<AuctionDTO> auctions = auctionService.getAllAuctions();
-    //         AuctionListResponse response = new AuctionListResponse(auctions);
-    //         return JsonUtils.toJson(ApiResponse.success(response,
-    //                 "Lấy danh sách thành công (" + auctions.size() + " phiên)"));
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //         return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
-    //     }
-    // }
- 
+    
     // /**
     //  * Trả về các auction đang active (OPEN / RUNNING).
     //  */

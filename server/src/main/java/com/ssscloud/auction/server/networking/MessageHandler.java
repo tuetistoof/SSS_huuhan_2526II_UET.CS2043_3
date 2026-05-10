@@ -82,10 +82,6 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", parsed));
                 }
                 case "CREATE_AUCTION": {
-                    // return JsonUtils.toJson(ClientMessage.request("CREATE_AUCTION_RESPONSE",
-                    //         JsonUtils.fromJson(auctionController.createAuction(msg.getData(), client.getUserId()),
-                    //                 ApiResponse.class)));
-                    
                     // 1. Ép chuỗi jsonMessage gốc thành JSON Object, rồi moi cái ruột "data" ra dạng String
                     com.google.gson.JsonObject rootObj = com.google.gson.JsonParser.parseString(jsonMessage).getAsJsonObject();
                     String rawDataJson = rootObj.get("data").toString();
