@@ -313,7 +313,7 @@ Vòng tròn loading
    ========================================= */
 .content-area {
     -fx-background-color: #f4f4f4;
-    -fx-padding: 0;
+    -fx-padding: 5;
 }
 
 /* =========================================
@@ -543,3 +543,45 @@ Vòng tròn loading
     -fx-padding: 20 24 20 24;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
 }
+
+
+.main-scroll-pane {
+    -fx-background-color: #f4f4f4; /* Trùng màu với content-area của bạn */
+    -fx-background: #f4f4f4;        /* Màu nền vùng trống */
+    -fx-border-color: transparent;
+    -fx-viewport-background-color: transparent;
+}
+
+/* 2. Tùy chỉnh thanh cuộn dọc (Track) */
+.main-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: #eeeeee; /* Màu nền nhẹ của rãnh trượt */
+    -fx-pref-width: 10;            /* Độ rộng thanh cuộn (mảnh hơn mặc định) */
+    -fx-background-insets: 0;
+}
+
+/* 3. Tùy chỉnh cục trượt (Thumb) */
+.main-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: #cccccc; /* Màu thanh trượt */
+    -fx-background-radius: 10;     /* Bo tròn thanh trượt */
+    -fx-background-insets: 2;      /* Tạo khoảng trống nhỏ so với mép rãnh */
+}
+
+.main-scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #b0b0b0; /* Đậm hơn khi hover */
+}
+
+/* 4. Ẩn các nút mũi tên ở hai đầu thanh cuộn */
+.main-scroll-pane .increment-button, 
+.main-scroll-pane .decrement-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0 5 0 5; /* Thu nhỏ kích thước nút */
+}
+
+.main-scroll-pane .increment-arrow, 
+.main-scroll-pane .decrement-arrow {
+    -fx-shape: ""; /* Xóa hình mũi tên */
+    -fx-padding: 0;
+}
+
+
