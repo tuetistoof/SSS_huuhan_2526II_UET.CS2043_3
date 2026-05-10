@@ -13,6 +13,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.factory.ItemDTOFactory;
 import com.ssscloud.auction.server.factory.ItemFactory;
 
 import java.time.Duration;
@@ -84,7 +85,7 @@ public class AuctionService {
 
         logger.info("Tạo auction thành công: " + config.getId() + " - " + config.getName());
 
-        return toDTO(auction);
+        return toDTO(auction, userService.getByUserId(sellerId), ItemDTOFactory.toDTO(item));
     }
 
     // TO_DOS: sau này sẽ bổ sung chức năng lấy danh sách phiên đấu giá
