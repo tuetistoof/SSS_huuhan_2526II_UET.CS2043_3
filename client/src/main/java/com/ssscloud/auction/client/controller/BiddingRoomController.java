@@ -85,7 +85,9 @@ public class BiddingRoomController implements MessageListener{
     @FXML private TextField txtManualBid;
     @FXML private TextField txtMaxBid;
 
-    private boolean isWatching = false;
+    @FXML private Button btnFollow;
+
+    private boolean isFollowing = false;
 
     private boolean isAutoBidding = false;   
     private long autoBidMaxBid = 0;    
@@ -167,6 +169,72 @@ public class BiddingRoomController implements MessageListener{
             amountLabel.setText(String.format("%,d ₫", bid.getBidAmount())); //bid amount
             setGraphic(root);
         }
+    }
+
+    @FXML
+    void handleFollow(ActionEvent event) {
+        if (currentAuction == null) {
+            return;
+        }
+        String action = isFollowing ? "UNFOLLOW_AUCTION" : "FOLLOW_AUCTION";
+        if (btnFollow != null) { 
+            btnFollow.setDisable(true);
+            btnFollow.setText("...");
+        }
+        new Thread(() -> {
+            try {
+                String json = JsonUtils.toJson(
+                        ClientMessage.request(action, currentAuction.getId()));
+                String responseJson = socket.sendAndReceive(json);
+                Platform.runLater(() -> {
+                    if (responseJson == null) {
+                        updateFollowButton(); // restore
+                        return;
+                    }
+                    ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                    String dataJson = JsonUtils.toJson(serverMsg.getData());
+                    ApiResponse<?> resp = JsonUtils.fromJson(dataJson, ApiResponse.class);
+                    if (resp != null && resp.isSuccess()) {
+                        isFollowing = !isFollowing;
+                    }
+                    updateFollowButton();
+                });
+            } catch (Exception e) {
+                Platform.runLater(this::updateFollowButton);
+            }
+        }).start();  
+    }
+
+    private void updateFollowButton() {
+        if (btnFollow == null) return;
+        btnFollow.setDisable(false);
+        if (isFollowing) {
+            btnFollow.setText("Following");
+            btnFollow.getStyleClass().setAll("br-btn-following"); 
+        } else {
+            btnFollow.setText("Follow");
+            btnFollow.getStyleClass().setAll("br-btn-follow");
+        }
+    }
+
+    private void checkFollowStatus(){
+        if (currentAuction == null) return;
+        new Thread(()-> {
+            try {
+                String json = JsonUtils.toJson(ClientMessage.request("CHECK_WATCH_STATUS", currentAuction.getId()));
+                String responseJson = socket.sendAndReceive(json);
+                if (responseJson == null) return;
+                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                String dataJson = JsonUtils.toJson(serverMsg.getData());
+                ApiResponse<?> resp = JsonUtils.fromJson(dataJson, ApiResponse.class);
+                if (resp != null && resp.isSuccess() && resp.getData() != null) {
+                    isFollowing = Boolean.parseBoolean(resp.getData().toString());
+                }
+                Platform.runLater(this::updateFollowButton);
+            } catch (Exception e) {
+                System.err.println("Lỗi kiểm tra trạng thái follow: " + e.getMessage());
+            }
+        }).start();
     }
 
 
@@ -438,6 +506,7 @@ public class BiddingRoomController implements MessageListener{
         this.currentAuction  = auction; 
         loadBidHistory(); 
         subcribeToAuction();
+        checkFollowStatus();
     }
     public void setUserId(String userId)         { this.currentUserId   = userId; }
     public void setUserName(String userName)     { this.currentUserName = userName; }

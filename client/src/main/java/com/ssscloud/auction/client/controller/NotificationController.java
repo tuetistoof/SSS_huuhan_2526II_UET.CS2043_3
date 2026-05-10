@@ -3,10 +3,10 @@ package com.ssscloud.auction.client.controller;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.ssscloud.auction.client.controller.NotificationController.NotifItem;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
 
@@ -24,11 +24,16 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class NotificationController implements MessageListener {
-    @FXML private Label            lblBadge;
+    @FXML private Label  lblBadge; // badge hiển thị số lượng thông báo chưa đọc
     @FXML private ListView<NotifItem> listNotifs; 
     private final AuctionClientSocket           socket  = AuctionClientSocket.getInstance();
     private final ObservableList<NotifItem>     notifs  = FXCollections.observableArrayList();
     private Consumer<String> onNavigateToAuction; //callback về MainLayout để navigate vào BiddingRoom
+    private IntConsumer badgeListener; 
+
+    public void setBadgeListener(IntConsumer listener) {
+        this.badgeListener = listener;
+    }
 
     public void init(Consumer<String> navigateCallback) {
         this.onNavigateToAuction = navigateCallback;
@@ -94,6 +99,7 @@ public class NotificationController implements MessageListener {
             lblBadge.setVisible(unread > 0);
             lblBadge.setManaged(unread > 0);
         }
+        if (badgeListener != null) badgeListener.accept((int) unread); 
     }
     private void setupList() {
         if (listNotifs == null) return;
@@ -109,13 +115,6 @@ public class NotificationController implements MessageListener {
             onNavigateToAuction.accept(item.getAuctionId());
         }
     }
-
-
-
-
-
-
-
 
 
 
