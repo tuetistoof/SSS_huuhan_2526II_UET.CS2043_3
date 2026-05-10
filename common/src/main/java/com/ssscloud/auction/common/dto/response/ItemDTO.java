@@ -12,13 +12,10 @@ public class ItemDTO implements Serializable {
 
     private String id;
     private String name;
+    private String sellerId;
+    private String creator;
     private String description;
     private String itemType;
-    private long basePrice;
-    private LocalDate manufacturingDate;
-    private String creator;
-    private String sellerId;
-    private String status;  // Trạng thái: DRAFT, AUCTIONING, SOLD, EXPIRED, DELETED
     private List<String> imageUrls;
 
     public ItemDTO() {}
@@ -35,20 +32,11 @@ public class ItemDTO implements Serializable {
     public String getItemType() { return itemType; }
     public void setItemType(String itemType) { this.itemType = itemType; }
 
-    public long getBasePrice() { return basePrice; }
-    public void setBasePrice(long basePrice) { this.basePrice = basePrice; }
-
-    public LocalDate getManufacturingDate() { return manufacturingDate; }
-    public void setManufacturingDate(LocalDate manufacturingDate) { this.manufacturingDate = manufacturingDate; }
-
     public String getCreator() { return creator; }
     public void setCreator(String creator) { this.creator = creator; }
 
     public String getSellerId() { return sellerId; }
     public void setSellerId(String sellerId) { this.sellerId = sellerId; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
 
     public List<String> getImageUrls() { return imageUrls; }
     public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
@@ -59,8 +47,6 @@ public class ItemDTO implements Serializable {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", itemType='" + itemType + '\'' +
-                ", basePrice=" + basePrice +
-                ", status='" + status + '\'' +
                 '}';
     }
 }

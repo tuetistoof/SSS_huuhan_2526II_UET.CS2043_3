@@ -1,6 +1,7 @@
 package com.ssscloud.auction.common.dto.response;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -13,11 +14,12 @@ public class AuctionDTO implements Serializable {
     private long minIncrement;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private String description;
-    
-    private long currentPrice;
     private AuctionStatus status;
-    private String sellerName;
+
+    private UserDTO userDTO;
+    private ItemDTO itemDTO;
+
+    private long currentPrice;
     private String highestBidderName;
     private int bidCount;
 
@@ -40,9 +42,6 @@ public class AuctionDTO implements Serializable {
         return name;
     }
 
-    public long getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }
-
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -56,21 +55,35 @@ public class AuctionDTO implements Serializable {
         this.endTime = endTime;
     }
 
-    
+    public void setStatus(AuctionStatus status) {
+        this.status = status;
+    }
+    public AuctionStatus getStatus() {
+        return status;
+    }
+
+    public ItemDTO getItemDTO() {
+        return itemDTO;
+    }
+    public void setItemDTO(ItemDTO itemDTO) {
+        this.itemDTO = itemDTO;
+    }
+    public UserDTO getUserDTO() {
+        return userDTO;
+    }
+    public void setUserDTO(UserDTO userDTO) {
+        this.userDTO = userDTO;
+    }
+
+    public long getCurrentPrice() { return currentPrice; }
+    public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }
+
     public void setBidCount(int bidCount) {
         this.bidCount = bidCount;
     }
     public int getBidCount() {
         return bidCount;
-    }
-
-    
-    public String getDescription() {
-        return description;
-    }
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    }   
 
     public void setHighestBidderName(String highestBidderName) {
         this.highestBidderName = highestBidderName;
@@ -80,20 +93,6 @@ public class AuctionDTO implements Serializable {
     }
 
     
-    public void setSellerName(String sellerName) {
-        this.sellerName = sellerName;
-    }
-    public String getSellerName() {
-        return sellerName;
-    }
-
-    public void setStatus(AuctionStatus status) {
-        this.status = status;
-    }
-    public AuctionStatus getStatus() {
-        return status;
-    }
-
 
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}

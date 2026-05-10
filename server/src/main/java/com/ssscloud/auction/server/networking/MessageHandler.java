@@ -17,6 +17,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.service.AuctionRegistry;
@@ -27,15 +28,18 @@ public class MessageHandler {
     private UserController userController;
     private AuctionController auctionController;
     private AuctionDAO auctionDAO;
+    private ItemController itemController;
     public MessageHandler(
             AuctionDAO auctionDAO,
             UserController userController,
             AuctionController auctionController,
-            BidController bidController) {
+            BidController bidController,
+            ItemController itemController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.auctionDAO = auctionDAO;
+        this.itemController = itemController;
     }
 
     public String handleMessage(String jsonMessage, ClientHandler client) {
@@ -106,26 +110,26 @@ public class MessageHandler {
                 }
 
                 case "AUTO_BID": {
-                    String raw = JsonUtils.toJson(msg.getData());
-                    AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
-                    if (req == null) {
-                        return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá tự động không hợplệ"));
-                    }
                     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
-                    JsonUtils.fromJson(bidController.registerAutoBid(req, client.getUserId(),
+                    JsonUtils.fromJson(bidController.registerAutoBid(msg.getData(), client.getUserId(),
                     client.getUsername()), ApiResponse.class)));
                 }
 
                 case "GET_MY_AUCTIONS": {
                     // Seller lấy danh sách auction của chính mình
                     String result = auctionController.getMyAuctions(client.getUserId());
-                    
+                    return null;
                 }
 
                 case "GET_ACTIVE_AUCTIONS": {
                     String result = auctionController.getActiveAuctions();
                     return JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS_RESPONSE",
                         JsonUtils.fromJson(result, ApiResponse.class)));
+                }
+
+                case "GET_AUCTION_DETAILS": {
+                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS_REPONSE",
+                    JsonUtils.fromJson(auctionController.getAuctionById(msg.getData()), ApiResponse.class)));
                 }
 
                 case "SUBSCRIBE_AUCTION": {
