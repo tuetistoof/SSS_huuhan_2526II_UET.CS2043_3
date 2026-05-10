@@ -8,14 +8,18 @@ import java.util.concurrent.Executors;
 
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
+import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 import com.ssscloud.auction.server.service.ConcurrentBidManager;
+import com.ssscloud.auction.server.service.ItemService;
+import com.ssscloud.auction.server.service.UserService;
 
 public class AuctionSocketServer {
     // khong dung thi tam thoi dong vao cho do an canh bao
@@ -24,20 +28,25 @@ public class AuctionSocketServer {
 
     public static void main(String[] args) {
         UserDAO userDAO = new UserDAO();
+        ItemDAO itemDAO = new ItemDAO();
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
 
         AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
         BidService bidService = new BidService(auctionDAO, userDAO);
         
+        UserService userService = new UserService(userDAO);
         UserController userCtrl = new UserController(userDAO);
-
-        AuctionService auctionService = new AuctionService(auctionDAO);
-        AuctionController auctionCtrl = new AuctionController(auctionService);
         
         BidController bidCtrl = new BidController(bidService, autoBidService);
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl);
+        
+        ItemService itemService = new ItemService(itemDAO);
+        ItemController itemCtrl = new ItemController(itemDAO);
+
+        AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService);
+        AuctionController auctionCtrl = new AuctionController(auctionService);
+        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl);
 
         System.out.println("[Server] Khởi động port 5000...");
 

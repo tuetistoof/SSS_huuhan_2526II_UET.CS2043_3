@@ -171,6 +171,10 @@ public class Auction implements Subject {
         this.bidTransaction = bidTransaction;
     }
 
+    public int getBidCount()
+    {
+        return bidTransaction.size();
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

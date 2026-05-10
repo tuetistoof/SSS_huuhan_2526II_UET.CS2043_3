@@ -50,6 +50,11 @@ public class UserService {
         return toDTO(user);
     }
 
+    public UserDTO getByUserId (String id)
+    {
+        return toDTO(userDAO.findById(id));
+    }
+
 
     private void validateLoginRequest(LoginRequest req){
         if (req == null)
@@ -96,6 +101,7 @@ public class UserService {
         if (!saved)
             throw new RuntimeException("Lỗi khi lưu user vào database");
     }
+
 
     private UserDTO toDTO(User user){
         return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole());
