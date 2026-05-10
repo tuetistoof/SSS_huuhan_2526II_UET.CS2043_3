@@ -19,6 +19,7 @@ public class AuctionDTO implements Serializable {
     private UserDTO userDTO;
     private ItemDTO itemDTO;
 
+    private String sellerName;
     private long currentPrice;
     private String highestBidderName;
     private int bidCount;
@@ -34,7 +35,6 @@ public class AuctionDTO implements Serializable {
         this.id = id;
     }
 
-    
     public void setName(String name) {
         this.name = name;
     }
@@ -73,6 +73,10 @@ public class AuctionDTO implements Serializable {
     }
     public void setUserDTO(UserDTO userDTO) {
         this.userDTO = userDTO;
+    }
+
+    public String getSellerName() {
+        return userDTO != null ? userDTO.getUsername() : null;
     }
 
     public long getCurrentPrice() { return currentPrice; }

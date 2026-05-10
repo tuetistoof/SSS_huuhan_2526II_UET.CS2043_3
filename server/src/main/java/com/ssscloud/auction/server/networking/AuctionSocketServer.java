@@ -39,7 +39,8 @@ public class AuctionSocketServer {
         
         UserService userService = new UserService(userDAO);
         UserController userCtrl = new UserController(userDAO);
-        BidController bidCtrl = new BidController(bidService, autoBidService);
+        //lỗi: hàm khởi tạo thiếu BidTransaction
+        BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
         
         ItemService itemService = new ItemService(itemDAO);
@@ -48,9 +49,11 @@ public class AuctionSocketServer {
         AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService);
         WatchlistDAO watchlistDAO = new WatchlistDAO();
 
-        NotificationService.getInstance().init(new WatchlistDAO());
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionService, bidCtrl, itemCtrl, watchlistDAO);
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
+        AuctionController auctionCtrl = new AuctionController(auctionService);
+
+        NotificationService.getInstance().init(watchlistDAO);
+        //lỗi: hàm khởi tạo không có auctionService -> auctionCtrl
+        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistDAO);
 
 
         System.out.println("[Server] Khởi động port 5000...");

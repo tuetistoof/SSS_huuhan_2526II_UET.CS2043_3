@@ -6,6 +6,7 @@ import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
@@ -98,8 +99,10 @@ public class AuctionService {
 
     public AuctionDTO getAuctionById(String auctionId) {
         Auction auction = auctionDAO.findByAuctionId(auctionId);
+        if (auction == null) throw new InvalidBidException("Auction không tồn tại: " + auctionId);
         UserDTO userDTO = userService.getByUserId(auction.getSellerId());
         ItemDTO itemDTO = itemService.getItemById(auction.getItemId());
+        if (itemDTO == null) throw new InvalidBidException("Item không tồn tại: " + auction.getItemId());
         return toDTO(auction, userDTO, itemDTO);
     }
 

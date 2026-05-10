@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.controller;
 import java.util.List;
 
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
+import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
@@ -89,7 +90,9 @@ public class AuctionController {
     public String getAuctionById(Object data) {
         try {
             String raw = JsonUtils.toJson(data);
-            String auctionId = JsonUtils.fromJson(raw, String.class);
+            // String auctionId = JsonUtils.fromJson(raw, String.class);
+            GetAuctionDetailsRequest req = JsonUtils.fromJson(raw, GetAuctionDetailsRequest.class);
+            String auctionId = req != null ? req.getAuctionId() : null;
             if (auctionId == null || auctionId.isBlank()) {
                 return JsonUtils.toJson(ApiResponse.error("Thiếu auctionId"));
             }

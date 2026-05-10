@@ -13,7 +13,8 @@ public class AuctionDisplayInfoDTO {
     private String sellerUsername;
     private List <String> imageUrl;
 
-
+    public AuctionDisplayInfoDTO () {};
+    
     public AuctionDisplayInfoDTO (String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List <String> imageUrl)
     {
         this.id = id;

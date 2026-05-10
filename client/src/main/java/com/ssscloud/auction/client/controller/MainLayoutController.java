@@ -6,7 +6,6 @@ import java.lang.reflect.Type;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
-import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
@@ -34,11 +33,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
-<<<<<<< HEAD
 import javafx.stage.Stage;
-=======
 import javafx.stage.Popup;
->>>>>>> a636f662ec6cae34d09666bb85afa0e06f0a6828
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -128,7 +124,7 @@ public class MainLayoutController {
     // Khi user click vào 1 notification, sẽ gọi callback này với auctionId tương ứng
     private void navigateToAuction(String auctionId) {
         // Tìm AuctionDTO từ danh sách đang hiển thị hoặc tạo dummy để navigate
-        AuctionDTO dummy = new AuctionDTO();
+        AuctionDisplayInfoDTO dummy = new AuctionDisplayInfoDTO();
         dummy.setId(auctionId);
         loadBiddingRoom(dummy);
     }
@@ -342,43 +338,48 @@ public class MainLayoutController {
             System.out.println("Chưa sửa chèn thêm fxml vào 1");
             return;
         }
+        new Thread(() -> {
+            GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
+            String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
+            
+            AuctionDTO fullAuctionData = null;
 
-        GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
-        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
-        
-        AuctionDTO fullAuctionData = null;
+            if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+                if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
+                    String responseRawData = JsonUtils.toJson(serverMsg.getData());
+                    Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
+                    ApiResponse<AuctionDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
 
-        if (jsonResponse != null && !jsonResponse.isEmpty()) {
-            ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-            if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
-                String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
-                ApiResponse<AuctionDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-
-                if (response != null && response.isSuccess()) {
-                    fullAuctionData = response.getData();
+                    if (response != null && response.isSuccess()) {
+                        fullAuctionData = response.getData();
+                    }
                 }
             }
-        }
-        if (fullAuctionData != null) {
-            updateActiveStyle(null);
-            clearContent();
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-                Parent view = loader.load();
+            final AuctionDTO finalData = fullAuctionData;
+            Platform.runLater(() -> {
+                if (finalData != null) {
+                    updateActiveStyle(null);
+                    clearContent();
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
+                        Parent view = loader.load();
 
-                BiddingRoomController ctrl = loader.getController();
-                ctrl.setAuction(fullAuctionData);                          // inject dữ liệu phòng
-                ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); // Back → dashboard
-                
-                currentController = ctrl;
-                contentArea.getChildren().add(view);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("Không lấy được Data phòng");
-        }
+                        BiddingRoomController ctrl = loader.getController();
+                        ctrl.setAuction(finalData);                          // inject dữ liệu phòng
+                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); // Back → dashboard
+                        
+                        currentController = ctrl;
+                        contentArea.getChildren().add(view);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    System.out.println("Không lấy được Data phòng");
+                }
+                if (loading != null) loading.setVisible(false);
+            });
+        }).start();
     }
 
     @FXML

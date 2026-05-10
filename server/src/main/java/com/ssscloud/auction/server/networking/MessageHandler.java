@@ -128,7 +128,7 @@ public class MessageHandler {
                 }
 
                 case "GET_AUCTION_DETAILS": {
-                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS_REPONSE",
+                    return JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS_RESPONSE",
                     JsonUtils.fromJson(auctionController.getAuctionById(msg.getData()), ApiResponse.class)));
                 }
                 case "GET_BID_HISTORY": {   //lịch sử đặt bid của auction
