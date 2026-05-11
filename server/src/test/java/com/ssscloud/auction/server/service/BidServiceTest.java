@@ -32,6 +32,9 @@ public class BidServiceTest {
 
         AuctionConfig config = new AuctionConfig();
         mockAuction = new Auction(config, AuctionStatus.RUNNING, "seller123", "item123");
+
+        // Xóa khỏi Registry để force dùng auctionDAO mock
+        AuctionRegistry.getInstance().remove("auction123");
     }
 
     @Test
@@ -70,7 +73,7 @@ public class BidServiceTest {
             bidService.placeBid(req, "bidder123", "Kphong"));
     }
 
-    @Test
+   @Test
     void testSellerCannotBidOnOwnAuction() {
         when(auctionDAO.findByAuctionId("auction123")).thenReturn(mockAuction);
 
@@ -80,7 +83,7 @@ public class BidServiceTest {
     }
 
     @Test
-    void testAmountExceedsAccountBalance() {
+    void testInsufficientBalance() {
         when(auctionDAO.findByAuctionId("auction123")).thenReturn(mockAuction);
 
         Bidder bidder = new Bidder("Kphong", "Kphong", "123456", "kphong@gmail.com", UserRole.BIDDER);
