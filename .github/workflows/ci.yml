@@ -34,7 +34,7 @@ jobs:
         run: ./mvnw clean package -pl server -am -DskipTests
 
       - name: Run tests and generate coverage report
-        run: ./mvnw test jacoco:report -pl server -am
+        run: ./mvnw test org.jacoco:jacoco-maven-plugin:report -pl server -am
 
       - name: Build Docker image
         run: docker compose build
