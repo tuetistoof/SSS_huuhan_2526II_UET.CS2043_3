@@ -50,11 +50,12 @@ jobs:
         shell: bash
 
       - name: Run containers
-        run: |
-          DB_USERNAME=${{ secrets.DB_USERNAME }} \
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-          docker compose up -d
-
+        run: docker compose up -d
+        shell: bash
+        env:
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          
       - name: Wait for server to be ready
         run: sleep 30
 
