@@ -328,6 +328,20 @@ public class AuctionDAO extends BaseDAO {
             closeResource(rs, ps);
         }
     }
+    public boolean updateEndTime(String auctionId, java.time.LocalDateTime newEndTime) {
+        String sql = "UPDATE auction_config SET end_time = ? WHERE id = ?";
+        try (Connection conn = getConnection();
+             java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setObject(1, newEndTime);
+            ps.setString(2, auctionId);
+            boolean ok = ps.executeUpdate() > 0;
+            if (ok) logger.info("updateEndTime auctionId=" + auctionId + " -> " + newEndTime);
+            return ok;
+        } catch (java.sql.SQLException e) {
+            logger.severe("Lỗi updateEndTime auctionId=" + auctionId + ": " + e.getMessage());
+            return false;
+        }
+    }
 
     public boolean updateStatus(String auctionId, AuctionStatus newStatus) {
         String sql = "UPDATE auction SET status = ? WHERE id = ?";

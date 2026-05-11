@@ -20,8 +20,10 @@ import com.ssscloud.auction.server.factory.ItemFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * AuctionService — business logic tạo phiên đấu giá.
@@ -41,6 +43,7 @@ public class AuctionService {
     private final AuctionDAO auctionDAO;
     private final UserService userService;
     private final ItemService itemService;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     public AuctionService(AuctionDAO auctionDAO, UserService userService, ItemService itemService) {
         this.auctionDAO = auctionDAO;
@@ -136,41 +139,29 @@ public class AuctionService {
         return auctionDTO;
     }
 
-    private void scheduleClose(Auction auction) {
-        Thread closer = new Thread(() -> {
-            while (true) {
-                try {
-                    LocalDateTime end = auction.getAuctionConfig().getEndTime();
-                    long remaining = Duration.between(LocalDateTime.now(), end).toMillis();
 
-                    if (remaining <= 0) {
-                        AuctionStatus current = auction.getStatus();
-                        if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
-                            auction.finish();
-                            auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
-                            AuctionRegistry.getInstance().remove(auction.getAuctionConfig().getId());
-                            ChangeManager.getInstance().notify(auction);
-                            NotificationService.getInstance().notifyAuctionEnded(auction);
-                            logger.info("scheduleClose: đóng auction " + auction.getAuctionConfig().getId());
-                        }
-                        break;
-                    }
+    public void scheduleClose(Auction auction) {
+        LocalDateTime end = auction.getAuctionConfig().getEndTime();
+        long delayMs = Duration.between(LocalDateTime.now(), end).toMillis();
+        if (delayMs < 0) delayMs = 0;
+        String auctionId = auction.getAuctionConfig().getId();
 
-                    Thread.sleep(Math.min(remaining, 1000)); // ngủ tối đa 1s để check lại, tránh sleep quá lâu khi có
-                                                             // antisnipping
-
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                } catch (Exception e) {
-                    logger.severe("scheduleClose lỗi: " + e.getMessage());
-                    break;
-                }
+        scheduler.schedule(() -> {
+            // Kiểm tra lại — có thể anti-sniping đã gia hạn sau khi schedule
+            if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
+                scheduleClose(auction); // reschedule với endTime mới
+                return;
             }
-
-        });
-        closer.setDaemon(true);
-        closer.setName("auction-closer-" + auction.getAuctionConfig().getId());
-        closer.start();
+            AuctionStatus current = auction.getStatus();
+            if (current == AuctionStatus.OPEN || current == AuctionStatus.RUNNING) {
+                auction.finish();
+                auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                AuctionRegistry.getInstance().remove(auctionId);
+                ChangeManager.getInstance().notify(auction);
+                NotificationService.getInstance().notifyAuctionEnded(auction);
+                logger.info("scheduleClose: đóng auction " + auctionId);
+            }
+        }, delayMs, TimeUnit.MILLISECONDS);
     }
+
 }
