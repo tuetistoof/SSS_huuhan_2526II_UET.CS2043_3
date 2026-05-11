@@ -11,6 +11,7 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
+import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
 public class ConcurrentBidManager {
@@ -32,17 +33,19 @@ public class ConcurrentBidManager {
 
     private BidTransactionDAO bidTransactionDAO;
     private AutoBidService    autoBidService;
+    private AuctionDAO auctionDAO;
 
-    private ConcurrentBidManager(BidTransactionDAO dao, AutoBidService service) {
+    private ConcurrentBidManager(BidTransactionDAO dao, AutoBidService service, AuctionDAO auctionDAO) {
         this.bidTransactionDAO = dao;
         this.autoBidService = service;
+        this.auctionDAO = auctionDAO;
     }
 
-    public static ConcurrentBidManager initialize(BidTransactionDAO dao, AutoBidService service) {
+    public static ConcurrentBidManager initialize(BidTransactionDAO dao, AutoBidService service, AuctionDAO auctionDAO  ) {
         if (instance == null) {
             synchronized (ConcurrentBidManager.class) {
                 if (instance == null) {
-                    instance = new ConcurrentBidManager(dao, service);
+                    instance = new ConcurrentBidManager(dao, service, auctionDAO);
                 }
             }
         }
@@ -116,8 +119,10 @@ public class ConcurrentBidManager {
                 task.bidAmount, LocalDateTime.now(), task.type);
         auction.placeBid(bid);
 
-        AntiSnipingService.processAntiSniping(auction.getAuctionConfig());
-        
+        LocalDateTime newEnd = AntiSnipingService.processAntiSniping(auction.getAuctionConfig());
+        if (newEnd != null && auctionDAO != null) {
+            auctionDAO.updateEndTime(auctionId, newEnd);
+        }
         if (bidTransactionDAO != null) {
             try {
                 bidTransactionDAO.saveBidTransaction(bid);

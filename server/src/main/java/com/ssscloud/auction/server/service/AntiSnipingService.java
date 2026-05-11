@@ -6,9 +6,9 @@ import java.time.LocalDateTime;
 import java.time.Duration;
 
 public class AntiSnipingService {
-    public static void processAntiSniping(AuctionConfig auction) {
+    public static LocalDateTime processAntiSniping(AuctionConfig auction) {
         if (auction == null || auction.getEndTime() == null)
-            return;
+            return null;
 
         LocalDateTime currentTime = LocalDateTime.now();
         LocalDateTime endTime = auction.getEndTime();
@@ -20,6 +20,8 @@ public class AntiSnipingService {
             LocalDateTime newEndTime = endTime.plusSeconds(auction.getExtendSecond());
             auction.setEndTime(newEndTime);
             System.out.println("[Anti - Snipping] Auction " + auction.getName() + " đã được kéo dài thêm " + auction.getExtendSecond() + "s . Thời gian kết thúc: " + newEndTime);
+            return newEndTime;
         }
+        return null;
     }
 }

@@ -41,7 +41,7 @@ public class AuctionSocketServer {
         UserController userCtrl = new UserController(userDAO);
         //lỗi: hàm khởi tạo thiếu BidTransaction
         BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService);
+        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO);
         
         ItemService itemService = new ItemService(itemDAO);
         ItemController itemCtrl = new ItemController(itemDAO);
