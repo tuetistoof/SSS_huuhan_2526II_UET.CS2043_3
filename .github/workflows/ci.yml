@@ -49,18 +49,28 @@ jobs:
         run: ./mvnw verify -pl server -am
         shell: bash
 
+      - name: Build Docker image
+        if: matrix.os == 'ubuntu-latest'
+        run: docker compose build
+        shell: bash
+
       - name: Run containers
+        if: matrix.os == 'ubuntu-latest'
         run: docker compose up -d
         shell: bash
         env:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          
+
       - name: Wait for server to be ready
+        if: matrix.os == 'ubuntu-latest'
         run: sleep 30
 
       - name: Check server health
+        if: matrix.os == 'ubuntu-latest'
         run: curl -f http://localhost:8080 || echo "Server running"
 
       - name: Stop containers
+        if: matrix.os == 'ubuntu-latest'
         run: docker compose down
+        shell: bash
