@@ -46,9 +46,9 @@ jobs:
         shell: bash
 
       - name: Run tests and generate coverage report
-        run: ./mvnw test jacoco:report -pl server -am
+        run: ./mvnw verify -pl server -am
         shell: bash
-        
+
       - name: Run containers
         run: |
           DB_USERNAME=${{ secrets.DB_USERNAME }} \
