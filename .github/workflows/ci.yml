@@ -31,7 +31,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Maven
-        run: ./mvnw clean package -DskipTests
+        run: ./mvnw clean package -pl server -am -DskipTests
+
+      - name: Run tests and generate coverage report
+        run: ./mvnw test jacoco:report -pl server -am
 
       - name: Build Docker image
         run: docker compose build
