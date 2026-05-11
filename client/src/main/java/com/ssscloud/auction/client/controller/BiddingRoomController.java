@@ -27,6 +27,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -76,7 +77,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private VBox panelChart;
     @FXML private VBox panelHistory;
     @FXML private VBox panelInfo;
-    @FXML private LineChart<?, ?> priceLineChart;
+    @FXML private LineChart<Number, Number> priceLineChart;
 
     @FXML private Button tabBtnChart;
     @FXML private Button tabBtnHistory;
@@ -86,6 +87,9 @@ public class BiddingRoomController implements MessageListener{
     @FXML private TextField txtMaxBid;
 
     @FXML private Button btnFollow;
+
+    private XYChart.Series<Number, Number> priceSeries; 
+    private int bidSequence = 0;
 
     private boolean isFollowing = false;
 
@@ -172,7 +176,7 @@ public class BiddingRoomController implements MessageListener{
     }
 
     @FXML
-    void handleFollow(ActionEvent event) {
+    void handleFollowRoom(ActionEvent event) {
         if (currentAuction == null) {
             return;
         }
@@ -183,8 +187,7 @@ public class BiddingRoomController implements MessageListener{
         }
         new Thread(() -> {
             try {
-                String json = JsonUtils.toJson(
-                        ClientMessage.request(action, currentAuction.getId()));
+                String json = JsonUtils.toJson(ClientMessage.request(action, currentAuction.getId()));
                 String responseJson = socket.sendAndReceive(json);
                 Platform.runLater(() -> {
                     if (responseJson == null) {
@@ -236,9 +239,6 @@ public class BiddingRoomController implements MessageListener{
             }
         }).start();
     }
-
-
-
 
     @FXML
     private void handlePlaceBid(ActionEvent event) {
@@ -292,6 +292,44 @@ public class BiddingRoomController implements MessageListener{
         btnTabAuto.getStyleClass().setAll("br-tab-active");
         btnTabManual.getStyleClass().setAll("br-tab");
 
+        if (priceSeries == null){
+            setupPriceChart();
+        }
+    }
+    @SuppressWarnings("unchecked") 
+    private void setupPriceChart(){
+        priceSeries = new XYChart.Series<>();
+        priceSeries.setName("Giá đấu");
+        
+        int size = bidHistory.size();
+        for (int i = size - 1; i >= 0; i--) { //đảo ngược để vẽ từ giá thấp đến cao theo thời gian
+            BidDTO bid = bidHistory.get(i);
+            bidSequence++;
+            priceSeries.getData().add(
+                new XYChart.Data<>(bidSequence, bid.getBidAmount())
+            );
+        }
+        if (currentAuction != null) {
+            long minInc = currentAuction.getMinIncrement();
+            if (minInc > 0) chartYAxis.setTickUnit(minInc);
+        }
+        chartYAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
+            @Override public String toString(Number n) {
+                return String.format("%,d", n.longValue());
+            }
+            @Override public Number fromString(String s) { return 0; }
+        });
+        chartXAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
+            @Override public String toString(Number n) { return "Bid " + n.intValue(); }
+            @Override public Number fromString(String s) { return 0; }
+        });
+        chartXAxis.setMinorTickVisible(false);
+        chartXAxis.setTickUnit(1);
+        priceLineChart.getData().clear();
+        priceLineChart.getData().add(priceSeries);
+        priceLineChart.setLegendVisible(false);
+        priceLineChart.setAnimated(false);   // tắt animation để append realtime mượt hơn
+        priceLineChart.setCreateSymbols(true); 
     }
 
     @FXML
@@ -307,6 +345,17 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleTabChart(ActionEvent event) {
+        panelHistory.setVisible(false);
+        panelHistory.setManaged(false);
+        panelInfo.setVisible(false);
+        panelInfo.setManaged(false);
+        panelChart.setVisible(true);
+        panelChart.setManaged(true);
+
+        tabBtnChart.getStyleClass().setAll("br-tab-active");
+        tabBtnHistory.getStyleClass().setAll("br-tab");
+        tabBtnInfo.getStyleClass().setAll("br-tab");
+
 
     }
 
@@ -596,8 +645,4 @@ public class BiddingRoomController implements MessageListener{
 
     }
 
-    @FXML
-    void handleFollowRoom(ActionEvent event) {
-
-    }
 }
