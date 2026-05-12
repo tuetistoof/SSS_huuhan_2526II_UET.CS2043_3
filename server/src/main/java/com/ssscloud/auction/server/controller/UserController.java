@@ -92,23 +92,25 @@ public class UserController {
     }
 
     public String deposit(Object data, String userId) {
-    try {
-        String amountStr = JsonUtils.toJson(data).replace("\"", "").trim();
-        long amount = Long.parseLong(amountStr);
-        if (amount <= 0) return JsonUtils.toJson(ApiResponse.error("Số tiền không hợp lệ"));
-
-        User user = userDAO.findById(userId);
-        long newBalance = 0;
-        if (user instanceof Bidder b) {
-            newBalance = b.getAccountBalance() + amount;
-            userDAO.updateAccountBalance(userId, newBalance);
-        } else if (user instanceof Seller s) {
-            newBalance = s.getAccountBalance() + amount;
-            userDAO.updateSellerBalance(userId, newBalance);
+        System.out.println(">>> DEPOSIT HIT: userId=" + userId);
+        try {
+            String amountStr = JsonUtils.toJson(data).replace("\"", "").trim();
+            long amount = (long) Double.parseDouble(amountStr);
+            System.out.println(">>> parsed amount: " + amount);
+            User user = userDAO.findById(userId);
+            System.out.println(">>> found user: " + (user == null ? "NULL" : user.getClass().getSimpleName()));
+            long newBalance = 0;
+            if (user instanceof Bidder b) {
+                newBalance = b.getAccountBalance() + amount;
+                userDAO.updateAccountBalance(userId, newBalance);
+            } else if (user instanceof Seller s) {
+                newBalance = s.getAccountBalance() + amount;
+                userDAO.updateSellerBalance(userId, newBalance);
+            }
+            return JsonUtils.toJson(ApiResponse.success(newBalance, "Nạp tiền thành công"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return JsonUtils.toJson(ApiResponse.error("Lỗi: " + e.getMessage()));
         }
-        return JsonUtils.toJson(ApiResponse.success(newBalance, "Nạp tiền thành công"));
-    } catch (Exception e) {
-        return JsonUtils.toJson(ApiResponse.error("Lỗi: " + e.getMessage()));
     }
-}
 }

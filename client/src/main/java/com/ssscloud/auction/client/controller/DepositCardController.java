@@ -22,7 +22,7 @@ public class DepositCardController {
     private MainLayoutController mainLayoutController;
 
     @FXML
-    public void intialize() {
+    public void initialize() {
         lblError.setVisible(false);
         lblError.setManaged(false);
     }
@@ -34,8 +34,9 @@ public class DepositCardController {
         String amountTxt = txtDepositValue.getText();
         int amount = Integer.parseInt(amountTxt.trim());
         if (amount < 5000) {
-            lblError.setStyle("error-label");
-            lblError.setText("Inavlid amount! Minium deposit is 5.000");
+            lblError.setVisible(true);
+            lblError.setManaged(true);
+            lblError.setText("Inavlid amount! Minium deposit is 5,000");
         } else {
             new Thread(() -> {
                 try {
@@ -49,7 +50,7 @@ public class DepositCardController {
                             
                             if (resp != null && resp.isSuccess()) {
                                 String dataJsonStr = JsonUtils.toJson(resp.getData());
-                                long newBalance = Long.parseLong(dataJsonStr);
+                                long newBalance = (long) Double.parseDouble(dataJsonStr);
                                 Platform.runLater(() -> {
                                     mainLayoutController.updateBalance(newBalance);
                                 });
@@ -67,6 +68,8 @@ public class DepositCardController {
                     });
                 }
             }).start();
+        Stage stage = (Stage) lblError.getScene().getWindow();
+        stage.close();
         }
     }
 

@@ -91,13 +91,15 @@ public class MainLayoutController {
     private AuctionClientSocket socket =  AuctionClientSocket.getInstance();
 
     private Runnable onSuccessCallback;
+    
+    java.text.DecimalFormat formatter = new java.text.DecimalFormat("#,###");
  
     public void setOnSuccessCallback(Runnable callback) {
         this.onSuccessCallback = callback;
     }
     public void initialize() {
         lblUsername.setText(user.getUsername());
-        lblAccountBalance.setText(String.valueOf(user.getAccountBalance()));
+        lblAccountBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
         applyRole(user.getRole());
         initNotification();
         handleNavDashboard(null);
@@ -240,10 +242,10 @@ public class MainLayoutController {
         }
     }
 
-    public void updateBalance(long addedAmount) {
-        currentBalance += addedAmount;
-        java.text.DecimalFormat formatter = new java.text.DecimalFormat("#,###");
+    public void updateBalance(long newBalance) {
+        currentBalance = newBalance;
         lblAccountBalance.setText("Balance: " + formatter.format(currentBalance));
+        SessionManager.getInstance().getCurrentUser().setAccountBalance(newBalance);
     }
 
     @FXML

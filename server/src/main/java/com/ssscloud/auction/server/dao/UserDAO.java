@@ -112,7 +112,7 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, s.bank_account " +
+                "b.account_balance, s.bank_account, s.account_balance AS seller_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -147,7 +147,7 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, s.bank_account " +
+                "b.account_balance, s.bank_account, s.account_balance AS seller_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -182,7 +182,7 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, s.bank_account " +
+                "b.account_balance, s.bank_account, s.account_balance AS seller_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -362,7 +362,7 @@ public class UserDAO extends BaseDAO {
             }
             case SELLER: {
                 String bankAccount = rs.getString("bank_account");
-                long balance = rs.getLong("account_balance");
+                long balance = rs.getLong("seller_balance");
                 Seller s = new Seller(id, name, userName, password, email, role, bankAccount, balance);
                 return s;
             }
