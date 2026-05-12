@@ -56,7 +56,7 @@
                         <HBox alignment="CENTER">
                            <children>
                               <Button fx:id="btnBackImage" mnemonicParsing="false" onAction="#navBackImage" styleClass="br-product-btn-change-image" text="&lt;" />
-                              <ImageView pickOnBounds="true" preserveRatio="true" />
+                              <ImageView fx:id="imgBiddingRoom" pickOnBounds="true" preserveRatio="true" />
                               <Button fx:id="btnFrontImage" mnemonicParsing="false" onAction="#navFrontImage" styleClass="br-product-btn-change-image" text="&gt;" />
                            </children>
                         </HBox>
@@ -139,7 +139,7 @@
         <padding><Insets bottom="16" left="0" right="0" top="0" /></padding>
 
         <!-- Tab bar -->
-        <HBox spacing="0" styleClass="br-tab-bar">
+        <HBox alignment="CENTER" spacing="0" styleClass="br-tab-bar">
           <Button fx:id="tabBtnHistory" maxWidth="Infinity" onAction="#handleTabHistory" styleClass="br-tab-active" text="Lịch sử bid" HBox.hgrow="ALWAYS" />
           <Button fx:id="tabBtnChart" maxWidth="Infinity" onAction="#handleTabChart" styleClass="br-tab" text="Biểu đồ giá" HBox.hgrow="ALWAYS" />
           <Button fx:id="tabBtnInfo" maxWidth="Infinity" onAction="#handleTabInfo" styleClass="br-tab" text="Thông tin phiên" HBox.hgrow="ALWAYS" />
@@ -157,7 +157,7 @@
           <!-- Panel: Biểu đồ giá -->
           <VBox fx:id="panelChart" managed="false" spacing="8" visible="false">
             <Label styleClass="br-form-title" text="Diễn biến giá theo thời gian" />
-            <LineChart fx:id="priceLineChart" animated="true" createSymbols="false" legendVisible="false" prefHeight="200" styleClass="br-chart">
+            <LineChart fx:id="priceLineChart" animated="true" createSymbols="false" legendVisible="false" styleClass="br-chart">
               <xAxis>
                 <NumberAxis fx:id="chartXAxis" forceZeroInRange="false" label="Thời gian" />
               </xAxis>

@@ -35,7 +35,10 @@ public class UserController {
                     user.getId(),
                     user.getUserName(),
                     user.getEmail(),
-                    user.getRole());
+                    user.getRole(),
+                    user instanceof Seller s ? s.getAccountBalance() :
+                    user instanceof Bidder b ? b.getAccountBalance() : 0L
+                    );
             return JsonUtils.toJson(ApiResponse.success(dto, "Login successful"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -66,14 +69,18 @@ public class UserController {
                             request.getPassword(),
                             request.getEmail(),
                             request.getRole(),
-                            request.getBankAccount());
+                            request.getBankAccount(),
+                            0L);
                     userDAO.saveSeller((Seller) user);
                 }
                 UserDTO dto = new UserDTO(
                         user.getId(),
                         user.getUserName(),
                         user.getEmail(),
-                        user.getRole());
+                        user.getRole(),
+                        user instanceof Seller s ? s.getAccountBalance() :
+                        user instanceof Bidder b ? b.getAccountBalance() : 0L
+                    );
                 return JsonUtils.toJson(ApiResponse.success(dto, "Register successful"));
             } else {
                 return JsonUtils.toJson(ApiResponse.error("Account is exist"));
@@ -83,4 +90,25 @@ public class UserController {
             return JsonUtils.toJson(ApiResponse.error("Server error: " + e.getMessage()));
         }
     }
+
+    public String deposit(Object data, String userId) {
+    try {
+        String amountStr = JsonUtils.toJson(data).replace("\"", "").trim();
+        long amount = Long.parseLong(amountStr);
+        if (amount <= 0) return JsonUtils.toJson(ApiResponse.error("Số tiền không hợp lệ"));
+
+        User user = userDAO.findById(userId);
+        long newBalance = 0;
+        if (user instanceof Bidder b) {
+            newBalance = b.getAccountBalance() + amount;
+            userDAO.updateAccountBalance(userId, newBalance);
+        } else if (user instanceof Seller s) {
+            newBalance = s.getAccountBalance() + amount;
+            userDAO.updateSellerBalance(userId, newBalance);
+        }
+        return JsonUtils.toJson(ApiResponse.success(newBalance, "Nạp tiền thành công"));
+    } catch (Exception e) {
+        return JsonUtils.toJson(ApiResponse.error("Lỗi: " + e.getMessage()));
+    }
+}
 }

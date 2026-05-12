@@ -58,3 +58,9 @@
     -fx-text-fill: #343a40;
     -fx-border-color: #343a40;
 }
+
+.error-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #D4537E;
+    -fx-font-weight: bold;
+}

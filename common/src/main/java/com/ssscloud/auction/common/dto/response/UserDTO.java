@@ -11,15 +11,17 @@ public class UserDTO implements Serializable {
     private String username;
     private String email;
     private UserRole role;
+    private long accountBalance;
 
     public UserDTO() {
     }
 
-    public UserDTO(String id, String username, String email, UserRole role) {
+    public UserDTO(String id, String username, String email, UserRole role, long accountBalance) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.role = role;
+        this.accountBalance = accountBalance;
     }
 
     public String getId() {
@@ -54,12 +56,21 @@ public class UserDTO implements Serializable {
         this.role = role;
     }
 
+    public long getAccountBalance() {
+        return accountBalance;
+    }
+
+    public void setAccountBalance(long accountBalance) {
+        this.accountBalance = accountBalance;
+    }
+
     @Override
     public String toString() {
         return "UserDTO{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", role=" + role +
+                ", accountBalance=" + accountBalance +
                 '}';
     }
 }

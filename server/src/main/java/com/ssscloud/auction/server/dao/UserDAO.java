@@ -63,7 +63,7 @@ public class UserDAO extends BaseDAO {
     public boolean saveSeller(Seller seller) {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
-        String sqlSeller = "INSERT INTO seller (id, bank_account) VALUES (?, ?)";
+        String sqlSeller = "INSERT INTO seller (id, bank_account, account_balance) VALUES (?, ?, ?)";
 
         Connection conn = null;
         PreparedStatement psEntity = null, psUser = null, psSeller = null;
@@ -87,6 +87,7 @@ public class UserDAO extends BaseDAO {
             psSeller = conn.prepareStatement(sqlSeller);
             psSeller.setString(1, seller.getId());
             psSeller.setString(2, seller.getBankAccount());
+            psSeller.setLong(3, seller.getAccountBalance()); 
             psSeller.executeUpdate();
 
             conn.commit();
@@ -323,6 +324,28 @@ public class UserDAO extends BaseDAO {
             closeResource(ps);
         }
     }
+    public boolean updateSellerBalance(String id, long newBalance) {
+        String sql = "UPDATE seller SET account_balance = ? WHERE id = ?";
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = getConnection();
+            ps = conn.prepareStatement(sql);
+            ps.setLong(1, newBalance);
+            ps.setString(2, id);
+            int row = ps.executeUpdate();
+            logger.info("update account balance userId = " + id + " - row =" + row);
+            return row > 0;
+
+        } catch (SQLException e) {
+            logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
+            return false;
+        } finally {
+            closeConnect(conn);
+            closeResource(ps);
+        }
+    }
     // ham ho tro
     public User mapResultSetToUser(ResultSet rs) throws SQLException {
         String id = rs.getString("id");
@@ -339,7 +362,8 @@ public class UserDAO extends BaseDAO {
             }
             case SELLER: {
                 String bankAccount = rs.getString("bank_account");
-                Seller s = new Seller(id, name, userName, password, email, role, bankAccount);
+                long balance = rs.getLong("account_balance");
+                Seller s = new Seller(id, name, userName, password, email, role, bankAccount, balance);
                 return s;
             }
             case ADMIN: {

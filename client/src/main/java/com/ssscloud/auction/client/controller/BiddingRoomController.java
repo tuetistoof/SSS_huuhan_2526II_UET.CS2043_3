@@ -33,6 +33,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -52,6 +53,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private NumberAxis chartYAxis;
     @FXML private VBox formAuto;
     @FXML private VBox formManual;
+    @FXML private ImageView imgBiddingRoom;
 
     @FXML private Label infoAntiSnipe;
     @FXML private Label infoEndTime;

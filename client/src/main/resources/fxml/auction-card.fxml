@@ -1,19 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="auctionCard" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="300.0" styleClass="main-card" stylesheets="@../css/auction-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.AuctionCardController">
+<VBox fx:id="auctionCard" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="380.0" prefWidth="220.0" styleClass="main-card" stylesheets="@../css/auction-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.AuctionCardController">
    <children>
-      <ImageView fx:id="imgItem" fitHeight="200.0" fitWidth="220.0" pickOnBounds="true" preserveRatio="true" styleClass="auction-image" />
-      <VBox>
+      <StackPane fx:id="imgItem" prefHeight="220.0" prefWidth="220.0" />
+      <Region prefHeight="20.0" />
+      <VBox spacing="6.0">
          <children>
-            <Label fx:id="lblItemName" alignment="TOP_LEFT" minHeight="80.0" prefHeight="80.0" prefWidth="230.0" styleClass="auction-title" text="Auction + Item name" wrapText="true" />
+            <Label fx:id="lblItemName" alignment="TOP_LEFT" prefHeight="40.0" prefWidth="230.0" styleClass="auction-title" text="Auction + Item name" wrapText="true" />
             <Label fx:id="lblCurrentPrice" styleClass="auction-description" text="Current Price" />
             <Label fx:id="lblEndTime" styleClass="auction-description" text="Endtime" />
-            <Label fx:id="lblSellerUsername" layoutX="10.0" layoutY="103.0" styleClass="auction-description" text="Seller ussername" />
+            <Label fx:id="lblSellerUsername" layoutX="10.0" layoutY="103.0" styleClass="auction-description" text="Seller ussername">
+               <padding>
+                  <Insets bottom="20.0" />
+               </padding></Label>
          </children>
+         <padding>
+            <Insets bottom="15.0" left="12.0" right="12.0" top="12.0" />
+         </padding>
       </VBox>
    </children>
 </VBox>

@@ -5,21 +5,26 @@ import com.ssscloud.auction.common.model.base.User;
 
 public class Seller extends User {
     private String bankAccount;
+    private long accountBalance;
     public Seller (String name, String username, String password, String email, UserRole role)
     {
         super(name, username, password, email, role);
         this.bankAccount = null;
+        this.accountBalance = 0;
     }
-    public Seller (String name, String username, String password, String email, UserRole role, String bankAccount)
+    public Seller (String name, String username, String password, String email, UserRole role, String bankAccount, long accountBalance)
     {
         super(name, username, password, email, role);
         this.bankAccount = bankAccount;
+        this.accountBalance = accountBalance;
     }
-    public Seller (String id, String name, String username, String password, String email, UserRole role, String bankAccount)
+    public Seller (String id, String name, String username, String password, String email, UserRole role, String bankAccount, long accountBalance)
     {
         super(id, name, username, password, email, role);
         this.bankAccount = bankAccount;
+        this.accountBalance = accountBalance;
     }
+    
     //getter setter
     public String getBankAccount() {
         return bankAccount;
@@ -27,4 +32,12 @@ public class Seller extends User {
     public void setBankAccount(String bankAccount) {
         this.bankAccount = bankAccount;
     }
+
+    public long getAccountBalance() {
+        return accountBalance;
+    }
+    public void setAccountBalance(long accountBalance) {
+        this.accountBalance = accountBalance;
+    }
 }
+    

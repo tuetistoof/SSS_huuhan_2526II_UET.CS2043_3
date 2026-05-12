@@ -104,7 +104,10 @@ public class UserService {
 
 
     private UserDTO toDTO(User user){
-        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole());
+        long balance = 0;
+        if (user instanceof Bidder b) balance = b.getAccountBalance();
+        else if (user instanceof Seller s) balance = s.getAccountBalance();
+        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole(), balance);
     }
 
     public static class AuthenticationException extends RuntimeException {

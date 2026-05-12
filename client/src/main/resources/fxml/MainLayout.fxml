@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -47,7 +47,7 @@
                </ImageView>
                <Region HBox.hgrow="ALWAYS" />
                <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
-               <Button mnemonicParsing="false" onAction="#handleDeposite" prefHeight="30.0" styleClass="btn-primary" text="Deposite" />
+               <Button mnemonicParsing="false" onAction="#handleDeposit" prefHeight="30.0" styleClass="btn-primary" text="Deposit" />
                    <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
                    <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" styleClass="avatar-circle" />
               </HBox>
@@ -151,16 +151,11 @@
               </VBox>
           </left>
       
-          <center>
+         <center>
             <StackPane>
                <children>
                      
-                     <ScrollPane fx:id="mainScrollPane" 
-                                 fitToWidth="true" 
-                                 fitToHeight="false" 
-                                 hbarPolicy="NEVER" 
-                                 vbarPolicy="AS_NEEDED" 
-                                 styleClass="main-scroll-pane">
+                     <ScrollPane fx:id="mainScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" styleClass="main-scroll-pane" vbarPolicy="AS_NEEDED">
                         <content>
                            <StackPane fx:id="contentArea" styleClass="content-area" />
                         </content>
@@ -172,7 +167,8 @@
             </StackPane>
          </center>
 
-         <right></right>
+         <right>
+         </right>
 
       </BorderPane>
    </children>

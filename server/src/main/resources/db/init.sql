@@ -288,6 +288,7 @@ DROP TABLE IF EXISTS `seller`;
 CREATE TABLE `seller` (
   `id` varchar(36) NOT NULL,
   `bank_account` varchar(255) NOT NULL,
+  'account_balance' bigint DEFAULT '0';
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_seller_user` FOREIGN KEY (`id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

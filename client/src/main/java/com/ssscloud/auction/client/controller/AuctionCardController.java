@@ -2,8 +2,7 @@ package com.ssscloud.auction.client.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -13,7 +12,7 @@ import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 
 public class AuctionCardController {
 
-    @FXML private ImageView imgItem;
+    @FXML private StackPane imgItem;
     @FXML private Label lblCurrentPrice;
     @FXML private Label lblItemName;
     @FXML private Label lblEndTime;
@@ -49,19 +48,12 @@ public class AuctionCardController {
        
         lblSellerUsername.setText(SellerUsername);
 
-        Image image = new Image(finalImageURL, true);
-        imgItem.setImage(image);
-        double width = 300;
-        double height = 250;
-
-        imgItem.setFitWidth(width);
-        imgItem.setFitHeight(height);
-        imgItem.setPreserveRatio(false);
-
-        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(width, height);
-        clip.setArcWidth(30);
-        clip.setArcHeight(30);
-        imgItem.setClip(clip);
+        String cssLayout = "-fx-background-image: url('" + finalImageURL + "'); " +
+                       "-fx-background-size: cover; " +
+                       "-fx-background-position: center center; " +
+                       "-fx-background-radius: 8 8 0 0;";
+                       
+        imgItem.setStyle(cssLayout);
 
         auctionCard.setOnMouseClicked(event -> {
             if (onClickListener != null) {

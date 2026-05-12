@@ -85,7 +85,8 @@ public class MainLayoutController {
     private final double SIDEBAR_COLLAPSED_WIDTH = 60.0;
 
     private Object currentController = null;
-    private UserDTO user;
+    private UserDTO user = SessionManager.getInstance().getCurrentUser();
+    private long currentBalance = user.getAccountBalance();
 
     private AuctionClientSocket socket =  AuctionClientSocket.getInstance();
 
@@ -94,10 +95,9 @@ public class MainLayoutController {
     public void setOnSuccessCallback(Runnable callback) {
         this.onSuccessCallback = callback;
     }
-
     public void initialize() {
-        user = SessionManager.getInstance().getCurrentUser();
         lblUsername.setText(user.getUsername());
+        lblAccountBalance.setText(String.valueOf(user.getAccountBalance()));
         applyRole(user.getRole());
         initNotification();
         handleNavDashboard(null);
@@ -222,19 +222,28 @@ public class MainLayoutController {
     }
 
     @FXML
-    void handleDeposite(ActionEvent event) {
+    void handleDeposit(ActionEvent event) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/fxml/DepositeCard.fxml"));
-            Scene scene = new Scene(root);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/DepositCard.fxml"));
+            Parent root = loader.load();
+
+            DepositCardController ctrl = loader.getController();
+            ctrl.setMainLayoutController(this);
 
             Stage depositStage = new Stage();
             depositStage.setTitle("Nạp tiền vào tài khoản");
-            depositStage.setScene(scene);
+            depositStage.setScene(new Scene(root));
             depositStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
             depositStage.show();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void updateBalance(long addedAmount) {
+        currentBalance += addedAmount;
+        java.text.DecimalFormat formatter = new java.text.DecimalFormat("#,###");
+        lblAccountBalance.setText("Balance: " + formatter.format(currentBalance));
     }
 
     @FXML

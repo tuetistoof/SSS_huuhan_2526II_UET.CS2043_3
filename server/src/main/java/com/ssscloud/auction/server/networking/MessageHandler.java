@@ -190,6 +190,12 @@ public class MessageHandler {
                         ApiResponse.success(watching, "OK")));  
                 }
 
+                case "DEPOSIT": {
+                    String result = userController.deposit(msg.getData(), client.getUserId());
+                    ApiResponse<?> resp = JsonUtils.fromJson(result, ApiResponse.class);
+                    return JsonUtils.toJson(ClientMessage.request("DEPOSIT_RESPONSE", resp));
+                }
+
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",
                             ApiResponse.error("Action không được hỗ trợ: " + action)));

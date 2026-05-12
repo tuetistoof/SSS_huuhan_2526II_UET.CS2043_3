@@ -9,12 +9,12 @@
 <?import javafx.scene.layout.VBox?>
 
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="350.0" styleClass="deposit-card" stylesheets="@../css/deposite-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.DepositeCardController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="350.0" styleClass="deposit-card" stylesheets="@../css/deposit-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.DepositSCardController">
    <children>
       <VBox alignment="CENTER_LEFT" layoutX="37.0" layoutY="45.0" spacing="10.0">
          <children>
             <Label styleClass="deposit-title" text="Nạp tiền vào tài khoản" />
-            <TextField fx:id="txtDepositeValue" promptText="Nhập số tiền (VD: 500,000)" styleClass="deposit-field" />
+            <TextField fx:id="txtDepositValue" promptText="Nhập số tiền (VD: 500,000)" styleClass="deposit-field" />
             <Label fx:id="lblError" text="Error" />
             <HBox>
                <children>

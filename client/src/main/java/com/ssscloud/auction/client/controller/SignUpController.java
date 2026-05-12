@@ -190,7 +190,7 @@ public class SignUpController {
                 final String finalErrorMessage = errorMessage;
                 final UserDTO finalUser = userDTO;
 
-                javafx.application.Platform.runLater(() -> {
+                Platform.runLater(() -> {
                     // Tắt hoạt cảnh
                     loadingController.stopAnimation();
                     loading.setVisible(false);
