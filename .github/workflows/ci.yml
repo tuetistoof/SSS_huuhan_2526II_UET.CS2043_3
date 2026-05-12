@@ -8,22 +8,25 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Create application.properties
+        shell: bash
         run: |
           cp server/src/main/resources/application.properties.example \
-             server/src/main/resources/application.properties
+            server/src/main/resources/application.properties
           echo "spring.application.name=cloud" > server/src/main/resources/application.properties
           echo "spring.datasource.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC" >> server/src/main/resources/application.properties
           echo "spring.datasource.username=${{ secrets.DB_USERNAME }}" >> server/src/main/resources/application.properties
           echo "spring.datasource.password=${{ secrets.DB_PASSWORD }}" >> server/src/main/resources/application.properties
           echo "spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver" >> server/src/main/resources/application.properties
-
       - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
@@ -40,24 +43,34 @@ jobs:
 
       - name: Build with Maven
         run: ./mvnw clean package -pl server -am -DskipTests
+        shell: bash
 
       - name: Run tests and generate coverage report
-        run: ./mvnw test org.jacoco:jacoco-maven-plugin:report -pl server -am
+        run: ./mvnw verify -pl server -am
+        shell: bash
 
       - name: Build Docker image
+        if: matrix.os == 'ubuntu-latest'
         run: docker compose build
+        shell: bash
 
       - name: Run containers
-        run: |
-          DB_USERNAME=${{ secrets.DB_USERNAME }} \
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-          docker compose up -d
+        if: matrix.os == 'ubuntu-latest'
+        run: docker compose up -d
+        shell: bash
+        env:
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
       - name: Wait for server to be ready
+        if: matrix.os == 'ubuntu-latest'
         run: sleep 30
 
       - name: Check server health
+        if: matrix.os == 'ubuntu-latest'
         run: curl -f http://localhost:8080 || echo "Server running"
 
       - name: Stop containers
+        if: matrix.os == 'ubuntu-latest'
         run: docker compose down
+        shell: bash

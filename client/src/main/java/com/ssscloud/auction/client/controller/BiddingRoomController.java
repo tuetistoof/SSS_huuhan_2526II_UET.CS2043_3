@@ -15,6 +15,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.*;
 
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
@@ -96,7 +99,8 @@ public class BiddingRoomController implements MessageListener{
     private boolean isFollowing = false;
 
     private boolean isAutoBidding = false;   
-    private long autoBidMaxBid = 0;    
+    private long autoBidMaxBid = 0;   
+    private Timeline countdownTimer; 
 
     //inject từ màn hình trước
     private AuctionDTO currentAuction;
@@ -127,7 +131,7 @@ public class BiddingRoomController implements MessageListener{
 
         //LAYOUT NODES
         private final HBox root = new HBox(10);
-        private final Label badgeLabel = new Label(); //manual hoặc auto
+        private final Label badgeLabel = new Label(); 
 
         private final VBox nameTimeBox = new VBox(2);
         private final Label nameLabel  = new Label();
@@ -499,6 +503,11 @@ public class BiddingRoomController implements MessageListener{
         currentAuction.setCurrentPrice(bid.getCurrentPrice());
         bidHistory.add(0, bid);
         lblBidCount.setText(String.valueOf(bidHistory.size()));
+        
+        if (lblMinHint != null && currentAuction.getMinIncrement() > 0) {
+            long minRequired = bid.getCurrentPrice() + currentAuction.getMinIncrement();
+            lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
+        }
         resetPlaceBidButton();
         // Nếu có gia hạn thời gian, cập nhật luôn
         if (bid.getNewEndTime() != null && bid.getNewEndTime().isAfter(currentAuction.getEndTime())) {
@@ -555,13 +564,76 @@ public class BiddingRoomController implements MessageListener{
     // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction)  { 
         this.currentAuction  = auction; 
+        populateUI();
         loadBidHistory(); 
         subcribeToAuction();
         checkFollowStatus();
+        startTimer();
     }
+
     public void setUserId(String userId)         { this.currentUserId   = userId; }
     public void setUserName(String userName)     { this.currentUserName = userName; }
 
+    private void populateUI() {
+        if (currentAuction == null) return;
+        if (lblAuctionName != null) {
+            lblAuctionName.setText(currentAuction.getName() != null
+                    ? currentAuction.getName() : "—");
+        }
+        if (lblCurrentPrice != null) {
+            lblCurrentPrice.setText(String.format("%,d ₫", currentAuction.getCurrentPrice()));
+        }
+
+        if (lblLeaderName != null) {
+            String leader = currentAuction.getHighestBidderName();
+            lblLeaderName.setText("Dẫn đầu: " + (leader != null ? leader : "—"));
+        }
+        if (lblMinIncrement != null) {
+            lblMinIncrement.setText(currentAuction.getMinIncrement() > 0
+                    ? String.format("%,d ₫", currentAuction.getMinIncrement()) : "—");
+        }
+
+        // Giá khởi điểm (dùng currentPrice nếu không có startPrice riêng)
+        if (lblStartPrice != null) {
+            lblStartPrice.setText(String.format("%,d ₫", currentAuction.getCurrentPrice()));
+        }
+        if (lblMinHint != null && currentAuction.getMinIncrement() > 0) {
+            long minRequired = currentAuction.getCurrentPrice() + currentAuction.getMinIncrement();
+            lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
+        }
+        if (lblStatusBadge != null && currentAuction.getStatus() != null) {
+            switch (currentAuction.getStatus()) {
+                case RUNNING   -> { lblStatusBadge.setText("Đang chạy");  lblStatusBadge.getStyleClass().setAll("br-badge-running"); }
+                case FINISHED -> { lblStatusBadge.setText("Đã kết thúc"); lblStatusBadge.getStyleClass().setAll("br-badge-ended"); }
+                default       -> lblStatusBadge.setText(currentAuction.getStatus().toString());
+            }
+        }
+    }
+    private void startTimer() {
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
+        if (currentAuction == null || currentAuction.getEndTime() == null) return;
+
+        countdownTimer = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), e -> {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            java.time.Duration remaining = java.time.Duration.between(now, currentAuction.getEndTime());
+            if (remaining.isNegative() || remaining.isZero()) {
+                if (lblTimer != null) lblTimer.setText("Còn lại: 00:00:00");
+                countdownTimer.stop();
+                return;
+            }
+            long h = remaining.toHours();
+            long m = remaining.toMinutesPart();
+            long s = remaining.toSecondsPart();
+            if (lblTimer != null) {
+                lblTimer.setText(String.format("Còn lại: %02d:%02d:%02d", h, m, s));
+            }
+        }));
+        countdownTimer.setCycleCount(Animation.INDEFINITE);
+        countdownTimer.play();
+    }
+    
     private void loadBidHistory(){
         if (currentAuction == null) return;
         new Thread(() -> {
@@ -608,6 +680,10 @@ public class BiddingRoomController implements MessageListener{
     // Cleanup khi rời phòng
     public void cleanup() {
         socket.removeListener(this);
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+            countdownTimer = null;
+        }
     }
  
     //Helpers
