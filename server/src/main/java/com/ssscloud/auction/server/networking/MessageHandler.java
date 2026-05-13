@@ -21,7 +21,7 @@ import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
-import com.ssscloud.auction.server.service.AuctionRegistry;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class MessageHandler {
     private Gson gson = new Gson();
@@ -148,7 +148,7 @@ public class MessageHandler {
                         return null;
                     }
 
-                    Auction auction = com.ssscloud.auction.server.util.AuctionRegistry.getInstance().getLiveAuction(auctionId);
+                    Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
 
                     if (auction == null) {
                         client.getWriter().println(JsonUtils.toJson(

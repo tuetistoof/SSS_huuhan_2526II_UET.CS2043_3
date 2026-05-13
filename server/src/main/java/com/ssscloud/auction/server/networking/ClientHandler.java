@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import com.ssscloud.auction.server.service.SessionRegistry;
+import com.ssscloud.auction.server.util.SessionRegistry;
 
 public class ClientHandler implements Runnable{
     private Socket clientSocket;

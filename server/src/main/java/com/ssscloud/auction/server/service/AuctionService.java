@@ -12,10 +12,9 @@ import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.dao.AuctionDAO;
-import com.ssscloud.auction.server.dao.ItemDAO;
-import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.factory.ItemDTOFactory;
 import com.ssscloud.auction.server.factory.ItemFactory;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
