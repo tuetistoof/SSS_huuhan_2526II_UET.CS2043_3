@@ -27,6 +27,8 @@
 	<properties>
 		<java.version>25</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    	<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
 		<junit.version>5.12.1</junit.version>
 	</properties>
 
