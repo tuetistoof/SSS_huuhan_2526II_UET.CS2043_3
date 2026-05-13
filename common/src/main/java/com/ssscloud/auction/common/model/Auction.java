@@ -67,9 +67,6 @@ public class Auction implements Subject {
     public void placeBid(BidTransaction bid) {
         // setState
         this.bidTransaction.add(bid);
-        if (this.status == AuctionStatus.OPEN) {
-            this.status = AuctionStatus.RUNNING;
-        }
     }
 
     @Override

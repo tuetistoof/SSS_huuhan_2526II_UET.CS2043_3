@@ -14,6 +14,7 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
+import com.ssscloud.auction.server.util.SessionRegistry;
 
 public class NotificationService {
     private static final NotificationService instance = new NotificationService();
