@@ -62,7 +62,7 @@ public class WatchlistDAO extends BaseDAO {
 
     // ── Query ─────────────────────────────────────────────────────────────────
 
-    /** Lấy list auction_id mà user đang watch — dùng cho màn hình Watch List. */
+    /** Lấy list auction_id mà user đang follow — dùng cho màn hình Follow List. */
     public List<String> findAuctionIdsByUser(String userId) {
         String sql = "SELECT auction_id FROM watchlist WHERE user_id = ?";
         Connection        conn   = null;
@@ -110,8 +110,8 @@ public class WatchlistDAO extends BaseDAO {
         return result;
     }
 
-    /** Kiểm tra user có đang watch auction không — dùng để render nút Watch/Unwatch. */
-    public boolean isWatching(String auctionId, String userId) {
+    /** Kiểm tra user có đang follow auction không — dùng để render nút Follow/Unfollow. */
+    public boolean isFollowing(String auctionId, String userId) {
         String sql = "SELECT 1 FROM watchlist WHERE auction_id = ? AND user_id = ?";
         Connection        conn = null;
         PreparedStatement ps   = null;
