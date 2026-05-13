@@ -1,27 +1,36 @@
 package com.ssscloud.auction.server.util;
 
 import com.ssscloud.auction.common.model.Auction;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AuctionRegistry {
     private static final AuctionRegistry instance = new AuctionRegistry();
-    
-    private final Map<String, Auction> liveAuctions = new ConcurrentHashMap<>();
-
     private AuctionRegistry() {}
+    public static AuctionRegistry getInstance() { return instance; }
 
-    public static AuctionRegistry getInstance() { 
-        return instance; 
-    }
+    private final Map<String, Auction> activeAuctions = new ConcurrentHashMap<>();
 
-    // 3. Hàm này dùng để nạp Auction vào kho (Gọi lúc CreateAuction)
     public void register(Auction auction) {
-        liveAuctions.put(auction.getAuctionConfig().getId(), auction);
+        activeAuctions.put(auction.getAuctionConfig().getId(), auction);
     }
 
-    // 4. Hàm này dùng để lôi Auction ra (Gọi lúc Client Subscribe)
+    public Auction get(String auctionId) {
+        return activeAuctions.get(auctionId);
+    }
+
+    // Alias dùng ở MessageHandler (SUBSCRIBE_AUCTION)
     public Auction getLiveAuction(String auctionId) {
-        return liveAuctions.get(auctionId);
+        return activeAuctions.get(auctionId);
+    }
+
+    public void remove(String auctionId) {
+        activeAuctions.remove(auctionId);
+    }
+
+    // Dùng ở recoverLiveAuctions + startAuctionCloser
+    public Collection<Auction> getAllLive() {
+        return activeAuctions.values();
     }
 }
