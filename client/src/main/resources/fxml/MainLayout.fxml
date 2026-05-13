@@ -48,6 +48,20 @@
                <Region HBox.hgrow="ALWAYS" />
                <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
                <Button mnemonicParsing="false" onAction="#handleDeposit" prefHeight="30.0" styleClass="btn-primary" text="Deposit" />
+               <StackPane>
+                  <children>
+                     <Button fx:id="btnBell" mnemonicParsing="false" onAction="#handleBell" style="-fx-background-color: transperant;">
+                        <graphic>
+                           <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                              <image>
+                                 <Image url="@../images/notification.png" />
+                              </image>
+                           </ImageView>
+                        </graphic>
+                     </Button>
+                     <Label fx:id="lblBellBadge" styleClass="notification-badge" />
+                  </children>
+               </StackPane>
                    <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
                    <Circle fx:id="navUserInfo" fill="GRAY" onMouseClicked="#handleNavUserInfo" radius="15" styleClass="avatar-circle" />
               </HBox>

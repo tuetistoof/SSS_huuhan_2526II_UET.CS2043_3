@@ -584,4 +584,17 @@ Vòng tròn loading
     -fx-padding: 0;
 }
 
+.notification-badge {
+    -fx-background-color: #ff3b30; 
+    -fx-text-fill: white;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 50%; 
+    -fx-min-width: 12px;
+    -fx-min-height: 12px;
+    -fx-max-width: 12px;
+    -fx-max-height: 12px;
+    -fx-translate-x: 6px;
+    -fx-translate-y: 6px;
+}
 

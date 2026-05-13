@@ -122,10 +122,11 @@ public class AuctionDAO extends BaseDAO {
 
     public Auction findByAuctionId(String id) {
         String sql = "SELECT a.id, a.status, a.seller_id, a.item_id, " +
-                "ac.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
+                "e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
                 "b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM auction a " +
                 "JOIN auction_config ac ON a.id = ac.id " +
+                "JOIN entity e ON a.id = e.id  " +
                 "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
                 "WHERE a.id = ? " +
                 "ORDER BY b.bid_time DESC";

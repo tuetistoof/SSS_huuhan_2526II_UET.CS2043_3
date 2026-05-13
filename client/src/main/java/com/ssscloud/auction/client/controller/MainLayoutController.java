@@ -107,7 +107,7 @@ public class MainLayoutController {
     private void initNotification() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/notification-popup.fxml"));
+            getClass().getResource("/fxml/notification-popup.fxml"));
             notifPopupRoot = loader.load(); 
             notificationController = loader.getController();
             notificationController.init(this::navigateToAuction);
