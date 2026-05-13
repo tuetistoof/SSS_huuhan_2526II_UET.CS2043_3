@@ -90,7 +90,7 @@ CREATE TABLE `auction` (
 
 LOCK TABLES `auction` WRITE;
 /*!40000 ALTER TABLE `auction` DISABLE KEYS */;
-INSERT INTO `auction` VALUES ('995ed873-5084-418f-8942-bdcb906ad320','OPEN','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','300b3417-94ca-4ded-ac87-8e060366a281'),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e','OPEN','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','343e6724-7efb-4958-a05d-9a815ab6bf08'),('b89ed511-03a0-4522-a45f-b8186265ef51','FINISHED','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','0f898bfd-c02f-490c-af40-69763e6e74d8');
+INSERT INTO `auction` VALUES ('995ed873-5084-418f-8942-bdcb906ad320','RUNNING','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','300b3417-94ca-4ded-ac87-8e060366a281'),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e','RUNNING','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','343e6724-7efb-4958-a05d-9a815ab6bf08'),('b89ed511-03a0-4522-a45f-b8186265ef51','FINISHED','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','0f898bfd-c02f-490c-af40-69763e6e74d8');
 /*!40000 ALTER TABLE `auction` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -135,7 +135,7 @@ CREATE TABLE `bid_transaction` (
   `bidder_id` varchar(36) NOT NULL,
   `bidder_username` varchar(255) DEFAULT NULL,
   `bid_amount` bigint DEFAULT NULL,
-  `bid_time` datetime NOT NULL,
+  `bid_time` datetime(6) DEFAULT NULL,
   `bid_type` varchar(50) DEFAULT NULL,
   KEY `fk_bid_transaction_auction` (`auction_id`),
   KEY `fk_bid_transactiond_user` (`bidder_id`),
@@ -150,6 +150,7 @@ CREATE TABLE `bid_transaction` (
 
 LOCK TABLES `bid_transaction` WRITE;
 /*!40000 ALTER TABLE `bid_transaction` DISABLE KEYS */;
+INSERT INTO `bid_transaction` VALUES ('995ed873-5084-418f-8942-bdcb906ad320','d6e71dcb-d078-4190-94bd-58d7038c0857','trungbeo',16000000,'2026-05-13 15:54:27.000000','MANUAL'),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e','d6e71dcb-d078-4190-94bd-58d7038c0857','trungbeo',100000,'2026-05-13 15:55:20.000000','MANUAL'),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e','d6e71dcb-d078-4190-94bd-58d7038c0857','trungbeo',170000,'2026-05-13 15:55:28.000000','MANUAL'),('995ed873-5084-418f-8942-bdcb906ad320','d6e71dcb-d078-4190-94bd-58d7038c0857','trungbeo',17000000,'2026-05-13 17:11:40.000000','MANUAL'),('995ed873-5084-418f-8942-bdcb906ad320','d6e71dcb-d078-4190-94bd-58d7038c0857','trungbeo',20000000,'2026-05-13 17:33:57.000000','MANUAL');
 /*!40000 ALTER TABLE `bid_transaction` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -398,4 +399,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-13 14:57:15
+-- Dump completed on 2026-05-14  0:03:01

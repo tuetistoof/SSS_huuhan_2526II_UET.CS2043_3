@@ -24,8 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class AutoBidService {
 
-    public static final int MAX_AUTO_BID_PER_AUCTION = 50;
-
     private final Map<String, List<AutoBidEntry>> registrationsByAuction = new ConcurrentHashMap<>();
 
     private final Map<String, Map<String, AtomicInteger>> bidCountByAuction = new ConcurrentHashMap<>();
@@ -63,9 +61,7 @@ public class AutoBidService {
         if (bidderId.equals(auction.getSellerId()))
             throw new IllegalArgumentException(
                     "Người bán không thể đăng ký auto bid cho sản phẩm của mình");
-        if (getAutoBidCount(req.getAuctionId(), bidderId) >= MAX_AUTO_BID_PER_AUCTION)
-            throw new IllegalArgumentException(
-                    "Đã đạt giới hạn " + MAX_AUTO_BID_PER_AUCTION + " lần auto bid cho phiên này");
+
         User bidder = userDAO.findById(bidderId);
         if (!(bidder instanceof Bidder b))
             throw new IllegalArgumentException("Người dùng không phải bidder");
@@ -74,8 +70,8 @@ public class AutoBidService {
         List<AutoBidEntry> entries = registrationsByAuction.computeIfAbsent(
                 req.getAuctionId(), k -> new CopyOnWriteArrayList<>());
         entries.removeIf(e -> e.bidderId.equals(bidderId));
-        entries.add(new AutoBidEntry(bidderId, bidderUsername,
-                (long) req.getMaxBid(), (long) req.getIncrement()));
+        entries.add(new AutoBidEntry(bidderId, bidderUsername, (long) req.getMaxBid(), (long) req.getIncrement()));
+        trigger(auction); 
     }
 
     public void trigger(Auction auction) {
