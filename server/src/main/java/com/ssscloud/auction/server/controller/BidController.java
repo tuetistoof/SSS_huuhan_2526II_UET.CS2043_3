@@ -31,8 +31,9 @@ public class BidController {
 
             if (req == null)
                 return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
+
             bidService.placeBid(req, bidderId, bidderUsername);
-            return null; 
+            return JsonUtils.toJson(ApiResponse.success(null, "Đặt giá thành công"));
 
         } catch (InvalidBidException e) {
             return JsonUtils.toJson(ApiResponse.error(e.getMessage()));
@@ -51,13 +52,13 @@ public class BidController {
                 return JsonUtils.toJson(ApiResponse.error("Dữ liệu đặt giá không hợp lệ"));
 
             autoBidService.register(req, bidderId, bidderUsername);
-            return null;
+            return JsonUtils.toJson(ApiResponse.success(null, "Đăng ký auto bid thành công"));
 
         } catch (IllegalArgumentException e) {
             return JsonUtils.toJson(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             System.err.println("[BidController] Lỗi: " + e.getMessage());
-            return JsonUtils.toJson(ApiResponse.error("Lỗi hệ thống khi đặt giá"));
+            return JsonUtils.toJson(ApiResponse.error("Lỗi hệ thống khi đăng ký auto bid"));
         }
     }
 
@@ -68,7 +69,6 @@ public class BidController {
                 return JsonUtils.toJson(ApiResponse.error("Thiếu auctionId"));
             }
             List<BidTransaction> txList = bidTransactionDAO.findByAuctionId(auctionId);
-            //map bidtransaction thành bidDTO
             List<BidDTO> bidHistory = txList.stream().map(tx -> {
                 BidDTO dto = new BidDTO();
                 dto.setAuctionId(tx.getAuctionId());

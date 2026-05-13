@@ -12,6 +12,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

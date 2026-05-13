@@ -19,6 +19,7 @@ import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class BidServiceTest {
 

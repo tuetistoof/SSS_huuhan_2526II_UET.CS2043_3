@@ -10,6 +10,7 @@ import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class BidService {
     private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();

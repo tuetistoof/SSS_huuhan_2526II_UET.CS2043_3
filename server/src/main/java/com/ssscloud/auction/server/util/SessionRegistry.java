@@ -1,4 +1,4 @@
-package com.ssscloud.auction.server.service;
+package com.ssscloud.auction.server.util;
 
 import java.io.PrintWriter;
 import java.util.Map;
