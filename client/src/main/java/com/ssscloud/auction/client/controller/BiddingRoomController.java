@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client.controller;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -310,7 +311,7 @@ public class BiddingRoomController implements MessageListener{
 
         // bidHistory[0] = mới nhất → đảo ngược để vẽ cũ→mới theo trục X
         int size = bidHistory.size();
-        for (int i = size - 1; i >= 0; i--) {
+        for (int i = 0; i < size; i++) {
             BidDTO bid = bidHistory.get(i);
             bidSequence++;
             priceSeries.getData().add(new XYChart.Data<>(bidSequence, bid.getBidAmount()));
@@ -702,6 +703,7 @@ public class BiddingRoomController implements MessageListener{
             // if (historyList == null) return;
             if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
                 List<BidDTO> historyList = apiResponse.getData();
+                Collections.reverse(historyList);
                 Platform.runLater(() -> {
                     bidHistory.setAll(historyList);
                     lblBidCount.setText(String.valueOf(historyList.size()));
