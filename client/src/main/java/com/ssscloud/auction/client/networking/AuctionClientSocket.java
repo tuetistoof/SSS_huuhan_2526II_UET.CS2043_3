@@ -91,11 +91,13 @@ public class AuctionClientSocket {
     }
 
     public String sendAndReceive(String json) {
-
         if (!connected || out == null) return null;
         try {
+            // Flush các response cũ còn sót trong queue trước khi gửi request mới
+            // Tránh nhận nhầm response của request trước (xảy ra khi vào phòng nhiều lần)
+            responseQueue.clear();
             send(json);
-            return responseQueue.poll(5, TimeUnit.SECONDS); // chờ tối đa 5s
+            return responseQueue.poll(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             System.out.println("Bị gián đoạn khi chờ response");
             return null;
