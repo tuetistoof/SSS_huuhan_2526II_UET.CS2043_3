@@ -10,7 +10,6 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
@@ -51,17 +50,25 @@
       <HBox spacing="12">
             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                <children>
-                  <AnchorPane styleClass="br-white-card" VBox.vgrow="ALWAYS">
-                     <children>
-                        <HBox alignment="CENTER">
-                           <children>
-                              <Button fx:id="btnBackImage" mnemonicParsing="false" onAction="#navBackImage" styleClass="br-product-btn-change-image" text="&lt;" />
-                              <ImageView fx:id="imgBiddingRoom" pickOnBounds="true" preserveRatio="true" />
-                              <Button fx:id="btnFrontImage" mnemonicParsing="false" onAction="#navFrontImage" styleClass="br-product-btn-change-image" text="&gt;" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </AnchorPane>
+                  <StackPane fx:id="containerImage" minHeight="400.0" prefHeight="400.0" styleClass="br-white-card">
+                    <children>
+                        
+                        <ImageView fx:id="imgBiddingRoom" fitHeight="360.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" />
+                        
+                        <Button fx:id="btnBackImage" onAction="#navBackImage" styleClass="br-product-btn-change-image" text="&lt;" StackPane.alignment="CENTER_LEFT">
+                          <StackPane.margin>
+                              <Insets left="20.0" />
+                          </StackPane.margin>
+                        </Button>
+                        
+                        <Button fx:id="btnFrontImage" onAction="#navFrontImage" styleClass="br-product-btn-change-image" text="&gt;" StackPane.alignment="CENTER_RIGHT">
+                          <StackPane.margin>
+                              <Insets right="20.0" />
+                          </StackPane.margin>
+                        </Button>
+
+                    </children>
+                  </StackPane>
       
               <!-- ── Cột trái: Giá hiện tại + Stats ── -->
               <VBox spacing="0" styleClass="br-white-card">

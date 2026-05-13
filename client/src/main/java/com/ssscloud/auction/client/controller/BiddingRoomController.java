@@ -38,6 +38,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -57,6 +58,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private NumberAxis chartYAxis;
     @FXML private VBox formAuto;
     @FXML private VBox formManual;
+    @FXML private StackPane containerImage;
     @FXML private ImageView imgBiddingRoom;
 
     @FXML private Label infoAntiSnipe;
@@ -120,6 +122,8 @@ public class BiddingRoomController implements MessageListener{
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     public void initialize() {
+        imgBiddingRoom.fitWidthProperty().bind(containerImage.widthProperty().subtract(100));
+        imgBiddingRoom.fitHeightProperty().bind(containerImage.heightProperty().subtract(40));
         socket.addListener(this);
         setupBidHistoryList();
     }
