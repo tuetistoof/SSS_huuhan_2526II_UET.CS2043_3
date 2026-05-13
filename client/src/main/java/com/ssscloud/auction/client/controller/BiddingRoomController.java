@@ -36,6 +36,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -106,7 +107,8 @@ public class BiddingRoomController implements MessageListener{
     private AuctionDTO currentAuction;
     private String currentUserId;
     private String currentUserName;
-
+    private List<String> itemUrls;
+    private int currentImageIndex = 0;
     private Runnable onSuccessCallback;
  
     public void setOnSuccessCallback(Runnable callback) {
@@ -564,11 +566,13 @@ public class BiddingRoomController implements MessageListener{
     // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction)  { 
         this.currentAuction  = auction; 
+        itemUrls = auction.getItemDTO().getImageUrls();
         populateUI();
         loadBidHistory(); 
         subcribeToAuction();
         checkFollowStatus();
         startTimer();
+        setUpItemImage(itemUrls);
     }
 
     public void setUserId(String userId)         { this.currentUserId   = userId; }
@@ -713,14 +717,40 @@ public class BiddingRoomController implements MessageListener{
         alert.showAndWait();
     }
 
+    private void setUpItemImage(List<String> itemUrls) {
+        this.itemUrls = itemUrls;
+        this.currentImageIndex = 0;
+        updateImageView();
+    }
+
     @FXML
     void navBackImage(ActionEvent event) {
-
+        if (itemUrls == null || itemUrls.isEmpty()) return;
+        if (currentImageIndex > 0) {
+            currentImageIndex--;
+        } else {
+            currentImageIndex = itemUrls.size() - 1;
+        }
+        updateImageView();
     }
 
     @FXML
     void navFrontImage(ActionEvent event) {
-
+        if (itemUrls == null || itemUrls.isEmpty()) return;
+        if (currentImageIndex < itemUrls.size() - 1) {
+            currentImageIndex++;
+        } else {
+            currentImageIndex = 0;
+        }
+        updateImageView();
     }
+
+    private void updateImageView() {
+    if (itemUrls != null && !itemUrls.isEmpty()) {
+        String url = itemUrls.get(currentImageIndex);
+        Image image = new Image(url, true);
+        imgBiddingRoom.setImage(image);
+    }
+}
 
 }
