@@ -93,12 +93,12 @@ public class AuctionDAO extends BaseDAO {
         // FIX: JOIN entity e ON a.id = e.id để lấy e.name (tên auction)
         // Code gốc dùng ac.name nhưng auction_config không có cột name
         String sql =
-            "SELECT a.id, a.status, a.seller_id, a.item_id, " +
+            "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
             "       b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
-            "JOIN entity e ON a.id = e.id " +          // <-- thêm JOIN entity
+            "JOIN entity e ON a.id = e.id " +
             "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
             "WHERE a.seller_id = ? " +
             "ORDER BY b.bid_time DESC";
@@ -115,7 +115,7 @@ public class AuctionDAO extends BaseDAO {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                String auctionId = rs.getString("id");
+                String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
                 if (auction == null) {
                     auction = mapResultSetToAuction(rs);
@@ -141,7 +141,7 @@ public class AuctionDAO extends BaseDAO {
     public Auction findByAuctionId(String id) {
         // Giữ nguyên — đã có JOIN entity e ON a.id = e.id, dùng e.name đúng
         String sql =
-            "SELECT a.id, a.status, a.seller_id, a.item_id, " +
+            "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
             "       b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
             "FROM auction a " +
@@ -186,12 +186,12 @@ public class AuctionDAO extends BaseDAO {
     public List<Auction> findByStatus(AuctionStatus status) {
         // FIX: thêm JOIN entity e ON a.id = e.id, đổi ac.name → e.name
         String sql =
-            "SELECT a.id, a.status, a.seller_id, a.item_id, " +
+            "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
             "       b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
-            "JOIN entity e ON a.id = e.id " +          // <-- thêm JOIN entity
+            "JOIN entity e ON a.id = e.id " +
             "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
             "WHERE a.status = ? " +
             "ORDER BY b.bid_time DESC";
@@ -208,7 +208,7 @@ public class AuctionDAO extends BaseDAO {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                String auctionId = rs.getString("id");
+                String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
                 if (auction == null) {
                     auction = mapResultSetToAuction(rs);
@@ -302,7 +302,7 @@ public class AuctionDAO extends BaseDAO {
             "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
             "                         WHERE b2.auction_id = b1.auction_id) " +
             ") AS last_bid ON last_bid.auction_id = a.id " +
-            "WHERE a.status = 'OPEN' " +
+             "WHERE a.status IN ('OPEN', 'RUNNING') " +
             "GROUP BY a.id, e.name, ac.end_time, u.username, ei.name, i.type, ac.start_price, last_bid.bid_amount";
 
         Connection        conn = null;
@@ -399,7 +399,7 @@ public class AuctionDAO extends BaseDAO {
 
     private Auction mapResultSetToAuction(ResultSet rs) throws SQLException {
         AuctionConfig config = new AuctionConfig(
-            rs.getString("id"),
+            rs.getString("auction_id"),                    // alias rõ ràng từ a.id AS auction_id
             rs.getString("name"),                          // từ entity e
             rs.getLong("start_price"),
             rs.getLong("min_increment"),
@@ -416,10 +416,10 @@ public class AuctionDAO extends BaseDAO {
         );
     }
 
-    // Khác với mapResultSetToBid bên BidTransactionDAO: dùng cột "id" làm auctionId
+    // Khác với mapResultSetToBid bên BidTransactionDAO: dùng alias "auction_id" rõ ràng
     private BidTransaction mapResultSetToBid(ResultSet rs) throws SQLException {
         return new BidTransaction(
-            rs.getString("id"),                            // auction_id
+            rs.getString("auction_id"),                    // alias rõ ràng từ a.id AS auction_id
             rs.getString("bidder_id"),
             rs.getString("bidder_username"),
             rs.getLong("bid_amount"),
@@ -440,7 +440,7 @@ public class AuctionDAO extends BaseDAO {
             rs.getString("item_type"),
             rs.getLong("current_price"),
             rs.getObject("end_time", LocalDateTime.class),
-            rs.getString("seller_username"),
+            rs.getString("seller_username"),    
             imageUrls
         );
     }

@@ -30,7 +30,7 @@ public class AutoBidService {
 
     private final Map<String, Map<String, AtomicInteger>> bidCountByAuction = new ConcurrentHashMap<>();
 
-    private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();;
+    private ConcurrentBidManager bidManager;
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
     public AutoBidService(AuctionDAO auctionDAO, UserDAO userDAO) {
@@ -51,13 +51,14 @@ public class AutoBidService {
             throw new IllegalArgumentException("Increment không được lớn hơn MaxBid");
 
         Auction auction = AuctionRegistry.getInstance().get(req.getAuctionId());
-        if (auction == null)
-        {
+        if (auction == null) {
             auction = auctionDAO.findByAuctionId(req.getAuctionId());
             if (auction == null)
                 throw new InvalidBidException("Phiên đấu giá không tồn tại: " + req.getAuctionId());
-            if (!auction.getStatus().isEnded() && !auction.isExpired())
-                AuctionRegistry.getInstance().register(auction);
+            if (auction.getStatus().isEnded() || auction.isExpired())
+                throw new InvalidBidException("Phiên đấu giá đã kết thúc");
+            AuctionRegistry.getInstance().registerIfAbsent(auction);
+            auction = AuctionRegistry.getInstance().get(req.getAuctionId());
         }
         if (bidderId.equals(auction.getSellerId()))
             throw new IllegalArgumentException(
@@ -127,7 +128,7 @@ public class AutoBidService {
                     + ", bỏ qua auctionId=" + auctionId);
             return;
         }
-
+        bidManager = ConcurrentBidManager.getInstance();
         bidManager.submitBid(auction, winner.bidderId, winner.bidderUsername, bidAmount, BidType.AUTO);
 
         incrementBidCount(auctionId, winner.bidderId);

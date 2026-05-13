@@ -303,32 +303,28 @@ public class BiddingRoomController implements MessageListener{
         formAuto.setManaged(true);
         btnTabAuto.getStyleClass().setAll("br-tab-active");
         btnTabManual.getStyleClass().setAll("br-tab");
-
-        if (priceSeries == null){
-            setupPriceChart();
-        }
     }
-    @SuppressWarnings("unchecked") 
-    private void setupPriceChart(){
+
+    @SuppressWarnings("unchecked")
+    private void setupPriceChart() {
+        // Reset mỗi lần build — đảm bảo đúng dữ liệu
         priceSeries = new XYChart.Series<>();
         priceSeries.setName("Giá đấu");
-        
+        bidSequence = 0;
+
+        // bidHistory[0] = mới nhất → đảo ngược để vẽ cũ→mới theo trục X
         int size = bidHistory.size();
-        for (int i = size - 1; i >= 0; i--) { //đảo ngược để vẽ từ giá thấp đến cao theo thời gian
+        for (int i = size - 1; i >= 0; i--) {
             BidDTO bid = bidHistory.get(i);
             bidSequence++;
-            priceSeries.getData().add(
-                new XYChart.Data<>(bidSequence, bid.getBidAmount())
-            );
+            priceSeries.getData().add(new XYChart.Data<>(bidSequence, bid.getBidAmount()));
         }
-        if (currentAuction != null) {
-            long minInc = currentAuction.getMinIncrement();
-            if (minInc > 0) chartYAxis.setTickUnit(minInc);
-        }
+
+        if (currentAuction != null && currentAuction.getMinIncrement() > 0)
+            chartYAxis.setTickUnit(currentAuction.getMinIncrement());
+
         chartYAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
-            @Override public String toString(Number n) {
-                return String.format("%,d", n.longValue());
-            }
+            @Override public String toString(Number n) { return String.format("%,d", n.longValue()); }
             @Override public Number fromString(String s) { return 0; }
         });
         chartXAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
@@ -337,11 +333,19 @@ public class BiddingRoomController implements MessageListener{
         });
         chartXAxis.setMinorTickVisible(false);
         chartXAxis.setTickUnit(1);
+
         priceLineChart.getData().clear();
         priceLineChart.getData().add(priceSeries);
         priceLineChart.setLegendVisible(false);
-        priceLineChart.setAnimated(false);   // tắt animation để append realtime mượt hơn
-        priceLineChart.setCreateSymbols(true); 
+        priceLineChart.setAnimated(false);
+        priceLineChart.setCreateSymbols(true);
+    }
+
+    /** Append điểm mới realtime khi chart đang hiển thị */
+    private void appendChartPoint(long bidAmount) {
+        if (priceSeries == null || !panelChart.isVisible()) return;
+        bidSequence++;
+        priceSeries.getData().add(new XYChart.Data<>(bidSequence, bidAmount));
     }
 
     @FXML
@@ -368,7 +372,8 @@ public class BiddingRoomController implements MessageListener{
         tabBtnHistory.getStyleClass().setAll("br-tab");
         tabBtnInfo.getStyleClass().setAll("br-tab");
 
-
+        // Build/rebuild chart mỗi lần mở tab — lấy đúng dữ liệu hiện tại
+        setupPriceChart();
     }
 
     @FXML
@@ -509,6 +514,7 @@ public class BiddingRoomController implements MessageListener{
         currentAuction.setCurrentPrice(bid.getCurrentPrice());
         bidHistory.add(0, bid);
         lblBidCount.setText(String.valueOf(bidHistory.size()));
+        appendChartPoint(bid.getBidAmount()); // realtime chart update nếu tab đang mở
         
         if (lblMinHint != null && currentAuction.getMinIncrement() > 0) {
             long minRequired = bid.getCurrentPrice() + currentAuction.getMinIncrement();
@@ -571,12 +577,17 @@ public class BiddingRoomController implements MessageListener{
     public void setAuction(AuctionDTO auction)  { 
         this.currentAuction  = auction; 
         itemUrls = auction.getItemDTO().getImageUrls();
-        populateUI();
-        loadBidHistory(); 
-        subcribeToAuction();
+        Platform.runLater(() -> {
+            populateUI();
+            setUpItemImage(itemUrls);});
+        new Thread(() -> {
+            
+            loadBidHistory();
+            subcribeToAuction();
+        }).start();
         checkFollowStatus();
         startTimer();
-        setUpItemImage(itemUrls);
+
     }
 
     public void setUserId(String userId)         { this.currentUserId   = userId; }
@@ -644,32 +655,32 @@ public class BiddingRoomController implements MessageListener{
     
     private void loadBidHistory(){
         if (currentAuction == null) return;
-        new Thread(() -> {
-            try {
-                String json = JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY", currentAuction.getId()));
-                String responseJson = socket.sendAndReceive(json);
-                if (responseJson == null) return;
+        
+        try {
+            String json = JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY", currentAuction.getId()));
+            String responseJson = socket.sendAndReceive(json);
+            if (responseJson == null) return;
                 // Unwrap ClientMessage wrapper
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (!"GET_BID_HISTORY_RESPONSE".equals(serverMsg.getAction())) return;
-                String rawData = JsonUtils.toJson(serverMsg.getData());
-                Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
-                ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
-                if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
+            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+            if (!"GET_BID_HISTORY_RESPONSE".equals(serverMsg.getAction())) return;
+            String rawData = JsonUtils.toJson(serverMsg.getData());
+            Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
+            ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
+            if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
 
                 //Double-parsed
-                String listJson = JsonUtils.toJson(apiResponse.getData());
-                Type listType = new TypeToken<List<BidDTO>>(){}.getType();
-                List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
-                if (historyList == null) return;
-                Platform.runLater(() -> {
-                    bidHistory.setAll(historyList);
-                    lblBidCount.setText(String.valueOf(historyList.size()));
-                });
-            } catch (Exception e) {
-                System.err.println("Lỗi tải lịch sử đặt giá: " + e.getMessage());
-            }
-        }).start();
+            String listJson = JsonUtils.toJson(apiResponse.getData());
+            Type listType = new TypeToken<List<BidDTO>>(){}.getType();
+            List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
+            if (historyList == null) return;
+            Platform.runLater(() -> {
+                bidHistory.setAll(historyList);
+                lblBidCount.setText(String.valueOf(historyList.size()));
+            });
+        } catch (Exception e) {
+            System.err.println("Lỗi tải lịch sử đặt giá: " + e.getMessage());
+        }
+
 
     }
 
@@ -687,11 +698,19 @@ public class BiddingRoomController implements MessageListener{
  
     // Cleanup khi rời phòng
     public void cleanup() {
-        socket.removeListener(this);
+        
         if (countdownTimer != null) {
             countdownTimer.stop();
             countdownTimer = null;
         }
+        if (currentAuction != null) {
+            
+            String json = JsonUtils.toJson(ClientMessage.request("UNSUBSCRIBE_AUCTION", currentAuction.getId()));
+            socket.send(json);
+               
+        }
+        socket.removeListener(this);
+
     }
  
     //Helpers
@@ -750,11 +769,10 @@ public class BiddingRoomController implements MessageListener{
     }
 
     private void updateImageView() {
-    if (itemUrls != null && !itemUrls.isEmpty()) {
-        String url = itemUrls.get(currentImageIndex);
-        Image image = new Image(url, true);
-        imgBiddingRoom.setImage(image);
+        if (itemUrls != null && !itemUrls.isEmpty()) {
+            String url = itemUrls.get(currentImageIndex);
+            Image image = new Image(url, true);
+            imgBiddingRoom.setImage(image);
+        }
     }
-}
-
 }

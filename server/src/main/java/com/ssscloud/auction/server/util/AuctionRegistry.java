@@ -16,6 +16,10 @@ public class AuctionRegistry {
         activeAuctions.put(auction.getAuctionConfig().getId(), auction);
     }
 
+    public void registerIfAbsent(Auction auction) {  
+        activeAuctions.putIfAbsent(auction.getAuctionConfig().getId(), auction);
+    }
+
     public Auction get(String auctionId) {
         return activeAuctions.get(auctionId);
     }

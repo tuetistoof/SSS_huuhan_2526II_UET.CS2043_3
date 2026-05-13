@@ -161,18 +161,18 @@ public class MessageHandler {
                     System.out.println("[Server] Client " + client.getUserId() + " đã vào phòng auction " + auctionId);
                     return null;
                 }
-                case "WATCH_AUCTION": {
+                case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
                     boolean added = watchlistDAO.add(client.getUserId(), auctionId);
-                    return JsonUtils.toJson(ClientMessage.request("WATCH_RESPONSE",
+                    return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
                         added ? ApiResponse.success(null, "Đã thêm vào Watch List")
                         : ApiResponse.error("Không thể thêm Watch List")));
                 }
  
-                case "UNWATCH_AUCTION": {
+                case "UNFOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
                     boolean removed = watchlistDAO.remove(client.getUserId(), auctionId);
-                    return JsonUtils.toJson(ClientMessage.request("UNWATCH_RESPONSE",
+                    return JsonUtils.toJson(ClientMessage.request("UNFOLLOW_RESPONSE",
                         removed ? ApiResponse.success(null, "Đã xóa khỏi Watch List")
                         : ApiResponse.error("Không thể xóa Watch List")));
                 }
@@ -183,11 +183,11 @@ public class MessageHandler {
                         ApiResponse.success(auctionIds, "OK")));
                 }
  
-                case "CHECK_WATCHING": {
+                case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
-                    boolean watching = watchlistDAO.isWatching(client.getUserId(), auctionId);
-                    return JsonUtils.toJson(ClientMessage.request("CHECK_WATCHING_RESPONSE",
-                        ApiResponse.success(watching, "OK")));  
+                    boolean following = watchlistDAO.isFollowing(client.getUserId(), auctionId);
+                    return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
+                        ApiResponse.success(following, "OK")));  
                 }
 
                 case "DEPOSIT": {

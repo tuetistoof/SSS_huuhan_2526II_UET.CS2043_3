@@ -6,6 +6,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
@@ -95,7 +96,7 @@ public class ConcurrentBidManager {
         }
     }
 
-     private void processTask(BidTask task) {
+    private void processTask(BidTask task) {
         Auction auction  = task.auction;
         String auctionId = auction.getAuctionConfig().getId();
 
@@ -117,8 +118,12 @@ public class ConcurrentBidManager {
 
         BidTransaction bid = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                 task.bidAmount, LocalDateTime.now(), task.type);
+        if (auction.getStatus() == AuctionStatus.OPEN)
+        {
+            auction.setStatus(AuctionStatus.RUNNING);
+            auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+        }
         auction.placeBid(bid);
-
         LocalDateTime newEnd = AntiSnipingService.processAntiSniping(auction.getAuctionConfig());
         if (newEnd != null && auctionDAO != null) {
             auctionDAO.updateEndTime(auctionId, newEnd);

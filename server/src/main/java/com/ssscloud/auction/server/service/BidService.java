@@ -13,7 +13,7 @@ import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class BidService {
-    private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();
+    private ConcurrentBidManager bidManager;
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
     public BidService (AuctionDAO auctionDAO, UserDAO userDAO)
@@ -37,8 +37,10 @@ public class BidService {
             auction = auctionDAO.findByAuctionId(req.getAuctionId());
             if (auction == null)
                 throw new InvalidBidException("Phiên đấu giá không tồn tại: " + req.getAuctionId());
-            if (!auction.getStatus().isEnded() && !auction.isExpired())
-                AuctionRegistry.getInstance().register(auction);
+            if (auction.getStatus().isEnded() || auction.isExpired())
+                throw new InvalidBidException("Phiên đấu giá đã kết thúc");
+            AuctionRegistry.getInstance().registerIfAbsent(auction);
+            auction = AuctionRegistry.getInstance().get(req.getAuctionId());
         }
         if (bidderId.equals(auction.getSellerId()))
             throw new InvalidBidException("Người bán không thể đấu giá sản phẩm của mình");
@@ -48,6 +50,7 @@ public class BidService {
             throw new IllegalArgumentException("Người dùng không phải bidder");
         if (b.getAccountBalance() < req.getBidAmount())
             throw new InvalidBidException("Số dư tài khoản không đủ để đặt giá");
+        bidManager = ConcurrentBidManager.getInstance();
         bidManager.submitBid(auction, bidderId, bidderUsername, req.getBidAmount(), BidType.MANUAL);
     }
 }
