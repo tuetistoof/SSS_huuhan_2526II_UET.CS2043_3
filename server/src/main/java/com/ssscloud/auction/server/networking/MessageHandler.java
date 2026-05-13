@@ -110,6 +110,7 @@ public class MessageHandler {
                 }
 
                 case "AUTO_BID": {
+                    System.out.println("Received AUTO_BID request: " + msg.getData());
                     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
                     JsonUtils.fromJson(bidController.registerAutoBid(msg.getData(), client.getUserId(),
                     client.getUsername()), ApiResponse.class)));

@@ -316,9 +316,8 @@ public class BiddingRoomController implements MessageListener{
         priceSeries.setName("Giá đấu");
         bidSequence = 0;
 
-        // bidHistory[0] = mới nhất → đảo ngược để vẽ cũ→mới theo trục X
         int size = bidHistory.size();
-        for (int i = 0; i < size; i++) {
+        for (int i = size - 1; i >= 0; i--) {
             BidDTO bid = bidHistory.get(i);
             bidSequence++;
             priceSeries.getData().add(new XYChart.Data<>(bidSequence, bid.getBidAmount()));
@@ -344,6 +343,7 @@ public class BiddingRoomController implements MessageListener{
         priceLineChart.setAnimated(false);
         priceLineChart.setCreateSymbols(true);
     }
+    
 
     /** Append điểm mới realtime khi chart đang hiển thị */
     private void appendChartPoint(long bidAmount) {
@@ -469,6 +469,7 @@ public class BiddingRoomController implements MessageListener{
  
                     if (response != null && response.isSuccess()) {
                         isAutoBidding = true;
+                        autoBidMaxBid = maxBid;
                         btnAutoToggle.setText("Auto Bidding...");
                         // Nút giữ disable — AUTO_BID_STOPPED push sẽ reset lại
                     } else {
@@ -499,6 +500,7 @@ public class BiddingRoomController implements MessageListener{
                 case "BID_UPDATE":       handleBidUpdate(root);       break;
                 case "BID_ERROR":        handleBidError(root);        break;
                 case "AUCTION_ENDED":    handleAuctionEnded(root);    break;
+                case "AUTO_BID_STOPPED":   handleAutoBidStopped(root); break;
                 default:
                     // Action khác không liên quan đến màn hình này — bỏ qua
                     break;
@@ -506,6 +508,20 @@ public class BiddingRoomController implements MessageListener{
         } catch (Exception e) {
             System.err.println("Lỗi xử lý server push: " + e.getMessage());
         }
+    }
+    private void handleAutoBidStopped(JsonObject root) {
+        Platform.runLater(() -> {
+            isAutoBidding = false;
+
+            btnAutoToggle.setText("Bắt đầu Auto Bid");
+            btnAutoToggle.getStyleClass().remove("br-btn-stop"); 
+            btnAutoToggle.getStyleClass().add("br-btn-secondary");
+
+            txtMaxBid.setDisable(false);
+            txtAutoIncrement.setDisable(false);
+            
+        });
+        
     }
 
     private void handleBidUpdate(JsonObject root) {
@@ -560,19 +576,19 @@ public class BiddingRoomController implements MessageListener{
                     }
                 }
 
-            // 7. Logic Auto-Bid (Kiểm tra nếu mình bị vượt giá)
-                if (isAutoBidding) {
-                    boolean iAmWinning = currentUserId.equals(String.valueOf(bid.getHighestBidderId())); 
-                    long nextPriceNeeded = bid.getBidAmount() + currentAuction.getMinIncrement();
-                    boolean canStillBid = autoBidMaxBid >= nextPriceNeeded;
+            // // 7. Logic Auto-Bid (Kiểm tra nếu mình bị vượt giá)
+            //     if (isAutoBidding) {
+            //         boolean iAmWinning = currentUserId.equals(String.valueOf(bid.getHighestBidderId())); 
+            //         long nextPriceNeeded = bid.getBidAmount() + currentAuction.getMinIncrement();
+            //         boolean canStillBid = autoBidMaxBid >= nextPriceNeeded;
 
-                    if (!iAmWinning && !canStillBid) {
-                        isAutoBidding = false;
-                        autoBidMaxBid = 0;
-                        resetAutoBidButton();
-                        showInfo("Auto Bid đã dừng — Giá hiện tại (" + formattedPrice + ") đã vượt ngưỡng tối đa của bạn.");
-                    }
-                }
+            //         if (!iAmWinning && !canStillBid) {
+            //             isAutoBidding = false;
+            //             autoBidMaxBid = 0;
+            //             resetAutoBidButton();
+            //             showInfo("Auto Bid đã dừng — Giá hiện tại (" + formattedPrice + ") đã vượt ngưỡng tối đa của bạn.");
+            //         }
+            //     }
 
             // 8. Các hiệu ứng bổ sung
                 appendChartPoint(bid.getBidAmount()); 
