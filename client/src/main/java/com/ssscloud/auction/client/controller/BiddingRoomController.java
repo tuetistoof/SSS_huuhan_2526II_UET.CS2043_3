@@ -776,3 +776,4 @@ public class BiddingRoomController implements MessageListener{
         }
     }
 }
+    
