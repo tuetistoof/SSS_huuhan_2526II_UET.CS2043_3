@@ -14,6 +14,7 @@ import com.ssscloud.auction.common.util.JsonUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.*;
+import com.ssscloud.auction.client.util.SessionManager;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -43,6 +44,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
 
 public class BiddingRoomController implements MessageListener{
 
@@ -108,9 +110,10 @@ public class BiddingRoomController implements MessageListener{
     //inject từ màn hình trước
     private AuctionDTO currentAuction;
     private String currentUserId;
-    private String currentUserName;
+    private String currentUserName = SessionManager.getInstance().getCurrentUser() != null ? SessionManager.getInstance().getCurrentUser().getUsername() : null;
     private List<String> itemUrls;
     private int currentImageIndex = 0;
+
     private Runnable onSuccessCallback;
  
     public void setOnSuccessCallback(Runnable callback) {
@@ -515,6 +518,19 @@ public class BiddingRoomController implements MessageListener{
                 currentAuction.setCurrentPrice(bid.getBidAmount());
                 currentAuction.setHighestBidderName(bid.getBidderUsername());
 
+            // LOG ĐỂ DEBUG
+                System.out.println("Checking Toast: Me=" + currentUserName + " vs Bidder=" + bid.getBidderUsername());
+
+                if (currentUserName != null && currentUserName.equals(bid.getBidderUsername())) {
+                    Window window = btnBack.getScene().getWindow();
+                    if (window != null) {
+                        BidSuccessToastController.show(
+                            currentAuction.getName(), 
+                            bid.getBidAmount(), 
+                            window
+                        );
+                    }
+                }
             // 3. Cập nhật UI chính (Giá & Người dẫn đầu)
                 String formattedPrice = String.format("%,d ₫", bid.getBidAmount());
                 lblCurrentPrice.setText(formattedPrice);
