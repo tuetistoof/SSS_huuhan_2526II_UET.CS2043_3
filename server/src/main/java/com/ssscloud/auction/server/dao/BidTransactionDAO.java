@@ -53,8 +53,7 @@ public class BidTransactionDAO extends BaseDAO {
         String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
         PreparedStatement psBidTransaction = null;
         try {
-            conn.setAutoCommit(false);
-
+            // KHÔNG setAutoCommit — caller (AuctionDAO) tự quản lý transaction
             psBidTransaction = conn.prepareStatement(sqlBidTransaction);
             psBidTransaction.setString(1, bidTransaction.getAuctionId());
             psBidTransaction.setString(2, bidTransaction.getBidderId());
@@ -64,18 +63,14 @@ public class BidTransactionDAO extends BaseDAO {
             psBidTransaction.setString(6, bidTransaction.getType().name());
             psBidTransaction.executeUpdate();
 
-            logger.info("da luu bidTransaction");
+            logger.info("Đã lưu bidTransaction (shared conn)");
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + e.getMessage());
-            safelyRollback(conn);
-            return false;
         } catch (SQLException e) {
-            logger.severe("Loi kh luu bidTransaction: " + e.getMessage());
-            safelyRollback(conn);
+            logger.severe("Lỗi saveBidTransaction (shared conn): " + e.getMessage());
+            // KHÔNG safelyRollback — để caller quyết định rollback hay không
             return false;
         } finally {
-            closeResource(psBidTransaction);
+            closeResource(psBidTransaction); // chỉ close PS, KHÔNG close conn
         }
     }
 

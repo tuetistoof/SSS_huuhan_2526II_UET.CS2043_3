@@ -96,7 +96,7 @@ public class ConcurrentBidManager {
         }
     }
 
-     private void processTask(BidTask task) {
+    private void processTask(BidTask task) {
         Auction auction  = task.auction;
         String auctionId = auction.getAuctionConfig().getId();
 

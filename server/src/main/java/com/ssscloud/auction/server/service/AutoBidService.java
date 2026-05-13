@@ -30,7 +30,7 @@ public class AutoBidService {
 
     private final Map<String, Map<String, AtomicInteger>> bidCountByAuction = new ConcurrentHashMap<>();
 
-    private final ConcurrentBidManager bidManager = ConcurrentBidManager.getInstance();;
+    private ConcurrentBidManager bidManager;
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
     public AutoBidService(AuctionDAO auctionDAO, UserDAO userDAO) {
@@ -127,7 +127,7 @@ public class AutoBidService {
                     + ", bỏ qua auctionId=" + auctionId);
             return;
         }
-
+        bidManager = ConcurrentBidManager.getInstance();
         bidManager.submitBid(auction, winner.bidderId, winner.bidderUsername, bidAmount, BidType.AUTO);
 
         incrementBidCount(auctionId, winner.bidderId);
