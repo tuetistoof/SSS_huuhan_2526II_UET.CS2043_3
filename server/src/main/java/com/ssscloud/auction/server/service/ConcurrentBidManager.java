@@ -140,7 +140,7 @@ public class ConcurrentBidManager {
         ChangeManager.getInstance().notify(auction);
         NotificationService.getInstance().notifyWatchers(auction, auction.getHighestBidderId());
 
-        if (autoBidService != null && task.type == BidType.MANUAL) {
+        if (autoBidService != null) {
             autoBidService.trigger(auction);
         }
     }
