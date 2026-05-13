@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.service;
 
+import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.BidType;
@@ -10,9 +11,11 @@ import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
+import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
+import com.ssscloud.auction.server.util.SessionRegistry;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,12 +34,15 @@ public class AutoBidService {
     private ConcurrentBidManager bidManager;
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
+    private final SessionRegistry sessionRegistry = SessionRegistry.getInstance();
+
     public AutoBidService(AuctionDAO auctionDAO, UserDAO userDAO) {
         this.auctionDAO = auctionDAO;
         this.userDAO = userDAO;
     }
 
     public void register(AutoBidRequest req, String bidderId, String bidderUsername) {
+        System.out.print("2 siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuu");
         if (req == null || bidderId == null || bidderUsername == null)
             throw new IllegalArgumentException("Request và thông tin người dùng không được để trống");
         if (req.getAuctionId() == null || String.valueOf(req.getAuctionId()).isBlank())
@@ -71,10 +77,11 @@ public class AutoBidService {
                 req.getAuctionId(), k -> new CopyOnWriteArrayList<>());
         entries.removeIf(e -> e.bidderId.equals(bidderId));
         entries.add(new AutoBidEntry(bidderId, bidderUsername, (long) req.getMaxBid(), (long) req.getIncrement()));
-        trigger(auction); 
+        trigger(auction);
     }
 
     public void trigger(Auction auction) {
+        System.out.print("siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuu");
         if (auction.getStatus().isEnded() || auction.isExpired()) {
             System.out.println("[AutoBidService] Phiên đã kết thúc, dừng chuỗi auctionId="
                     + auction.getAuctionConfig().getId());
@@ -115,7 +122,7 @@ public class AutoBidService {
             }
         }
 
-        long base = Math.max (secondHighestMaxBid, currentPrice);
+        long base = Math.max(secondHighestMaxBid, currentPrice);
         long bidAmount = Math.min(base + winner.increment, winner.maxBid);
 
         if (bidAmount <= currentPrice) {
@@ -172,11 +179,24 @@ public class AutoBidService {
         });
 
         if (!exhaustedEntries.isEmpty()) {
-            exhaustedEntries.forEach(e -> System.out.println(
-                    "[AutoBidService] Xóa entry hết hạn mức: auctionId=" + auctionId
-                            + " bidderId=" + e.bidderId
-                            + " maxBid=" + e.maxBid
-                            + " currentPrice=" + currentPrice));
+            exhaustedEntries.forEach(e -> {
+                System.out.println(
+                        "[AutoBidService] Xóa entry hết hạn mức: auctionId=" + auctionId
+                                + " bidderId=" + e.bidderId
+                                + " maxBid=" + e.maxBid
+                                + " currentPrice=" + currentPrice);
+
+                // THÊM: push về client
+                java.io.PrintWriter writer = sessionRegistry.getWriter(e.bidderId);
+                if (writer != null) {
+                    synchronized (writer) {
+                        writer.println(JsonUtils.toJson(
+                                ClientMessage.push("AUTO_BID_STOPPED",
+                                        java.util.Map.of("message",
+                                                "Auto Bid đã dừng — giá hiện tại vượt ngưỡng tối đa của bạn"))));
+                    }
+                }
+            });
         }
 
         return exhaustedEntries;

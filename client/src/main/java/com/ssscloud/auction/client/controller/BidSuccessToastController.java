@@ -7,12 +7,10 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.AudioClip;
 import javafx.stage.Popup;
@@ -39,8 +37,7 @@ public class BidSuccessToastController {
             NumberFormat.getIntegerInstance(new Locale("vi", "VN"));
 
     private Timeline  autoCloseTimeline;
-    private StackPane parentPane;
-    private StackPane toastRoot;
+    private Popup popup;
 
 
     public static void show(String auctionName, long amount, Window owner) {
@@ -56,16 +53,15 @@ public class BidSuccessToastController {
 
                 Popup popup = new Popup();
                 popup.getContent().add(toastNode);
-                popup.setAutoHide(true); // Tự đóng khi click ra ngoài (nếu cần)
+                controller.popup = popup; // Lưu tham chiếu để sau này có thể đóng
 
-                popup.show(owner, 
-                    owner.getX() + owner.getWidth() - 350, // Cách lề phải 350px
-                    owner.getY() + 80                      // Cách lề trên 80px
-                );
+                double x = owner.getX() + owner.getWidth() - 350;
+                double y = owner.getY() + 80;
+                popup.show(owner, x, y);
 
-                controller.animateIn();//chạy hiệu ứng trượt từ phải sang trái
-                controller.playSound();//phát âm thanh thông báo
-                controller.startAutoClose();//bắt đầu đếm ngược tự động đóng toast sau vài giây
+                controller.animateIn();
+                controller.playSound();
+                Platform.runLater(controller::startAutoClose);//bắt đầu đếm ngược tự động đóng toast sau vài giây
 
             } catch (IOException e) {
                 System.err.println("[BidSuccessToast] Không load được FXML: " + e.getMessage());
@@ -103,12 +99,14 @@ public class BidSuccessToastController {
                 new KeyValue(toastCard.translateXProperty(), 340, Interpolator.EASE_IN),
                 new KeyValue(toastCard.opacityProperty(), 0, Interpolator.EASE_IN))
         );
-        slideOut.setOnFinished(e -> removeFromParent());
+        slideOut.setOnFinished(e -> {
+            if (popup != null) popup.hide();
+        });
         slideOut.play();
     }
 
-
     private void startAutoClose() {
+        progressBar.setProgress(1.0);
         autoCloseTimeline = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(progressBar.progressProperty(), 1.0)),
@@ -139,11 +137,5 @@ public class BidSuccessToastController {
     private void handleClose() {
         if (autoCloseTimeline != null) autoCloseTimeline.stop();
         animateOut();
-    }
-
-    private void removeFromParent() {
-        if (parentPane != null && toastRoot != null) {
-            parentPane.getChildren().remove(toastRoot);
-        }
     }
 }
