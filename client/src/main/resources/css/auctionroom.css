@@ -107,6 +107,13 @@
     -fx-background-radius: 10;
     -fx-font-size: 24px;
 }
+.br-product-btn-change-image:hover {
+    -fx-background-color: #ffbcd4;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 10;
+    -fx-font-size: 25px;
+}
 
 /* ── Cột trái: giá ── */
 .br-section-label {
@@ -422,4 +429,10 @@
 
 .br-btn-follow:pressed {
     -fx-background-color: #F8DDE6;
+}
+
+.br-image-view {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+    -fx-border-color: #fce4ec;
+    -fx-border-width: 2;
 }

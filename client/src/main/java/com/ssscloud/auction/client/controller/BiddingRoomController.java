@@ -38,7 +38,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -59,6 +61,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private NumberAxis chartYAxis;
     @FXML private VBox formAuto;
     @FXML private VBox formManual;
+    @FXML private StackPane containerImage;
     @FXML private ImageView imgBiddingRoom;
 
     @FXML private Label infoAntiSnipe;
@@ -109,6 +112,8 @@ public class BiddingRoomController implements MessageListener{
     private AuctionDTO currentAuction;
     private String currentUserId;
     private String currentUserName = SessionManager.getInstance().getCurrentUser() != null ? SessionManager.getInstance().getCurrentUser().getUsername() : null;
+    private List<String> itemUrls;
+    private int currentImageIndex = 0;
 
     private Runnable onSuccessCallback;
  
@@ -121,6 +126,8 @@ public class BiddingRoomController implements MessageListener{
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     public void initialize() {
+        imgBiddingRoom.fitWidthProperty().bind(containerImage.widthProperty().subtract(100));
+        imgBiddingRoom.fitHeightProperty().bind(containerImage.heightProperty().subtract(40));
         socket.addListener(this);
         setupBidHistoryList();
     }
@@ -606,7 +613,10 @@ public class BiddingRoomController implements MessageListener{
     // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction)  { 
         this.currentAuction  = auction; 
-        Platform.runLater(() -> populateUI());
+        itemUrls = auction.getItemDTO().getImageUrls();
+        Platform.runLater(() -> {
+            populateUI();
+            setUpItemImage(itemUrls);});
         new Thread(() -> {
             loadBidHistory();
             subcribeToAuction();
@@ -614,6 +624,7 @@ public class BiddingRoomController implements MessageListener{
         }).start();
         checkFollowStatus();
         startTimer();
+
     }
 
     public void setUserId(String userId)         { this.currentUserId   = userId; }
@@ -785,14 +796,40 @@ public class BiddingRoomController implements MessageListener{
         alert.showAndWait();
     }
 
+    private void setUpItemImage(List<String> itemUrls) {
+        this.itemUrls = itemUrls;
+        this.currentImageIndex = 0;
+        updateImageView();
+    }
+
     @FXML
     void navBackImage(ActionEvent event) {
-
+        if (itemUrls == null || itemUrls.isEmpty()) return;
+        if (currentImageIndex > 0) {
+            currentImageIndex--;
+        } else {
+            currentImageIndex = itemUrls.size() - 1;
+        }
+        updateImageView();
     }
 
     @FXML
     void navFrontImage(ActionEvent event) {
-
+        if (itemUrls == null || itemUrls.isEmpty()) return;
+        if (currentImageIndex < itemUrls.size() - 1) {
+            currentImageIndex++;
+        } else {
+            currentImageIndex = 0;
+        }
+        updateImageView();
     }
 
+    private void updateImageView() {
+        if (itemUrls != null && !itemUrls.isEmpty()) {
+            String url = itemUrls.get(currentImageIndex);
+            Image image = new Image(url, true);
+            imgBiddingRoom.setImage(image);
+        }
+    }
 }
+    
