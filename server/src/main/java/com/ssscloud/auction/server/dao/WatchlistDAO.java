@@ -124,7 +124,7 @@ public class WatchlistDAO extends BaseDAO {
             rs = ps.executeQuery();
             return rs.next();
         } catch (SQLException e) {
-            logger.severe("Lỗi isWatching: " + e.getMessage());
+            logger.severe("Lỗi isFollowing: " + e.getMessage());
             return false;
         } finally {
             closeResource(rs, ps);
