@@ -44,12 +44,12 @@ public class AuctionSocketServer {
 
         AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
         BidService bidService = new BidService(auctionDAO, userDAO);
+        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO);
 
         UserService userService = new UserService(userDAO);
         UserController userCtrl = new UserController(userDAO);
 
         BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO);
 
         ItemService itemService = new ItemService(itemDAO);
         ItemController itemCtrl = new ItemController(itemDAO);
