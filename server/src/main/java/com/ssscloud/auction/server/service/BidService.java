@@ -37,8 +37,10 @@ public class BidService {
             auction = auctionDAO.findByAuctionId(req.getAuctionId());
             if (auction == null)
                 throw new InvalidBidException("Phiên đấu giá không tồn tại: " + req.getAuctionId());
-            if (!auction.getStatus().isEnded() && !auction.isExpired())
-                AuctionRegistry.getInstance().register(auction);
+            if (auction.getStatus().isEnded() || auction.isExpired())
+                throw new InvalidBidException("Phiên đấu giá đã kết thúc");
+            AuctionRegistry.getInstance().registerIfAbsent(auction);
+            auction = AuctionRegistry.getInstance().get(req.getAuctionId());
         }
         if (bidderId.equals(auction.getSellerId()))
             throw new InvalidBidException("Người bán không thể đấu giá sản phẩm của mình");

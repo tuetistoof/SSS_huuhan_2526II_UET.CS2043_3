@@ -302,7 +302,7 @@ public class AuctionDAO extends BaseDAO {
             "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
             "                         WHERE b2.auction_id = b1.auction_id) " +
             ") AS last_bid ON last_bid.auction_id = a.id " +
-            "WHERE a.status = 'OPEN' " +
+             "WHERE a.status IN ('OPEN', 'RUNNING') " +
             "GROUP BY a.id, e.name, ac.end_time, u.username, ei.name, i.type, ac.start_price, last_bid.bid_amount";
 
         Connection        conn = null;
@@ -440,7 +440,7 @@ public class AuctionDAO extends BaseDAO {
             rs.getString("item_type"),
             rs.getLong("current_price"),
             rs.getObject("end_time", LocalDateTime.class),
-            rs.getString("seller_username"),
+            rs.getString("seller_username"),    
             imageUrls
         );
     }

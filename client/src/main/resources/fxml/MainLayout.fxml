@@ -50,7 +50,7 @@
                <Button mnemonicParsing="false" onAction="#handleDeposit" prefHeight="30.0" styleClass="btn-primary" text="Deposit" />
                <StackPane>
                   <children>
-                     <Button fx:id="btnBell" mnemonicParsing="false" onAction="#handleBell" style="-fx-background-color: transperant;">
+                     <Button fx:id="btnBell" mnemonicParsing="false" onAction="#handleBell" style="-fx-background-color: transparent;">
                         <graphic>
                            <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                               <image>
