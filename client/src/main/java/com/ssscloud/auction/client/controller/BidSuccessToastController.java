@@ -8,12 +8,15 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.AudioClip;
+import javafx.stage.Popup;
+import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -40,27 +43,29 @@ public class BidSuccessToastController {
     private StackPane toastRoot;
 
 
-    public static void show(StackPane parentPane, String auctionName, long bidAmount) {
+    public static void show(String auctionName, long amount, Window owner) {
         Platform.runLater(() -> {
             try {
                 FXMLLoader loader = new FXMLLoader(BidSuccessToastController.class.getResource("/fxml/bid-success-toast.fxml"));
-                StackPane root = loader.load();
+                Parent toastNode = loader.load();
 
-                BidSuccessToastController ctrl = loader.getController();
-                ctrl.parentPane = parentPane;
-                ctrl.toastRoot  = root;
-                ctrl.setup(auctionName, bidAmount);
+                toastNode.getStylesheets().add(BidSuccessToastController.class.getResource("/css/toast.css").toExternalForm());
 
-                URL cssUrl = BidSuccessToastController.class.getResource("/css/toast.css");
-                if (cssUrl != null) root.getStylesheets().add(cssUrl.toExternalForm());
+                BidSuccessToastController controller = loader.getController();
+                controller.setup(auctionName, amount);
 
-                root.setPickOnBounds(false);
-                StackPane.setAlignment(root, Pos.TOP_RIGHT);
+                Popup popup = new Popup();
+                popup.getContent().add(toastNode);
+                popup.setAutoHide(true); // Tự đóng khi click ra ngoài (nếu cần)
 
-                parentPane.getChildren().add(root);
-                ctrl.animateIn();//chạy hiệu ứng trượt từ phải sang trái
-                ctrl.playSound();//phát âm thanh thông báo
-                ctrl.startAutoClose();//bắt đầu đếm ngược tự động đóng toast sau vài giây
+                popup.show(owner, 
+                    owner.getX() + owner.getWidth() - 350, // Cách lề phải 350px
+                    owner.getY() + 80                      // Cách lề trên 80px
+                );
+
+                controller.animateIn();//chạy hiệu ứng trượt từ phải sang trái
+                controller.playSound();//phát âm thanh thông báo
+                controller.startAutoClose();//bắt đầu đếm ngược tự động đóng toast sau vài giây
 
             } catch (IOException e) {
                 System.err.println("[BidSuccessToast] Không load được FXML: " + e.getMessage());
