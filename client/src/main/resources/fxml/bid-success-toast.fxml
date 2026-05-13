@@ -16,8 +16,7 @@
            styleClass="toast-root"
            pickOnBounds="false">
 
-    <VBox styleClass="toast-card" maxWidth="320.0" pickOnBounds="true">
-
+    <VBox fx:id="toastCard" styleClass="toast-card" maxWidth="320.0" pickOnBounds="true">
         <!-- ── Header: icon + tiêu đề + nút đóng ── -->
         <HBox styleClass="toast-header" alignment="CENTER_LEFT" spacing="10.0">
             <padding><Insets top="14.0" right="14.0" bottom="10.0" left="14.0"/></padding>
