@@ -564,9 +564,12 @@ public class BiddingRoomController implements MessageListener{
     // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction)  { 
         this.currentAuction  = auction; 
-        populateUI();
-        loadBidHistory(); 
-        subcribeToAuction();
+        Platform.runLater(() -> populateUI());
+        new Thread(() -> {
+            
+            loadBidHistory();
+            subcribeToAuction();
+        }).start();
         checkFollowStatus();
         startTimer();
     }
@@ -636,32 +639,32 @@ public class BiddingRoomController implements MessageListener{
     
     private void loadBidHistory(){
         if (currentAuction == null) return;
-        new Thread(() -> {
-            try {
-                String json = JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY", currentAuction.getId()));
-                String responseJson = socket.sendAndReceive(json);
-                if (responseJson == null) return;
+        
+        try {
+            String json = JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY", currentAuction.getId()));
+            String responseJson = socket.sendAndReceive(json);
+            if (responseJson == null) return;
                 // Unwrap ClientMessage wrapper
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (!"GET_BID_HISTORY_RESPONSE".equals(serverMsg.getAction())) return;
-                String rawData = JsonUtils.toJson(serverMsg.getData());
-                Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
-                ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
-                if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
+            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+            if (!"GET_BID_HISTORY_RESPONSE".equals(serverMsg.getAction())) return;
+            String rawData = JsonUtils.toJson(serverMsg.getData());
+            Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
+            ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
+            if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
 
                 //Double-parsed
-                String listJson = JsonUtils.toJson(apiResponse.getData());
-                Type listType = new TypeToken<List<BidDTO>>(){}.getType();
-                List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
-                if (historyList == null) return;
-                Platform.runLater(() -> {
-                    bidHistory.setAll(historyList);
-                    lblBidCount.setText(String.valueOf(historyList.size()));
-                });
-            } catch (Exception e) {
-                System.err.println("Lỗi tải lịch sử đặt giá: " + e.getMessage());
-            }
-        }).start();
+            String listJson = JsonUtils.toJson(apiResponse.getData());
+            Type listType = new TypeToken<List<BidDTO>>(){}.getType();
+            List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
+            if (historyList == null) return;
+            Platform.runLater(() -> {
+                bidHistory.setAll(historyList);
+                lblBidCount.setText(String.valueOf(historyList.size()));
+            });
+        } catch (Exception e) {
+            System.err.println("Lỗi tải lịch sử đặt giá: " + e.getMessage());
+        }
+
 
     }
 
@@ -679,11 +682,19 @@ public class BiddingRoomController implements MessageListener{
  
     // Cleanup khi rời phòng
     public void cleanup() {
-        socket.removeListener(this);
+        
         if (countdownTimer != null) {
             countdownTimer.stop();
             countdownTimer = null;
         }
+        if (currentAuction != null) {
+            
+            String json = JsonUtils.toJson(ClientMessage.request("UNSUBSCRIBE_AUCTION", currentAuction.getId()));
+            socket.send(json);
+               
+        }
+        socket.removeListener(this);
+
     }
  
     //Helpers

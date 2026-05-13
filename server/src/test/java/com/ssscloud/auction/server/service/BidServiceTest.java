@@ -15,6 +15,7 @@ import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.Bidder;
+import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
@@ -115,7 +116,8 @@ public class BidServiceTest {
         when(auctionDAO.findByAuctionId("auction-config-1")).thenReturn(mockAuction);
 
         // Trả về null → không phải Bidder instance
-        when(userDAO.findById("bidder123")).thenReturn(null);
+        Seller seller = new Seller("seller", "seller", "123456", "seller@gmail.com", UserRole.SELLER);
+        when(userDAO.findById("bidder123")).thenReturn(seller);
 
         PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
         assertThrows(IllegalArgumentException.class, () ->
