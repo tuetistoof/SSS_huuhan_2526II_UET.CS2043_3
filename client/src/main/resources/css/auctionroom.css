@@ -48,7 +48,7 @@
     -fx-padding: 2 10 2 10;
 }
 .br-badge-ended {
-    -fx-background-color: #D3D1C7;
+    -fx-background-color: #e36262;
     -fx-background-radius: 20;
     -fx-text-fill: #444441;
     -fx-font-size: 11px;
