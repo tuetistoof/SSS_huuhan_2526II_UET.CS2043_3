@@ -499,47 +499,67 @@ public class BiddingRoomController implements MessageListener{
     }
 
     private void handleBidUpdate(JsonObject root) {
+    // 1. Parse dữ liệu từ Server
         BidDTO bid = JsonUtils.fromJson(JsonUtils.toJson(root.get("data")), BidDTO.class);
-        if (bid == null) return;
- 
-        // Cập nhật UI
-        lblCurrentPrice.setText(String.format("%,d ₫", bid.getCurrentPrice()));
-        if (bid.getBidderUsername() != null) lblLeaderName.setText(bid.getBidderUsername());
-        currentAuction.setCurrentPrice(bid.getCurrentPrice());
-        bidHistory.add(0, bid);
-        lblBidCount.setText(String.valueOf(bidHistory.size()));
-        appendChartPoint(bid.getBidAmount()); // realtime chart update nếu tab đang mở
-        
-        if (lblMinHint != null && currentAuction.getMinIncrement() > 0) {
-            long minRequired = bid.getCurrentPrice() + currentAuction.getMinIncrement();
-            lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
-        }
-        resetPlaceBidButton();
-        // Nếu có gia hạn thời gian, cập nhật luôn
-        if (bid.getNewEndTime() != null && bid.getNewEndTime().isAfter(currentAuction.getEndTime())) {
-            currentAuction.setEndTime(bid.getNewEndTime());
-            DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-            if (infoEndTime != null){
-                infoEndTime.setText(bid.getNewEndTime().format(dtFmt));
+        if (bid == null || currentAuction == null) return;
+
+        Platform.runLater(() -> {
+            try {
+            // 2. Cập nhật dữ liệu vào Object hiện tại
+                currentAuction.setCurrentPrice(bid.getBidAmount());
+                currentAuction.setHighestBidderName(bid.getBidderUsername());
+
+            // 3. Cập nhật UI chính (Giá & Người dẫn đầu)
+                String formattedPrice = String.format("%,d ₫", bid.getBidAmount());
+                lblCurrentPrice.setText(formattedPrice);
+                lblLeaderName.setText("Dẫn đầu: " + (bid.getBidderUsername() != null ? bid.getBidderUsername() : "Chưa có ai"));
+
+            // 4. Cập nhật lịch sử đấu giá (đưa lên đầu danh sách)
+                bidHistory.add(0, bid);
+                lblBidCount.setText(String.valueOf(bidHistory.size()));
+
+            // 5. Cập nhật gợi ý giá tối thiểu cho lượt bid tiếp theo
+                if (lblMinHint != null) {
+                    long minRequired = bid.getBidAmount() + currentAuction.getMinIncrement();
+                    lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
+                }
+
+            // 6. Xử lý gia hạn thời gian (nếu có)
+                if (bid.getNewEndTime() != null && bid.getNewEndTime().isAfter(currentAuction.getEndTime())) {
+                    currentAuction.setEndTime(bid.getNewEndTime());
+                    DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+                
+                    if (infoEndTime != null) {
+                        infoEndTime.setText(bid.getNewEndTime().format(dtFmt));
+                    }
+                    if (lblTimer != null) {
+                        lblTimer.setText("Gia hạn đến: " + bid.getNewEndTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+                    }
+                }
+
+            // 7. Logic Auto-Bid (Kiểm tra nếu mình bị vượt giá)
+                if (isAutoBidding) {
+                    boolean iAmWinning = currentUserId.equals(String.valueOf(bid.getHighestBidderId())); 
+                    long nextPriceNeeded = bid.getBidAmount() + currentAuction.getMinIncrement();
+                    boolean canStillBid = autoBidMaxBid >= nextPriceNeeded;
+
+                    if (!iAmWinning && !canStillBid) {
+                        isAutoBidding = false;
+                        autoBidMaxBid = 0;
+                        resetAutoBidButton();
+                        showInfo("Auto Bid đã dừng — Giá hiện tại (" + formattedPrice + ") đã vượt ngưỡng tối đa của bạn.");
+                    }
+                }
+
+            // 8. Các hiệu ứng bổ sung
+                appendChartPoint(bid.getBidAmount()); 
+                resetPlaceBidButton();
+
+            } catch (Exception e) {
+                System.err.println("Lỗi cập nhật UI realtime: " + e.getMessage());
+                e.printStackTrace();
             }
-            if (lblTimer != null){
-                lblTimer.setText("Gia hạn đến: "+ bid.getNewEndTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
-            }
-        }
-        // Tự check trạng thái auto bid — không cần server push riêng
-        if (isAutoBidding) {
-            boolean iAmWinning  = currentUserId.equals(bid.getHighestBidderId());
-            boolean canStillBid = autoBidMaxBid >= bid.getCurrentPrice()
-                                + currentAuction.getMinIncrement();
- 
-            if (!iAmWinning && !canStillBid) {
-                // Hết hạn mức → reset tự động
-                isAutoBidding = false;
-                autoBidMaxBid = 0;
-                resetAutoBidButton();
-                showInfo("Auto Bid đã dừng — đã đạt giá tối đa.");
-            }
-        }
+        });
     }
 
     private void handleBidError(JsonObject root) {
@@ -572,9 +592,9 @@ public class BiddingRoomController implements MessageListener{
         this.currentAuction  = auction; 
         Platform.runLater(() -> populateUI());
         new Thread(() -> {
-            
             loadBidHistory();
             subcribeToAuction();
+            Platform.runLater(() -> btnPlaceBid.setDisable(false));
         }).start();
         checkFollowStatus();
         startTimer();
@@ -597,6 +617,7 @@ public class BiddingRoomController implements MessageListener{
             String leader = currentAuction.getHighestBidderName();
             lblLeaderName.setText("Dẫn đầu: " + (leader != null ? leader : "—"));
         }
+        btnPlaceBid.setDisable(true); // Tạm khóa nút đặt giá cho đến khi tải xong lịch sử và cập nhật giá hiện tại
         if (lblMinIncrement != null) {
             lblMinIncrement.setText(currentAuction.getMinIncrement() > 0
                     ? String.format("%,d ₫", currentAuction.getMinIncrement()) : "—");
@@ -653,20 +674,37 @@ public class BiddingRoomController implements MessageListener{
                 // Unwrap ClientMessage wrapper
             ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
             if (!"GET_BID_HISTORY_RESPONSE".equals(serverMsg.getAction())) return;
+
             String rawData = JsonUtils.toJson(serverMsg.getData());
             Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
             ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
-            if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
+            // if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
 
-                //Double-parsed
-            String listJson = JsonUtils.toJson(apiResponse.getData());
-            Type listType = new TypeToken<List<BidDTO>>(){}.getType();
-            List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
-            if (historyList == null) return;
-            Platform.runLater(() -> {
-                bidHistory.setAll(historyList);
-                lblBidCount.setText(String.valueOf(historyList.size()));
-            });
+            //     //Double-parsed
+            // String listJson = JsonUtils.toJson(apiResponse.getData());
+            // Type listType = new TypeToken<List<BidDTO>>(){}.getType();
+            // List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
+            // if (historyList == null) return;
+            if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                List<BidDTO> historyList = apiResponse.getData();
+                Platform.runLater(() -> {
+                    bidHistory.setAll(historyList);
+                    lblBidCount.setText(String.valueOf(historyList.size()));
+                    if (!historyList.isEmpty()) {
+                        BidDTO latestBid = historyList.get(0);
+                        currentAuction.setCurrentPrice(latestBid.getBidAmount());
+                        currentAuction.setHighestBidderName(latestBid.getBidderUsername());
+
+                        lblCurrentPrice.setText(String.format("%,d ₫", latestBid.getBidAmount()));
+                        lblLeaderName.setText("Dẫn đầu: " + latestBid.getBidderUsername());
+                        if (lblMinHint != null) {
+                            long minRequired = latestBid.getBidAmount() + currentAuction.getMinIncrement();
+                            lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
+                        }
+                    }
+        
+                });
+            }
         } catch (Exception e) {
             System.err.println("Lỗi tải lịch sử đặt giá: " + e.getMessage());
         }
