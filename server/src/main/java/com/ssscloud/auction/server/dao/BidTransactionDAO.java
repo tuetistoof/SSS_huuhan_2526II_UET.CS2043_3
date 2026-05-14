@@ -110,7 +110,7 @@ public class BidTransactionDAO extends BaseDAO {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.bidder_id = ? " +
-                "ORDER BY b.bid_time DESC";
+                "ORDER BY b.bid_time ASC";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -141,7 +141,7 @@ public class BidTransactionDAO extends BaseDAO {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
-                "ORDER BY b.bid_time DESC";
+                "ORDER BY b.bid_time ASC";
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;

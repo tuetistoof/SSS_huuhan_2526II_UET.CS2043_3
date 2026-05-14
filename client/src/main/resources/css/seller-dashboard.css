@@ -190,6 +190,7 @@
 */
 .content-area {
     -fx-background-color: #ffffff;
+    -fx-background-radius: 12px;
 }
 
 /* ── TAB BAR ── */
@@ -197,6 +198,7 @@
     -fx-background-color: #ffffff;
     -fx-border-color: #e8e8e8;
     -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 12 12 0 0;
 }
 
 .tab-btn {

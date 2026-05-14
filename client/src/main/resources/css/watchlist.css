@@ -1,0 +1,194 @@
+/* ── HEADER CARD ── */
+.wl-header-card {
+    -fx-background-color: #f6cace;
+}
+
+.wl-page-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+}
+
+.wl-page-sub {
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+.wl-count-badge {
+    -fx-background-color: #f25858;
+    -fx-background-radius: 14px;
+    -fx-min-width: 32px;
+    -fx-min-height: 28px;
+    -fx-padding: 4 10 4 10;
+    -fx-alignment: center;
+}
+
+.wl-count-text {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+/* ── CONTENT AREA ── */
+.wl-content-area {
+    -fx-background-color: #f0f0f0;
+}
+
+/* ── EMPTY STATE ── */
+.wl-empty-state {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
+}
+
+.wl-empty-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-alignment: center;
+}
+
+.wl-empty-sub {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999999;
+    -fx-alignment: center;
+}
+
+/* ── SCROLL + LIST ── */
+.wl-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 12 12 12 12;
+}
+
+.wl-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.wl-list {
+    -fx-background-color: transparent;
+    -fx-spacing: 8;
+}
+
+/* scrollbar mỏng giống dashboard */
+.wl-scroll .scroll-bar:vertical {
+    -fx-pref-width: 6px;
+    -fx-background-color: transparent;
+}
+.wl-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #dedede;
+    -fx-background-radius: 3px;
+}
+.wl-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #c0c0c0;
+}
+.wl-scroll .scroll-bar .increment-button,
+.wl-scroll .scroll-bar .decrement-button {
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-opacity: 0;
+}
+.wl-scroll .scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+/* ── ROW ── */
+.wl-row {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 6, 0, 0, 2);
+    -fx-cursor: default;
+}
+
+.wl-row:hover {
+    -fx-background-color: #fff8f9;
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.12), 8, 0, 0, 3);
+}
+
+/* thumbnail — dùng background-image từ controller */
+.wl-thumb {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 8px;
+    -fx-background-size: cover;
+    -fx-background-position: center center;
+}
+
+/* ── ROW TEXT ── */
+.wl-row-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+}
+
+.wl-badge-type {
+    -fx-background-color: #fde8e8;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 6 2 6;
+}
+
+.wl-row-seller {
+    -fx-font-size: 12px;
+    -fx-text-fill: #888888;
+}
+
+.wl-row-price {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f75667;
+}
+
+.wl-row-timer {
+    -fx-font-size: 12px;
+    -fx-text-fill: #e07b00;
+}
+
+.wl-row-timer-safe {
+    -fx-font-size: 12px;
+    -fx-text-fill: #888888;
+}
+
+/* ── BUTTONS ── */
+.wl-btn-enter {
+    -fx-background-color: #f75667;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 7px;
+    -fx-border-color: transparent;
+    -fx-padding: 6 16 6 16;
+    -fx-cursor: hand;
+    -fx-pref-width: 100px;
+}
+
+.wl-btn-enter:hover {
+    -fx-background-color: #e0455a;
+}
+
+.wl-btn-unfollow {
+    -fx-background-color: transparent;
+    -fx-text-fill: #999999;
+    -fx-font-size: 12px;
+    -fx-background-radius: 7px;
+    -fx-border-color: #dddddd;
+    -fx-border-width: 1px;
+    -fx-border-radius: 7px;
+    -fx-padding: 5 16 5 16;
+    -fx-cursor: hand;
+    -fx-pref-width: 100px;
+}
+
+.wl-btn-unfollow:hover {
+    -fx-border-color: #f75667;
+    -fx-text-fill: #f75667;
+}
+
+/* focus ring ẩn */
+.wl-btn-enter:focused,
+.wl-btn-unfollow:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}

@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: cloud
+-- Host: localhost    Database: cloud
 -- ------------------------------------------------------
 -- Server version	8.0.45
 
@@ -59,7 +59,7 @@ CREATE TABLE `art` (
 
 LOCK TABLES `art` WRITE;
 /*!40000 ALTER TABLE `art` DISABLE KEYS */;
-INSERT INTO `art` VALUES ('300b3417-94ca-4ded-ac87-8e060366a281',1),('343e6724-7efb-4958-a05d-9a815ab6bf08',1);
+INSERT INTO `art` VALUES ('09a99fb0-64c7-47ef-9ee4-79415183b392',1);
 /*!40000 ALTER TABLE `art` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -90,7 +90,7 @@ CREATE TABLE `auction` (
 
 LOCK TABLES `auction` WRITE;
 /*!40000 ALTER TABLE `auction` DISABLE KEYS */;
-INSERT INTO `auction` VALUES ('995ed873-5084-418f-8942-bdcb906ad320','OPEN','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','300b3417-94ca-4ded-ac87-8e060366a281'),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e','OPEN','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','343e6724-7efb-4958-a05d-9a815ab6bf08'),('b89ed511-03a0-4522-a45f-b8186265ef51','FINISHED','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','0f898bfd-c02f-490c-af40-69763e6e74d8');
+INSERT INTO `auction` VALUES ('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','RUNNING','dc35111b-344c-49ff-89ff-9426c50d3115','09a99fb0-64c7-47ef-9ee4-79415183b392'),('d369c0a6-1766-48e7-ac42-707c561c2895','RUNNING','dc35111b-344c-49ff-89ff-9426c50d3115','79f1a2db-c429-4cd4-aa90-1912915f85a7');
 /*!40000 ALTER TABLE `auction` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -119,7 +119,7 @@ CREATE TABLE `auction_config` (
 
 LOCK TABLES `auction_config` WRITE;
 /*!40000 ALTER TABLE `auction_config` DISABLE KEYS */;
-INSERT INTO `auction_config` VALUES ('995ed873-5084-418f-8942-bdcb906ad320',15000000,600000,'2026-05-12 08:00:00','2026-05-16 22:00:00',36),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e',50000,10000,'2026-05-13 02:14:16','2026-05-14 03:00:00',36),('b89ed511-03a0-4522-a45f-b8186265ef51',15000000,5000000,'2026-05-04 03:40:09','2026-05-07 20:00:00',36);
+INSERT INTO `auction_config` VALUES ('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3',400000,50000,'2026-05-14 01:10:10','2026-05-15 12:30:00',36),('d369c0a6-1766-48e7-ac42-707c561c2895',300000,50000,'2026-05-14 01:38:37','2026-05-19 14:30:00',36);
 /*!40000 ALTER TABLE `auction_config` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -135,7 +135,7 @@ CREATE TABLE `bid_transaction` (
   `bidder_id` varchar(36) NOT NULL,
   `bidder_username` varchar(255) DEFAULT NULL,
   `bid_amount` bigint DEFAULT NULL,
-  `bid_time` datetime NOT NULL,
+  `bid_time` datetime(6) DEFAULT NULL,
   `bid_type` varchar(50) DEFAULT NULL,
   KEY `fk_bid_transaction_auction` (`auction_id`),
   KEY `fk_bid_transactiond_user` (`bidder_id`),
@@ -150,6 +150,7 @@ CREATE TABLE `bid_transaction` (
 
 LOCK TABLES `bid_transaction` WRITE;
 /*!40000 ALTER TABLE `bid_transaction` DISABLE KEYS */;
+INSERT INTO `bid_transaction` VALUES ('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','d0ffa144-26f1-4f86-a877-ecc952e72c3d','onion',450000,'2026-05-14 01:12:01.163345','MANUAL'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','d0ffa144-26f1-4f86-a877-ecc952e72c3d','onion',600000,'2026-05-14 01:20:09.213241','MANUAL'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','9171ac52-84f8-4cf1-b248-e2cab9520dd0','trungbeo',1500000,'2026-05-14 01:21:35.638500','MANUAL'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','d0ffa144-26f1-4f86-a877-ecc952e72c3d','onion',1600000,'2026-05-14 01:33:08.420175','MANUAL'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','d0ffa144-26f1-4f86-a877-ecc952e72c3d','onion',1700000,'2026-05-14 01:35:54.159168','MANUAL'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','d0ffa144-26f1-4f86-a877-ecc952e72c3d','onion',1800000,'2026-05-14 01:36:02.577750','MANUAL'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','9171ac52-84f8-4cf1-b248-e2cab9520dd0','trungbeo',3500000,'2026-05-14 01:36:45.867124','MANUAL'),('d369c0a6-1766-48e7-ac42-707c561c2895','9171ac52-84f8-4cf1-b248-e2cab9520dd0','trungbeo',400000,'2026-05-14 01:40:10.974869','MANUAL');
 /*!40000 ALTER TABLE `bid_transaction` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -174,7 +175,7 @@ CREATE TABLE `bidder` (
 
 LOCK TABLES `bidder` WRITE;
 /*!40000 ALTER TABLE `bidder` DISABLE KEYS */;
-INSERT INTO `bidder` VALUES ('394f3d4d-4c98-4411-bf2e-bc0a887a3587',100000000),('8862d63e-f4ec-4b6e-9473-0137776d3be5',1000000),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5',1000000),('d6e71dcb-d078-4190-94bd-58d7038c0857',165884696),('dd9ef995-0125-4060-8a80-b8f1895dd875',0);
+INSERT INTO `bidder` VALUES ('9171ac52-84f8-4cf1-b248-e2cab9520dd0',1000000000),('d0ffa144-26f1-4f86-a877-ecc952e72c3d',10450000);
 /*!40000 ALTER TABLE `bidder` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -200,7 +201,6 @@ CREATE TABLE `electronic` (
 
 LOCK TABLES `electronic` WRITE;
 /*!40000 ALTER TABLE `electronic` DISABLE KEYS */;
-INSERT INTO `electronic` VALUES ('0f898bfd-c02f-490c-af40-69763e6e74d8',1,36);
 /*!40000 ALTER TABLE `electronic` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -224,7 +224,7 @@ CREATE TABLE `entity` (
 
 LOCK TABLES `entity` WRITE;
 /*!40000 ALTER TABLE `entity` DISABLE KEYS */;
-INSERT INTO `entity` VALUES ('0f898bfd-c02f-490c-af40-69763e6e74d8','Beatrice'),('300b3417-94ca-4ded-ac87-8e060366a281','Beako plushy'),('343e6724-7efb-4958-a05d-9a815ab6bf08','Bã mía loại 3'),('394f3d4d-4c98-4411-bf2e-bc0a887a3587','hà anh'),('5903b82c-e5e0-426c-9ecd-e791edabfc0d','Tran Thi B'),('995ed873-5084-418f-8942-bdcb906ad320','Sell Beako plushy'),('9c5e920e-54c5-4fdc-bb74-b6c1c6f8be4e','Shop Độ Mimi'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','Nguyen Van A'),('b89ed511-03a0-4522-a45f-b8186265ef51','Sell Beako'),('c79f0cf0-b48e-4dc6-8025-59f3eadb0974','Trung Lê'),('d6e71dcb-d078-4190-94bd-58d7038c0857','Trung Lê'),('dd9ef995-0125-4060-8a80-b8f1895dd875','nguyen duc tue');
+INSERT INTO `entity` VALUES ('09a99fb0-64c7-47ef-9ee4-79415183b392','Beako plushy'),('79f1a2db-c429-4cd4-aa90-1912915f85a7','TETO'),('9171ac52-84f8-4cf1-b248-e2cab9520dd0','Trung Lee'),('ccd6339f-e08e-4f05-bcbd-a0b0983cd3d3','bán loli'),('d0ffa144-26f1-4f86-a877-ecc952e72c3d','hà anh'),('d369c0a6-1766-48e7-ac42-707c561c2895','Bán TETO'),('dc35111b-344c-49ff-89ff-9426c50d3115','trung lê'),('ef532146-0c6f-4637-ae82-f35612861d6d','TETO');
 /*!40000 ALTER TABLE `entity` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -254,7 +254,7 @@ CREATE TABLE `item` (
 
 LOCK TABLES `item` WRITE;
 /*!40000 ALTER TABLE `item` DISABLE KEYS */;
-INSERT INTO `item` VALUES ('0f898bfd-c02f-490c-af40-69763e6e74d8','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','IDK','yet ser','ELECTRONIC'),('300b3417-94ca-4ded-ac87-8e060366a281','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','Subaru','Don\'t let Emilia see this','ART'),('343e6724-7efb-4958-a05d-9a815ab6bf08','c79f0cf0-b48e-4dc6-8025-59f3eadb0974','Độ mimi','IU A DO MIXI','ART');
+INSERT INTO `item` VALUES ('09a99fb0-64c7-47ef-9ee4-79415183b392','dc35111b-344c-49ff-89ff-9426c50d3115','internet','mỗi người nên có ít nhất 1 bé','ART'),('79f1a2db-c429-4cd4-aa90-1912915f85a7','dc35111b-344c-49ff-89ff-9426c50d3115','INTERNET','Ai cũng cần 1 con','VEHICLE'),('ef532146-0c6f-4637-ae82-f35612861d6d','dc35111b-344c-49ff-89ff-9426c50d3115','internet','TETO123','ELECTRONIC');
 /*!40000 ALTER TABLE `item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -267,8 +267,8 @@ DROP TABLE IF EXISTS `item_image_url`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `item_image_url` (
   `item_id` varchar(36) NOT NULL,
-  `image_url` varchar(255) NOT NULL,
-  PRIMARY KEY (`item_id`,`image_url`),
+  `image_url` text,
+  KEY `fk_itemimage_item` (`item_id`),
   CONSTRAINT `fk_itemimage_item` FOREIGN KEY (`item_id`) REFERENCES `item` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -279,7 +279,7 @@ CREATE TABLE `item_image_url` (
 
 LOCK TABLES `item_image_url` WRITE;
 /*!40000 ALTER TABLE `item_image_url` DISABLE KEYS */;
-INSERT INTO `item_image_url` VALUES ('0f898bfd-c02f-490c-af40-69763e6e74d8','https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg'),('300b3417-94ca-4ded-ac87-8e060366a281','https://i.pinimg.com/736x/f6/e9/c2/f6e9c2a7b911b6e64c60147e6789dcae.jpg'),('343e6724-7efb-4958-a05d-9a815ab6bf08','https://down-vn.img.susercontent.com/file/vn-11134207-7r98o-lvy3123l4xcp65');
+INSERT INTO `item_image_url` VALUES ('09a99fb0-64c7-47ef-9ee4-79415183b392','https://th.bing.com/th/id/OIP.8v16bx0DQxWJFDZbKeOrpwHaHh?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3'),('ef532146-0c6f-4637-ae82-f35612861d6d','https://th.bing.com/th/id/OIP.hJzaTf6QcFEaBgShJ8EIcgHaHa?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3'),('79f1a2db-c429-4cd4-aa90-1912915f85a7','https://thuvienmeme.com/wp-content/uploads/2024/04/meme-sieu-nhan-ngoi-chong-cam-hanh-phuc.jpg'),('79f1a2db-c429-4cd4-aa90-1912915f85a7','https://th.bing.com/th/id/OIP.YovTjY1b8reVgfROUVVubwHaHa?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3'),('79f1a2db-c429-4cd4-aa90-1912915f85a7','https://th.bing.com/th/id/OIP.stBsb0sfY-NXgqF8hVWgCAHaHa?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3');
 /*!40000 ALTER TABLE `item_image_url` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -305,7 +305,7 @@ CREATE TABLE `seller` (
 
 LOCK TABLES `seller` WRITE;
 /*!40000 ALTER TABLE `seller` DISABLE KEYS */;
-INSERT INTO `seller` VALUES ('5903b82c-e5e0-426c-9ecd-e791edabfc0d','MB-9999888',0),('c79f0cf0-b48e-4dc6-8025-59f3eadb0974','00000001234',600000);
+INSERT INTO `seller` VALUES ('dc35111b-344c-49ff-89ff-9426c50d3115','123456',0);
 /*!40000 ALTER TABLE `seller` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -334,7 +334,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES ('394f3d4d-4c98-4411-bf2e-bc0a887a3587','onion','123456','into@gmail.com','BIDDER'),('5903b82c-e5e0-426c-9ecd-e791edabfc0d','tranthib','abcdef','b@gmail.com','SELLER'),('b58ac62f-4a9f-4e4c-9bfb-5fa663c38bf5','nguyenvana','123456','a@gmail.com','BIDDER'),('c79f0cf0-b48e-4dc6-8025-59f3eadb0974','trunglee','trung2007','tuantrungbeo@gmail.com','SELLER'),('d6e71dcb-d078-4190-94bd-58d7038c0857','trungbeo','trung2007','tuantrungbeo@gmail.com','BIDDER'),('dd9ef995-0125-4060-8a80-b8f1895dd875','tuetistoof','tue10092007','tuenopro@gmail.com','BIDDER');
+INSERT INTO `user` VALUES ('9171ac52-84f8-4cf1-b248-e2cab9520dd0','trungbeo','trung2007','ainfo@gmail.com','BIDDER'),('d0ffa144-26f1-4f86-a877-ecc952e72c3d','onion','123456','into@gmail.com','BIDDER'),('dc35111b-344c-49ff-89ff-9426c50d3115','trunglee','trung2007','ainfo@gmail.com','SELLER');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -360,6 +360,7 @@ CREATE TABLE `vehicle` (
 
 LOCK TABLES `vehicle` WRITE;
 /*!40000 ALTER TABLE `vehicle` DISABLE KEYS */;
+INSERT INTO `vehicle` VALUES ('79f1a2db-c429-4cd4-aa90-1912915f85a7',0,36);
 /*!40000 ALTER TABLE `vehicle` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -398,4 +399,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-13 14:57:15
+-- Dump completed on 2026-05-14  1:41:56

@@ -111,6 +111,7 @@ public class MainLayoutController {
             notifPopupRoot = loader.load(); 
             notificationController = loader.getController();
             notificationController.init(this::navigateToAuction);
+            
             // Gắn badge listener: mỗi lần badge thay đổi → cập nhật lblBellBadge
             notificationController.setBadgeListener(count -> {
                 if (lblBellBadge != null) {
@@ -125,7 +126,9 @@ public class MainLayoutController {
     }
     // Khi user click vào 1 notification, sẽ gọi callback này với auctionId tương ứng
     private void navigateToAuction(String auctionId) {
-        // Tìm AuctionDTO từ danh sách đang hiển thị hoặc tạo dummy để navigate
+        if (notifPopup != null && notifPopup.isShowing()) {
+            notifPopup.hide();
+        }
         AuctionDisplayInfoDTO dummy = new AuctionDisplayInfoDTO();
         dummy.setId(auctionId);
         loadBiddingRoom(dummy);
@@ -422,7 +425,42 @@ public class MainLayoutController {
 
     @FXML
     void handleNavWatchlist(MouseEvent event) {
-        
+        updateActiveStyle(navWatchlist);
+        clearContent();
+
+        FXMLLoader loader = new FXMLLoader();
+        try {
+            loader = new FXMLLoader(getClass().getResource("/fxml/watchlist.fxml"));
+            Parent watchlistView = loader.load();
+
+        // Chưa load đc
+        //     CreateAuctionController controller = loader.getController();
+        //     controller.setOnSuccessCallback(newAuction -> {
+        //         updateActiveStyle(null);
+        //         clearContent();
+        //         try {
+        //             FXMLLoader roomLoader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));z`
+        //             Parent view = roomLoader.load();
+
+        //             BiddingRoomController ctrl = roomLoader.getController();
+        //             ctrl.setAuction(newAuction); 
+        //             ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); 
+                    
+        //             currentController = ctrl;
+        //             contentArea.getChildren().add(view);
+        //         } catch (IOException e) {
+        //             e.printStackTrace();
+        //         }
+        //     });
+
+        //     contentArea.getChildren().clear();
+        //     contentArea.getChildren().add(createAuctionView);
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi load file watchlist.fxml");
+        }
+
     }
 
     @FXML

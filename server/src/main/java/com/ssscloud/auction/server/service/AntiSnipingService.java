@@ -14,8 +14,6 @@ public class AntiSnipingService {
         LocalDateTime endTime = auction.getEndTime();
 
         long secondsLeft = Duration.between(currentTime, endTime).toSeconds();
-
-
         if (secondsLeft > 0 && secondsLeft <= 36){
             LocalDateTime newEndTime = endTime.plusSeconds(auction.getExtendSecond());
             auction.setEndTime(newEndTime);

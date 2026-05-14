@@ -48,7 +48,7 @@
     -fx-padding: 2 10 2 10;
 }
 .br-badge-ended {
-    -fx-background-color: #D3D1C7;
+    -fx-background-color: #e36262;
     -fx-background-radius: 20;
     -fx-text-fill: #444441;
     -fx-font-size: 11px;
@@ -106,6 +106,13 @@
     -fx-border-radius: 8;
     -fx-background-radius: 10;
     -fx-font-size: 24px;
+}
+.br-product-btn-change-image:hover {
+    -fx-background-color: #ffbcd4;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 10;
+    -fx-font-size: 25px;
 }
 
 /* ── Cột trái: giá ── */
@@ -422,4 +429,51 @@
 
 .br-btn-follow:pressed {
     -fx-background-color: #F8DDE6;
+}
+.br-btn-follow-active {
+    -fx-background-color: #CE5A82;
+    -fx-border-color: #CE5A82;
+    -fx-text-fill: white;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 6 17 6 17;
+}
+
+.br-btn-follow-active {
+    -fx-background-color: #CE5A82;
+    -fx-border-color: #CE5A82;
+    -fx-text-fill: white;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 6 17 6 17;
+}
+.br-btn-follow-active:hover {
+    -fx-background-color: #A8365E;
+    -fx-border-color: #A8365E;
+}
+
+.br-image-view {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
+    -fx-border-color: #fce4ec;
+    -fx-border-width: 2;
+}
+/* ── Outbid warning ── */
+.outbid-warning {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #A32D2D;
+    -fx-background-color: #FFF0F0;
+    -fx-background-radius: 6;
+    -fx-border-color: #F4C0C0;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-padding: 5 10 5 10;
 }

@@ -49,7 +49,10 @@
                            </children>
                         </HBox>
                         <Region prefHeight="10.0" />
-                        <FlowPane fx:id="auctionContainer" hgap="10.0" vgap="10.0" />
+                        <FlowPane fx:id="auctionContainer" hgap="16.0" vgap="16.0">
+                           <padding>
+                              <Insets bottom="8.0" left="8.0" right="8.0" top="8.0" />
+                           </padding></FlowPane>
                      </children>
                   </VBox>
                </children>
