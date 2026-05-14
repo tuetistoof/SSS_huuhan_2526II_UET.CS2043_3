@@ -2,13 +2,10 @@ package com.ssscloud.auction.server.networking;
 
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-<<<<<<< HEAD
 import java.util.List;
 import java.util.ResourceBundle.Control;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-=======
->>>>>>> f1804963538f8ad46e9a9019a2630095a1ba2fb6
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
@@ -26,7 +23,6 @@ import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
-import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
     
 public class MessageHandler {
@@ -35,21 +31,21 @@ public class MessageHandler {
     private AuctionController auctionController;
     private AuctionDAO auctionDAO;
     private ItemController itemController;
-    private WatchlistDAO watchlistDAO;
+
+    private static final Logger logger = Logger.getLogger(MessageHandler.class.getName());
+
     private WatchlistController watchlistController;
     public MessageHandler(
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
             ItemController itemController,
-            WatchlistDAO watchlistDAO,
             WatchlistController watchlistController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.itemController = itemController;
         this.watchlistController = watchlistController;
-        this.watchlistDAO = watchlistDAO;
     }
 
     public String handleMessage(String jsonMessage, ClientHandler client) {
@@ -168,7 +164,7 @@ public class MessageHandler {
                     ChangeManager.getInstance().attach(auction, observer);
                     System.out.println("[Server] Client " + client.getUserId() + " đã vào phòng auction " + auctionId);
                     return null;
-                }
+                }*/
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
@@ -190,13 +186,8 @@ public class MessageHandler {
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
-<<<<<<< HEAD
-                        ApiResponse.success(following, "OK")));  
-                } */
-=======
                         JsonUtils.fromJson(watchlistController.checkFollowing(auctionId, client.getUserId()), ApiResponse.class)));
                 }
->>>>>>> f1804963538f8ad46e9a9019a2630095a1ba2fb6
 
                 case "DEPOSIT": {
                     String result = userController.deposit(msg.getData(), client.getUserId());
@@ -215,7 +206,7 @@ public class MessageHandler {
             return JsonUtils.toJson(ClientMessage.request("VALIDATE_ERROR", ApiResponse.error(e.getMessage(), e.getErrorCode())));
 
         } catch (ServiceExceptions e) {
-            logger.log(Level.INFO, "Business logic error: " + e.getMessage(), e);
+            logger.log(Level.WARNING, "Business logic error: " + e.getMessage(), e);
             return JsonUtils.toJson(ClientMessage.request("BUSINESS_ERROR", ApiResponse.error(e.getMessage(), e.getErrorCode())));
             
         } catch (DAOExceptions e){

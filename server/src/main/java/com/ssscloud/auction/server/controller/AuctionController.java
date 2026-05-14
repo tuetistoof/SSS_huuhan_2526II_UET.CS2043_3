@@ -28,7 +28,7 @@ public class AuctionController {
             CreateAuctionRequest request = JsonUtils.fromJson(rawDataJson, CreateAuctionRequest.class);
             // Validate
             if (request == null) {
-                return Json Utils.toJson(ApiResponse.error("Dữ liệu request không hợp lệ"));
+                return JsonUtils.toJson(ApiResponse.error("Dữ liệu request không hợp lệ"));
             }
             if (request.getName() == null || request.getName().isBlank()) {
                 return JsonUtils.toJson(ApiResponse.error("Tên phiên đấu giá không được để trống"));

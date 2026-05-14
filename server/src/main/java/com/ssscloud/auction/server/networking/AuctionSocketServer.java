@@ -86,11 +86,7 @@ public class AuctionSocketServer {
 
         NotificationService.getInstance().init(watchlistDAO);
 
-<<<<<<< HEAD
-        MessageHandler messageHandler = new MessageHandler(userCtrl, auctionCtrl, bidCtrl, itemCtrl);
-=======
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistDAO, watchlistCtrl);
->>>>>>> f1804963538f8ad46e9a9019a2630095a1ba2fb6
+        MessageHandler  messageHandler = new MessageHandler(userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistCtrl);
 
         // Phục hồi auction còn sống sau restart + bật safety net 30s
         recoverLiveAuctions(auctionDAO, auctionService);
