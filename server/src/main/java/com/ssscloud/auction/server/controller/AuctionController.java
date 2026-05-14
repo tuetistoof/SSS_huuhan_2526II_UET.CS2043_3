@@ -9,7 +9,6 @@ import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
-import com.ssscloud.auction.common.exception.InvalidBidException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AuctionService;
@@ -23,7 +22,7 @@ public class AuctionController {
     }
 
     // public String createAuction(Object data, String sellerId){
-    public String createAuction(String rawDataJson, String sellerId) {
+    public String createAuction(String rawDataJson, String sellerId) throws Exception {
         try {
             // String json = JsonUtils.toJson(rawDataJson);
             CreateAuctionRequest request = JsonUtils.fromJson(rawDataJson, CreateAuctionRequest.class);
