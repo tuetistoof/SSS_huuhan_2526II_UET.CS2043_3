@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane stylesheets="@../css/watchlist.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.WatchlistController">
+    <children>
+        <VBox spacing="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
+
+            <!-- ── HEADER CARD ── -->
+            <VBox styleClass="wl-header-card">
+                <padding><Insets bottom="18" left="20" right="20" top="18" /></padding>
+                <children>
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <children>
+                            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label styleClass="wl-page-title" text="Watchlist" />
+                                    <Label fx:id="lblSubtitle" styleClass="wl-page-sub" text="Auction you follow" />
+                                </children>
+                            </VBox>
+                            <!-- Badge tổng số -->
+                            <StackPane styleClass="wl-count-badge">
+                                <children>
+                                    <Label fx:id="lblTotalCount" styleClass="wl-count-text" text="0" />
+                                </children>
+                            </StackPane>
+                        </children>
+                    </HBox>
+                </children>
+            </VBox>
+
+            <!-- ── CONTENT AREA ── -->
+            <VBox spacing="0" styleClass="wl-content-area" VBox.vgrow="ALWAYS">
+                <children>
+
+                    <!-- Empty state — ẩn khi có data -->
+                    <VBox fx:id="emptyState" alignment="CENTER" managed="true" styleClass="wl-empty-state" visible="true" VBox.vgrow="ALWAYS">
+                        <padding><Insets bottom="60" top="60" /></padding>
+                        <children>
+                            <Label style="-fx-font-size: 48px;" text="🔖" />
+                            <Region prefHeight="12" />
+                            <Label styleClass="wl-empty-title" text="Feeling Empty" />
+                            <Region prefHeight="6" />
+                            <Label styleClass="wl-empty-sub" text="Follow an auction by clicking the follow button" wrapText="true" />
+                        </children>
+                    </VBox>
+
+                    <!-- Danh sách rows — hiện khi có data -->
+                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" managed="false" styleClass="wl-scroll" visible="false" VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox fx:id="listContainer" spacing="0" styleClass="wl-list" />
+                        </content>
+                    </ScrollPane>
+
+                </children>
+            </VBox>
+
+        </VBox>
+    </children>
+</AnchorPane>
