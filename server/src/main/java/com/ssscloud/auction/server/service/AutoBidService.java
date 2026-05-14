@@ -42,7 +42,6 @@ public class AutoBidService {
     }
 
     public void register(AutoBidRequest req, String bidderId, String bidderUsername) {
-        System.out.print("2 siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuu");
         if (req == null || bidderId == null || bidderUsername == null)
             throw new IllegalArgumentException("Request và thông tin người dùng không được để trống");
         if (req.getAuctionId() == null || String.valueOf(req.getAuctionId()).isBlank())
@@ -64,6 +63,9 @@ public class AutoBidService {
             AuctionRegistry.getInstance().registerIfAbsent(auction);
             auction = AuctionRegistry.getInstance().get(req.getAuctionId());
         }
+        long minIncrement = auction.getAuctionConfig().getMinIncrement();
+        if (req.getIncrement() < minIncrement)
+            throw new IllegalArgumentException ("increment phai lon hon minIncrement cua auction");
         if (bidderId.equals(auction.getSellerId()))
             throw new IllegalArgumentException(
                     "Người bán không thể đăng ký auto bid cho sản phẩm của mình");
@@ -79,65 +81,68 @@ public class AutoBidService {
         entries.add(new AutoBidEntry(bidderId, bidderUsername, (long) req.getMaxBid(), (long) req.getIncrement()));
         trigger(auction);
     }
-
     public void trigger(Auction auction) {
-        System.out.print("siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuu");
-        if (auction.getStatus().isEnded() || auction.isExpired()) {
-            System.out.println("[AutoBidService] Phiên đã kết thúc, dừng chuỗi auctionId="
-                    + auction.getAuctionConfig().getId());
-            return;
-        }
+        if (auction.getStatus().isEnded() || auction.isExpired()) return;
 
         String auctionId = auction.getAuctionConfig().getId();
         long currentPrice = auction.getCurrentPrice();
-        String highestBidderId = auction.getHighestBidderId();
-        removeExhaustedEntries(auctionId, currentPrice, highestBidderId);
 
-        List<AutoBidEntry> entries = registrationsByAuction.get(auctionId);
-        if (entries == null || entries.isEmpty())
-            return;
-
-        List<AutoBidEntry> eligibleEntries = new ArrayList<>();
-        for (AutoBidEntry entry : entries) {
-            if (!entry.bidderId.equals(highestBidderId))
-                eligibleEntries.add(entry);
+        List<AutoBidEntry> allEntries = registrationsByAuction.get(auctionId);
+        if (allEntries == null || allEntries.isEmpty()) return;
+        System.out.println (allEntries.size());
+        List<AutoBidEntry> snapshot = new ArrayList<>(allEntries);
+        if (snapshot.isEmpty()) return;
+        System.out.print(snapshot.size());
+        List<AutoBidEntry> eligible = new ArrayList<>();
+        for (AutoBidEntry e : snapshot) {
+            eligible.add(e);
         }
-        if (eligibleEntries.isEmpty())
-            return;
+        if (eligible.size() <= 1) return;
 
-        AutoBidEntry winner = eligibleEntries.get(0);
-        for (AutoBidEntry entry : eligibleEntries) {
-            if (entry.maxBid > winner.maxBid
-                    || (entry.maxBid == winner.maxBid
-                            && entry.registeredAt.isBefore(winner.registeredAt))) {
-                winner = entry;
+        AutoBidEntry winner = eligible.get(0);
+        for (AutoBidEntry e : eligible) {
+            if (e.maxBid > winner.maxBid
+                    || (e.maxBid == winner.maxBid
+                            && e.registeredAt.isBefore(winner.registeredAt))) {
+                winner = e;
             }
         }
-
-        long secondHighestMaxBid = 0;
-        for (AutoBidEntry entry : eligibleEntries) {
-            if (!entry.bidderId.equals(winner.bidderId)
-                    && entry.maxBid > secondHighestMaxBid) {
-                secondHighestMaxBid = entry.maxBid;
-            }
+        
+        long secondHighest = 0;
+        for (AutoBidEntry e : eligible) {
+            if (!e.bidderId.equals(winner.bidderId) && e.maxBid > secondHighest)
+                secondHighest = e.maxBid;
         }
-
-        long base = Math.max(secondHighestMaxBid, currentPrice);
+        System.out.println (secondHighest);
+        long base = Math.max(secondHighest, currentPrice);
         long bidAmount = Math.min(base + winner.increment, winner.maxBid);
+        System.out.println (secondHighest);
+        if (bidAmount <= currentPrice) return;
 
-        if (bidAmount <= currentPrice) {
-            System.out.println("[AutoBidService] bidAmount=" + bidAmount
-                    + " không vượt currentPrice=" + currentPrice
-                    + ", bỏ qua auctionId=" + auctionId);
-            return;
-        }
         bidManager = ConcurrentBidManager.getInstance();
         bidManager.submitBid(auction, winner.bidderId, winner.bidderUsername, bidAmount, BidType.AUTO);
-
         incrementBidCount(auctionId, winner.bidderId);
-        System.out.println("[AutoBidService] Submit auto bid auctionId=" + auctionId
-                + " winner=" + winner.bidderId
-                + " bidAmount=" + bidAmount);
+
+        List<AutoBidEntry> toRemove = new ArrayList<>();
+        for (AutoBidEntry entry : snapshot) {
+            if (entry.bidderId.equals(winner.bidderId)) continue;
+            toRemove.add(entry);
+        }
+
+        allEntries.removeAll(toRemove);
+        toRemove.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
+    }
+
+    private void notifyAutoBidStopped(String bidderId) {
+        java.io.PrintWriter writer = sessionRegistry.getWriter(bidderId);
+        if (writer != null) {
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(
+                    ClientMessage.push("AUTO_BID_STOPPED",
+                        java.util.Map.of("message",
+                            "Auto Bid đã dừng — giá hiện tại vượt ngưỡng tối đa của bạn"))));
+            }
+        }
     }
 
     public void onBidSuccess(Auction auction, BidTransaction bid) {
@@ -162,45 +167,6 @@ public class AutoBidService {
         System.out.println("[AutoBidService] Đã xóa đăng ký auto bid cho auctionId=" + auctionId);
     }
 
-    public List<AutoBidEntry> removeExhaustedEntries(String auctionId,
-            long currentPrice,
-            String highestBidderId) {
-        List<AutoBidEntry> entries = registrationsByAuction.get(auctionId);
-        if (entries == null || entries.isEmpty())
-            return List.of();
-
-        List<AutoBidEntry> exhaustedEntries = new ArrayList<>();
-        entries.removeIf(entry -> {
-            boolean isExhausted = !entry.bidderId.equals(highestBidderId)
-                    && entry.maxBid < currentPrice + entry.increment;
-            if (isExhausted)
-                exhaustedEntries.add(entry);
-            return isExhausted;
-        });
-
-        if (!exhaustedEntries.isEmpty()) {
-            exhaustedEntries.forEach(e -> {
-                System.out.println(
-                        "[AutoBidService] Xóa entry hết hạn mức: auctionId=" + auctionId
-                                + " bidderId=" + e.bidderId
-                                + " maxBid=" + e.maxBid
-                                + " currentPrice=" + currentPrice);
-
-                // THÊM: push về client
-                java.io.PrintWriter writer = sessionRegistry.getWriter(e.bidderId);
-                if (writer != null) {
-                    synchronized (writer) {
-                        writer.println(JsonUtils.toJson(
-                                ClientMessage.push("AUTO_BID_STOPPED",
-                                        java.util.Map.of("message",
-                                                "Auto Bid đã dừng — giá hiện tại vượt ngưỡng tối đa của bạn"))));
-                    }
-                }
-            });
-        }
-
-        return exhaustedEntries;
-    }
 
     private void incrementBidCount(String auctionId, String bidderId) {
         bidCountByAuction.computeIfAbsent(auctionId, k -> new ConcurrentHashMap<>())

@@ -113,7 +113,6 @@ public class MessageHandler {
                 }
 
                 case "AUTO_BID": {
-                    System.out.println("Received AUTO_BID request: " + msg.getData());
                     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE",
                     JsonUtils.fromJson(bidController.registerAutoBid(msg.getData(), client.getUserId(),
                     client.getUsername()), ApiResponse.class)));
@@ -136,10 +135,13 @@ public class MessageHandler {
                     JsonUtils.fromJson(auctionController.getAuctionById(msg.getData()), ApiResponse.class)));
                 }
                 case "GET_BID_HISTORY": {   //lịch sử đặt bid của auction
-                    String result = bidController.getBidHistory(msg.getData());
-                    com.ssscloud.auction.common.dto.response.ApiResponse<?> resp =
-                            com.ssscloud.auction.common.util.JsonUtils.fromJson(result,
-                                    com.ssscloud.auction.common.dto.response.ApiResponse.class);
+                    // String result = bidController.getBidHistory(msg.getData());
+                    // com.ssscloud.auction.common.dto.response.ApiResponse<?> resp =
+                    //         com.ssscloud.auction.common.util.JsonUtils.fromJson(result,
+                    //                 com.ssscloud.auction.common.dto.response.ApiResponse.class);
+                    // return JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY_RESPONSE", resp));
+                    ApiResponse<?> resp = JsonUtils.fromJson(
+                    bidController.getBidHistory(msg.getData()), ApiResponse.class);
                     return JsonUtils.toJson(ClientMessage.request("GET_BID_HISTORY_RESPONSE", resp));
                 }
 
