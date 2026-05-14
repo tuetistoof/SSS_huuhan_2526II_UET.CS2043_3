@@ -432,7 +432,10 @@ public class MainLayoutController {
         try {
             loader = new FXMLLoader(getClass().getResource("/fxml/watchlist.fxml"));
             Parent watchlistView = loader.load();
+            WatchlistController ctrl = loader.getController();
+            ctrl.setOnOpenAuction(this::loadBiddingRoom);
 
+            contentArea.getChildren().add(watchlistView);
         // Chưa load đc
         //     CreateAuctionController controller = loader.getController();
         //     controller.setOnSuccessCallback(newAuction -> {

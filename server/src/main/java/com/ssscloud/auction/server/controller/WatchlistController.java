@@ -1,6 +1,7 @@
 package com.ssscloud.auction.server.controller;
  
 import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
@@ -51,8 +52,8 @@ public class WatchlistController {
     }
     public String getWatchlist(String userId) {
         try {
-            List<String> auctionIds = watchlistDAO.findAuctionIdsByUser(userId);
-            return JsonUtils.toJson(ApiResponse.success(auctionIds, "OK"));
+            List<AuctionDisplayInfoDTO> watchlistDetails = watchlistDAO.findWatchlistDetailsByUser(userId);
+            return JsonUtils.toJson(ApiResponse.success(watchlistDetails, "OK"));
         } catch (Exception e) {
             return JsonUtils.toJson(ApiResponse.error("Lỗi server: " + e.getMessage()));
         }

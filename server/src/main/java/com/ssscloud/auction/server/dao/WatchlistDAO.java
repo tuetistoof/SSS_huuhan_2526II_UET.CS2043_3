@@ -5,8 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 
 public class WatchlistDAO extends BaseDAO {
 
@@ -61,6 +64,72 @@ public class WatchlistDAO extends BaseDAO {
     }
 
     // ── Query ─────────────────────────────────────────────────────────────────
+
+    public List<AuctionDisplayInfoDTO> findWatchlistDetailsByUser(String userId) {
+    List<AuctionDisplayInfoDTO> list = new ArrayList<>();
+    
+    // SQL được xây dựng dựa trên cấu trúc findSellerAuction của bạn
+    String sql = 
+        "SELECT a.id, " +
+        "       e.name AS auction_name, " +          // Tên cuộc đấu giá lấy từ entity
+        "       ac.end_time, " +                     // Thời gian kết thúc từ auction_config
+        "       u_seller.username AS seller_username, " + // Người bán
+        "       ei.name AS item_name, " +            // Tên vật phẩm lấy từ entity (alias ei)
+        "       i.type AS item_type, " +             // Loại vật phẩm (electronic/vehicle...)
+        "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " + // Giá hiện tại
+        "       (SELECT img.image_url FROM item_image_url img " +
+        "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + // Lấy 1 ảnh đại diện
+        "FROM watchlist w " +
+        "JOIN auction a ON w.auction_id = a.id " +
+        "JOIN auction_config ac ON a.id = ac.id " +
+        "JOIN entity e ON a.id = e.id " +            // JOIN entity để lấy tên auction
+        "JOIN user u_seller ON a.seller_id = u_seller.id " + 
+        "JOIN item i ON a.item_id = i.id " +
+        "JOIN entity ei ON i.id = ei.id " +          // JOIN entity lần nữa để lấy tên item
+        "LEFT JOIN ( " +
+        "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
+        "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
+        "                         WHERE b2.auction_id = b1.auction_id) " +
+        ") AS last_bid ON last_bid.auction_id = a.id " +
+        "WHERE w.user_id = ?";
+
+    Connection conn = null;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+        conn = getConnection();
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, userId);
+        rs = ps.executeQuery();
+
+        while (rs.next()) {
+            AuctionDisplayInfoDTO dto = new AuctionDisplayInfoDTO();
+            dto.setId(rs.getString("id"));
+            dto.setAuctionName(rs.getString("auction_name"));
+            dto.setItemName(rs.getString("item_name"));
+            dto.setItemType(rs.getString("item_type"));
+            dto.setCurrentPrice(rs.getLong("current_price"));
+            
+            Timestamp ts = rs.getTimestamp("end_time");
+            if (ts != null) {
+                dto.setEndTime(ts.toLocalDateTime());
+            }
+            
+            dto.setSellerUsername(rs.getString("seller_username"));
+            
+
+            list.add(dto);
+        }
+        logger.info("[Watchlist] Loaded " + list.size() + " detailed items for user " + userId);
+    } catch (SQLException e) {
+        logger.severe("Lỗi SQL Watchlist (Chi tiết): " + e.getMessage());
+    } finally {
+        closeResource(rs, ps);
+        closeConnect(conn);
+    }
+    return list;
+}
 
     /** Lấy list auction_id mà user đang follow — dùng cho màn hình Follow List. */
     public List<String> findAuctionIdsByUser(String userId) {
