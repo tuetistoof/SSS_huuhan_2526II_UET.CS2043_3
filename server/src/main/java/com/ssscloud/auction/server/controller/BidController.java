@@ -44,7 +44,6 @@ public class BidController {
     }
 
     public String registerAutoBid(Object data, String bidderId, String bidderUsername) {
-        System.out.print("1 siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu siuuuuuuuuuuuuuuuuuuuuuuuu");
         try {
             String raw = JsonUtils.toJson(data);
             AutoBidRequest req = JsonUtils.fromJson(raw, AutoBidRequest.class);
@@ -58,7 +57,9 @@ public class BidController {
         } catch (IllegalArgumentException | InvalidBidException e) {
             return JsonUtils.toJson(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            return JsonUtils.toJson(ApiResponse.error("Lỗi hệ thống khi đăng ký auto bid"));
+            System.err.println("[BidController] " + e.getMessage());
+            e.printStackTrace();
+            return JsonUtils.toJson( ApiResponse.error("Lỗi hệ thống: " + e.getMessage()));
         }
     }
 

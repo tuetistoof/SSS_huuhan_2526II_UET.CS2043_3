@@ -24,10 +24,9 @@ public class AuctionDAO extends BaseDAO {
     // ── Save ──────────────────────────────────────────────────────────────────
 
     public boolean saveAuction(Auction auction) {
-        // entity lưu id + name của auction_config
-        String sqlEntity      = "INSERT INTO entity (id, name) VALUES (?, ?)";
+        String sqlEntity        = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlAuctionConfig = "INSERT INTO auction_config (id, start_price, min_increment, start_time, end_time, extend_second) VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlAuction     = "INSERT INTO auction (id, status, seller_id, item_id) VALUES (?, ?, ?, ?)";
+        String sqlAuction       = "INSERT INTO auction (id, status, seller_id, item_id) VALUES (?, ?, ?, ?)";
 
         Connection        conn            = null;
         PreparedStatement psEntity        = null;
@@ -38,13 +37,13 @@ public class AuctionDAO extends BaseDAO {
             conn = getConnection();
             conn.setAutoCommit(false);
 
-            // 1. entity — lưu name của auction vào đây
+            // 1. entity — lưu name của auction
             psEntity = conn.prepareStatement(sqlEntity);
             psEntity.setString(1, auction.getAuctionConfig().getId());
             psEntity.setString(2, auction.getAuctionConfig().getName());
             psEntity.executeUpdate();
 
-            // 2. auction_config — không có cột name
+            // 2. auction_config
             psAuctionConfig = conn.prepareStatement(sqlAuctionConfig);
             psAuctionConfig.setString(1, auction.getAuctionConfig().getId());
             psAuctionConfig.setLong(2,   auction.getAuctionConfig().getStartPrice());
@@ -62,7 +61,7 @@ public class AuctionDAO extends BaseDAO {
             psAuction.setString(4, auction.getItemId());
             psAuction.executeUpdate();
 
-            // 4. bid transactions (nếu có)
+            // 4. bid transactions (nếu có) — dùng BidTransactionDAO với shared conn
             BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
             for (BidTransaction bt : auction.getBidTransaction()) {
                 bidTransactionDAO.saveBidTransaction(conn, bt);
@@ -90,22 +89,21 @@ public class AuctionDAO extends BaseDAO {
     // ── Find by seller ────────────────────────────────────────────────────────
 
     public List<Auction> findBySellerId(String sellerId) {
-        // FIX: JOIN entity e ON a.id = e.id để lấy e.name (tên auction)
-        // Code gốc dùng ac.name nhưng auction_config không có cột name
+        // FIX: b.auction_id AS b_auction_id — tránh conflict với a.id AS auction_id
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e ON a.id = e.id " +
             "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
             "WHERE a.seller_id = ? " +
-            "ORDER BY b.bid_time DESC";
+            "ORDER BY b.bid_time ASC";
 
-        Connection        conn = null;
-        PreparedStatement ps   = null;
-        ResultSet         rs   = null;
+        Connection           conn       = null;
+        PreparedStatement    ps         = null;
+        ResultSet            rs         = null;
         Map<String, Auction> auctionMap = new LinkedHashMap<>();
 
         try {
@@ -118,11 +116,11 @@ public class AuctionDAO extends BaseDAO {
                 String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
                 if (auction == null) {
-                    auction = mapResultSetToAuction(rs);
+                    auction = mapRowToAuction(rs);
                     auctionMap.put(auctionId, auction);
                 }
                 if (rs.getString("bidder_id") != null) {
-                    auction.getBidTransaction().add(mapResultSetToBid(rs));
+                    auction.placeBid(mapRowToBid(rs));
                 }
             }
             return new ArrayList<>(auctionMap.values());
@@ -139,17 +137,17 @@ public class AuctionDAO extends BaseDAO {
     // ── Find by auction id ────────────────────────────────────────────────────
 
     public Auction findByAuctionId(String id) {
-        // Giữ nguyên — đã có JOIN entity e ON a.id = e.id, dùng e.name đúng
+        // FIX: b.auction_id AS b_auction_id — tránh conflict với a.id AS auction_id
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e ON a.id = e.id " +
             "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
             "WHERE a.id = ? " +
-            "ORDER BY b.bid_time DESC";
+            "ORDER BY b.bid_time ASC";
 
         Connection        conn    = null;
         PreparedStatement ps      = null;
@@ -164,10 +162,10 @@ public class AuctionDAO extends BaseDAO {
 
             while (rs.next()) {
                 if (auction == null) {
-                    auction = mapResultSetToAuction(rs);
+                    auction = mapRowToAuction(rs);
                 }
                 if (rs.getString("bidder_id") != null) {
-                    auction.getBidTransaction().add(mapResultSetToBid(rs));
+                    auction.placeBid(mapRowToBid(rs));
                 }
             }
             return auction; // null nếu không tìm thấy
@@ -184,21 +182,21 @@ public class AuctionDAO extends BaseDAO {
     // ── Find by status ────────────────────────────────────────────────────────
 
     public List<Auction> findByStatus(AuctionStatus status) {
-        // FIX: thêm JOIN entity e ON a.id = e.id, đổi ac.name → e.name
+        // FIX: b.auction_id AS b_auction_id — tránh conflict với a.id AS auction_id
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e ON a.id = e.id " +
             "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
             "WHERE a.status = ? " +
-            "ORDER BY b.bid_time DESC";
+            "ORDER BY b.bid_time ASC";
 
-        Connection        conn = null;
-        PreparedStatement ps   = null;
-        ResultSet         rs   = null;
+        Connection           conn       = null;
+        PreparedStatement    ps         = null;
+        ResultSet            rs         = null;
         Map<String, Auction> auctionMap = new LinkedHashMap<>();
 
         try {
@@ -211,11 +209,11 @@ public class AuctionDAO extends BaseDAO {
                 String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
                 if (auction == null) {
-                    auction = mapResultSetToAuction(rs);
+                    auction = mapRowToAuction(rs);
                     auctionMap.put(auctionId, auction);
                 }
                 if (rs.getString("bidder_id") != null) {
-                    auction.getBidTransaction().add(mapResultSetToBid(rs));
+                    auction.placeBid(mapRowToBid(rs));
                 }
             }
             return new ArrayList<>(auctionMap.values());
@@ -232,7 +230,6 @@ public class AuctionDAO extends BaseDAO {
     // ── Find seller auctions (DTO) ────────────────────────────────────────────
 
     public List<AuctionDisplayInfoDTO> findSellerAuction(String sellerId) {
-        // entity e ON a.id = e.id → e.name = tên auction (đã đúng trong code gốc)
         String sql =
             "SELECT a.id, " +
             "       e.name AS auction_name, ac.end_time, " +
@@ -242,10 +239,10 @@ public class AuctionDAO extends BaseDAO {
             "       GROUP_CONCAT(img.image_url SEPARATOR ', ') AS image_url " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
-            "JOIN entity e ON a.id = e.id " +           // tên auction
+            "JOIN entity e ON a.id = e.id " +
             "JOIN user u ON a.seller_id = u.id " +
             "JOIN item i ON a.item_id = i.id " +
-            "JOIN entity ei ON i.id = ei.id " +          // tên item — alias riêng
+            "JOIN entity ei ON i.id = ei.id " +
             "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
             "LEFT JOIN ( " +
             "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
@@ -267,7 +264,7 @@ public class AuctionDAO extends BaseDAO {
 
             List<AuctionDisplayInfoDTO> result = new ArrayList<>();
             while (rs.next()) {
-                result.add(mapResultSetToDisplayDTO(rs));
+                result.add(mapRowToDisplayDTO(rs));
             }
             return result;
 
@@ -292,17 +289,17 @@ public class AuctionDAO extends BaseDAO {
             "       GROUP_CONCAT(img.image_url SEPARATOR ', ') AS image_url " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
-            "JOIN entity e ON a.id = e.id " +           // tên auction
+            "JOIN entity e ON a.id = e.id " +
             "JOIN user u ON a.seller_id = u.id " +
             "JOIN item i ON a.item_id = i.id " +
-            "JOIN entity ei ON i.id = ei.id " +          // tên item — alias riêng
+            "JOIN entity ei ON i.id = ei.id " +
             "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
             "LEFT JOIN ( " +
             "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
             "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
             "                         WHERE b2.auction_id = b1.auction_id) " +
             ") AS last_bid ON last_bid.auction_id = a.id " +
-             "WHERE a.status IN ('OPEN', 'RUNNING') " +
+            "WHERE a.status IN ('OPEN', 'RUNNING') " +
             "GROUP BY a.id, e.name, ac.end_time, u.username, ei.name, i.type, ac.start_price, last_bid.bid_amount";
 
         Connection        conn = null;
@@ -316,7 +313,7 @@ public class AuctionDAO extends BaseDAO {
 
             List<AuctionDisplayInfoDTO> result = new ArrayList<>();
             while (rs.next()) {
-                result.add(mapResultSetToDisplayDTO(rs));
+                result.add(mapRowToDisplayDTO(rs));
             }
             return result;
 
@@ -395,12 +392,12 @@ public class AuctionDAO extends BaseDAO {
         }
     }
 
-    // ── Mappers ───────────────────────────────────────────────────────────────
+    // ── Mappers (private — chỉ dùng nội bộ class này) ────────────────────────
 
-    private Auction mapResultSetToAuction(ResultSet rs) throws SQLException {
+    private Auction mapRowToAuction(ResultSet rs) throws SQLException {
         AuctionConfig config = new AuctionConfig(
-            rs.getString("auction_id"),                    // alias rõ ràng từ a.id AS auction_id
-            rs.getString("name"),                          // từ entity e
+            rs.getString("auction_id"),                         // a.id AS auction_id
+            rs.getString("name"),                               // e.name
             rs.getLong("start_price"),
             rs.getLong("min_increment"),
             toLocalDateTime(rs.getTimestamp("start_time")),
@@ -416,10 +413,19 @@ public class AuctionDAO extends BaseDAO {
         );
     }
 
-    // Khác với mapResultSetToBid bên BidTransactionDAO: dùng alias "auction_id" rõ ràng
-    private BidTransaction mapResultSetToBid(ResultSet rs) throws SQLException {
+    /**
+     * Map một row từ JOIN query sang BidTransaction.
+     *
+     * Lý do dùng alias "b_auction_id" thay vì "auction_id":
+     *   - JOIN query đã có  a.id AS auction_id  (dùng cho auction)
+     *   - Nếu đọc rs.getString("auction_id") thì JDBC trả về cột đầu tiên
+     *     khớp tên, tức là a.id — không phải b.auction_id — gây bug silent.
+     *   - Đặt alias riêng b.auction_id AS b_auction_id loại bỏ hoàn toàn
+     *     sự nhập nhằng này.
+     */
+    private BidTransaction mapRowToBid(ResultSet rs) throws SQLException {
         return new BidTransaction(
-            rs.getString("auction_id"),                    // alias rõ ràng từ a.id AS auction_id
+            rs.getString("b_auction_id"),                       // b.auction_id AS b_auction_id
             rs.getString("bidder_id"),
             rs.getString("bidder_username"),
             rs.getLong("bid_amount"),
@@ -428,7 +434,7 @@ public class AuctionDAO extends BaseDAO {
         );
     }
 
-    private AuctionDisplayInfoDTO mapResultSetToDisplayDTO(ResultSet rs) throws SQLException {
+    private AuctionDisplayInfoDTO mapRowToDisplayDTO(ResultSet rs) throws SQLException {
         String imageUrlRaw = rs.getString("image_url");
         List<String> imageUrls = (imageUrlRaw != null)
                 ? List.of(imageUrlRaw.split(", "))
@@ -440,7 +446,7 @@ public class AuctionDAO extends BaseDAO {
             rs.getString("item_type"),
             rs.getLong("current_price"),
             rs.getObject("end_time", LocalDateTime.class),
-            rs.getString("seller_username"),    
+            rs.getString("seller_username"),
             imageUrls
         );
     }

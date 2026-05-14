@@ -42,6 +42,9 @@ public class BidService {
             AuctionRegistry.getInstance().registerIfAbsent(auction);
             auction = AuctionRegistry.getInstance().get(req.getAuctionId());
         }
+        long minIncrement = auction.getAuctionConfig().getMinIncrement();
+        if (req.getBidAmount() - auction.getCurrentPrice() < minIncrement)
+            throw new IllegalArgumentException ("increment phai lon hon minIncrement cua auction");
         if (bidderId.equals(auction.getSellerId()))
             throw new InvalidBidException("Người bán không thể đấu giá sản phẩm của mình");
 
