@@ -126,8 +126,6 @@ public class BiddingRoomController implements MessageListener{
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     public void initialize() {
-        imgBiddingRoom.fitWidthProperty().bind(containerImage.widthProperty().subtract(100));
-        imgBiddingRoom.fitHeightProperty().bind(containerImage.heightProperty().subtract(40));
         socket.addListener(this);
         setupBidHistoryList();
     }

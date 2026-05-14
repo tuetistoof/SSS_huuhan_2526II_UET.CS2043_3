@@ -53,7 +53,7 @@
                   <StackPane fx:id="containerImage" maxHeight="1000.0" maxWidth="1800.0" minHeight="400.0" prefHeight="500.0" styleClass="br-white-card">
                     <children>
                         
-                        <ImageView fx:id="imgBiddingRoom" fitHeight="360.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" styleClass="br-image-view" />
+                        <ImageView fx:id="imgBiddingRoom" fitHeight="360.0" pickOnBounds="true" preserveRatio="true" styleClass="br-image-view" />
                         
                         <Button fx:id="btnBackImage" onAction="#navBackImage" styleClass="br-product-btn-change-image" text="&lt;" StackPane.alignment="CENTER_LEFT">
                           <StackPane.margin>
@@ -78,6 +78,7 @@
       
                 <Label styleClass="br-section-label" text="LEADING PRICE" />
                 <Label fx:id="lblCurrentPrice" styleClass="br-price-big" text="0 ₫" />
+                <Label fx:id="lblOutbid" managed="false" styleClass="outbid-warning" visible="false" />
                 <Label fx:id="lblLeaderName" styleClass="br-price-sub" text="Leading: —" />
       
                 <Region prefHeight="12" />
@@ -106,7 +107,7 @@
             </VBox>
 
         <!-- ── Cột phải: Tab Manual / Auto Bid ── -->
-        <VBox alignment="CENTER" maxWidth="600.0" minWidth="260" prefWidth="300.0" styleClass="br-white-card" HBox.hgrow="ALWAYS">
+        <VBox alignment="CENTER" maxWidth="450.0" minWidth="260" prefWidth="450.0" styleClass="br-white-card" HBox.hgrow="NEVER">
           <padding><Insets bottom="16" left="0" right="0" top="0" /></padding>
 
           <!-- Tab bar -->
