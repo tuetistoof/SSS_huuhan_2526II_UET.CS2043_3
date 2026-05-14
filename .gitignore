@@ -35,3 +35,12 @@ build/
 ### Database & Environment ###
 .env
 **/src/main/resources/application.properties
+
+# Ignore Repomix output
+repomix-output.txt
+repomix-output.xml
+
+# Bỏ qua các file log
+*.log
+server.log
+*.lck

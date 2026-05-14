@@ -1,97 +1,90 @@
 package com.ssscloud.auction.server.service;
 
+import java.util.logging.Logger;
+
 import com.ssscloud.auction.common.dto.request.LoginRequest;
 import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.exception.ServiceExceptions;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.server.dao.UserDAO;
 
 /*
-    * UserService chịu trách nhiệm xử lý logic liên quan đến người dùng, bao gồm:
-    * - Đăng nhập
-    * - Đăng ký
-    * Nó sẽ tương tác với UserDAO để truy xuất và lưu trữ dữ liệu người dùng trong database.
-    * Các phương thức sẽ thực hiện các bước sau:
-    * 1. validateLoginRequest / validateRegisterRequest: Kiểm tra tính hợp lệ của dữ liệu đầu vào, đảm bảo rằng tất cả các trường cần thiết đều có giá trị hợp lệ.
-    * 2. login: Tìm kiếm người dùng theo username, kiểm tra mật khẩu, và trả về UserDTO nếu đăng nhập thành công. Nếu có lỗi, sẽ ném ra IllegalArgumentException với thông báo lỗi cụ thể.
-    * 3. register: Kiểm tra xem username và email đã tồn tại chưa, xây dựng đối tượng User mới dựa trên role, lưu trữ vào database, và trả về UserDTO. Nếu có lỗi, sẽ ném ra IllegalArgumentException hoặc RuntimeException với thông báo lỗi cụ thể.
+ * UserService is responsible for handling user-related business logic, including:
+ * - Login
+ * - Registration
+ * It interacts with UserDAO to retrieve and store user data in the database.
  */
 public class UserService {
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
     private final UserDAO userDAO;
 
     public UserService(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
-    public UserDTO login(LoginRequest req){
-        validateLoginRequest(req);
+    public UserDTO login(LoginRequest req) {
         User user = userDAO.findByUsername(req.getUsername());
 
         if (user == null)
-            throw new IllegalArgumentException("Không tìm thấy user với username: " + req.getUsername());
-        if (!user.getPassword().equals(req.getPassword()))
-            throw new IllegalArgumentException("Sai mật khẩu");
+            throw new ServiceExceptions("ACCOUNT_NOT_FOUND", "Account does not exist");
+        if (!req.getPassword().equals(user.getPassword()))
+            throw new ServiceExceptions("WRONG_PASSWORD", "Incorrect password");
+
         return toDTO(user);
     }
 
-    public UserDTO register(RegisterRequest req){
-        validateRegisterRequest(req);
+    public UserDTO register(RegisterRequest req) {
         if (userDAO.findByUsername(req.getUsername()) != null)
-            throw new IllegalArgumentException("Username đã tồn tại: " + req.getUsername());
+            throw new ServiceExceptions("USERNAME_EXISTED", "Username already exists: " + req.getUsername());
 
         if (userDAO.findByEmail(req.getEmail()) != null)
-            throw new IllegalArgumentException("Email đã tồn tại: " + req.getEmail());
+            throw new ServiceExceptions("EMAIL_EXISTED", "Email already exists: " + req.getEmail());
 
         User user = buildUser(req);
         persistUser(user, req.getRole());
         return toDTO(user);
     }
 
-    public UserDTO getByUserId (String id)
-    {
-        return toDTO(userDAO.findById(id));
+    public long deposit(long amount, String userId) {
+        User user = userDAO.findById(userId);
+        logger.info(">>> found user: " + (user == null ? "NULL" : user.getClass().getSimpleName()));
+        
+        if (user == null) {
+            throw new ServiceExceptions("ACCOUNT_NOT_FOUND", "Account does not exist");
+        }
+
+        long newBalance = 0;
+        if (user instanceof Bidder b) {
+            newBalance = b.getAccountBalance() + amount;
+            userDAO.updateAccountBalance(userId, newBalance);
+        } else if (user instanceof Seller s) {
+            newBalance = s.getAccountBalance() + amount;
+            userDAO.updateSellerBalance(userId, newBalance);
+        }
+        return newBalance;
     }
 
-
-    private void validateLoginRequest(LoginRequest req){
-        if (req == null)
-            throw new IllegalArgumentException("LoginRequest không được null");
-        if (req.getUsername() == null || req.getUsername().isBlank())
-            throw new IllegalArgumentException("Username không được null hoặc rỗng");
-        if (req.getPassword() == null || req.getPassword().isBlank())
-            throw new IllegalArgumentException("Password không được null hoặc rỗng");
-    }
-    private void validateRegisterRequest(RegisterRequest req){
-        if (req == null)
-            throw new IllegalArgumentException("RegisterRequest không được null");
-        if (req.getUsername() == null || req.getUsername().isBlank())
-            throw new IllegalArgumentException("Username không được null hoặc rỗng");
-        if (req.getPassword() == null || req.getPassword().isBlank())
-            throw new IllegalArgumentException("Password không được null hoặc rỗng");
-        if (req.getEmail() == null || req.getEmail().isBlank())
-            throw new IllegalArgumentException("Email không được null hoặc rỗng");
-        if (req.getRole() == null)
-            throw new IllegalArgumentException("Role không được null");
-
-        if (req.getUsername().length() < 3 || req.getUsername().length() > 20)
-            throw new IllegalArgumentException("Username phải có độ dài từ 3 đến 20 ký tự");
-        if (req.getPassword().length() < 6 || req.getPassword().length() > 100)
-            throw new IllegalArgumentException("Password phải có độ dài từ 6 đến 100 ký tự");
-        if (!req.getEmail().contains("@")) 
-            throw new IllegalArgumentException("Email không hợp lệ");
+    public UserDTO getByUserId(String id) {
+        User user = userDAO.findById(id);
+        if (user == null) {
+            throw new ServiceExceptions("ACCOUNT_NOT_FOUND", "Account does not exist");
+        }
+        return toDTO(user);
     }
 
-    private User buildUser(RegisterRequest req){
+    private User buildUser(RegisterRequest req) {
         return switch (req.getRole()) {
             case BIDDER -> new Bidder(req.getName(), req.getUsername(), req.getPassword(), req.getEmail(), req.getRole());
             case SELLER -> new Seller(req.getName(), req.getUsername(), req.getPassword(), req.getEmail(), req.getRole());
-            default -> throw new IllegalArgumentException("Role không hợp lệ: " + req.getRole());
+            default -> throw new ServiceExceptions("INVALID_ROLE", "Invalid role: " + req.getRole());
         };
     }
-    private void persistUser(User user, UserRole role){
+
+    private void persistUser(User user, UserRole role) {
         boolean saved = switch (role) {
             case BIDDER -> userDAO.saveBidder((Bidder) user);
             case SELLER -> userDAO.saveSeller((Seller) user);
@@ -99,22 +92,13 @@ public class UserService {
         };
 
         if (!saved)
-            throw new RuntimeException("Lỗi khi lưu user vào database");
+            throw new ServiceExceptions("SAVE_ERROR", "Error saving user to database");
     }
 
-
-    private UserDTO toDTO(User user){
+    private UserDTO toDTO(User user) {
         long balance = 0;
         if (user instanceof Bidder b) balance = b.getAccountBalance();
         else if (user instanceof Seller s) balance = s.getAccountBalance();
         return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole(), balance);
-    }
-
-    public static class AuthenticationException extends RuntimeException {
-        public AuthenticationException(String message) { super(message); }
-    }
- 
-    public static class RegistrationException extends RuntimeException {
-        public RegistrationException(String message) { super(message); }
     }
 }

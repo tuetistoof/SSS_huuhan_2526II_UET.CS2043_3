@@ -10,6 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;   
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
@@ -33,9 +36,30 @@ import com.ssscloud.auction.server.service.UserService;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class AuctionSocketServer {
+
+    public static void setupLogger() {
+        try {
+            // Tạo file tên là "server.log" nằm ngay ở thư mục gốc project
+            // Chữ 'true' có nghĩa là ghi nối tiếp vào cuối file (append), không xóa log cũ
+            FileHandler fileHandler = new FileHandler("server.log", true);
+            
+            // Ép nó ghi dưới dạng Text dễ đọc (nếu không mặc định nó sẽ ghi ra file XML rất lằng nhằng)
+            fileHandler.setFormatter(new SimpleFormatter());
+            
+            // Lấy Logger "tổ tiên" của toàn hệ thống và gắn bộ ghi file này vào
+            Logger rootLogger = Logger.getLogger("");
+            rootLogger.addHandler(fileHandler);
+            
+        } catch (Exception e) {
+            System.err.println("Không thể khởi tạo file log: " + e.getMessage());
+        }
+    }
+
     private static ExecutorService pool = Executors.newCachedThreadPool();
 
     public static void main(String[] args) {
+        setupLogger();
+
         UserDAO userDAO = new UserDAO();
         ItemDAO itemDAO = new ItemDAO();
         AuctionDAO auctionDAO = new AuctionDAO();
@@ -47,7 +71,7 @@ public class AuctionSocketServer {
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO);
 
         UserService userService = new UserService(userDAO);
-        UserController userCtrl = new UserController(userDAO);
+        UserController userCtrl = new UserController(userService);
 
         BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
 
@@ -59,7 +83,7 @@ public class AuctionSocketServer {
 
         NotificationService.getInstance().init(watchlistDAO);
 
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistDAO);
+        MessageHandler messageHandler = new MessageHandler(userCtrl, auctionCtrl, bidCtrl, itemCtrl);
 
         // Phục hồi auction còn sống sau restart + bật safety net 30s
         recoverLiveAuctions(auctionDAO, auctionService);

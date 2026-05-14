@@ -1,9 +1,9 @@
 package com.ssscloud.auction.server.service;
-
+import java.lang.ModuleLayer.Controller;
 
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.enums.BidType;
-import com.ssscloud.auction.common.exception.InvalidBidException;
+import com.ssscloud.auction.common.exception.ServiceExceptions;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.base.User;
@@ -24,7 +24,7 @@ public class BidService {
 
     public void placeBid(PlaceBidRequest req, String bidderId, String bidderUsername) {
         if (req == null)
-            throw new InvalidBidException("Request không được null");
+            throw new Controller("INVALID_REQUEST", "request không được null");
         if (req.getAuctionId() == null || req.getAuctionId().isBlank())
             throw new InvalidBidException("Thiếu auctionId");
         if (bidderId == null || bidderId.isBlank())
@@ -36,9 +36,9 @@ public class BidService {
         if (auction == null) {
             auction = auctionDAO.findByAuctionId(req.getAuctionId());
             if (auction == null)
-                throw new InvalidBidException("Phiên đấu giá không tồn tại: " + req.getAuctionId());
+                throw new AuctionNotFoundException("Phiên đấu giá không tồn tại: " + req.getAuctionId());
             if (auction.getStatus().isEnded() || auction.isExpired())
-                throw new InvalidBidException("Phiên đấu giá đã kết thúc");
+                throw new AuctionClosedException("Phiên đấu giá đã kết thúc");
             AuctionRegistry.getInstance().registerIfAbsent(auction);
             auction = AuctionRegistry.getInstance().get(req.getAuctionId());
         }

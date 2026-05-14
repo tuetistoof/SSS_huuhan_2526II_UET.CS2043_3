@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.ResourceBundle.Control;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
@@ -12,6 +15,9 @@ import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.exception.ControllerExceptions;
+import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.ServiceExceptions;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -22,7 +28,7 @@ import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
-
+    
 public class MessageHandler {
     private Gson gson = new Gson();
     private BidController bidController;
@@ -31,29 +37,29 @@ public class MessageHandler {
     private AuctionDAO auctionDAO;
     private ItemController itemController;
     private WatchlistDAO watchlistDAO;
+
+    private static final Logger logger = Logger.getLogger(MessageHandler.class.getName());
+
     public MessageHandler(
-            AuctionDAO auctionDAO,
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
-            ItemController itemController,
-            WatchlistDAO watchlistDAO) {
+            ItemController itemController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
-        this.auctionDAO = auctionDAO;
         this.itemController = itemController;
-        this.watchlistDAO = watchlistDAO;
     }
 
     public String handleMessage(String jsonMessage, ClientHandler client) {
+        logger.info("Received data from client: " + jsonMessage);
         try {
             // Chuyển JSON thành ClientMessage object
             ClientMessage msg = JsonUtils.fromJson(jsonMessage, ClientMessage.class);
 
             if (msg == null || msg.getAction() == null) {
-                System.err.println("Message không hợp lệ từ client ");
-                return JsonUtils.toJson(ApiResponse.error("Message không hợp lệ"));
+                logger.warning("Invalid message format from client");
+                return JsonUtils.toJson(ApiResponse.error("Invalid message"));
             }
 
             String action = msg.getAction().toUpperCase().trim();
@@ -84,12 +90,12 @@ public class MessageHandler {
                     ApiResponse<UserDTO> parsed = JsonUtils.fromJsonGeneric(responseJson, apiUserType);
 
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", parsed));
-                }
+                } /*
                 case "CREATE_AUCTION": {
                     // 1. Ép chuỗi jsonMessage gốc thành JSON Object, rồi moi cái ruột "data" ra dạng String
                     com.google.gson.JsonObject rootObj = com.google.gson.JsonParser.parseString(jsonMessage).getAsJsonObject();
                     String rawDataJson = rootObj.get("data").toString();
-
+                    
                     // 2. Truyền cái rawDataJson (kiểu String) đó vào controller thay vì msg.getData() (kiểu Object)
                     String controllerResponse = auctionController.createAuction(rawDataJson, client.getUserId());
                     // 3. Đóng gói trả lời lại cho Client
@@ -188,7 +194,7 @@ public class MessageHandler {
                     boolean following = watchlistDAO.isFollowing(client.getUserId(), auctionId);
                     return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
                         ApiResponse.success(following, "OK")));  
-                }
+                } */
 
                 case "DEPOSIT": {
                     String result = userController.deposit(msg.getData(), client.getUserId());
@@ -198,16 +204,25 @@ public class MessageHandler {
 
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR",
-                            ApiResponse.error("Action không được hỗ trợ: " + action)));
+                            ApiResponse.error("Unsupported action: " + action)));
                 }
             }
             
+        } catch (ControllerExceptions e){
+            logger.log(Level.WARNING, "Validation error: " + e.getMessage(), e);
+            return JsonUtils.toJson(ClientMessage.request("VALIDATE_ERROR", ApiResponse.error(e.getMessage(), e.getErrorCode())));
 
+        } catch (ServiceExceptions e) {
+            logger.log(Level.INFO, "Business logic error: " + e.getMessage(), e);
+            return JsonUtils.toJson(ClientMessage.request("BUSINESS_ERROR", ApiResponse.error(e.getMessage(), e.getErrorCode())));
+            
+        } catch (DAOExceptions e){
+            logger.log(Level.SEVERE, "Database access error: " + e.getMessage(), e);
+            return JsonUtils.toJson(ClientMessage.request("DAO_ERROR", ApiResponse.error("System DAO error. Please try again later.")));
+            
         } catch (Exception e) {
-            System.err.println("Lỗi xử lý message từ client: " + e.getMessage());
-            return JsonUtils.toJson(ClientMessage.request("ERROR",
-                    ApiResponse.error("Lỗi hệ thống: " + e.getMessage())));
+            logger.log(Level.SEVERE, "Unknown system error", e);
+            return JsonUtils.toJson(ClientMessage.request("UNDEFINED_ERROR", ApiResponse.error("Internal system error: " + e.getMessage())));
         }
     }
-
 }
