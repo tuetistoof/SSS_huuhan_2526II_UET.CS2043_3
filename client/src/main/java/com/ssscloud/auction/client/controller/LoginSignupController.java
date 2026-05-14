@@ -153,7 +153,13 @@ public class LoginSignupController {
                         }
                     }
                     else {
-                        errorMessage = "Invalid response from server";
+                        ApiResponse<?> errResp = JsonUtils.fromJson(
+                            JsonUtils.toJson(serverMsg.getData()), ApiResponse.class);
+                        if (errResp != null && errResp.getMessage() != null) {
+                            errorMessage = errResp.getMessage(); // hiển thị đúng "Sai mật khẩu", "Tài khoản không tồn tại"...
+                        } else {
+                            errorMessage = "Invalid response from server";
+                        }        
                     }
                 }
                 else {

@@ -30,9 +30,14 @@ public class NotificationController implements MessageListener {
     private final ObservableList<NotifItem>     notifs  = FXCollections.observableArrayList();
     private Consumer<String> onNavigateToAuction; //callback về MainLayout để navigate vào BiddingRoom
     private IntConsumer badgeListener; 
+    private Runnable onClosePopup;
 
     public void setBadgeListener(IntConsumer listener) {
         this.badgeListener = listener;
+    }
+
+    public void setOnClosePopup(Runnable onClosePopup) {
+        this.onClosePopup = onClosePopup;
     }
 
     public void init(Consumer<String> navigateCallback) {
@@ -111,9 +116,8 @@ public class NotificationController implements MessageListener {
         item.setRead(true);
         listNotifs.refresh();
         updateBadge();
-        if (onNavigateToAuction != null) {
-            onNavigateToAuction.accept(item.getAuctionId());
-        }
+        if (onClosePopup != null) onClosePopup.run();
+        if (onNavigateToAuction != null) onNavigateToAuction.accept(item.getAuctionId());
     }
 
 

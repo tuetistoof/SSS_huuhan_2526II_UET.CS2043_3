@@ -108,13 +108,6 @@ public class ConcurrentBidManager {
             System.err.println("[BidWorker] Phiên hết giờ: " + task.bidderId);
             return;
         }
-        long minIncrement = auction.getAuctionConfig().getMinIncrement();
-        if (!BidValidator.isValidBid(task.bidAmount, auction.getCurrentPrice(), minIncrement)) {
-            System.err.println("[BidWorker] Bid không hợp lệ — " + task.bidderId
-                    + " | bidAmount: " + task.bidAmount
-                    + " | yêu cầu: " + (auction.getCurrentPrice() + minIncrement));
-            return;
-        }
 
         BidTransaction bid = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                 task.bidAmount, LocalDateTime.now(), task.type);

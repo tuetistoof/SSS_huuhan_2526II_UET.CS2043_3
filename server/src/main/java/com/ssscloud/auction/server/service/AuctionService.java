@@ -156,6 +156,7 @@ public class AuctionService {
                 auction.finish();
                 auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
                 AuctionRegistry.getInstance().remove(auctionId);
+                ConcurrentBidManager.getInstance().shutdown(auctionId); 
                 ChangeManager.getInstance().notify(auction);
                 NotificationService.getInstance().notifyAuctionEnded(auction);
                 logger.info("scheduleClose: đóng auction " + auctionId);
