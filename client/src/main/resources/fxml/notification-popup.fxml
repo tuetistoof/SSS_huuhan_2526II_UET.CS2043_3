@@ -15,9 +15,17 @@
              -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0, 0, 5);">
 
     <HBox alignment="CENTER_LEFT" style="-fx-padding: 16 16 12 16;">
-        <Label text="Notification"
-               style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ff6b81;"/>
+        <Label text="Thông báo"
+               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #72243E;"/>
         <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="lblBadge"
+               visible="false" managed="false"
+               style="-fx-background-color: #D4537E;
+                      -fx-background-radius: 10;
+                      -fx-text-fill: white;
+                      -fx-font-size: 11px;
+                      -fx-font-weight: bold;
+                      -fx-padding: 2 7 2 7;"/>
     </HBox>
 
     <ListView fx:id="listNotifs"
@@ -29,8 +37,19 @@
                      -fx-selection-bar: #f8f9fa;"/>
 
     <HBox alignment="CENTER"
-          style="-fx-padding: 10 0 10 0;
+          style="-fx-padding: 10 16 10 16;
                  -fx-border-color: #f0f0f0 transparent transparent transparent;
                  -fx-border-width: 1 0 0 0;">
+        <Button text="Đánh dấu tất cả đã đọc"
+                onAction="#handleMarkAllRead"
+                style="-fx-background-color: transparent;
+                       -fx-border-color: #D4537E;
+                       -fx-border-width: 0.5;
+                       -fx-border-radius: 6;
+                       -fx-background-radius: 6;
+                       -fx-text-fill: #D4537E;
+                       -fx-font-size: 12px;
+                       -fx-cursor: hand;
+                       -fx-padding: 5 12 5 12;"/>
     </HBox>
 </VBox>

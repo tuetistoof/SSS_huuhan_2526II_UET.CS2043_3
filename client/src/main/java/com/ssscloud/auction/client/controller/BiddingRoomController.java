@@ -82,6 +82,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private Label lblStartPrice;
     @FXML private Label lblStatusBadge;
     @FXML private Label lblTimer;
+    @FXML private Label lblOutbid;
 
     @FXML private ListView<BidDTO> listViewBidHistory;
 
@@ -229,33 +230,14 @@ public class BiddingRoomController implements MessageListener{
         btnFollow.setDisable(false);
         if (isFollowing) {
             btnFollow.setText("Following");
-            btnFollow.getStyleClass().setAll("br-btn-following"); 
+            btnFollow.getStyleClass().setAll("br-btn-follow-active"); 
         } else {
             btnFollow.setText("Follow");
             btnFollow.getStyleClass().setAll("br-btn-follow");
         }
     }
 
-    private void checkFollowStatus(){
-        if (currentAuction == null) return;
-        new Thread(()-> {
-            try {
-                String json = JsonUtils.toJson(ClientMessage.request("CHECK_WATCH_STATUS", currentAuction.getId()));
-                String responseJson = socket.sendAndReceive(json);
-                if (responseJson == null) return;
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                String dataJson = JsonUtils.toJson(serverMsg.getData());
-                ApiResponse<?> resp = JsonUtils.fromJson(dataJson, ApiResponse.class);
-                if (resp != null && resp.isSuccess() && resp.getData() != null) {
-                    isFollowing = Boolean.parseBoolean(resp.getData().toString());
-                }
-                Platform.runLater(this::updateFollowButton);
-            } catch (Exception e) {
-                System.err.println("Lỗi kiểm tra trạng thái follow: " + e.getMessage());
-            }
-        }).start();
-    }
-
+    
     @FXML
     private void handlePlaceBid(ActionEvent event) {
          String amountText = txtManualBid.getText().trim(); 
@@ -525,19 +507,17 @@ public class BiddingRoomController implements MessageListener{
     }
 
     private void handleBidUpdate(JsonObject root) {
-    // 1. Parse dữ liệu từ Server
         BidDTO bid = JsonUtils.fromJson(JsonUtils.toJson(root.get("data")), BidDTO.class);
         if (bid == null || currentAuction == null) return;
 
         Platform.runLater(() -> {
             try {
-            // 2. Cập nhật dữ liệu vào Object hiện tại
+                String prevLeader = currentAuction.getHighestBidderName();
+
                 currentAuction.setCurrentPrice(bid.getBidAmount());
                 currentAuction.setHighestBidderName(bid.getBidderUsername());
 
-            // LOG ĐỂ DEBUG
-                System.out.println("Checking Toast: Me=" + currentUserName + " vs Bidder=" + bid.getBidderUsername());
-
+            
                 if (currentUserName != null && currentUserName.equals(bid.getBidderUsername())) {
                     Window window = btnBack.getScene().getWindow();
                     if (window != null) {
@@ -547,6 +527,9 @@ public class BiddingRoomController implements MessageListener{
                             window
                         );
                     }
+                } else if (prevLeader != null && prevLeader.equals(currentUserName) && !currentUserName.equals(bid.getBidderUsername())) {
+                    showOutbidAlert(bid.getBidderUsername(), bid.getBidAmount());
+                
                 }
             // 3. Cập nhật UI chính (Giá & Người dẫn đầu)
                 String formattedPrice = String.format("%,d ₫", bid.getBidAmount());
@@ -682,6 +665,26 @@ public class BiddingRoomController implements MessageListener{
             }
         }
     }
+    private void checkFollowStatus(){
+        if (currentAuction == null) return;
+        new Thread(()-> {
+            try {
+                String json = JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING", currentAuction.getId()));
+                String responseJson = socket.sendAndReceive(json);
+                if (responseJson == null) return;
+                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                String dataJson = JsonUtils.toJson(serverMsg.getData());
+                ApiResponse<?> resp = JsonUtils.fromJson(dataJson, ApiResponse.class);
+                if (resp != null && resp.isSuccess() && resp.getData() != null) {
+                    isFollowing = Boolean.parseBoolean(resp.getData().toString());
+                }
+                Platform.runLater(this::updateFollowButton);
+            } catch (Exception e) {
+                System.err.println("Lỗi kiểm tra trạng thái follow: " + e.getMessage());
+            }
+        }).start();
+    }
+
     private void startTimer() {
         if (countdownTimer != null) {
             countdownTimer.stop();
@@ -811,6 +814,24 @@ public class BiddingRoomController implements MessageListener{
         alert.setContentText(message);
         alert.showAndWait();
     }
+    private void showOutbidAlert(String newLeader, long newPrice) {
+        // Dùng non-blocking notification thay vì Alert để không chặn UI
+        // lblOutbid là Label nhỏ hiển thị ngay dưới giá dẫn đầu
+        if (lblOutbid != null) {
+            lblOutbid.setText(String.format("⚠ Bạn vừa bị %s vượt giá (%,d ₫)", newLeader, newPrice));
+            lblOutbid.setVisible(true);
+            lblOutbid.setManaged(true);
+            // Tự ẩn sau 5 giây
+            new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(5),
+                    e -> {
+                        lblOutbid.setVisible(false);
+                        lblOutbid.setManaged(false);
+                    })
+            ).play();
+        }
+    }
+
 
     private void setUpItemImage(List<String> itemUrls) {
         this.itemUrls = itemUrls;

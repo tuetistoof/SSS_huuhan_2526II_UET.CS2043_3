@@ -1,16 +1,11 @@
 package com.ssscloud.auction.server.networking;
 
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.util.List;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -19,30 +14,33 @@ import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
+import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class MessageHandler {
-    private Gson gson = new Gson();
     private BidController bidController;
     private UserController userController;
     private AuctionController auctionController;
     private AuctionDAO auctionDAO;
     private ItemController itemController;
     private WatchlistDAO watchlistDAO;
+    private WatchlistController watchlistController;
     public MessageHandler(
             AuctionDAO auctionDAO,
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
             ItemController itemController,
-            WatchlistDAO watchlistDAO) {
+            WatchlistDAO watchlistDAO,
+            WatchlistController watchlistController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.auctionDAO = auctionDAO;
         this.itemController = itemController;
+        this.watchlistController = watchlistController;
         this.watchlistDAO = watchlistDAO;
     }
 
@@ -164,31 +162,26 @@ public class MessageHandler {
                 }
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
-                    boolean added = watchlistDAO.add(client.getUserId(), auctionId);
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
-                        added ? ApiResponse.success(null, "Đã thêm vào Watch List")
-                        : ApiResponse.error("Không thể thêm Watch List")));
+                        JsonUtils.fromJson(watchlistController.follow(auctionId, client.getUserId()), ApiResponse.class)));
                 }
  
                 case "UNFOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
-                    boolean removed = watchlistDAO.remove(client.getUserId(), auctionId);
                     return JsonUtils.toJson(ClientMessage.request("UNFOLLOW_RESPONSE",
-                        removed ? ApiResponse.success(null, "Đã xóa khỏi Watch List")
-                        : ApiResponse.error("Không thể xóa Watch List")));
+                        JsonUtils.fromJson(watchlistController.unfollow(auctionId, client.getUserId()), ApiResponse.class)));
                 }
  
                 case "GET_WATCHLIST": {
-                    List<String> auctionIds = watchlistDAO.findAuctionIdsByUser(client.getUserId());
                     return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
-                        ApiResponse.success(auctionIds, "OK")));
+                        JsonUtils.fromJson(watchlistController.getWatchlist(client.getUserId()), ApiResponse.class)));
                 }
+
  
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(msg.getData()).replace("\"", "").trim();
-                    boolean following = watchlistDAO.isFollowing(client.getUserId(), auctionId);
                     return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
-                        ApiResponse.success(following, "OK")));  
+                        JsonUtils.fromJson(watchlistController.checkFollowing(auctionId, client.getUserId()), ApiResponse.class)));
                 }
 
                 case "DEPOSIT": {

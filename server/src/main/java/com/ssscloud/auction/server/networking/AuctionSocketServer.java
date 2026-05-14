@@ -18,6 +18,7 @@ import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
+import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
@@ -57,9 +58,11 @@ public class AuctionSocketServer {
         AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService);
         AuctionController auctionCtrl = new AuctionController(auctionService);
 
+        WatchlistController watchlistCtrl = new WatchlistController(watchlistDAO);
+
         NotificationService.getInstance().init(watchlistDAO);
 
-        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistDAO);
+        MessageHandler messageHandler = new MessageHandler(auctionDAO, userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistDAO, watchlistCtrl);
 
         // Phục hồi auction còn sống sau restart + bật safety net 30s
         recoverLiveAuctions(auctionDAO, auctionService);

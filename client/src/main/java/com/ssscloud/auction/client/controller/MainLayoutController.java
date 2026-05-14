@@ -111,6 +111,7 @@ public class MainLayoutController {
             notifPopupRoot = loader.load(); 
             notificationController = loader.getController();
             notificationController.init(this::navigateToAuction);
+            
             // Gắn badge listener: mỗi lần badge thay đổi → cập nhật lblBellBadge
             notificationController.setBadgeListener(count -> {
                 if (lblBellBadge != null) {
@@ -125,7 +126,9 @@ public class MainLayoutController {
     }
     // Khi user click vào 1 notification, sẽ gọi callback này với auctionId tương ứng
     private void navigateToAuction(String auctionId) {
-        // Tìm AuctionDTO từ danh sách đang hiển thị hoặc tạo dummy để navigate
+        if (notifPopup != null && notifPopup.isShowing()) {
+            notifPopup.hide();
+        }
         AuctionDisplayInfoDTO dummy = new AuctionDisplayInfoDTO();
         dummy.setId(auctionId);
         loadBiddingRoom(dummy);

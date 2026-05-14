@@ -79,6 +79,7 @@
                 <Label styleClass="br-section-label" text="Giá dẫn đầu" />
                 <Label fx:id="lblCurrentPrice" styleClass="br-price-big" text="0 ₫" />
                 <Label fx:id="lblLeaderName" styleClass="br-price-sub" text="Dẫn đầu: —" />
+                <Label fx:id="lblOutbid" visible="false" managed="false" styleClass="outbid-warning"/>
       
                 <Region prefHeight="12" />
                 <Separator styleClass="br-divider" />
