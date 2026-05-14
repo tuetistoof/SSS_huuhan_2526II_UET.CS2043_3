@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox fx:id="rowRoot" alignment="CENTER_LEFT" spacing="16" styleClass="wl-row" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.WatchlistRowController">
+    <padding><Insets bottom="12" left="16" right="16" top="12" /></padding>
+    <children>
+
+        <!-- Ảnh thumbnail -->
+        <StackPane fx:id="imgThumb" maxHeight="72" maxWidth="72" minHeight="72" minWidth="72" styleClass="wl-thumb" />
+
+        <!-- Thông tin auction -->
+        <VBox spacing="4" HBox.hgrow="ALWAYS">
+            <children>
+                <Label fx:id="lblAuctionName" maxWidth="340" styleClass="wl-row-title" text="Auction name" wrapText="false" />
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <children>
+                        <Label fx:id="lblItemType" styleClass="wl-badge-type" text="Item Type" />
+                        <Label fx:id="lblSeller" styleClass="wl-row-seller" text="Seller name" />
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="16">
+                    <children>
+                        <Label fx:id="lblCurrentPrice" styleClass="wl-row-price" text="Curent price" />
+                        <Label fx:id="lblEndTime" styleClass="wl-row-timer" text="End time" />
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <!-- Actions -->
+        <VBox alignment="CENTER" spacing="8">
+            <children>
+                <Button fx:id="btnEnter" onAction="#handleEnter" prefWidth="80.0" styleClass="wl-btn-enter" text="View Room" />
+                <Button fx:id="btnUnfollow" onAction="#handleUnfollow" prefWidth="80.0" styleClass="wl-btn-unfollow" text="Unfollow" />
+            </children>
+        </VBox>
+
+    </children>
+</HBox>

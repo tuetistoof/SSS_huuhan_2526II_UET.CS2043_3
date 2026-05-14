@@ -320,16 +320,56 @@ public class BiddingRoomController implements MessageListener{
         for (int i = size - 1; i >= 0; i--) {
             BidDTO bid = bidHistory.get(i);
             bidSequence++;
+            // Thêm cái m trỏ chuột vô thì nó hiện lên thông tin số thứ tự, tên người bid, giá
+            // XYChart.Data<Number, Number> dataPoint = new XYChart.Data<>(bidSequence, bid.getBidAmount());
+
+            // javafx.scene.shape.Circle symbol = new javafx.scene.shape.Circle(5);
+            // symbol.setStyle("-fx-fill: #f75667;");
+            
+            // javafx.scene.control.Tooltip tip = new javafx.scene.control.Tooltip(
+            //     String.format("Bid %d\n%s\n%,d ₫", bidSequence, bid.getBidderUsername(), bid.getBidAmount())
+            // );
+            // tip.setStyle("-fx-font-size: 12px;");
+            // javafx.scene.control.Tooltip.install(symbol, tip);
+            
+            // dataPoint.setNode(symbol);
+            
             priceSeries.getData().add(new XYChart.Data<>(bidSequence, bid.getBidAmount()));
         }
 
-        if (currentAuction != null && currentAuction.getMinIncrement() > 0)
-            chartYAxis.setTickUnit(currentAuction.getMinIncrement());
+        // Chuyển chuỗi số dài thành M và K
+        if (currentAuction != null && !bidHistory.isEmpty()) {
+            long minPrice = bidHistory.stream().mapToLong(BidDTO::getBidAmount).min().orElse(0);
+            long maxPrice = bidHistory.stream().mapToLong(BidDTO::getBidAmount).max().orElse(0);
+            long range = maxPrice - minPrice;
+            
+            // Tính tick unit để có khoảng 5-8 vạch
+            long rawTick = range / 6;
+            // Làm tròn lên bội số đẹp (1M, 5M, 10M...)
+            long magnitude = (long) Math.pow(10, (long) Math.log10(rawTick));
+            long tickUnit = Math.max(magnitude, currentAuction.getMinIncrement());
+            
+            chartYAxis.setAutoRanging(false);
+            chartYAxis.setLowerBound(Math.max(0, minPrice - tickUnit / 2));
+            chartYAxis.setUpperBound(maxPrice + tickUnit / 2);
+            chartYAxis.setTickUnit(tickUnit);
+            chartYAxis.setTickLabelFormatter(new NumberAxis.DefaultFormatter(chartYAxis) {
+                @Override public String toString(Number value) {
+                    if (value.longValue() >= 1_000_000)
+                        return (value.longValue() / 1_000_000) + "M";
+                    if (value.longValue() >= 1_000)
+                        return (value.longValue() / 1_000) + "K";
+                    return value.toString();
+                }
+            });
+        } else {
+            chartYAxis.setAutoRanging(true); // không có data thì để tự scale
+        }
 
-        chartYAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
-            @Override public String toString(Number n) { return String.format("%,d", n.longValue()); }
-            @Override public Number fromString(String s) { return 0; }
-        });
+        // chartYAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
+        //     @Override public String toString(Number n) { return String.format("%,d", n.longValue()); }
+        //     @Override public Number fromString(String s) { return 0; }
+        // });
         chartXAxis.setTickLabelFormatter(new javafx.util.StringConverter<Number>() {
             @Override public String toString(Number n) { return "Bid " + n.intValue(); }
             @Override public Number fromString(String s) { return 0; }

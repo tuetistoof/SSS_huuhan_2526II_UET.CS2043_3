@@ -34,13 +34,13 @@
            ═══════════════════════════════════════════ -->
       <HBox alignment="CENTER_LEFT" spacing="12" styleClass="br-header-card">
         <VBox spacing="6" HBox.hgrow="ALWAYS">
-          <Label fx:id="lblAuctionName" styleClass="br-auction-name" text="Tên phiên đấu giá" />
+          <Label fx:id="lblAuctionName" styleClass="br-auction-name" text="Auction name" />
           <HBox alignment="CENTER_LEFT" spacing="10">
-            <Label fx:id="lblStatusBadge" styleClass="br-badge-running" text="Đang chạy" />
-            <Label fx:id="lblTimer" styleClass="br-timer" text="Còn lại: --:--" />
+            <Label fx:id="lblStatusBadge" styleClass="br-badge-running" text="Running" />
+            <Label fx:id="lblTimer" styleClass="br-timer" text="Time left: --:--" />
           </HBox>
         </VBox>
-        <Button fx:id="btnBack" onAction="#handleBack" styleClass="br-btn-back" text="← Quay lại" />
+        <Button fx:id="btnBack" onAction="#handleBack" styleClass="br-btn-back" text="← Back" />
             <Button fx:id="btnFollow" mnemonicParsing="false" onAction="#handleFollowRoom" styleClass="br-btn-follow" text="Follow" />
       </HBox>
 
@@ -50,7 +50,7 @@
       <HBox spacing="12">
             <VBox spacing="10.0" HBox.hgrow="ALWAYS">
                <children>
-                  <StackPane fx:id="containerImage" minHeight="400.0" prefHeight="400.0" styleClass="br-white-card">
+                  <StackPane fx:id="containerImage" maxHeight="1000.0" maxWidth="1800.0" minHeight="400.0" prefHeight="500.0" styleClass="br-white-card">
                     <children>
                         
                         <ImageView fx:id="imgBiddingRoom" fitHeight="360.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" styleClass="br-image-view" />
@@ -71,14 +71,14 @@
                   </StackPane>
       
               <!-- ── Cột trái: Giá hiện tại + Stats ── -->
-              <VBox spacing="0" styleClass="br-white-card">
+              <VBox maxWidth="1800.0" spacing="0" styleClass="br-white-card">
                 <padding>
                         <Insets bottom="16" left="20" right="20" top="16" />
                      </padding>
       
-                <Label styleClass="br-section-label" text="Giá dẫn đầu" />
+                <Label styleClass="br-section-label" text="LEADING PRICE" />
                 <Label fx:id="lblCurrentPrice" styleClass="br-price-big" text="0 ₫" />
-                <Label fx:id="lblLeaderName" styleClass="br-price-sub" text="Dẫn đầu: —" />
+                <Label fx:id="lblLeaderName" styleClass="br-price-sub" text="Leading: —" />
       
                 <Region prefHeight="12" />
                 <Separator styleClass="br-divider" />
@@ -88,17 +88,17 @@
                   <!-- Stat: số lượt bid -->
                   <VBox styleClass="br-stat-card" HBox.hgrow="ALWAYS">
                     <Label fx:id="lblBidCount" styleClass="br-stat-num-green" text="0" />
-                    <Label styleClass="br-stat-lbl" text="Lượt bid" />
+                    <Label styleClass="br-stat-lbl" text="Bids" />
                   </VBox>
                   <!-- Stat: bước tối thiểu -->
                   <VBox styleClass="br-stat-card" HBox.hgrow="ALWAYS">
                     <Label fx:id="lblMinIncrement" styleClass="br-stat-num-pink" text="—" />
-                    <Label styleClass="br-stat-lbl" text="Bước tối thiểu" />
+                    <Label styleClass="br-stat-lbl" text="Minimum Bid Increment" />
                   </VBox>
                   <!-- Stat: giá khởi điểm -->
                   <VBox styleClass="br-stat-card" HBox.hgrow="ALWAYS">
                     <Label fx:id="lblStartPrice" styleClass="br-stat-num" text="—" />
-                    <Label styleClass="br-stat-lbl" text="Giá khởi điểm" />
+                    <Label styleClass="br-stat-lbl" text="Starting Price" />
                   </VBox>
                 </HBox>
               </VBox>
@@ -106,13 +106,13 @@
             </VBox>
 
         <!-- ── Cột phải: Tab Manual / Auto Bid ── -->
-        <VBox alignment="CENTER" minWidth="260" prefWidth="300" styleClass="br-white-card">
+        <VBox alignment="CENTER" maxWidth="600.0" minWidth="260" prefWidth="300.0" styleClass="br-white-card" HBox.hgrow="ALWAYS">
           <padding><Insets bottom="16" left="0" right="0" top="0" /></padding>
 
           <!-- Tab bar -->
           <HBox alignment="CENTER" spacing="0" styleClass="br-tab-bar">
-            <Button fx:id="btnTabManual" maxWidth="Infinity" onAction="#handleSwitchToManual" styleClass="br-tab-active" text="Manual Bid" HBox.hgrow="ALWAYS" />
-            <Button fx:id="btnTabAuto" maxWidth="Infinity" onAction="#handleSwitchToAuto" styleClass="br-tab" text="Auto Bid" HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnTabManual" contentDisplay="CENTER" maxWidth="Infinity" onAction="#handleSwitchToManual" styleClass="br-tab-active" text="Manual Bid" HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnTabAuto" contentDisplay="CENTER" maxWidth="Infinity" onAction="#handleSwitchToAuto" styleClass="br-tab" text="Auto Bid" HBox.hgrow="ALWAYS" />
           </HBox>
 
           <!-- Vùng form — StackPane để swap 2 form -->
@@ -121,19 +121,19 @@
 
             <!-- Form Manual -->
             <VBox fx:id="formManual" spacing="8">
-              <Label styleClass="br-form-title" text="Đặt giá thủ công" />
-              <TextField fx:id="txtManualBid" promptText="Nhập số tiền (₫)" styleClass="br-input" />
-              <Label fx:id="lblMinHint" styleClass="br-hint" text="Tối thiểu: —" />
-              <Button fx:id="btnPlaceBid" maxWidth="Infinity" onAction="#handlePlaceBid" styleClass="br-btn-primary" text="Đặt giá" />
+              <Label styleClass="br-form-title" text="Manual Bidding" />
+              <TextField fx:id="txtManualBid" promptText="Enter amount (₫)" styleClass="br-input" />
+              <Label fx:id="lblMinHint" styleClass="br-hint" text="Minimum: —" />
+              <Button fx:id="btnPlaceBid" maxWidth="Infinity" onAction="#handlePlaceBid" styleClass="br-btn-primary" text="Place Bid" />
             </VBox>
 
             <!-- Form Auto -->
             <VBox fx:id="formAuto" managed="false" spacing="8" visible="false">
-              <Label styleClass="br-form-title" text="Đặt giá tự động" />
-              <TextField fx:id="txtMaxBid" promptText="Giá tối đa (₫)" styleClass="br-input" />
-              <TextField fx:id="txtAutoIncrement" promptText="Bước tăng tự động (₫)" styleClass="br-input" />
-              <Label styleClass="br-hint" text="Hệ thống tự bid theo bước tăng đến khi đạt giá tối đa" wrapText="true" />
-              <Button fx:id="btnAutoToggle" maxWidth="Infinity" onAction="#handleToggleAutoBid" styleClass="br-btn-secondary" text="Bắt đầu Auto Bid" />
+              <Label styleClass="br-form-title" text="Auto Bidding" />
+              <TextField fx:id="txtMaxBid" promptText="Maximum Bid (₫)" styleClass="br-input" />
+              <TextField fx:id="txtAutoIncrement" promptText="Step-up Amount (₫)" styleClass="br-input" />
+              <Label styleClass="br-hint" text="Automatically places bids incrementally up to your maximum price" wrapText="true" />
+              <Button fx:id="btnAutoToggle" maxWidth="Infinity" onAction="#handleToggleAutoBid" styleClass="br-btn-secondary" text="Start Auto Bid" />
             </VBox>
           </StackPane>
         </VBox>
@@ -147,9 +147,9 @@
 
         <!-- Tab bar -->
         <HBox alignment="CENTER" spacing="0" styleClass="br-tab-bar">
-          <Button fx:id="tabBtnHistory" maxWidth="Infinity" onAction="#handleTabHistory" styleClass="br-tab-active" text="Lịch sử bid" HBox.hgrow="ALWAYS" />
-          <Button fx:id="tabBtnChart" maxWidth="Infinity" onAction="#handleTabChart" styleClass="br-tab" text="Biểu đồ giá" HBox.hgrow="ALWAYS" />
-          <Button fx:id="tabBtnInfo" maxWidth="Infinity" onAction="#handleTabInfo" styleClass="br-tab" text="Thông tin phiên" HBox.hgrow="ALWAYS" />
+          <Button fx:id="tabBtnHistory" alignment="CENTER" maxWidth="Infinity" onAction="#handleTabHistory" styleClass="br-tab-active" text="Bid History" HBox.hgrow="ALWAYS" />
+          <Button fx:id="tabBtnChart" alignment="CENTER" maxWidth="Infinity" onAction="#handleTabChart" styleClass="br-tab" text="Price Chart" HBox.hgrow="ALWAYS" />
+          <Button fx:id="tabBtnInfo" alignment="CENTER" maxWidth="Infinity" onAction="#handleTabInfo" styleClass="br-tab" text="Information" HBox.hgrow="ALWAYS" />
         </HBox>
 
         <!-- Panels — StackPane để swap -->
@@ -158,7 +158,7 @@
 
           <!-- Panel: Lịch sử bid -->
           <VBox fx:id="panelHistory" spacing="0">
-            <ListView fx:id="listViewBidHistory" maxHeight="220" prefHeight="220" styleClass="br-bid-list" />
+            <ListView fx:id="listViewBidHistory" styleClass="br-bid-list" />
           </VBox>
 
           <!-- Panel: Biểu đồ giá -->
@@ -177,35 +177,35 @@
           <!-- Panel: Thông tin phiên -->
           <VBox fx:id="panelInfo" managed="false" spacing="6" visible="false">
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Tên phiên" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Auction Name: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoName" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Người bán" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Seller: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoSeller" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Loại sản phẩm" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Item Type:" HBox.hgrow="ALWAYS" />
               <Label fx:id="infoItemType" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Giá khởi điểm" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Start Price: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoStartPrice" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Bước giá tối thiểu" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Minimum Price Step: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoMinIncrement" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Bắt đầu" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Start Time: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoStartTime" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Kết thúc dự kiến" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Scheduled End Time: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoEndTime" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Anti-sniping" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Anti-Sniping: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoAntiSnipe" styleClass="br-info-val" text="—" />
             </HBox>
           </VBox>

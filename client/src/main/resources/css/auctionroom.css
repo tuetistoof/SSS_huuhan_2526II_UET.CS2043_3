@@ -431,6 +431,23 @@
     -fx-background-color: #F8DDE6;
 }
 
+.br-btn-follow-active {
+    -fx-background-color: #CE5A82;
+    -fx-border-color: #CE5A82;
+    -fx-text-fill: white;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 6 17 6 17;
+}
+.br-btn-follow-active:hover {
+    -fx-background-color: #A8365E;
+    -fx-border-color: #A8365E;
+}
+
 .br-image-view {
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 5);
     -fx-border-color: #fce4ec;
