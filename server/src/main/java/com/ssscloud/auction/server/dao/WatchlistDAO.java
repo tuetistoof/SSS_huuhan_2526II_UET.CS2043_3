@@ -117,6 +117,7 @@ public class WatchlistDAO extends BaseDAO {
             }
             
             dto.setSellerUsername(rs.getString("seller_username"));
+            dto.setImageUrl(List.of(rs.getString("image_url")));
             
 
             list.add(dto);
