@@ -133,7 +133,7 @@ public class WatchlistDAO extends BaseDAO {
 }
 
     /** Lấy list auction_id mà user đang follow — dùng cho màn hình Follow List. */
-    public List<String> findAuctionIdsByUser(String userId) throws {
+    public List<String> findAuctionIdsByUser(String userId) {
         String sql = "SELECT auction_id FROM watchlist WHERE user_id = ?";
         Connection        conn   = null;
         PreparedStatement ps     = null;
