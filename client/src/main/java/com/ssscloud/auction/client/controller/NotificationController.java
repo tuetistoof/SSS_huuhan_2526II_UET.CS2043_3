@@ -1,7 +1,10 @@
 package com.ssscloud.auction.client.controller;
 
+import java.lang.reflect.Type;
+import com.google.gson.reflect.TypeToken;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
@@ -9,6 +12,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
+import com.ssscloud.auction.common.dto.response.NotificationDTO;
+import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -59,11 +64,45 @@ public class NotificationController implements MessageListener {
                 switch (action) {
                     case "OUTBID_NOTIFICATION"        -> handleOutbid(root.getAsJsonObject("data"));
                     case "AUCTION_ENDED_NOTIFICATION" -> handleEnded(root.getAsJsonObject("data"));
+                    case "PENDING_NOTIFICATIONS"      -> handlePending(root.get("data").toString());
                 }
             } catch (Exception ignored) {}
         });
     }
 
+    private void handlePending(String dataJson){ 
+       try {
+            Type listType = new TypeToken<List<NotificationDTO>>() {}.getType();
+            List<NotificationDTO> list = JsonUtils.fromJsonGeneric(dataJson, listType);
+            if (list == null || list.isEmpty()) return;
+
+            for (NotificationDTO dto : list){
+                NotifItem item; 
+                LocalDateTime time = dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now();
+
+                if ("OUTBID".equals(dto.getType())) {
+                    item = new NotifItem(
+                            "OUTBID", "Outbid",
+                            dto.getAuctionName() + "\n" + String.format("%,d ₫", dto.getPrice()),
+                            dto.getAuctionId(), time);
+                } else {
+                    item = new NotifItem(
+                            "ENDED", "Ended auction",
+                            dto.getAuctionName() + "\nWinner: " + dto.getWinner()
+                                    + " — " + String.format("%,d ₫", dto.getPrice()),
+                            dto.getAuctionId(), time);
+                }
+                notifs.add(item);  
+            }
+
+            notifs.sort((a, b) -> b.getTime().compareTo(a.getTime()));
+            updateBadge();
+        } catch (Exception e) {
+            System.err.println("[NotificationController] handlePending lỗi: " + e.getMessage());
+    
+        }
+
+    }
     private void handleOutbid(JsonObject data) {
         String auctionId   = data.get("auctionId").getAsString();
         String auctionName = data.get("auctionName").getAsString();

@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
@@ -18,6 +19,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.util.AuctionRegistry;
@@ -33,16 +35,20 @@ public class MessageHandler {
     private final UserController userController;
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
+    private final NotificationController notificationController;
+
 
     public MessageHandler(
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
-            WatchlistController watchlistController) {
+            WatchlistController watchlistController,
+            NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
+        this.notificationController = notificationController;
     }
 
     // --- PUBLIC METHODS ---
@@ -71,6 +77,16 @@ public class MessageHandler {
 
                     if (loginResult != null && loginResult.isSuccess() && loginResult.getData() != null) {
                         clientHandler.setSession(loginResult.getData().getId(), loginResult.getData().getUsername());
+
+                        String pendingJson = notificationController.getPendingNotifications(loginResult.getData().getId());
+                        Type pendingType = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
+                        ApiResponse<List<NotificationDTO>> pendingResult = JsonUtils.fromJsonGeneric(pendingJson, pendingType);
+
+        if (pendingResult.isSuccess() && pendingResult.getData() != null
+                && !pendingResult.getData().isEmpty()) {
+            clientHandler.getWriter().println(
+                JsonUtils.toJson(ClientMessage.push("PENDING_NOTIFICATIONS", pendingResult.getData())));
+        }
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
                 }

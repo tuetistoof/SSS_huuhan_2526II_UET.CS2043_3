@@ -4,6 +4,7 @@
 package com.ssscloud.auction.server.service;
 
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,11 +12,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.util.SessionRegistry;
 import com.ssscloud.auction.server.util.AuctionRegistry;
@@ -25,10 +28,9 @@ public class NotificationService {
 
     private static final NotificationService instance = new NotificationService();
     private WatchlistDAO watchlistDAO; // Dependency Injection: Short name
+    private NotificationDAO notificationDAO;
 
     private NotificationService() {}
-
-    // --- PUBLIC METHODS ---
 
     public static NotificationService getInstance() { return instance; }
 
@@ -43,11 +45,11 @@ public class NotificationService {
                 throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: WatchlistDAO dependency is not initialized.");
             }
      
-            String auctionId = auction.getAuctionConfig().getId(); // Internal Logic: [Entity]Id
+            String auctionId = auction.getAuctionConfig().getId(); 
             String auctionName = auction.getAuctionConfig().getName();
             long currentPrice = auction.getCurrentPrice();
      
-            List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId); // DTOs: List suffix
+            List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId); 
      
             for (String watcherId : watcherIdList) {
                 // Skip the current highest bidder
@@ -59,6 +61,7 @@ public class NotificationService {
                 try {
                     PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
                     if (writer == null) { 
+                        savePending(watcherId, "OUTBID", auctionId, auctionName, currentPrice, null);
                         logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
                         continue;
                     }
@@ -96,6 +99,7 @@ public class NotificationService {
                 try {
                     PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
                     if (writer == null) { 
+                        savePending(watcherId, "ENDED", auctionId, auctionName, finalPrice, winnerName);
                         logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
                         continue;
                     }
@@ -150,11 +154,24 @@ public class NotificationService {
             logger.log(Level.WARNING, "[NotificationService] Error transmitting auction ended notification to client.", exception);
         }
     }
+    private void savePending(String userId, String type, String auctionId,
+                             String auctionName, long price, String winner) {
+        if (notificationDAO == null) return;
+        NotificationDTO dto = new NotificationDTO();
+        dto.setUserId     (userId);
+        dto.setType       (type);
+        dto.setAuctionId  (auctionId);
+        dto.setAuctionName(auctionName);
+        dto.setPrice      (price);
+        dto.setWinner     (winner);
+        dto.setCreatedAt  (LocalDateTime.now());
+        boolean saved = notificationDAO.save(dto);
+        if (!saved) logger.log(Level.WARNING, "Không lưu được pending notification cho user " + userId);
+    }
 
     private boolean isInRoom(String auctionId, String watcherId) {
         Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
         if (auction == null) return false;
- 
         return ChangeManager.getInstance().hasObserver(auction, watcherId);
     }
 }
