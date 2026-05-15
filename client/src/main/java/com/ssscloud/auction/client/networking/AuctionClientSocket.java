@@ -36,7 +36,11 @@ public class AuctionClientSocket {
  
     public static AuctionClientSocket getInstance() {
         if (instance == null) {
-            instance = new AuctionClientSocket();
+            synchronized (AuctionClientSocket.class) {
+                if (instance == null) {
+                    instance = new AuctionClientSocket();
+                }
+            }
         }
         return instance;
     }
