@@ -2,6 +2,7 @@ package com.ssscloud.auction.server.controller;
  
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.exception.ControllerExceptions;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -60,8 +61,8 @@ public class WatchlistController {
 
     public String getWatchlist(String userId) throws ControllerExceptions {
         logger.log(Level.INFO, "Retrieving full watchlist for userId: {0}", userId);
-        List<String> auctionIdList = watchlistDAO.findAuctionIdsByUser(userId);
-        return JsonUtils.toJson(ApiResponse.success(auctionIdList, "User watchlist retrieved successfully."));
+        List<AuctionDisplayInfoDTO> watchlistDetails = watchlistDAO.findWatchlistDetailsByUser(userId);
+        return JsonUtils.toJson(ApiResponse.success(new ListResponse<>(watchlistDetails), "User watchlist retrieved successfully."));
     }
 
     private void validateAuctionId(String auctionId) {
