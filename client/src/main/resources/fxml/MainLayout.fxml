@@ -59,7 +59,7 @@
                            </ImageView>
                         </graphic>
                      </Button>
-                     <Label fx:id="lblBellBadge" styleClass="notification-badge" />
+                     <Label fx:id="lblBellBadge" styleClass="notification-badge"  mouseTransparent="true" />
                   </children>
                </StackPane>
                    <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
