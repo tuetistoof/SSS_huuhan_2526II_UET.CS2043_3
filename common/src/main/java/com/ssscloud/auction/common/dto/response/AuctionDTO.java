@@ -11,6 +11,7 @@ public class AuctionDTO implements Serializable {
 
     private String id;
     private String name;
+    private long startPrice;
     private long minIncrement;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -42,6 +43,12 @@ public class AuctionDTO implements Serializable {
         return name;
     }
 
+    public long getStartPrice() {
+        return startPrice;
+    }
+    public void setStartPrice(long startPrice) {
+        this.startPrice = startPrice;
+    }
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -75,9 +82,6 @@ public class AuctionDTO implements Serializable {
         this.userDTO = userDTO;
     }
 
-    public String getSellerName() {
-        return userDTO != null ? userDTO.getUsername() : null;
-    }
 
     public long getCurrentPrice() { return currentPrice; }
     public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }

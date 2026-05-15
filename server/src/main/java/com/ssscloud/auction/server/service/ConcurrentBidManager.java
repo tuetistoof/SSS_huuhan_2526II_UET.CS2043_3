@@ -55,11 +55,11 @@ public class ConcurrentBidManager {
     }
 
     public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) {
-        if (instance == null) {
-            synchronized (ConcurrentBidManager.class) {
-                if (instance == null) {
-                    instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO);
-                }
+        synchronized (ConcurrentBidManager.class) {
+            if (instance == null) {
+                instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO);
+            } else {
+                instance.updateDependencies(bidDAO, autoBidService, auctionDAO);
             }
         }
         return instance;
@@ -71,6 +71,12 @@ public class ConcurrentBidManager {
         ensureWorkerRunning(auctionId);
         bidTaskQueues.get(auctionId).offer(new BidTask(
                 auctionEntity, bidderId, bidderUsername, bidAmount, bidType));
+    }
+
+    private void updateDependencies(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) {
+        this.bidDAO = bidDAO;
+        this.autoBidService = autoBidService;
+        this.auctionDAO = auctionDAO;
     }
 
     public void shutdown(String auctionId) {
@@ -119,41 +125,69 @@ public class ConcurrentBidManager {
     private void processTask(BidTask task) {
         Auction auctionEntity = task.auction;
         String auctionId = auctionEntity.getAuctionConfig().getId();
-
-        if (auctionEntity.getStatus().isEnded()) {
-            logger.log(Level.WARNING, "Incoming bid rejected: the target auction has already concluded. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
-            return;
-        }
-        if (auctionEntity.isExpired()) {
-            logger.log(Level.WARNING, "Incoming bid rejected: the target auction has reached its expiration time. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
-            return;
-        }
-
-        BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
-                task.bidAmount, LocalDateTime.now(), task.bidType); // Naming: full descriptive name
-        
-        if (auctionEntity.getStatus() == AuctionStatus.OPEN)
-        {
-            auctionEntity.setStatus(AuctionStatus.RUNNING);
-            auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
-        }
-
-        auctionEntity.placeBid(bidTransaction);
-        LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
-        if (updatedEndTime != null && auctionDAO != null) {
-            auctionDAO.updateEndTime(auctionId, updatedEndTime);
-        }
-
-        if (bidDAO != null) {
-            try {
-                bidDAO.saveBidTransaction(bidTransaction);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId + ". Bid remains valid in memory.", e);
+        long currentAuctionPrice = auctionEntity.getCurrentPrice();
+        if (task.bidAmount > currentAuctionPrice) {
+            BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
+                    task.bidAmount, LocalDateTime.now(), task.bidType);
+            
+            if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
+                auctionEntity.setStatus(AuctionStatus.RUNNING);
+                auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
             }
-        }
 
-        ChangeManager.getInstance().notify(auctionEntity);
-        NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
+            auctionEntity.placeBid(bidTransaction);
+            LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+            if (updatedEndTime != null && auctionDAO != null) {
+                auctionDAO.updateEndTime(auctionId, updatedEndTime);
+            }
+
+            if (bidDAO != null) {
+                try {
+                    bidDAO.saveBidTransaction(bidTransaction);
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
+                }
+            }
+            ChangeManager.getInstance().notify(auctionEntity);
+            NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
+        } else {
+            logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
+        }
+        // if (task.bidAmount <= currentAuctionPrice) 
+        //     return;
+        // if (auctionEntity.getStatus().isEnded()) {
+        //     logger.log(Level.WARNING, "Incoming bid rejected: the target auction has already concluded. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
+        //     return;
+        // }
+        // if (auctionEntity.isExpired()) {
+        //     logger.log(Level.WARNING, "Incoming bid rejected: the target auction has reached its expiration time. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
+        //     return;
+        // }
+
+        // BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
+        //         task.bidAmount, LocalDateTime.now(), task.bidType); // Naming: full descriptive name
+        
+        // if (auctionEntity.getStatus() == AuctionStatus.OPEN)
+        // {
+        //     auctionEntity.setStatus(AuctionStatus.RUNNING);
+        //     auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+        // }
+
+        // auctionEntity.placeBid(bidTransaction);
+        // LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+        // if (updatedEndTime != null && auctionDAO != null) {
+        //     auctionDAO.updateEndTime(auctionId, updatedEndTime);
+        // }
+
+        // if (bidDAO != null) {
+        //     try {
+        //         bidDAO.saveBidTransaction(bidTransaction);
+        //     } catch (Exception e) {
+        //         logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId + ". Bid remains valid in memory.", e);
+        //     }
+        // }
+        // ChangeManager.getInstance().notify(auctionEntity);
+        // NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
 
         if (autoBidService != null) {
             autoBidService.trigger(auctionEntity);

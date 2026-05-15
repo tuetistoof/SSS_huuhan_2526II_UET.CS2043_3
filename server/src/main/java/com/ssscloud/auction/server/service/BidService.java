@@ -85,20 +85,29 @@ public class BidService {
     }
 
     /**
-     * Retrieves an auction by ID and performs initial validation on its state.
+     * Retrieves an auction from Registry first (cache strategy), then from DAO if not found.
+     * Performs initial validation on auction state.
      * @param auctionId The ID of the auction to retrieve.
      * @return The validated Auction entity.
      * @throws ServiceExceptions if the auction is not found or has already concluded.
      */
     private Auction retrieveAndValidateAuction(String auctionId) throws ServiceExceptions {
-        Auction auction = auctionDAO.findByAuctionId(auctionId);
+        // Step 1: Check Registry first (cache strategy)
+        Auction auction = AuctionRegistry.getInstance().get(auctionId);
         if (auction == null) {
-            throw new ServiceExceptions(ErrorCode.AUCTION_NOT_FOUND, "The system could not locate an auction with the specified ID: " + auctionId);
+            // Step 2: If not in Registry, query from DAO
+            auction = auctionDAO.findByAuctionId(auctionId);
+            if (auction == null) {
+                throw new ServiceExceptions(ErrorCode.AUCTION_NOT_FOUND, "Auction not found with identifier: " + auctionId);
+            }
+            // Step 3: Validate auction state
+            if (auction.getStatus().isEnded() || auction.isExpired()) {
+                throw new ServiceExceptions(ErrorCode.AUCTION_CLOSED, "Auction has already concluded.");
+            }
+            // Step 4: Register into Registry
+            AuctionRegistry.getInstance().registerIfAbsent(auction);
+            auction = AuctionRegistry.getInstance().get(auctionId);
         }
-        if (auction.getStatus().isEnded() || auction.isExpired()) {
-            throw new ServiceExceptions(ErrorCode.AUCTION_CLOSED, "Bidding is unavailable because the auction has already concluded.");
-        }
-        AuctionRegistry.getInstance().registerIfAbsent(auction); // Register if not already in registry
-        return AuctionRegistry.getInstance().get(auctionId); // Return the registered instance
+        return auction;
     }
 }
