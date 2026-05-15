@@ -12,7 +12,7 @@ import org.mockito.Mockito;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.UserRole;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
@@ -59,35 +59,35 @@ public class BidServiceTest {
 
     @Test
     void testNullRequest() {
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(null, "bidder123", "Kphong"));
     }
 
     @Test
     void testBlankAuctionId() {
         PlaceBidRequest req = new PlaceBidRequest("", 50000L);
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "bidder123", "Kphong"));
     }
 
     @Test
     void testBlankBidderId() {
         PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "", "Kphong"));
     }
 
     @Test
     void testNegativeBidAmount() {
         PlaceBidRequest req = new PlaceBidRequest("auction-config-1", -1000L);
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "bidder123", "Kphong"));
     }
 
     @Test
     void testZeroBidAmount() {
         PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 0L);
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "bidder123", "Kphong"));
     }
 
@@ -98,7 +98,7 @@ public class BidServiceTest {
         when(auctionDAO.findByAuctionId("notfound")).thenReturn(null);
 
         PlaceBidRequest req = new PlaceBidRequest("notfound", 50000L);
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "bidder123", "Kphong"));
     }
 
@@ -108,7 +108,7 @@ public class BidServiceTest {
 
         PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
         // seller123 là người tạo auction, không được đặt giá
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "seller123", "seller"));
     }
 
@@ -137,7 +137,7 @@ public class BidServiceTest {
         when(userDAO.findById("poorBidder")).thenReturn(poorBidder);
 
         PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
-        assertThrows(ServiceExceptions.class, () ->
+        assertThrows(ServiceException.class, () ->
             bidService.placeBid(req, "poorBidder", "poor"));
     }
 }

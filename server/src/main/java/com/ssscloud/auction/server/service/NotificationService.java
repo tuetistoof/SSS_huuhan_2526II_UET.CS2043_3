@@ -14,7 +14,7 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
 import com.ssscloud.auction.server.util.SessionRegistry;
@@ -24,88 +24,108 @@ public class NotificationService {
     private static final Logger logger = Logger.getLogger(NotificationService.class.getName()); // Logging Standards: Declared first
 
     private static final NotificationService instance = new NotificationService();
-    private WatchlistDAO watchlistDAO;
+    private WatchlistDAO watchlistDAO; // Dependency Injection: Short name
 
     private NotificationService() {}
 
-    public static NotificationService getInstance() { return instance; }
-
     // --- PUBLIC METHODS ---
+
+    public static NotificationService getInstance() { return instance; }
 
     public void init(WatchlistDAO watchlistDAO) {
         this.watchlistDAO = watchlistDAO;
         logger.log(Level.INFO, "[NotificationService] Successfully initialized with WatchlistDAO.");
     }
 
-    public void notifyWatchers(Auction auction, String highestBidderId) {
-        if (watchlistDAO == null) return;
- 
-        String auctionId   = auction.getAuctionConfig().getId();
-        String auctionName = auction.getAuctionConfig().getName();
-        long   currentPrice = auction.getCurrentPrice();
- 
-        List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId);
- 
-        for (String watcherId : watcherIdList) {
-            // Skip the current highest bidder
-            if (watcherId.equals(highestBidderId)) continue;
- 
-            // Skip users currently in the bidding room as they receive updates via RoomObserver
-            if (isInRoom(auctionId, watcherId)) continue;
- 
-            try {
-                PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
-                if (writer == null) { 
-                    logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
-                    continue;
-                }
-                pushOutbid(writer, auctionId, auctionName, currentPrice);
-            } catch (Exception exception) { 
-                logger.log(Level.WARNING, "[NotificationService] Failed to deliver outbid notification to watcherId " + watcherId + " for auctionId " + auctionId, exception);
+    public void notifyWatchers(Auction auction, String highestBidderId) throws ServiceException, Exception {
+        try {
+            if (watchlistDAO == null) {
+                throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: WatchlistDAO dependency is not initialized.");
             }
+     
+            String auctionId = auction.getAuctionConfig().getId(); // Internal Logic: [Entity]Id
+            String auctionName = auction.getAuctionConfig().getName();
+            long currentPrice = auction.getCurrentPrice();
+     
+            List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId); // DTOs: List suffix
+     
+            for (String watcherId : watcherIdList) {
+                // Skip the current highest bidder
+                if (watcherId.equals(highestBidderId)) continue;
+     
+                // Skip users currently in the bidding room as they receive updates via RoomObserver
+                if (isInRoom(auctionId, watcherId)) continue;
+     
+                try {
+                    PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
+                    if (writer == null) { 
+                        logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
+                        continue;
+                    }
+                    pushOutbid(writer, auctionId, auctionName, currentPrice);
+                } catch (Exception deliveryException) { 
+                    logger.log(Level.WARNING, "[NotificationService] Failed to deliver outbid notification to watcherId " + watcherId + " for auctionId " + auctionId, deliveryException);
+                }
+            }
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            // Final safety net for system-level failures
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationService.notifyWatchers: " + exception.getMessage(), exception);
+            throw new ServiceException(ErrorCode.NOTIFICATION_FAILED, "An unexpected system error occurred while notifying watchers.");
         }
     }
 
-    public void notifyAuctionEnded(Auction auction) {
-        if (watchlistDAO == null) return;
- 
-        String auctionId   = auction.getAuctionConfig().getId();
-        String auctionName = auction.getAuctionConfig().getName();
-        long   finalPrice  = auction.getCurrentPrice();
-        String winnerName  = auction.getHighestBidderName() != null
-                             ? auction.getHighestBidderName() : "No bids placed";
- 
-        List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId);
- 
-        for (String watcherId : watcherIdList) {
-            if (isInRoom(auctionId, watcherId)) continue; 
- 
-            try {
-                PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
-                if (writer == null) { 
-                    logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
-                    continue;
-                }
-                pushAuctionEnded(writer, auctionId, auctionName, finalPrice, winnerName);
-            } catch (Exception exception) { 
-                logger.log(Level.WARNING, "[NotificationService] Failed to deliver auction ended notification to watcherId " + watcherId + " for auctionId " + auctionId, exception);
+    public void notifyAuctionEnded(Auction auction) throws ServiceException, Exception {
+        try {
+            if (watchlistDAO == null) {
+                throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: WatchlistDAO dependency is not initialized.");
             }
+     
+            String auctionId = auction.getAuctionConfig().getId(); // Internal Logic: [Entity]Id
+            String auctionName = auction.getAuctionConfig().getName();
+            long finalPrice = auction.getCurrentPrice();
+            String winnerName = auction.getHighestBidderName() != null
+                                 ? auction.getHighestBidderName() : "No bids placed";
+     
+            List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId); // DTOs: List suffix
+     
+            for (String watcherId : watcherIdList) {
+                if (isInRoom(auctionId, watcherId)) continue; 
+     
+                try {
+                    PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
+                    if (writer == null) { 
+                        logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
+                        continue;
+                    }
+                    pushAuctionEnded(writer, auctionId, auctionName, finalPrice, winnerName);
+                } catch (Exception exception) { 
+                    logger.log(Level.WARNING, "[NotificationService] Failed to deliver auction ended notification to watcherId " + watcherId + " for auctionId " + auctionId, exception); // Specific problem logging
+                }
+            }
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            // Final safety net for system-level failures
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationService.notifyAuctionEnded: " + exception.getMessage(), exception);
+            throw new ServiceException(ErrorCode.NOTIFICATION_FAILED, "An unexpected system error occurred during auction end notification.");
         }
     }
 
     // --- PRIVATE METHODS ---
 
     private void pushOutbid(PrintWriter writer, String auctionId,
-                             String auctionName, long currentPrice) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("auctionId",    auctionId);
-        payload.put("auctionName",  auctionName);
-        payload.put("currentPrice", currentPrice);
-        payload.put("type",         "OUTBID");
+                            String auctionName, long currentPrice) {
+        Map<String, Object> jsonPayload = new HashMap<>(); // Internal Logic: jsonPayload
+        jsonPayload.put("auctionId", auctionId);
+        jsonPayload.put("auctionName", auctionName);
+        jsonPayload.put("currentPrice", currentPrice);
+        jsonPayload.put("type", "OUTBID");
  
         try {
             synchronized (writer) {
-                writer.println(JsonUtils.toJson(ClientMessage.push("OUTBID_NOTIFICATION", payload)));
+                writer.println(JsonUtils.toJson(ClientMessage.push("OUTBID_NOTIFICATION", jsonPayload)));
             }
         } catch (Exception exception) {
             logger.log(Level.WARNING, "[NotificationService] Error transmitting outbid notification to client.", exception);
@@ -113,17 +133,17 @@ public class NotificationService {
     }
  
     private void pushAuctionEnded(PrintWriter writer, String auctionId,
-                                   String auctionName, long finalPrice, String winnerName) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("auctionId",   auctionId);
-        payload.put("auctionName", auctionName);
-        payload.put("finalPrice",  finalPrice);
-        payload.put("winner",      winnerName);
-        payload.put("type",        "ENDED");
+                                  String auctionName, long finalPrice, String winnerName) {
+        Map<String, Object> jsonPayload = new HashMap<>(); // Internal Logic: jsonPayload
+        jsonPayload.put("auctionId", auctionId);
+        jsonPayload.put("auctionName", auctionName);
+        jsonPayload.put("finalPrice", finalPrice);
+        jsonPayload.put("winner", winnerName);
+        jsonPayload.put("type", "ENDED");
  
         try {
             synchronized (writer) {
-                writer.println(JsonUtils.toJson(ClientMessage.push("AUCTION_ENDED_NOTIFICATION", payload)));
+                writer.println(JsonUtils.toJson(ClientMessage.push("AUCTION_ENDED_NOTIFICATION", jsonPayload)));
             }
         } catch (Exception exception) {
             logger.log(Level.WARNING, "[NotificationService] Error transmitting auction ended notification to client.", exception);
@@ -136,5 +156,4 @@ public class NotificationService {
  
         return ChangeManager.getInstance().hasObserver(auction, watcherId);
     }
-
 }

@@ -9,7 +9,7 @@ package com.ssscloud.auction.common.exception;
  * - When request mapping fails (malformed JSON, type mismatch)
  * - When controller-level authorization checks fail
  */
-public class ControllerExceptions extends Exceptions {
+public class ControllerException extends BaseException {
 
     /**
      * Constructs a ControllerExceptions with the specified error code and message.
@@ -17,7 +17,7 @@ public class ControllerExceptions extends Exceptions {
      * @param errorCode standardized error code from ErrorCode class
      * @param message detailed error message explaining the controller failure
      */
-    public ControllerExceptions(String errorCode, String message) {
+    public ControllerException(String errorCode, String message) {
         super(errorCode, message);
     }
 }

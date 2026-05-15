@@ -10,7 +10,7 @@ import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
-import com.ssscloud.auction.common.exception.ControllerExceptions;
+import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AuctionService;
@@ -27,76 +27,104 @@ public class AuctionController {
         this.auctionService = auctionService;
     }
 
-    public String createAuction(Object rawRequest, String sellerId) throws ControllerExceptions {
-        logger.log(Level.INFO, "Processing auction creation for sellerId: {0}", sellerId);
-        
-        String jsonPayload = JsonUtils.toJson(rawRequest);
-        CreateAuctionRequest createAuctionRequest = JsonUtils.fromJson(jsonPayload, CreateAuctionRequest.class);
+    public String createAuction(Object rawRequest, String sellerId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Processing auction creation for sellerId: {0}", sellerId);
+            
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            CreateAuctionRequest createAuctionRequest = JsonUtils.fromJson(jsonPayload, CreateAuctionRequest.class);
 
-        validateCreateAuctionRequest(createAuctionRequest);
+            validateCreateAuctionRequest(createAuctionRequest);
 
-        AuctionDTO auctionDto = auctionService.createAuction(createAuctionRequest, sellerId);
+            AuctionDTO auctionDto = auctionService.createAuction(createAuctionRequest, sellerId);
 
-        return JsonUtils.toJson(ApiResponse.success(auctionDto, "Auction has been created successfully: " + auctionDto.getName()));
-    }
-
-    public String getActiveAuctions() throws ControllerExceptions {
-        logger.info("Retrieving current active auctions list.");
-        
-        List<AuctionDisplayInfoDTO> activeAuctions = auctionService.getActiveAuctions();
-        ListResponse<AuctionDisplayInfoDTO> activeAuctionsList = new ListResponse<>(activeAuctions);
-        
-        return JsonUtils.toJson(ApiResponse.success(activeAuctionsList,
-                "Active auctions retrieved successfully. Total items: " + activeAuctions.size()));
-    }
-
-    public String getMyAuctions(String sellerId) throws ControllerExceptions {
-        logger.log(Level.INFO, "Retrieving owned auctions for sellerId: {0}", sellerId);
-        
-        if (sellerId == null || sellerId.isBlank()) {
-            throw new ControllerExceptions(ErrorCode.INVALID_DATA, "SellerId identifier is required and cannot be empty.");
+            return JsonUtils.toJson(ApiResponse.success(auctionDto, "Auction has been created successfully: " + auctionDto.getName()));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error during auction creation.", exception);
+            throw exception;
         }
-
-        List<AuctionDisplayInfoDTO> myAuctions = auctionService.getMyAuctions(sellerId);
-        ListResponse<AuctionDisplayInfoDTO> myAuctionsList = new ListResponse<>(myAuctions);
-        
-        return JsonUtils.toJson(ApiResponse.success(myAuctionsList,
-                "Seller auctions retrieved successfully. Total items: " + myAuctions.size()));
     }
 
-    public String getAuctionById(Object rawRequest) throws ControllerExceptions {
-        logger.info("Retrieving specific auction details by ID.");
-        
-        String jsonPayload = JsonUtils.toJson(rawRequest);
-        GetAuctionDetailsRequest getAuctionDetailsRequest = JsonUtils.fromJson(jsonPayload, GetAuctionDetailsRequest.class);
-        String auctionId = (getAuctionDetailsRequest != null) ? getAuctionDetailsRequest.getAuctionId() : null;
-
-        if (auctionId == null || auctionId.isBlank()) {
-            throw new ControllerExceptions(ErrorCode.MISSING_AUCTION_ID, "AuctionId identifier is mandatory.");
+    public String getActiveAuctions() throws ControllerException, Exception {
+        try {
+            logger.info("Retrieving current active auctions list.");
+            
+            List<AuctionDisplayInfoDTO> activeAuctions = auctionService.getActiveAuctions();
+            ListResponse<AuctionDisplayInfoDTO> activeAuctionsList = new ListResponse<>(activeAuctions);
+            
+            return JsonUtils.toJson(ApiResponse.success(activeAuctionsList,
+                    "Active auctions retrieved successfully. Total items: " + activeAuctions.size()));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while retrieving active auctions.", exception);
+            throw exception;
         }
+    }
 
-        AuctionDTO auctionDto = auctionService.getAuctionById(auctionId);
-        return JsonUtils.toJson(ApiResponse.success(auctionDto, "Auction detailed information retrieved successfully."));
+    public String getMyAuctions(String sellerId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving owned auctions for sellerId: {0}", sellerId);
+            
+            if (sellerId == null || sellerId.isBlank()) {
+                throw new ControllerException(ErrorCode.INVALID_DATA, "SellerId identifier is required and cannot be empty.");
+            }
+
+            List<AuctionDisplayInfoDTO> myAuctions = auctionService.getMyAuctions(sellerId);
+            ListResponse<AuctionDisplayInfoDTO> myAuctionsList = new ListResponse<>(myAuctions);
+            
+            return JsonUtils.toJson(ApiResponse.success(myAuctionsList,
+                    "Seller auctions retrieved successfully. Total items: " + myAuctions.size()));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while retrieving seller auctions.", exception);
+            throw exception;
+        }
+    }
+
+    public String getAuctionById(Object rawRequest) throws ControllerException, Exception {
+        try {
+            logger.info("Retrieving specific auction details by ID.");
+            
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            GetAuctionDetailsRequest getAuctionDetailsRequest = JsonUtils.fromJson(jsonPayload, GetAuctionDetailsRequest.class);
+            String auctionId = (getAuctionDetailsRequest != null) ? getAuctionDetailsRequest.getAuctionId() : null;
+
+            if (auctionId == null || auctionId.isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "AuctionId identifier is mandatory.");
+            }
+
+            AuctionDTO auctionDto = auctionService.getAuctionById(auctionId);
+            return JsonUtils.toJson(ApiResponse.success(auctionDto, "Auction detailed information retrieved successfully."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while retrieving auction details.", exception);
+            throw exception;
+        }
     }
 
     private void validateCreateAuctionRequest(CreateAuctionRequest createAuctionRequest) {
         if (createAuctionRequest == null) {
-            throw new ControllerExceptions(ErrorCode.INVALID_DATA, "CreateAuctionRequest payload is null.");
+            throw new ControllerException(ErrorCode.INVALID_DATA, "CreateAuctionRequest payload is null.");
         }
         if (createAuctionRequest.getName() == null || createAuctionRequest.getName().isBlank()) {
-            throw new ControllerExceptions(ErrorCode.INVALID_DATA, "Auction name is required.");
+            throw new ControllerException(ErrorCode.INVALID_DATA, "Auction name is required.");
         }
         if (createAuctionRequest.getStartPrice() <= 0) {
-            throw new ControllerExceptions(ErrorCode.INVALID_BID_AMOUNT, "Initial starting price must be greater than zero.");
+            throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "Initial starting price must be greater than zero.");
         }
         if (createAuctionRequest.getItemData() == null) {
-            throw new ControllerExceptions(ErrorCode.INVALID_ITEM_DATA, "Associated item data is mandatory.");
+            throw new ControllerException(ErrorCode.INVALID_ITEM_DATA, "Associated item data is mandatory.");
         }
         if (createAuctionRequest.getEndTime() == null) {
-            throw new ControllerExceptions(ErrorCode.INVALID_DATA, "Auction termination time (endTime) must be specified.");
+            throw new ControllerException(ErrorCode.INVALID_DATA, "Auction termination time (endTime) must be specified.");
         }
         if (createAuctionRequest.getStartTime() != null && createAuctionRequest.getEndTime().isBefore(createAuctionRequest.getStartTime())) {
-            throw new ControllerExceptions(ErrorCode.INVALID_DATA, "Termination time must occur after the scheduled start time.");
+            throw new ControllerException(ErrorCode.INVALID_DATA, "Termination time must occur after the scheduled start time.");
         }
     }
 }

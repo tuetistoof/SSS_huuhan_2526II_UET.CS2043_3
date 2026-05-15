@@ -98,157 +98,172 @@ public class ErrorCode {
 
     // ==================== WATCHLIST ERRORS (Controller) ====================
     
-    /** Lỗi thêm/xóa khỏi watchlist */
+    /** Error occurring during watchlist addition or removal */
     public static final String WATCHLIST_ERROR = "WATCHLIST_ERROR";
 
     // ==================== DATABASE ERRORS (DAO) ====================
     
-    /** File application.properties không tìm thấy */
+    /** application.properties configuration file not found */
     public static final String DB_CONFIG_NOT_FOUND = "DB_CONFIG_NOT_FOUND";
     
-    /** Cấu hình database bị thiếu (url/username/password) */
+    /** Database configuration is missing (url/username/password) */
     public static final String DB_CONFIG_MISSING = "DB_CONFIG_MISSING";
     
-    /** Lỗi đọc cấu hình database */
+    /** Failure while reading database configuration */
     public static final String DB_CONFIG_READ_ERROR = "DB_CONFIG_READ_ERROR";
     
-    /** Không thể xác định user role */
+    /** Failed to identify or map user role */
     public static final String INVALID_USER_ROLE = "INVALID_USER_ROLE";
 
-    /** Lỗi kết nối database (Connection Pool failure) */
+    /** Database connection failure (Connection Pool exhaustion or timeout) */
     public static final String CONNECTION_FAILURE = "CONNECTION_FAILURE";
 
-    /** Lỗi thực thi truy vấn SQL */
+    /** Failure during SQL query execution */
     public static final String SQL_EXECUTION_FAILURE = "SQL_EXECUTION_FAILURE";
 
-    /** Lỗi chuyển đổi dữ liệu từ ResultSet sang Object */
+    /** Error mapping data from ResultSet to Domain Object */
     public static final String DATA_MAPPING_FAILURE = "DATA_MAPPING_FAILURE";
 
-    /** Lỗi rollback transaction */
+    /** Database transaction rollback failure */
     public static final String TRANSACTION_ROLLBACK_FAILED = "TRANSACTION_ROLLBACK_FAILED";
 
-    /** Lỗi reset trạng thái auto-commit */
+    /** Failed to reset database auto-commit state */
     public static final String AUTO_COMMIT_RESET_FAILED = "AUTO_COMMIT_RESET_FAILED";
 
-    /** Lỗi đóng tài nguyên database (ResultSet/Statement) */
+    /** Failure while closing database resources (ResultSet/Statement) */
     public static final String RESOURCE_CLEANUP_FAILED = "RESOURCE_CLEANUP_FAILED";
 
-    /** Lỗi đóng kết nối database */
+    /** Failure while closing the database connection */
     public static final String CONNECTION_CLOSE_FAILED = "CONNECTION_CLOSE_FAILED";
 
     // ==================== AUTO BID ERRORS (AutoBidService) ====================
     
-    /** Đăng ký auto bid thất bại */
+    /** Auto-bid registration process failed */
     public static final String AUTO_BID_REGISTRATION_FAILED = "AUTO_BID_REGISTRATION_FAILED";
     
     /** Auto bid validation error */
     public static final String AUTO_BID_VALIDATION_ERROR = "AUTO_BID_VALIDATION_ERROR";
     
-    /** Người bán không thể đăng ký auto bid */
+    /** Sellers are prohibited from registering auto-bids on their own auctions */
     public static final String AUTO_SELLER_CANNOT_AUTOBID = "AUTO_SELLER_CANNOT_AUTOBID";
     
-    /** Auto bid tối đa nhỏ hơn mức tăng giá */
+    /** Maximum auto-bid amount is less than the required increment */
     public static final String AUTO_BID_INVALID_RANGE = "AUTO_BID_INVALID_RANGE";
 
     // ==================== BID ERRORS - ADVANCED ====================
     
-    /** Giá đặt thấp hơn giá hiện tại */
+    /** Bid amount is lower than the current auction price */
     public static final String BID_LOWER_THAN_CURRENT = "BID_LOWER_THAN_CURRENT";
     
-    /** Mức tăng giá quá thấp */
+    /** Bid increment does not meet the minimum requirement */
     public static final String INCREMENT_TOO_LOW = "INCREMENT_TOO_LOW";
     
-    /** Giá đặt không hợp lệ */
+    /** General bid validation failure */
     public static final String INVALID_BID_VALIDATION = "INVALID_BID_VALIDATION";
 
     // ==================== ITEM ERRORS (ItemService) ====================
     
-    /** Lỗi lưu item vào database */
+    /** Persistence failure when saving item entity */
     public static final String ITEM_SAVE_FAILED = "ITEM_SAVE_FAILED";
     
-    /** Loại item không được hỗ trợ */
+    /** The specified item type is not supported by the system */
     public static final String ITEM_TYPE_UNSUPPORTED = "ITEM_TYPE_UNSUPPORTED";
     
-    /** Dữ liệu item không hợp lệ */
+    /** Provided item data is invalid or incomplete */
     public static final String INVALID_ITEM_DATA = "INVALID_ITEM_DATA";
 
     // ==================== AUCTION ERRORS - ADVANCED ====================
     
-    /** Lỗi tạo phiên đấu giá */
+    /** Failure during auction creation process */
     public static final String AUCTION_CREATION_FAILED = "AUCTION_CREATION_FAILED";
     
-    /** Phiên đấu giá chưa bắt đầu */
+    /** The target auction has not started yet */
     public static final String AUCTION_NOT_STARTED = "AUCTION_NOT_STARTED";
     
-    /** Item lưu thất bại, phiên đấu giá không được tạo */
+    /** Auction creation aborted due to item persistence failure */
     public static final String AUCTION_ITEM_NOT_SAVED = "AUCTION_ITEM_NOT_SAVED";
     
-    /** Phiên đấu giá được hỗ trợ không còn hoạt động */
+    /** The requested auction is no longer active */
     public static final String AUCTION_NOT_ACTIVE = "AUCTION_NOT_ACTIVE";
 
     // ==================== NOTIFICATION ERRORS (NotificationService) ====================
     
-    /** Lỗi gửi thông báo */
+    /** NotificationService is not properly initialized with its dependencies */
+    public static final String NOTIFICATION_SERVICE_NOT_INITIALIZED = "NOTIFICATION_SERVICE_NOT_INITIALIZED";
+
+    /** Failure during notification delivery */
     public static final String NOTIFICATION_FAILED = "NOTIFICATION_FAILED";
     
-    /** Người dùng không online */
+    /** Target user is currently offline */
     public static final String USER_OFFLINE = "USER_OFFLINE";
     
-    /** Session người dùng không tồn tại */
+    /** Active user session not found */
     public static final String USER_SESSION_NOT_FOUND = "USER_SESSION_NOT_FOUND";
 
     // ==================== ANTI-SNIPING ERRORS (AntiSnipingService) ====================
     
-    /** Lỗi xử lý anti-sniping */
+    /** Error occurring during anti-sniping processing */
     public static final String ANTI_SNIPING_ERROR = "ANTI_SNIPING_ERROR";
     
-    /** Cấu hình anti-sniping không hợp lệ */
+    /** Provided anti-sniping configuration is invalid */
     public static final String INVALID_ANTI_SNIPING_CONFIG = "INVALID_ANTI_SNIPING_CONFIG";
 
     // ==================== WATCHLIST ERRORS - ADVANCED ====================
     
-    /** Auction đã trong watchlist */
+    /** Auction entity is already present in the user watchlist */
     public static final String AUCTION_ALREADY_IN_WATCHLIST = "AUCTION_ALREADY_IN_WATCHLIST";
     
-    /** Auction không trong watchlist */
+    /** Auction entity not found in the user watchlist */
     public static final String AUCTION_NOT_IN_WATCHLIST = "AUCTION_NOT_IN_WATCHLIST";
 
     // ==================== FACTORY ERRORS ====================
 
-    /** Lỗi khởi tạo đối tượng trong Factory */
+    /** Failure during object instantiation within the Factory layer */
     public static final String FACTORY_CREATION_FAILED = "FACTORY_CREATION_FAILED";
 
-    /** Loại đối tượng không được hỗ trợ trong Factory mapping */
+    /** Unsupported object type encountered during Factory mapping */
     public static final String UNKNOWN_TYPE_MAPPING = "UNKNOWN_TYPE_MAPPING";
 
 
     // ==================== TRANSACTION ERRORS (BidTransactionDAO) ====================
     
-    /** Lỗi lưu giao dịch bid */
+    /** Failure while recording bid transaction */
     public static final String BID_TRANSACTION_FAILED = "BID_TRANSACTION_FAILED";
     
-    /** Lỗi cập nhật số dư tài khoản */
+    /** Failure while updating account balance */
     public static final String ACCOUNT_BALANCE_UPDATE_FAILED = "ACCOUNT_BALANCE_UPDATE_FAILED";
 
     // ==================== CONCURRENCY ERRORS (ConcurrentBidManager) ====================
     
-    /** Lỗi xử lý bid đồng thời */
+    /** Error during concurrent bid task execution */
     public static final String CONCURRENT_BID_PROCESSING_ERROR = "CONCURRENT_BID_PROCESSING_ERROR";
     
-    /** Worker bid bị gián đoạn */
+    /** Sequential bid worker thread was interrupted */
     public static final String BID_WORKER_INTERRUPTED = "BID_WORKER_INTERRUPTED";
 
     // ==================== GENERAL ERRORS ====================
     
-    /** Lỗi lưu dữ liệu vào database */
+    /** General persistence failure */
     public static final String SAVE_ERROR = "SAVE_ERROR";
     
-    /** Lỗi chung không xác định */
+    /** Unidentified general system error */
     public static final String GENERAL_ERROR = "GENERAL_ERROR";
     
-    /** Tài nguyên không tìm thấy */
+    /** Requested resource not found */
     public static final String RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND";
     
-    /** Dữ liệu không hợp lệ */
+    /** Provided data is invalid or malformed */
     public static final String INVALID_DATA = "INVALID_DATA";
+
+    /** Unexpected internal server error */
+    public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";
+
+    /** System-level input/output operation failure */
+    public static final String IO_ERROR = "IO_ERROR";
+
+    /** Null value encountered where an object reference was required */
+    public static final String NULL_VALUE_ENCOUNTERED = "NULL_VALUE_ENCOUNTERED";
+
+    /** Operation aborted due to invalid system state */
+    public static final String ILLEGAL_STATE_ERROR = "ILLEGAL_STATE_ERROR";
 }

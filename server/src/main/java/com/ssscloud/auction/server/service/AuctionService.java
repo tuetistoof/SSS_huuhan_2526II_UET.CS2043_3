@@ -7,7 +7,7 @@ import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * 6. Return AuctionDTO.
  */
 public class AuctionService {
-    private static final Logger logger = Logger.getLogger(AuctionService.class.getName());
+    private static final Logger logger = Logger.getLogger(AuctionService.class.getName()); // Logging Standards: Declared first
 
     private final AuctionDAO auctionDAO;
     private final UserService userService;
@@ -53,81 +53,109 @@ public class AuctionService {
 
     // --- PUBLIC METHODS ---
 
-    public AuctionDTO createAuction(CreateAuctionRequest createAuctionRequest, String sellerId) throws ServiceExceptions {
-        logger.log(Level.INFO, "Initiating auction creation process for sellerId: " + sellerId);
-        
-        validateCreateAuctionRequest(createAuctionRequest, sellerId); // Step 1: Validate input data
-
-        Item item = createItemFromFactory(createAuctionRequest, sellerId); // Step 2: Create item using factory
-        
-        itemService.saveItem(item); // Step 3: Persist item data; throws ServiceExceptions if failed
-
-        LocalDateTime startTime = (createAuctionRequest.getStartTime() != null)
-                ? createAuctionRequest.getStartTime()
-                : LocalDateTime.now();
-
-        AuctionConfig auctionConfig = new AuctionConfig(
-                createAuctionRequest.getName(),
-                createAuctionRequest.getStartPrice(),
-                createAuctionRequest.getMinIncrement(),
-                startTime,
-                createAuctionRequest.getEndTime(),
-                36); // Default anti-sniping extension duration
-
-        Auction auction = new Auction(auctionConfig, AuctionStatus.OPEN, sellerId, item.getId());
-        
-        boolean isAuctionSaved = auctionDAO.saveAuction(auction);
-        if (!isAuctionSaved) {
-            logger.log(Level.SEVERE, "Critical failure: Unable to persist auction record for name: " + auctionConfig.getName());
-            throw new ServiceExceptions(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
+    public AuctionDTO createAuction(CreateAuctionRequest request, String sellerId) throws ServiceException, Exception {
+        try {
+            logger.log(Level.INFO, "Initiating auction creation process for sellerId: " + sellerId);
+            
+            validateCreateAuctionRequest(request, sellerId); // Step 1: Validate input data
+    
+            Item item = createItemFromFactory(request, sellerId); // Step 2: Create item using factory
+            
+            itemService.saveItem(item); // Step 3: Persist item data; throws ServiceExceptions if failed
+    
+            LocalDateTime startTime = (request.getStartTime() != null)
+                    ? request.getStartTime()
+                    : LocalDateTime.now();
+    
+            AuctionConfig auctionConfig = new AuctionConfig(
+                    request.getName(),
+                    request.getStartPrice(),
+                    request.getMinIncrement(),
+                    startTime,
+                    request.getEndTime(),
+                    36); // Default anti-sniping extension duration
+    
+            Auction auction = new Auction(auctionConfig, AuctionStatus.OPEN, sellerId, item.getId());
+            
+            boolean isAuctionSaved = auctionDAO.saveAuction(auction);
+            if (!isAuctionSaved) {
+                logger.log(Level.SEVERE, "Critical failure: Unable to persist auction record for name: " + auctionConfig.getName());
+                throw new ServiceException(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
+            }
+    
+            AuctionRegistry.getInstance().register(auction); // Step 5: Register auction in the registry
+    
+            scheduleClose(auction); // Step 6: Schedule automatic closure
+            logger.log(Level.INFO, "Auction successfully created and registered with ID: " + auctionConfig.getId());
+    
+            UserDTO sellerDto = userService.getByUserId(sellerId);
+            ItemDTO itemDto = ItemDTOFactory.toDto(item);
+            
+            return toAuctionDto(auction, sellerDto, itemDto);
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.createAuction: " + exception.getMessage(), exception);
+            throw exception;
         }
-
-        AuctionRegistry.getInstance().register(auction); // Step 5: Register auction in the registry
-
-        scheduleClose(auction); // Step 6: Schedule automatic closure
-        logger.log(Level.INFO, "Auction successfully created and registered with ID: " + auctionConfig.getId());
-
-        UserDTO sellerDto = userService.getByUserId(sellerId);
-        ItemDTO itemDto = ItemDTOFactory.toDto(item);
-        
-        return toAuctionDto(auction, sellerDto, itemDto);
     }
 
-    public AuctionDTO getAuctionById(String auctionId) throws ServiceExceptions {
-        logger.log(Level.INFO, "Retrieving auction details for auctionId: " + auctionId);
-        validateAuctionId(auctionId);
-        
-        Auction auction = auctionDAO.findByAuctionId(auctionId);
-        if (auction == null) {
-            throw new ServiceExceptions(ErrorCode.AUCTION_NOT_FOUND, "Resource not found: The auction with ID " + auctionId + " does not exist.");
+    public AuctionDTO getAuctionById(String auctionId) throws ServiceException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving auction details for auctionId: " + auctionId);
+            validateAuctionId(auctionId);
+            
+            Auction auction = auctionDAO.findByAuctionId(auctionId);
+            if (auction == null) {
+                throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Resource not found: The auction with ID " + auctionId + " does not exist.");
+            }
+    
+            UserDTO sellerDto = userService.getByUserId(auction.getSellerId());
+            ItemDTO itemDto = itemService.getItemById(auction.getItemId());
+            
+            if (itemDto == null) {
+                throw new ServiceException(ErrorCode.ITEM_NOT_FOUND, "Data integrity error: The item associated with auction " + auctionId + " was not found.");
+            }
+    
+            return toAuctionDto(auction, sellerDto, itemDto);
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getAuctionById: " + exception.getMessage(), exception);
+            throw exception;
         }
-
-        UserDTO sellerDto = userService.getByUserId(auction.getSellerId());
-        ItemDTO itemDto = itemService.getItemById(auction.getItemId());
-        
-        if (itemDto == null) {
-            throw new ServiceExceptions(ErrorCode.ITEM_NOT_FOUND, "Data integrity error: The item associated with auction " + auctionId + " was not found.");
-        }
-
-        return toAuctionDto(auction, sellerDto, itemDto);
     }
 
-    public List<AuctionDisplayInfoDTO> getMyAuctions(String sellerId) throws ServiceExceptions {
-        logger.log(Level.INFO, "Retrieving auction list for sellerId: " + sellerId);
-        if (sellerId == null || sellerId.isBlank()) {
-            throw new ServiceExceptions(ErrorCode.INVALID_DATA, "Operation failed: The seller identifier is mandatory to retrieve auctions.");
+    public List<AuctionDisplayInfoDTO> getMyAuctions(String sellerId) throws ServiceException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving auction list for sellerId: " + sellerId);
+            if (sellerId == null || sellerId.isBlank()) {
+                throw new ServiceException(ErrorCode.INVALID_DATA, "Operation failed: The seller identifier is mandatory to retrieve auctions.");
+            }
+            List<AuctionDisplayInfoDTO> myAuctionsList = auctionDAO.findSellerAuction(sellerId);
+            return myAuctionsList;
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getMyAuctions: " + exception.getMessage(), exception);
+            throw exception;
         }
-        List<AuctionDisplayInfoDTO> myAuctionsList = auctionDAO.findSellerAuction(sellerId);
-        return myAuctionsList;
     }
 
-    public List<AuctionDisplayInfoDTO> getActiveAuctions() throws ServiceExceptions {
-        logger.log(Level.INFO, "Retrieving all currently active auctions.");
-        List<AuctionDisplayInfoDTO> activeAuctionsList = auctionDAO.findActiveAuctions();
-        return activeAuctionsList;
+    public List<AuctionDisplayInfoDTO> getActiveAuctions() throws ServiceException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving all currently active auctions.");
+            List<AuctionDisplayInfoDTO> activeAuctionsList = auctionDAO.findActiveAuctions();
+            return activeAuctionsList;
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getActiveAuctions: " + exception.getMessage(), exception);
+            throw exception;
+        }
     }
 
-    public void scheduleClose(Auction auction) {
+    public void scheduleClose(Auction auction) throws Exception {
         String auctionId = auction.getAuctionConfig().getId();
         LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
         
@@ -137,21 +165,28 @@ public class AuctionService {
         }
 
         scheduler.schedule(() -> {
-            // Re-verify conclusion time in case anti-sniping has extended the duration
-            if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
-                scheduleClose(auction); // Reschedule with updated end time
-                return;
-            }
+            try {
+                // Re-verify conclusion time in case anti-sniping has extended the duration
+                if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
+                    scheduleClose(auction); // Reschedule with updated end time
+                    return;
+                }
 
-            AuctionStatus currentStatus = auction.getStatus();
-            if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
-                auction.finish();
-                auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                AuctionRegistry.getInstance().remove(auctionId);
-                ConcurrentBidManager.getInstance().shutdown(auctionId); 
-                ChangeManager.getInstance().notify(auction);
-                NotificationService.getInstance().notifyAuctionEnded(auction);
-                logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
+                AuctionStatus currentStatus = auction.getStatus();
+                if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
+                    auction.finish();
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                    AuctionRegistry.getInstance().remove(auctionId);
+                    ConcurrentBidManager.getInstance().shutdown(auctionId); 
+                    ChangeManager.getInstance().notify(auction);
+                    NotificationService.getInstance().notifyAuctionEnded(auction);
+                    logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
+                }
+            } catch (ServiceException serviceException) {
+                logger.log(Level.WARNING, "Business logic error in scheduled auction closure for auctionId: " + auctionId, serviceException);
+            } catch (Exception exception) {
+                logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: " + auctionId, exception);
+                // Background tasks should not rethrow to prevent thread termination unless managed
             }
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
@@ -179,27 +214,30 @@ public class AuctionService {
         return auctionDto;
     }
 
-    private void validateCreateAuctionRequest(CreateAuctionRequest createAuctionRequest, String sellerId) throws ServiceExceptions {
-        if (createAuctionRequest == null) {
-            throw new ServiceExceptions(ErrorCode.INVALID_DATA, "The auction request payload cannot be null.");
+    private void validateCreateAuctionRequest(CreateAuctionRequest request, String sellerId) throws ServiceException {
+        if (request == null) {
+            throw new ServiceException(ErrorCode.INVALID_DATA, "The auction request payload cannot be null.");
         }
-        if (sellerId == null || sellerId.isBlank()) {
-            throw new ServiceExceptions(ErrorCode.MISSING_BIDDER_ID, "The seller identifier is required for auction creation.");
+        if (sellerId == null || sellerId.isEmpty()) {
+            throw new ServiceException(ErrorCode.MISSING_BIDDER_ID, "The seller identifier is required for auction creation.");
         }
     }
 
-    private void validateAuctionId(String auctionId) throws ServiceExceptions {
+    private void validateAuctionId(String auctionId) throws ServiceException {
         if (auctionId == null || auctionId.isBlank()) {
-            throw new ServiceExceptions(ErrorCode.MISSING_AUCTION_ID, "The auction identification is required to perform this operation.");
+            throw new ServiceException(ErrorCode.MISSING_AUCTION_ID, "The auction identification is required to perform this operation.");
         }
     }
 
-    private Item createItemFromFactory(CreateAuctionRequest createAuctionRequest, String sellerId) throws ServiceExceptions {
+    private Item createItemFromFactory(CreateAuctionRequest request, String sellerId) throws ServiceException, Exception {
         try {
-            return ItemFactory.createItem(createAuctionRequest, sellerId);
+            return ItemFactory.createItem(request, sellerId);
         } catch (IllegalArgumentException illegalArgumentException) {
             logger.log(Level.SEVERE, "ItemFactory encountered a creation failure: " + illegalArgumentException.getMessage(), illegalArgumentException);
-            throw new ServiceExceptions(ErrorCode.INVALID_ITEM_DATA, "Validation failure: The provided item data is invalid: " + illegalArgumentException.getMessage());
+            throw new ServiceException(ErrorCode.INVALID_ITEM_DATA, "Validation failure: The provided item data is invalid: " + illegalArgumentException.getMessage());
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error during item creation via ItemFactory: " + exception.getMessage(), exception);
+            throw exception; // Naming Convention: English log and rethrow
         }
     }
 }

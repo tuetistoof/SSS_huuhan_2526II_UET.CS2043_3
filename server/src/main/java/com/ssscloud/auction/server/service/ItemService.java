@@ -4,7 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.server.dao.ItemDAO;
@@ -21,38 +21,51 @@ public class ItemService {
 
     // --- PUBLIC METHODS ---
 
-    public void saveItem(Item item) throws ServiceExceptions {
-        boolean isSaved = switch (item.getType()) {
-            case "ART"        -> itemDAO.saveArt((com.ssscloud.auction.common.model.Art) item);
-            case "VEHICLE"    -> itemDAO.saveVehicle((com.ssscloud.auction.common.model.Vehicle) item);
-            case "ELECTRONIC" -> itemDAO.saveElectronic((com.ssscloud.auction.common.model.Electronic) item);
-            default -> {
-                logger.log(Level.WARNING, "Unsupported item type encountered during save: " + item.getType());
-                throw new ServiceExceptions(ErrorCode.ITEM_TYPE_UNSUPPORTED, "The provided item type is currently not supported: " + item.getType());
+    public void saveItem(Item item) throws ServiceException, Exception {
+        try {
+            boolean isSaved = switch (item.getType()) {
+                case "ART"        -> itemDAO.saveArt((com.ssscloud.auction.common.model.Art) item);
+                case "VEHICLE"    -> itemDAO.saveVehicle((com.ssscloud.auction.common.model.Vehicle) item);
+                case "ELECTRONIC" -> itemDAO.saveElectronic((com.ssscloud.auction.common.model.Electronic) item);
+                default -> {
+                    logger.log(Level.WARNING, "Unsupported item type encountered during save: " + item.getType());
+                    throw new ServiceException(ErrorCode.ITEM_TYPE_UNSUPPORTED, "The provided item type is currently not supported: " + item.getType());
+                }
+            };
+    
+            if (!isSaved) {
+                throw new ServiceException(ErrorCode.ITEM_SAVE_FAILED, "Critical failure: Failed to persist the item entity to the database.");
             }
-        };
-
-        if (!isSaved) {
-            throw new ServiceExceptions(ErrorCode.ITEM_SAVE_FAILED, "Critical failure: Failed to persist the item entity to the database.");
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Lỗi hệ thống tại ItemService.saveItem: " + exception.getMessage(), exception);
+            throw exception;
         }
     }
 
-    public ItemDTO getItemById(String itemId) throws ServiceExceptions { 
-        validateItemId(itemId); 
-        Item item = itemDAO.findById(itemId);
-        if (item == null) {
-            throw new ServiceExceptions(ErrorCode.ITEM_NOT_FOUND, "Resource not found: Item with identifier " + itemId + " does not exist.");
+    public ItemDTO getItemById(String itemId) throws ServiceException, Exception { 
+        try {
+            validateItemId(itemId); 
+            Item item = itemDAO.findById(itemId);
+            if (item == null) {
+                throw new ServiceException(ErrorCode.ITEM_NOT_FOUND, "Resource not found: Item with identifier " + itemId + " does not exist.");
+            }
+            ItemDTO itemDto = ItemDTOFactory.toDto(item);
+            return itemDto;
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Lỗi hệ thống tại ItemService.getItemById: " + exception.getMessage(), exception);
+            throw exception;
         }
-        ItemDTO itemDto = ItemDTOFactory.toDto
-        (item);
-        return itemDto;
     }
 
     // --- VALIDATION METHODS ---
 
     private void validateItemId(String itemId) {
         if (itemId == null || itemId.isBlank()) {
-            throw new ServiceExceptions(ErrorCode.INVALID_DATA, "Validation failure: The provided ItemId identifier cannot be null or empty.");
+            throw new ServiceException(ErrorCode.INVALID_DATA, "Validation failure: The provided ItemId identifier cannot be null or empty.");
         }
     }
 }

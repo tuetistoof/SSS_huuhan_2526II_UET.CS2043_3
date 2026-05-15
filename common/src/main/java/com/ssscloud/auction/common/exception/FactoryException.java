@@ -9,7 +9,7 @@ package com.ssscloud.auction.common.exception;
  * - When ItemDTOFactory fails to convert between Item and ItemDTO
  * - Use ErrorCode constants to provide specific error information
  */
-public class FactoryExceptions extends Exceptions {
+public class FactoryException extends BaseException {
 
     /**
      * Constructs a FactoryExceptions with the specified error code and message.
@@ -17,7 +17,7 @@ public class FactoryExceptions extends Exceptions {
      * @param errorCode standardized error code from ErrorCode class
      * @param message detailed error message explaining the factory failure
      */
-    public FactoryExceptions(String errorCode, String message) {
+    public FactoryException(String errorCode, String message) {
         super(errorCode, message);
     }
 }

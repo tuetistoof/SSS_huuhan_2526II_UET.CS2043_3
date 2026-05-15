@@ -5,7 +5,7 @@ package com.ssscloud.auction.common.exception;
  * All custom exceptions extend this class to provide consistent error handling
  * with standardized error codes and messages.
  */
-public class Exceptions extends RuntimeException {
+public class BaseException extends RuntimeException {
     
     private final String errorCode;
 
@@ -15,7 +15,7 @@ public class Exceptions extends RuntimeException {
      * @param errorCode standardized error code for identifying the error type
      * @param message detailed error message for debugging and logging
      */
-    public Exceptions(String errorCode, String message) {
+    public BaseException(String errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
     }

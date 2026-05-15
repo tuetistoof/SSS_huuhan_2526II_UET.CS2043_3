@@ -5,7 +5,7 @@ import com.ssscloud.auction.common.dto.response.ElectricDTO;
 import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.dto.response.VehicleDTO;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.FactoryExceptions;
+import com.ssscloud.auction.common.exception.FactoryException;
 import com.ssscloud.auction.common.model.Art;
 import com.ssscloud.auction.common.model.Electronic;
 import com.ssscloud.auction.common.model.Vehicle;
@@ -21,55 +21,69 @@ public class ItemDTOFactory {
         /* Private constructor to prevent instantiation of utility class */
     }
 
-    public static ItemDTO toDto(Item itemEntity) throws FactoryExceptions {
-        logger.log(Level.INFO, "Initiating conversion from Item entity to ItemDto.");
-        validateItem(itemEntity);
-
-        ItemDTO itemDto = buildItemDtoByType(itemEntity);
-        populateItemDtoAttributes(itemDto, itemEntity);
-
-        logger.log(Level.INFO, "Item entity successfully converted to DTO with type: " + itemEntity.getType());
-        return itemDto;
+    public static ItemDTO toDto(Item itemEntity) throws FactoryException, Exception {
+        try {
+            logger.log(Level.INFO, "Initiating conversion from Item entity to ItemDto.");
+            validateItem(itemEntity);
+    
+            ItemDTO itemDto = buildItemDtoByType(itemEntity);
+            populateItemDtoAttributes(itemDto, itemEntity);
+    
+            logger.log(Level.INFO, "Item entity successfully converted to DTO with type: " + itemEntity.getType());
+            return itemDto;
+        } catch (FactoryException factoryException) {
+            // Re-throw specific business exceptions, already logged at their source
+            throw factoryException;
+        } catch (Exception exception) {
+            // Catch and log any unexpected system errors
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in " + ItemDTOFactory.class.getSimpleName() + ".toDto: " + exception.getMessage(), exception);
+            throw exception;
+        }
     }
 
     /**
      * Cast an ItemDTO (already a subclass) to the corresponding DTO subclass based on itemType.
      * Used when deserialized generic ItemDTO needs to be treated as a specific subtype.
      */
-    public static ItemDTO castToSubDto(ItemDTO itemDto) throws FactoryExceptions {
-        logger.log(Level.INFO, "Casting generic ItemDto to specific subtype: " + itemDto.getItemType());
-        validateItemDto(itemDto);
-
-        if (itemDto instanceof ArtDTO || 
-            itemDto instanceof VehicleDTO || 
-            itemDto instanceof ElectricDTO) {
-            logger.log(Level.FINE, "ItemDto is already a specific subtype instance.");
-            return itemDto;
+    public static ItemDTO castToSubDto(ItemDTO itemDto) throws FactoryException, Exception {
+        try {
+            logger.log(Level.INFO, "Casting generic ItemDto to specific subtype: " + itemDto.getItemType());
+            validateItemDto(itemDto);
+    
+            if (itemDto instanceof ArtDTO || itemDto instanceof VehicleDTO || itemDto instanceof ElectricDTO) {
+                logger.log(Level.FINE, "ItemDto is already a specific subtype instance.");
+                return itemDto;
+            }
+    
+            String itemType = itemDto.getItemType();
+            ItemDTO subDto = createItemDtoSubclass(itemType);
+            populateSubDtoAttributes(subDto, itemDto);
+    
+            logger.log(Level.INFO, "ItemDto successfully cast to subtype: " + itemType);
+            return subDto;
+        } catch (FactoryException factoryException) {
+            throw factoryException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in " + ItemDTOFactory.class.getSimpleName() + ".castToSubDto: " + exception.getMessage(), exception);
+            throw exception;
         }
-
-        String itemType = itemDto.getItemType();
-        ItemDTO subDto = createItemDtoSubclass(itemType);
-        populateSubDtoAttributes(subDto, itemDto);
-
-        logger.log(Level.INFO, "ItemDto successfully cast to subtype: " + itemType);
-        return subDto;
     }
 
-    private static void validateItem(Item itemEntity) throws FactoryExceptions {
+    private static void validateItem(Item itemEntity) throws FactoryException {
         if (itemEntity == null) {
             logger.log(Level.SEVERE, "Validation failure: Provided Item entity for conversion is null.");
-            throw new FactoryExceptions(ErrorCode.ITEM_NOT_FOUND, "The Item entity source cannot be null.");
+            throw new FactoryException(ErrorCode.ITEM_NOT_FOUND, "The Item entity source cannot be null.");
         }
     }
 
-    private static ItemDTO buildItemDtoByType(Item itemEntity) throws FactoryExceptions {
+    private static ItemDTO buildItemDtoByType(Item itemEntity) throws FactoryException {
         return switch (itemEntity) {
             case Art artEntity -> createArtDto(artEntity);
             case Vehicle vehicleEntity -> createVehicleDto(vehicleEntity);
             case Electronic electronicEntity -> createElectronicDto(electronicEntity);
             default -> {
                 logger.log(Level.SEVERE, "Invalid item type encountered: " + itemEntity.getClass().getSimpleName());
-                throw new FactoryExceptions(ErrorCode.INVALID_ITEM_TYPE, "Invalid item type: " + itemEntity.getClass().getSimpleName());
+                throw new FactoryException(ErrorCode.INVALID_ITEM_TYPE, "Invalid item type: " + itemEntity.getClass().getSimpleName());
             }
         };
     }
@@ -107,27 +121,27 @@ public class ItemDTOFactory {
         itemDto.setImageUrls(itemEntity.getImageUrl());
     }
 
-    private static void validateItemDto(ItemDTO itemDto) throws FactoryExceptions {
+    private static void validateItemDto(ItemDTO itemDto) throws FactoryException {
         if (itemDto == null) {
             logger.log(Level.SEVERE, "Validation failure: ItemDto provided for casting is null.");
-            throw new FactoryExceptions(ErrorCode.ITEM_NOT_FOUND, "The source ItemDto cannot be null.");
+            throw new FactoryException(ErrorCode.ITEM_NOT_FOUND, "The source ItemDto cannot be null.");
         }
 
         String itemType = itemDto.getItemType();
         if (itemType == null || itemType.isBlank()) {
             logger.log(Level.SEVERE, "Validation failure: itemType attribute is missing in ItemDto.");
-            throw new FactoryExceptions(ErrorCode.INVALID_ITEM_TYPE, "ItemType attribute must not be null or blank.");
+            throw new FactoryException(ErrorCode.INVALID_ITEM_TYPE, "ItemType attribute must not be null or blank.");
         }
     }
 
-    private static ItemDTO createItemDtoSubclass(String itemType) throws FactoryExceptions {
+    private static ItemDTO createItemDtoSubclass(String itemType) throws FactoryException {
         return switch (itemType.trim().toUpperCase()) {
             case "ART" -> new ArtDTO();
             case "VEHICLE" -> new VehicleDTO();
             case "ELECTRONIC" -> new ElectricDTO();
             default -> {
                 logger.log(Level.SEVERE, "Invalid item type for casting: " + itemType);
-                throw new FactoryExceptions(
+                throw new FactoryException(
                     ErrorCode.INVALID_ITEM_TYPE, 
                     "Invalid item type: " + itemType
                 );

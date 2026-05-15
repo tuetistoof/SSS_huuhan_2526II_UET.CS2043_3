@@ -9,7 +9,7 @@ package com.ssscloud.auction.common.exception;
  * - When bid service operations fail (place bid, validate bid)
  * - When user service operations fail (deposit, withdrawal)
  */
-public class ServiceExceptions extends Exceptions {
+public class ServiceException extends BaseException {
 
     /**
      * Constructs a ServiceExceptions with the specified error code and message.
@@ -17,7 +17,7 @@ public class ServiceExceptions extends Exceptions {
      * @param errorCode standardized error code from ErrorCode class
      * @param message detailed error message explaining the service failure
      */
-    public ServiceExceptions(String errorCode, String message) {
+    public ServiceException(String errorCode, String message) {
         super(errorCode, message);
     }
 }
