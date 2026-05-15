@@ -12,7 +12,7 @@ import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 
 public class BiddedAuctionsListDAO extends BaseDAO{
     // ── Query ─────────────────────────────────────────────────────────────────
-    public List<AuctionDisplayInfoDTO> findBiddedAuctions(String userId) {
+    public List<AuctionDisplayInfoDTO> findBiddedAuctionsDetailsByUser(String userId) {
         List<AuctionDisplayInfoDTO> list = new ArrayList<>();
 
         String sql =
@@ -90,29 +90,5 @@ public class BiddedAuctionsListDAO extends BaseDAO{
             closeConnect(conn);
         }
         return list;
-    }
-
-    // Ném aution ra để hiện thị
-    public List<String> findAuctionIdsByUser(String userId) {
-        String sql = "SELECT auction_id FROM watchlist WHERE user_id = ?";
-        Connection        conn   = null;
-        PreparedStatement ps     = null;
-        ResultSet         rs     = null;
-        List<String>      result = new ArrayList<>();
-        try {
-            conn = getConnection();
-            ps   = conn.prepareStatement(sql);
-            ps.setString(1, userId);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                result.add(rs.getString("auction_id"));
-            }
-        } catch (SQLException e) {
-            logger.severe("Lỗi findAuctionIdsByUser: " + e.getMessage());
-        } finally {
-            closeResource(rs, ps);
-            closeConnect(conn);
-        }
-        return result;
     }
 }

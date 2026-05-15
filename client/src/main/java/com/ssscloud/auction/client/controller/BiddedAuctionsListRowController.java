@@ -29,7 +29,13 @@ public class BiddedAuctionsListRowController {
         lblSeller.setText("Seller: " + data.getSellerUsername());
         if (data.getMyLastBid() > 0) {
             lblMyBid.setText("Your bid: " + String.format("%,d ₫", data.getMyLastBid()));
-            lblStatus.setText(data.isLeading() ? "🟢 Leading" : "🔴 Outbid");
+            lblStatus.setText(data.isLeading() ? "▲ Leading" : "▼ Outbid");
+            lblStatus.getStyleClass().removeAll("bda-leading-status", "bda-outbid-status");
+            if (data.isLeading()) {
+                lblStatus.getStyleClass().add("bda-leading-status");
+            } else {
+                lblStatus.getStyleClass().add("bda-outbid-status");
+            }
             lblMyBid.setVisible(true);
             lblStatus.setVisible(true);
         } else {

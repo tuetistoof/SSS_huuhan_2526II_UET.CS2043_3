@@ -26,7 +26,6 @@
                                     <Label fx:id="lblSubtitle" styleClass="bda-page-sub" text="Auctions you are bidding on" />
                                 </children>
                             </VBox>
-                            <!-- Badge tổng số -->
                             <StackPane styleClass="bda-count-badge">
                                 <children>
                                     <Label fx:id="lblTotalCount" styleClass="bda-count-text" text="0" />
@@ -41,17 +40,17 @@
             <VBox spacing="0" styleClass="bda-content-area" VBox.vgrow="ALWAYS">
                 <children>
 
-                    <!-- Spinner — hiện khi đang load -->
+                    <!-- Spinner -->
                     <VBox fx:id="spinnerPane" alignment="CENTER" managed="true" styleClass="bda-empty-state" visible="true" VBox.vgrow="ALWAYS">
                         <padding><Insets bottom="60" top="60" /></padding>
                         <children>
-                            <javafx.scene.control.ProgressIndicator prefHeight="48" prefWidth="48" />
+                            <javafx.scene.control.ProgressIndicator prefHeight="48" prefWidth="48" style="-fx-progress-color: #d11f4d;" />
                             <Region prefHeight="12" />
                             <Label styleClass="bda-empty-sub" text="Loading..." />
                         </children>
                     </VBox>
 
-                    <!-- Empty state — ẩn khi đang load hoặc có data -->
+                    <!-- Empty state -->
                     <VBox fx:id="emptyState" alignment="CENTER" managed="false" styleClass="wl-empty-state" visible="false" VBox.vgrow="ALWAYS">
                         <padding><Insets bottom="60" top="60" /></padding>
                         <children>
@@ -63,7 +62,7 @@
                         </children>
                     </VBox>
 
-                    <!-- Danh sách rows — hiện khi có data -->
+                    <!-- Danh sách rows -->
                     <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" managed="false" styleClass="wl-scroll" visible="false" VBox.vgrow="ALWAYS">
                         <content>
                             <VBox fx:id="listContainer" spacing="0" styleClass="bda-list" />

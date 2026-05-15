@@ -8,34 +8,33 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox fx:id="rowRoot" alignment="CENTER_LEFT" spacing="16" styleClass="wl-row" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.BiddedAuctionsListRowController">
+<HBox fx:id="rowRoot" alignment="CENTER_LEFT" spacing="16" styleClass="bda-row" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.BiddedAuctionsListRowController">
     <padding><Insets bottom="12" left="16" right="16" top="12" /></padding>
     <children>
 
         <!-- Ảnh thumbnail -->
-        <StackPane fx:id="imgThumb" maxHeight="72" maxWidth="72" minHeight="72" minWidth="72" styleClass="wl-thumb" />
+        <StackPane fx:id="imgThumb" maxHeight="72" maxWidth="72" minHeight="72" minWidth="72" styleClass="bda-thumb" />
 
         <!-- Thông tin auction -->
         <VBox spacing="4" HBox.hgrow="ALWAYS">
             <children>
-                <Label fx:id="lblAuctionName" maxWidth="300" styleClass="wl-row-title" text="Auction name" wrapText="false" />
+                <Label fx:id="lblAuctionName" maxWidth="340" styleClass="bda-row-title" text="Auction name" wrapText="false" />
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <children>
-                        <Label fx:id="lblItemType" styleClass="wl-badge-type" text="Item Type" />
-                        <Label fx:id="lblSeller" styleClass="wl-row-seller" text="Seller name" />
+                        <Label fx:id="lblItemType" styleClass="bda-badge-type" text="Item Type" />
+                        <Label fx:id="lblSeller" styleClass="bda-row-seller" text="Seller name" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="16">
                     <children>
-                        <Label fx:id="lblCurrentPrice" styleClass="wl-row-price" text="Current price" />
-                        <Label fx:id="lblEndTime" styleClass="wl-row-timer" text="End time" />
+                        <Label fx:id="lblCurrentPrice" styleClass="bda-row-price" text="Current price" />
+                        <Label fx:id="lblEndTime" styleClass="bda-row-timer" text="End time" />
                     </children>
                 </HBox>
-                <!-- Dòng riêng: giá bid của user + trạng thái -->
                 <HBox alignment="CENTER_LEFT" spacing="8">
                     <children>
-                        <Label fx:id="lblMyBid" styleClass="wl-row-seller" text="Your bid: —" />
-                        <Label fx:id="lblStatus" styleClass="wl-badge-type" text="—" />
+                        <Label fx:id="lblMyBid" styleClass="bda-row-seller" text="Your bid: —" />
+                        <Label fx:id="lblStatus" styleClass="bda-badge-type" text="—" />
                     </children>
                 </HBox>
             </children>
@@ -43,10 +42,10 @@
 
         <Region HBox.hgrow="ALWAYS" />
 
-        <!-- Chỉ có View Room, không có Unfollow -->
+        <!-- Actions -->
         <VBox alignment="CENTER" spacing="8">
             <children>
-                <Button fx:id="btnEnter" onAction="#handleEnter" styleClass="wl-btn-enter" text="View Room" />
+                <Button fx:id="btnEnter" onAction="#handleEnter" prefWidth="80.0" styleClass="bda-btn-enter" text="View Room" />
             </children>
         </VBox>
 
