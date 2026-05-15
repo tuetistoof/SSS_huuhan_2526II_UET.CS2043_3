@@ -2,12 +2,16 @@ package com.ssscloud.auction.server.controller;
  
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.exception.ControllerExceptions;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
  
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.List;
  
 public class WatchlistController {
+    private static final Logger logger = Logger.getLogger(WatchlistController.class.getName());
  
     private final WatchlistDAO watchlistDAO;
  
@@ -15,38 +19,53 @@ public class WatchlistController {
         this.watchlistDAO = watchlistDAO;
     }
 
-    public String follow(String auctionId, String userId) throws Exception {
-        if (auctionId == null || auctionId.isBlank())
-            throw new ControllerExceptions("INVALID_AUCTION_ID", "Auction ID cannot be null or blank");
+    public String follow(Object rawRequest, String userId) throws ControllerExceptions {
+        logger.log(Level.INFO, "Processing follow auction request for userId: {0}", userId);
+        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+        String auctionId = jsonPayload;
+
+        validateAuctionId(auctionId);
  
-        boolean added = watchlistDAO.add(auctionId, userId); 
-        return added
-            ? JsonUtils.toJson(ApiResponse.success(null, "Successfully added to Watchlist"))
-            : JsonUtils.toJson(ApiResponse.error("You are already following this auction"));
+        boolean isAdded = watchlistDAO.add(auctionId, userId); 
+        if (!isAdded) {
+            throw new ControllerExceptions(ErrorCode.AUCTION_ALREADY_IN_WATCHLIST, "The specified auction is already present in the user's watchlist.");
+        }
+        return JsonUtils.toJson(ApiResponse.success(null, "Auction successfully added to the watchlist."));
     }
 
-    public String unfollow(String auctionId, String userId) throws Exception {
-        // Đã thay thế return error bằng throw Exception cho chuẩn form Validate
-        if (auctionId == null || auctionId.isBlank())
-            throw new ControllerExceptions("INVALID_AUCTION_ID", "Auction ID cannot be null or blank");
+    public String unfollow(Object rawRequest, String userId) throws ControllerExceptions {
+        logger.log(Level.INFO, "Processing unfollow auction request for userId: {0}", userId);
+        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+        String auctionId = jsonPayload;
 
-        boolean removed = watchlistDAO.remove(auctionId, userId); 
-        return removed
-            ? JsonUtils.toJson(ApiResponse.success(null, "Successfully removed from Watchlist"))
-            : JsonUtils.toJson(ApiResponse.error("Auction not found in your Watchlist"));
+        validateAuctionId(auctionId);
+
+        boolean isRemoved = watchlistDAO.remove(auctionId, userId); 
+        if (!isRemoved) {
+            throw new ControllerExceptions(ErrorCode.AUCTION_NOT_IN_WATCHLIST, "The specified auction was not found in the user's watchlist.");
+        }
+        return JsonUtils.toJson(ApiResponse.success(null, "Auction successfully removed from the watchlist."));
     }
 
-    public String checkFollowing(String auctionId, String userId) throws Exception {
-        if (auctionId == null || auctionId.isBlank())
-            throw new ControllerExceptions("INVALID_AUCTION_ID", "Auction ID cannot be null or blank");
+    public String checkFollowing(Object rawRequest, String userId) throws ControllerExceptions {
+        logger.log(Level.INFO, "Checking watchlist status for userId: {0}", userId);
+        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+        String auctionId = jsonPayload;
 
-        boolean following = watchlistDAO.isFollowing(auctionId, userId); 
-        return JsonUtils.toJson(ApiResponse.success(following, "Success"));
+        validateAuctionId(auctionId);
+        boolean followingStatusResult = watchlistDAO.isFollowing(auctionId, userId); 
+        return JsonUtils.toJson(ApiResponse.success(followingStatusResult, "Watchlist status check completed successfully."));
     }
 
-    public String getWatchlist(String userId) throws Exception {
-        // Không cần try-catch nữa vì MessageHandler sẽ lo việc đó nếu DAO có lỗi sập Database
-        List<String> auctionIds = watchlistDAO.findAuctionIdsByUser(userId);
-        return JsonUtils.toJson(ApiResponse.success(auctionIds, "Success"));
+    public String getWatchlist(String userId) throws ControllerExceptions {
+        logger.log(Level.INFO, "Retrieving full watchlist for userId: {0}", userId);
+        List<String> auctionIdList = watchlistDAO.findAuctionIdsByUser(userId);
+        return JsonUtils.toJson(ApiResponse.success(auctionIdList, "User watchlist retrieved successfully."));
+    }
+
+    private void validateAuctionId(String auctionId) {
+        if (auctionId == null || auctionId.isBlank()) {
+            throw new ControllerExceptions(ErrorCode.INVALID_AUCTION_ID, "The auction identifier is mandatory and cannot be null or blank.");
+        }
     }
 }

@@ -3,7 +3,6 @@ package com.ssscloud.auction.common.dto.request;
 import java.io.Serializable;
 
 public class AutoBidRequest implements Serializable{
-    //serialVersion dùng để ghi nhớ các phiên bản của Serializable
     private static final long serialVersionUID = 1L;
     private String auctionId;
     private long maxBid;
@@ -13,7 +12,6 @@ public class AutoBidRequest implements Serializable{
     public AutoBidRequest(String auctionId, long maxBid, long increment){
         this.auctionId = auctionId;
         this.maxBid = maxBid;
-        
         this.increment = increment;
     }
 
@@ -36,5 +34,3 @@ public class AutoBidRequest implements Serializable{
     }
 }
 
-//Cấu trúc 1 DTO: serialVersion, thuộc tính truyền đi, getter/setter, constructor mặc định và tham số
-// toString để giúp debug

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *  Observer cũ (mỗi Subject tự giữ list):
@@ -28,6 +30,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ChangeManager {
     //danh bạ 
     private final Map<Subject, List<Observer>> registry = new ConcurrentHashMap<>();
+
+    private static final Logger logger = Logger.getLogger(ChangeManager.class.getName());
 
     //Singleton
     private static volatile ChangeManager instance = null;
@@ -72,7 +76,7 @@ public class ChangeManager {
                 o.update(subject); 
             } catch (Exception e) {
                 // 1 observer lỗi không được dừng các observer khác
-                System.err.println("[ChangeManager] Lỗi notify observer: " + e.getMessage());
+                logger.log(Level.SEVERE, "[ChangeManager] Error notifying observer: " + e.getMessage(), e);
             }
         }
     }
