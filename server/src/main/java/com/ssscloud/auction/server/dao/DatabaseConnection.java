@@ -8,70 +8,76 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
+/**
+ * DatabaseConnection manages the lifecycle and configuration of the HikariCP connection pool.
+ * It follows the Singleton pattern to ensure a shared resource across the persistence layer.
+ */
 public class DatabaseConnection {
+    private static final Logger logger = Logger.getLogger(DatabaseConnection.class.getName()); // Logging Standard: First Attribute
 
-    private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
-
-    //singleton
     private static DatabaseConnection instance;
 
-
     private final HikariDataSource dataSource;
-    private DatabaseConnection() throws SQLException {
+
+    // --- CONSTRUCTOR ---
+
+    private DatabaseConnection() throws DAOExceptions { // Technical English and Explicit Throws
         try {
-            InputStream input = DatabaseConnection.class
+            InputStream inputStream = DatabaseConnection.class
                 .getClassLoader()
                 .getResourceAsStream("application.properties");
             
-            if (input == null){
-                throw new SQLException("Khong thay file application.properties trong class path");
+            if (inputStream == null){
+                throw new DAOExceptions(ErrorCode.DB_CONFIG_NOT_FOUND, "Configuration failure: The application.properties file was not found in the classpath.");
             }
-            Properties props = new Properties();
-            props.load(input);
+            Properties databaseProperties = new Properties();
+            databaseProperties.load(inputStream);
             
-            String url = props.getProperty("spring.datasource.url");
-            String user = props.getProperty("spring.datasource.username");
-            String pass = props.getProperty("spring.datasource.password");
+            String databaseUrl = databaseProperties.getProperty("spring.datasource.url");
+            String databaseUser = databaseProperties.getProperty("spring.datasource.username");
+            String databasePassword = databaseProperties.getProperty("spring.datasource.password");
 
-            if (url == null || user == null || pass == null) {
-                throw new SQLException("thieu cau hinh DB trong application.properties (url/username/password)");
+            if (databaseUrl == null || databaseUser == null || databasePassword == null) {
+                throw new DAOExceptions(ErrorCode.DB_CONFIG_MISSING, "Configuration failure: Missing required database connection parameters (url/username/password).");
             }
 
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(url);
-            config.setUsername(user);
-            config.setPassword(pass);
+            HikariConfig poolConfig = new HikariConfig();
+            poolConfig.setJdbcUrl(databaseUrl);
+            poolConfig.setUsername(databaseUser);
+            poolConfig.setPassword(databasePassword);
             
-            config.setMaximumPoolSize(18);
-            config.setMinimumIdle(3);
-            
-            config.setConnectionTimeout(30000);
-            config.setIdleTimeout(60000);
-            config.setMaxLifetime(180000);
+            // Pool configuration settings
+            poolConfig.setMaximumPoolSize(18);
+            poolConfig.setMinimumIdle(3);
+            poolConfig.setConnectionTimeout(30000);
+            poolConfig.setIdleTimeout(60000);
+            poolConfig.setMaxLifetime(180000);
 
-            config.setConnectionTestQuery("SELECT 1");
+            poolConfig.setConnectionTestQuery("SELECT 1");
+            poolConfig.setPoolName("AuctionHikariPool");
 
-            config.setPoolName("AuctionHikariPool");
+            this.dataSource = new HikariDataSource(poolConfig);
 
-            this.dataSource = new HikariDataSource(config);
-
-            LOGGER.info("Khởi tạo HikariCP pool thành công: " + url);
-            System.out.println("Kết nối database (HikariCP) thành công!");
+            logger.log(Level.INFO, "HikariCP connection pool initialized successfully for URL: " + databaseUrl);
         } 
-        catch (IOException e){
-            LOGGER.log(Level.SEVERE, "Không đọc được application.properties", e);
-            throw new SQLException("Lỗi đọc cấu hình: " + e.getMessage(), e);
+        catch (IOException ioException){
+            logger.log(Level.SEVERE, "IO failure: Unable to read the application.properties configuration file.", ioException);
+            throw new DAOExceptions(ErrorCode.DB_CONFIG_READ_ERROR, "Configuration read failure: " + ioException.getMessage());
         }
-        catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Lỗi kết nối MySQL: " + e.getMessage(), e);
-            throw e;
+        catch (Exception genericException) {
+            logger.log(Level.SEVERE, "Connectivity failure: Failed to connect to the database server during initialization.", genericException);
+            throw new DAOExceptions(ErrorCode.CONNECTION_FAILURE, "Critical database initialization failure: " + genericException.getMessage());
         }
     }
 
-    public static DatabaseConnection getInstance() throws SQLException {
+    // --- PUBLIC METHODS ---
+
+    public static DatabaseConnection getInstance() throws DAOExceptions {
         if (instance == null) { 
             synchronized (DatabaseConnection.class) {
                 if (instance == null) { 
@@ -82,14 +88,19 @@ public class DatabaseConnection {
         return instance;
     }
 
-    public Connection getConnection() throws SQLException {
-        return dataSource.getConnection();
+    public Connection getConnection() throws DAOExceptions {
+        try {
+            return dataSource.getConnection();
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Persistence failure: Unable to acquire a database connection from the pool.", sqlException);
+            throw new DAOExceptions(ErrorCode.CONNECTION_FAILURE, "Database connection acquisition failure.");
+        }
     }
 
     public void close() {
         if (dataSource != null && !dataSource.isClosed()) {
             dataSource.close();
-            LOGGER.info("HikariCP pool đã đóng.");
+            logger.log(Level.INFO, "HikariCP connection pool has been closed successfully.");
         }
     }
 }

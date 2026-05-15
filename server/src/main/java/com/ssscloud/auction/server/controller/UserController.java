@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.controller;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.request.LoginRequest;
@@ -7,77 +8,79 @@ import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.exception.ControllerExceptions;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.UserService;
 
 public class UserController {
-    private final UserService userService;
     private static final Logger logger = Logger.getLogger(UserController.class.getName());
+
+    private final UserService userService; // Dependency Injection: Short name for Service
 
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-    public String login(Object data) throws Exception {
-        String dataJsonString = JsonUtils.toJson(data);
-        LoginRequest req = JsonUtils.fromJson(dataJsonString, LoginRequest.class);
+    public String login(Object rawRequest) throws ControllerExceptions {
+        String jsonPayload = JsonUtils.toJson(rawRequest); // Internal Logic: jsonPayload
+        LoginRequest loginRequest = JsonUtils.fromJson(jsonPayload, LoginRequest.class); // Request Mapping: loginRequest
 
-        validateLoginRequest(req);
+        validateLoginRequest(loginRequest); // Validation: validateLoginRequest
 
-        UserDTO dto = userService.login(req);
-        return JsonUtils.toJson(ApiResponse.success(dto, "Login successful"));
+        UserDTO userDto = userService.login(loginRequest); // DTOs: userDto
+        return JsonUtils.toJson(ApiResponse.success(userDto, "User logged in successfully."));
     }
 
-    public String register(Object data) throws Exception {
-        String dataJsonString = JsonUtils.toJson(data);
-        RegisterRequest req = JsonUtils.fromJson(dataJsonString, RegisterRequest.class);
+    public String register(Object rawRequest) throws ControllerExceptions {
+        String jsonPayload = JsonUtils.toJson(rawRequest); // Internal Logic: jsonPayload
+        RegisterRequest registerRequest = JsonUtils.fromJson(jsonPayload, RegisterRequest.class); // Request Mapping: registerRequest
 
-        validateRegisterRequest(req);
-        UserDTO dto = userService.register(req);
-        return JsonUtils.toJson(ApiResponse.success(dto, "Registration successful"));
+        validateRegisterRequest(registerRequest); // Validation: validateRegisterRequest
+        UserDTO userDto = userService.register(registerRequest); // DTOs: userDto
+        return JsonUtils.toJson(ApiResponse.success(userDto, "User registered successfully."));
     }
 
-    public String deposit(Object data, String userId) throws Exception {
-        logger.info(">>> DEPOSIT HIT: userId=" + userId);
-        String amountStr = JsonUtils.toJson(data).replace("\"", "").trim();
-        long amount = (long) Double.parseDouble(amountStr);
-        logger.info(">>> parsed amount: " + amount);
-        validateDepositRequest(amount);
-        long newBalance = userService.deposit(amount, userId);
-        return JsonUtils.toJson(ApiResponse.success(newBalance, "Deposit successful"));
+    public String deposit(Object rawRequest, String userId) throws ControllerExceptions {
+        logger.log(Level.INFO, "Processing deposit request for userId: {0}", userId); // Logging Standards: Level.INFO
+        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim(); // Internal Logic: jsonPayload
+        long depositAmount = (long) Double.parseDouble(jsonPayload); // Naming Convention: depositAmount
+        logger.log(Level.INFO, "Parsed deposit amount: {0}", depositAmount); // Logging Standards: Level.INFO
+        validateDepositRequest(depositAmount); // Validation: validateDepositRequest
+        long newBalance = userService.deposit(depositAmount, userId); // DTOs: newBalance
+        return JsonUtils.toJson(ApiResponse.success(newBalance, "Funds deposited successfully."));
     }
 
-    private void validateLoginRequest(LoginRequest req){
-        if (req == null)
-            throw new ControllerExceptions("INVALID_LOGIN_REQUEST", "LoginRequest cannot be null");
-        if (req.getUsername() == null || req.getUsername().isBlank())
-            throw new ControllerExceptions("INVALID_LOGIN_REQUEST", "Username cannot be null or empty");
-        if (req.getPassword() == null || req.getPassword().isBlank())
-            throw new ControllerExceptions("INVALID_LOGIN_REQUEST", "Password cannot be null or empty");
+    private void validateLoginRequest(LoginRequest loginRequest){ // Validation: validateLoginRequest
+        if (loginRequest == null)
+            throw new ControllerExceptions(ErrorCode.INVALID_LOGIN_REQUEST, "The login request payload cannot be null."); // Language Policy: English
+        if (loginRequest.getUsername() == null || loginRequest.getUsername().isBlank())
+            throw new ControllerExceptions(ErrorCode.INVALID_LOGIN_REQUEST, "The username field is required and cannot be empty."); // Language Policy: English
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().isBlank())
+            throw new ControllerExceptions(ErrorCode.INVALID_LOGIN_REQUEST, "The password field is required and cannot be empty."); // Language Policy: English
     }
 
-     private void validateRegisterRequest(RegisterRequest req){
-        if (req == null)
-            throw new ControllerExceptions("INVALID_REGISTER_REQUEST", "RegisterRequest cannot be null");
-        if (req.getUsername() == null || req.getUsername().isBlank())
-            throw new ControllerExceptions("INVALID_USERNAME", "Username cannot be null or empty");
-        if (req.getPassword() == null || req.getPassword().isBlank())
-            throw new ControllerExceptions("INVALID_PASSWORD", "Password cannot be null or empty");
-        if (req.getEmail() == null || req.getEmail().isBlank())
-            throw new ControllerExceptions("INVALID_EMAIL", "Email cannot be null or empty");
-        if (req.getRole() == null)
-            throw new ControllerExceptions("UNDEFINED_ROLE", "Role cannot be null");
+     private void validateRegisterRequest(RegisterRequest registerRequest){ // Validation: validateRegisterRequest
+        if (registerRequest == null)
+            throw new ControllerExceptions(ErrorCode.INVALID_REGISTER_REQUEST, "The registration request payload cannot be null."); // Language Policy: English
+        if (registerRequest.getUsername() == null || registerRequest.getUsername().isBlank())
+            throw new ControllerExceptions(ErrorCode.INVALID_USERNAME, "The username field is required and cannot be empty."); // Language Policy: English
+        if (registerRequest.getPassword() == null || registerRequest.getPassword().isBlank())
+            throw new ControllerExceptions(ErrorCode.INVALID_PASSWORD, "The password field is required and cannot be empty."); // Language Policy: English
+        if (registerRequest.getEmail() == null || registerRequest.getEmail().isBlank())
+            throw new ControllerExceptions(ErrorCode.INVALID_EMAIL, "The email address is required and cannot be empty."); // Language Policy: English
+        if (registerRequest.getRole() == null)
+            throw new ControllerExceptions(ErrorCode.UNDEFINED_ROLE, "The user role must be specified."); // Language Policy: English
 
-        if (req.getUsername().length() < 3 || req.getUsername().length() > 20)
-            throw new ControllerExceptions("INVALID_LENGTH_USERNAME", "Username must be between 3 and 20 characters long");
-        if (req.getPassword().length() < 6 || req.getPassword().length() > 100)
-            throw new ControllerExceptions("INVALID_LENGTH_PASSWORD", "Password must be between 6 and 100 characters long");
-        if (!req.getEmail().contains("@")) 
-            throw new ControllerExceptions("INVALID_EMAIL", "Invalid email format");
+        if (registerRequest.getUsername().length() < 3 || registerRequest.getUsername().length() > 20)
+            throw new ControllerExceptions(ErrorCode.INVALID_LENGTH_USERNAME, "The username must be between 3 and 20 characters in length."); // Language Policy: English
+        if (registerRequest.getPassword().length() < 6 || registerRequest.getPassword().length() > 100)
+            throw new ControllerExceptions(ErrorCode.INVALID_LENGTH_PASSWORD, "The password must be between 6 and 100 characters in length."); // Language Policy: English
+        if (!registerRequest.getEmail().contains("@")) 
+            throw new ControllerExceptions(ErrorCode.INVALID_EMAIL, "The provided email address format is invalid."); // Language Policy: English
     }
 
-    private void validateDepositRequest(long amount){
-        if (amount <= 0)
-            throw new ControllerExceptions("INVALID_DEPOSIT", "Deposit amount must be greater than 0");
+    private void validateDepositRequest(long depositAmount){ // Validation: validateDepositRequest
+        if (depositAmount <= 0)
+            throw new ControllerExceptions(ErrorCode.INVALID_DEPOSIT, "The deposit amount must be a positive value greater than zero."); // Language Policy: English
     }
 }

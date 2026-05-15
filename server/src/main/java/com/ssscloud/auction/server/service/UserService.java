@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.service;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.request.LoginRequest;
@@ -7,98 +8,152 @@ import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.server.dao.UserDAO;
 
-/*
- * UserService is responsible for handling user-related business logic, including:
- * - Login
- * - Registration
- * It interacts with UserDAO to retrieve and store user data in the database.
+/**
+ * UserService manages the core business logic for user entities, 
+ * including authentication, registration, and financial balance operations.
  */
 public class UserService {
-    private static final Logger logger = Logger.getLogger(UserService.class.getName());
+    private static final Logger logger = Logger.getLogger(UserService.class.getName()); // Logging Standards: First attribute
+
     private final UserDAO userDAO;
 
     public UserService(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
-    public UserDTO login(LoginRequest req) {
-        User user = userDAO.findByUsername(req.getUsername());
+    // --- PUBLIC METHODS ---
 
-        if (user == null)
-            throw new ServiceExceptions("ACCOUNT_NOT_FOUND", "Account does not exist");
-        if (!req.getPassword().equals(user.getPassword()))
-            throw new ServiceExceptions("WRONG_PASSWORD", "Incorrect password");
+    public UserDTO login(LoginRequest loginRequest) throws ServiceExceptions {
+        validateLoginRequest(loginRequest);
 
-        return toDTO(user);
+        User user = userDAO.findByUsername(loginRequest.getUsername());
+        if (user == null) {
+            throw new ServiceExceptions(ErrorCode.ACCOUNT_NOT_FOUND, "Authentication failed: The specified account does not exist.");
+        }
+        if (!loginRequest.getPassword().equals(user.getPassword())) {
+            throw new ServiceExceptions(ErrorCode.WRONG_PASSWORD, "Authentication failed: The provided password is incorrect.");
+        }
+
+        UserDTO userDto = toUserDto(user);
+        return userDto;
     }
 
-    public UserDTO register(RegisterRequest req) {
-        if (userDAO.findByUsername(req.getUsername()) != null)
-            throw new ServiceExceptions("USERNAME_EXISTED", "Username already exists: " + req.getUsername());
+    public UserDTO register(RegisterRequest registerRequest) throws ServiceExceptions {
+        validateRegisterRequest(registerRequest);
 
-        if (userDAO.findByEmail(req.getEmail()) != null)
-            throw new ServiceExceptions("EMAIL_EXISTED", "Email already exists: " + req.getEmail());
+        if (userDAO.findByUsername(registerRequest.getUsername()) != null) {
+            throw new ServiceExceptions(ErrorCode.USERNAME_EXISTED, "Registration failure: The username is already associated with an account: " + registerRequest.getUsername());
+        }
+        if (userDAO.findByEmail(registerRequest.getEmail()) != null) {
+            throw new ServiceExceptions(ErrorCode.EMAIL_EXISTED, "Registration failure: The email address is already associated with an account: " + registerRequest.getEmail());
+        }
 
-        User user = buildUser(req);
-        persistUser(user, req.getRole());
-        return toDTO(user);
+        User user = buildUser(registerRequest);
+        persistUser(user, registerRequest.getRole());
+        
+        UserDTO userDto = toUserDto(user);
+        return userDto;
     }
 
-    public long deposit(long amount, String userId) {
+    public long deposit(long depositAmount, String userId) throws ServiceExceptions {
+        validateDepositRequest(depositAmount, userId);
+
         User user = userDAO.findById(userId);
-        logger.info(">>> found user: " + (user == null ? "NULL" : user.getClass().getSimpleName()));
+        logger.log(Level.INFO, "Executing deposit operation for userType: " + (user == null ? "NULL" : user.getClass().getSimpleName()));
         
         if (user == null) {
-            throw new ServiceExceptions("ACCOUNT_NOT_FOUND", "Account does not exist");
+            throw new ServiceExceptions(ErrorCode.ACCOUNT_NOT_FOUND, "Deposition failure: The specified account could not be found.");
         }
-
-        long newBalance = 0;
-        if (user instanceof Bidder b) {
-            newBalance = b.getAccountBalance() + amount;
-            userDAO.updateAccountBalance(userId, newBalance);
-        } else if (user instanceof Seller s) {
-            newBalance = s.getAccountBalance() + amount;
-            userDAO.updateSellerBalance(userId, newBalance);
+        
+        long updatedBalance;
+        if (user instanceof Bidder bidderAccount) {
+            updatedBalance = bidderAccount.getAccountBalance() + depositAmount;
+            if (!userDAO.updateAccountBalance(userId, updatedBalance)) {
+                throw new ServiceExceptions(ErrorCode.ACCOUNT_BALANCE_UPDATE_FAILED, "Persistence failure: Failed to update bidder account balance in the database.");
+            }
+        } else if (user instanceof Seller sellerAccount) {
+            updatedBalance = sellerAccount.getAccountBalance() + depositAmount;
+            if (!userDAO.updateSellerBalance(userId, updatedBalance)) {
+                throw new ServiceExceptions(ErrorCode.ACCOUNT_BALANCE_UPDATE_FAILED, "Persistence failure: Failed to update seller account balance in the database.");
+            }
+        } else {
+            throw new ServiceExceptions(ErrorCode.INVALID_ROLE, "Authorization failure: The user role is unauthorized for account balance deposition.");
         }
-        return newBalance;
+        return updatedBalance;
     }
 
-    public UserDTO getByUserId(String id) {
-        User user = userDAO.findById(id);
+    public UserDTO getByUserId(String userId) throws ServiceExceptions {
+        validateUserIdRequest(userId);
+        User user = userDAO.findById(userId);
         if (user == null) {
-            throw new ServiceExceptions("ACCOUNT_NOT_FOUND", "Account does not exist");
+            throw new ServiceExceptions(ErrorCode.ACCOUNT_NOT_FOUND, "Retrieval failure: The specified account does not exist.");
         }
-        return toDTO(user);
+        UserDTO userDto = toUserDto(user);
+        return userDto;
     }
 
-    private User buildUser(RegisterRequest req) {
-        return switch (req.getRole()) {
-            case BIDDER -> new Bidder(req.getName(), req.getUsername(), req.getPassword(), req.getEmail(), req.getRole());
-            case SELLER -> new Seller(req.getName(), req.getUsername(), req.getPassword(), req.getEmail(), req.getRole());
-            default -> throw new ServiceExceptions("INVALID_ROLE", "Invalid role: " + req.getRole());
+    // --- PRIVATE HELPERS ---
+
+    private User buildUser(RegisterRequest registerRequest) {
+        return switch (registerRequest.getRole()) {
+            case BIDDER -> new Bidder(registerRequest.getName(), registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getEmail(), registerRequest.getRole());
+            case SELLER -> new Seller(registerRequest.getName(), registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getEmail(), registerRequest.getRole());
+            default -> throw new ServiceExceptions(ErrorCode.INVALID_ROLE, "Logic failure: Encountered an unsupported user role: " + registerRequest.getRole());
         };
     }
 
-    private void persistUser(User user, UserRole role) {
-        boolean saved = switch (role) {
+    private void persistUser(User user, UserRole role) throws ServiceExceptions {
+        boolean isSaved = switch (role) {
             case BIDDER -> userDAO.saveBidder((Bidder) user);
             case SELLER -> userDAO.saveSeller((Seller) user);
             default -> false;
         };
 
-        if (!saved)
-            throw new ServiceExceptions("SAVE_ERROR", "Error saving user to database");
+        if (!isSaved) {
+            throw new ServiceExceptions(ErrorCode.SAVE_ERROR, "Critical persistence failure: Could not save user entity to the database.");
+        }
     }
 
-    private UserDTO toDTO(User user) {
-        long balance = 0;
-        if (user instanceof Bidder b) balance = b.getAccountBalance();
-        else if (user instanceof Seller s) balance = s.getAccountBalance();
-        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole(), balance);
+    private UserDTO toUserDto(User user) {
+        long accountBalance = 0;
+        if (user instanceof Bidder bidderAccount) {
+            accountBalance = bidderAccount.getAccountBalance();
+        } else if (user instanceof Seller sellerAccount) {
+            accountBalance = sellerAccount.getAccountBalance();
+        }
+        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole(), accountBalance);
+    }
+
+    // --- VALIDATION METHODS ---
+
+    private void validateLoginRequest(LoginRequest loginRequest) throws ServiceExceptions {
+        if (loginRequest == null) throw new ServiceExceptions(ErrorCode.INVALID_LOGIN_REQUEST, "The login request payload cannot be null.");
+        // Further validation (e.g., username/password format) is handled by Controller
+    }
+
+    private void validateRegisterRequest(RegisterRequest registerRequest) throws ServiceExceptions {
+        if (registerRequest == null) throw new ServiceExceptions(ErrorCode.INVALID_REGISTER_REQUEST, "The registration request payload cannot be null.");
+        // Further validation (e.g., username/password/email format, length) is handled by Controller
+    }
+
+    private void validateDepositRequest(long depositAmount, String userId) throws ServiceExceptions {
+        if (depositAmount <= 0) {
+            throw new ServiceExceptions(ErrorCode.INVALID_DEPOSIT, "Validation failure: The deposit amount must be a positive integer greater than zero.");
+        }
+        if (userId == null || userId.isBlank()) {
+            throw new ServiceExceptions(ErrorCode.INVALID_DATA, "Validation failure: The user identifier is mandatory for the deposition operation.");
+        }
+    }
+
+    private void validateUserIdRequest(String userId) throws ServiceExceptions {
+        if (userId == null || userId.isBlank()) {
+            throw new ServiceExceptions(ErrorCode.INVALID_DATA, "Validation failure: The user identifier cannot be null or empty.");
+        }
     }
 }
