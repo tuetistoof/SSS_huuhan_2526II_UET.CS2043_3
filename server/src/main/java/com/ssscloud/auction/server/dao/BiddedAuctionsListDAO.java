@@ -35,7 +35,7 @@ public class BiddedAuctionsListDAO extends BaseDAO{
             "JOIN entity ei               ON i.id = ei.id " +
             "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
             
-            // Fix Bug 2: dùng IN thay vì correlated subquery để tránh duplicate
+            // Lấy bid cao nhất hiện tại
             "LEFT JOIN ( " +
             "    SELECT auction_id, MAX(bid_amount) AS bid_amount " +
             "    FROM bid_transaction " +
