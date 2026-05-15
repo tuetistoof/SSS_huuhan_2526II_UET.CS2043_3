@@ -209,6 +209,12 @@
               <Label styleClass="br-info-key" text="Anti-Sniping: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoAntiSnipe" styleClass="br-info-val" text="—" />
             </HBox>
+                  <VBox>
+                     <children>
+                        <Label text="Description: " />
+                        <Label fx:id="infoDescription" text="—" />
+                     </children>
+                  </VBox>
           </VBox>
 
         </StackPane>

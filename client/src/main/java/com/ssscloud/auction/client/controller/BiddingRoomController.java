@@ -72,6 +72,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private Label infoSeller;
     @FXML private Label infoStartPrice;
     @FXML private Label infoStartTime;
+    @FXML private Label infoDescription;
 
     @FXML private Label lblAuctionName;
     @FXML private Label lblBidCount;
@@ -444,7 +445,8 @@ public class BiddingRoomController implements MessageListener{
  
         infoEndTime.setText(currentAuction.getEndTime() != null
                 ? currentAuction.getEndTime().format(dtFmt) : "—");
-
+        infoDescription.setText(currentAuction.getItemDTO().getDescription() != null
+                ? currentAuction.getItemDTO().getDescription() : "—");
 
     }
 

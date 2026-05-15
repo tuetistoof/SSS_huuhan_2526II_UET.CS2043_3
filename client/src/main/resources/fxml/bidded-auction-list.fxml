@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
@@ -40,21 +39,11 @@
             <VBox spacing="0" styleClass="bda-content-area" VBox.vgrow="ALWAYS">
                 <children>
 
-                    <!-- Spinner -->
-                    <VBox fx:id="spinnerPane" alignment="CENTER" managed="true" styleClass="bda-empty-state" visible="true" VBox.vgrow="ALWAYS">
-                        <padding><Insets bottom="60" top="60" /></padding>
-                        <children>
-                            <javafx.scene.control.ProgressIndicator prefHeight="48" prefWidth="48" style="-fx-progress-color: #d11f4d;" />
-                            <Region prefHeight="12" />
-                            <Label styleClass="bda-empty-sub" text="Loading..." />
-                        </children>
-                    </VBox>
-
                     <!-- Empty state -->
-                    <VBox fx:id="emptyState" alignment="CENTER" managed="false" styleClass="wl-empty-state" visible="false" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="emptyState" alignment="CENTER" managed="true" styleClass="bda-empty-state" visible="true" VBox.vgrow="ALWAYS">
                         <padding><Insets bottom="60" top="60" /></padding>
                         <children>
-                            <Label style="-fx-font-size: 48px;" text="🏷️" />
+                            <Label style="-fx-font-size: 48px;" text="🛒" />
                             <Region prefHeight="12" />
                             <Label styleClass="bda-empty-title" text="No Active Bids" />
                             <Region prefHeight="6" />
@@ -63,7 +52,7 @@
                     </VBox>
 
                     <!-- Danh sách rows -->
-                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" managed="false" styleClass="wl-scroll" visible="false" VBox.vgrow="ALWAYS">
+                    <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" managed="false" styleClass="bda-scroll" visible="false" VBox.vgrow="ALWAYS">
                         <content>
                             <VBox fx:id="listContainer" spacing="0" styleClass="bda-list" />
                         </content>

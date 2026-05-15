@@ -84,16 +84,16 @@ public class BiddedAuctionsListController {
             if (auctions.isEmpty()) {
                 emptyState.setVisible(true);
                 emptyState.setManaged(true);
-                spinnerPane.setVisible(true);
-                spinnerPane.setManaged(true);
+                // spinnerPane.setVisible(true);
+                // spinnerPane.setManaged(true);
                 scrollPane.setVisible(false);
                 scrollPane.setManaged(false);
             } else {
             // Hiện ScrollPane chứa danh sách
                 emptyState.setVisible(false);
                 emptyState.setManaged(false);
-                spinnerPane.setVisible(false);
-                spinnerPane.setManaged(false);
+                // spinnerPane.setVisible(false);
+                // spinnerPane.setManaged(false);
 
                 scrollPane.setVisible(true);
                 scrollPane.setManaged(true);
