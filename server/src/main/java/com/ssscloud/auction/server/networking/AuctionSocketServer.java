@@ -51,7 +51,7 @@ public class AuctionSocketServer {
     /**
      * Configures the global logging system to output to a file in the project root.
      */
-    public static void setupLogger() {
+    public static void setupLogger() throws Exception {
         try {
             // Create "server.log" in the root directory. Enable append mode to preserve historical data.
             FileHandler fileHandler = new FileHandler("server.log", true);
@@ -63,28 +63,29 @@ public class AuctionSocketServer {
             Logger rootLogger = Logger.getLogger("");
             rootLogger.addHandler(fileHandler);
             
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Log Initialization Failure: Unable to instantiate the server log file.", e);
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Log Initialization Failure: Unable to instantiate the server log file.", exception);
+            throw exception;
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         setupLogger();
 
         UserDAO userDAO = new UserDAO();
         ItemDAO itemDAO = new ItemDAO();
         AuctionDAO auctionDAO = new AuctionDAO();
-        BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
+        BidTransactionDAO bidDAO = new BidTransactionDAO();
         WatchlistDAO watchlistDAO = new WatchlistDAO();
 
         AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
         BidService bidService = new BidService(auctionDAO, userDAO);
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO);
+        ConcurrentBidManager.initialize(bidDAO, autoBidService, auctionDAO);
 
         UserService userService = new UserService(userDAO);
         UserController userController = new UserController(userService); // Naming: Clear descriptive names
 
-        BidController bidController = new BidController(bidService, autoBidService, bidTransactionDAO);
+        BidController bidController = new BidController(bidService, autoBidService, bidDAO);
 
         ItemService itemService = new ItemService(itemDAO);
 
@@ -107,8 +108,12 @@ public class AuctionSocketServer {
                 Socket clientSocket = serverSocket.accept();
                 workerPool.execute(new ClientHandler(clientSocket, messageHandler));
             }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Socket Initialization Error: Main listener loop terminated unexpectedly.", e);
+        } catch (IOException ioException) {
+            logger.log(Level.SEVERE, "Socket Initialization Error: Main listener loop terminated unexpectedly.", ioException);
+            throw ioException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Critical unexpected error in server main loop.", exception);
+            throw exception;
         }
     }
 
@@ -118,25 +123,32 @@ public class AuctionSocketServer {
      * On server restart, reloads all auctions with OPEN or RUNNING status from the database,
      * registers them into the AuctionRegistry, and schedules the closing timers.
      */
-    private static void recoverLiveAuctions(AuctionDAO auctionDAO, AuctionService auctionService) {
-        List<Auction> liveAuctionList = new ArrayList<>(); // List naming suffix
-        liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.OPEN));
-        liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.RUNNING));
+    private static void recoverLiveAuctions(AuctionDAO auctionDAO, AuctionService auctionService) throws Exception {
+        try {
+            List<Auction> liveAuctionList = new ArrayList<>(); // List naming suffix
+            liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.OPEN));
+            liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.RUNNING));
 
-        LocalDateTime now = LocalDateTime.now();
-        for (Auction auction : liveAuctionList) {
-            if (auction.getAuctionConfig().getEndTime() != null
-                    && auction.getAuctionConfig().getEndTime().isBefore(now)) {
-                // Finalize auctions that exceeded their conclusion time during server downtime.
-                auction.finish();
-                auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
-                logger.log(Level.INFO, "[Recovery] Successfully finalized overdue auctionId: " + auction.getAuctionConfig().getId());
-            } else {
-                // Re-register active auctions and reschedule automatic closure.
-                AuctionRegistry.getInstance().register(auction);
-                auctionService.scheduleClose(auction);
-                logger.log(Level.INFO, "[Recovery] Re-registered active auctionId: " + auction.getAuctionConfig().getId());
+            LocalDateTime now = LocalDateTime.now();
+            for (Auction auction : liveAuctionList) {
+                String auctionId = auction.getAuctionConfig().getId(); // Id suffix
+
+                if (auction.getAuctionConfig().getEndTime() != null
+                        && auction.getAuctionConfig().getEndTime().isBefore(now)) {
+                    // Finalize auctions that exceeded their conclusion time during server downtime.
+                    auction.finish();
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                    logger.log(Level.INFO, "[Recovery] Successfully finalized overdue auctionId: " + auctionId);
+                } else {
+                    // Re-register active auctions and reschedule automatic closure.
+                    AuctionRegistry.getInstance().register(auction);
+                    auctionService.scheduleClose(auction);
+                    logger.log(Level.INFO, "[Recovery] Re-registered active auctionId: " + auctionId);
+                }
             }
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Infrastructure failure during auction state recovery from database.", exception);
+            throw exception;
         }
     }
 
@@ -144,7 +156,7 @@ public class AuctionSocketServer {
      * Safety-net task: periodically scans for overdue auctions that might have been missed by 
      * standard scheduling mechanisms (e.g., edge cases during high load).
      */
-    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService) {
+    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService) throws Exception {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "auction-closer");
             t.setDaemon(true);

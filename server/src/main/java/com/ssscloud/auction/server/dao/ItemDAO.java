@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.model.Art;
 import com.ssscloud.auction.common.model.Electronic;
@@ -14,23 +16,33 @@ import com.ssscloud.auction.common.model.Vehicle;
 import com.ssscloud.auction.common.model.base.Item;
 
 public class ItemDAO extends BaseDAO {
-    public boolean saveElectronic(Electronic electronic) {
+
+    private static final Logger logger = Logger.getLogger(ItemDAO.class.getName());
+
+    // --- PUBLIC METHODS ---
+
+    public boolean saveElectronic(Electronic electronic) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, creator, description, type) VALUES (?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlElectronic = "INSERT INTO electronic (id, is_repaired, warranty_period) VALUES (?, ?, ?)";
-        Connection conn = null;
-        PreparedStatement psEntity = null, psItem = null, psItemImageUrl = null, psElectronic = null;
-        try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+        
+        Connection connection = null;
+        PreparedStatement psEntity = null;
+        PreparedStatement psItem = null;
+        PreparedStatement psItemImageUrl = null;
+        PreparedStatement psElectronic = null;
 
-            psEntity = conn.prepareStatement(sqlEntity);
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false);
+
+            psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, electronic.getId());
             psEntity.setString(2, electronic.getName());
             psEntity.executeUpdate();
 
-            psItem = conn.prepareStatement(sqlItem);
+            psItem = connection.prepareStatement(sqlItem);
             psItem.setString(1, electronic.getId());
             psItem.setString(2, electronic.getSellerId());
             psItem.setString(3, electronic.getCreator());
@@ -38,20 +50,21 @@ public class ItemDAO extends BaseDAO {
             psItem.setString(5, electronic.getType());
             psItem.executeUpdate();
 
-            psItemImageUrl = conn.prepareStatement(sqlItemImageUrl);
-            for (String url : electronic.getImageUrl()) {
+            psItemImageUrl = connection.prepareStatement(sqlItemImageUrl);
+            for (String imageUrl : electronic.getImageUrl()) {
                 psItemImageUrl.setString(1, electronic.getId());
-                psItemImageUrl.setString(2, url);
+                psItemImageUrl.setString(2, imageUrl);
                 psItemImageUrl.addBatch();
             }
             psItemImageUrl.executeBatch();
 
-            psElectronic = conn.prepareStatement(sqlElectronic);
+            psElectronic = connection.prepareStatement(sqlElectronic);
             psElectronic.setString(1, electronic.getId());
             psElectronic.setBoolean(2, electronic.getIsRepaired());
             psElectronic.setInt(3, electronic.getWarrantyPeriod());
             psElectronic.executeUpdate();
 
+<<<<<<< HEAD
             conn.commit();
             logger.info("Successfully saved electronic: " + electronic.getId() + " - " + electronic.getName());
             return true;
@@ -62,32 +75,51 @@ public class ItemDAO extends BaseDAO {
             return false;
         } catch (SQLException e) {
             logger.severe("Error saving electronic [" + electronic.getName() + "]: " + e.getMessage());
+=======
+            connection.commit();
+            logger.log(Level.INFO, "Electronic item successfully persisted: " + electronic.getId());
+            return true;
+        } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
+            logger.log(Level.WARNING, "Constraint violation in saveElectronic: " + sqlConstraintException.getMessage());
+            safelyRollback(connection);
             return false;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database failure in saveElectronic for: " + electronic.getName(), sqlException);
+            safelyRollback(connection);
+>>>>>>> origin/twe
+            return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveElectronic: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
+            resetAutocommit(connection);
+            closeConnect(connection);
             closeResource(psEntity, psItem, psItemImageUrl, psElectronic);
         }
     }
 
-    public boolean saveVehicle(Vehicle vehicle) {
+    public boolean saveVehicle(Vehicle vehicle) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, creator, description, type) VALUES (?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlVehicle = "INSERT INTO vehicle (id, is_repaired, warranty_period) VALUES (?, ?, ?)";
 
-        Connection conn = null;
-        PreparedStatement psEntity = null, psItem = null, psItemImageUrl = null, psVehicle = null;
-        try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+        Connection connection = null;
+        PreparedStatement psEntity = null;
+        PreparedStatement psItem = null;
+        PreparedStatement psItemImageUrl = null;
+        PreparedStatement psVehicle = null;
 
-            psEntity = conn.prepareStatement(sqlEntity);
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false);
+
+            psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, vehicle.getId());
             psEntity.setString(2, vehicle.getName());
             psEntity.executeUpdate();
 
-            psItem = conn.prepareStatement(sqlItem);
+            psItem = connection.prepareStatement(sqlItem);
             psItem.setString(1, vehicle.getId());
             psItem.setString(2, vehicle.getSellerId());
             psItem.setString(3, vehicle.getCreator());
@@ -95,56 +127,63 @@ public class ItemDAO extends BaseDAO {
             psItem.setString(5, vehicle.getType());
             psItem.executeUpdate();
 
-            psItemImageUrl = conn.prepareStatement(sqlItemImageUrl);
-            for (String url : vehicle.getImageUrl()) {
+            psItemImageUrl = connection.prepareStatement(sqlItemImageUrl);
+            for (String imageUrl : vehicle.getImageUrl()) {
                 psItemImageUrl.setString(1, vehicle.getId());
-                psItemImageUrl.setString(2, url);
+                psItemImageUrl.setString(2, imageUrl);
                 psItemImageUrl.addBatch();
             }
             psItemImageUrl.executeBatch();
 
-            psVehicle = conn.prepareStatement(sqlVehicle);
+            psVehicle = connection.prepareStatement(sqlVehicle);
             psVehicle.setString(1, vehicle.getId());
             psVehicle.setBoolean(2, vehicle.getIsRepaired());
             psVehicle.setInt(3, vehicle.getWarrantyPeriod());
             psVehicle.executeUpdate();
 
-            conn.commit();
-            logger.info("Successfully saved vehicle: " + vehicle.getId() + " - " + vehicle.getName());
+            connection.commit();
+            logger.log(Level.INFO, "Vehicle item successfully persisted: " + vehicle.getId());
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("saveVehicle constraint violation (possible duplicate item id or invalid seller): "
-                    + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
+            logger.log(Level.WARNING, "Constraint violation in saveVehicle: " + sqlConstraintException.getMessage());
+            safelyRollback(connection);
             return false;
-        } catch (SQLException e) {
-            logger.severe("Error saving vehicle [" + vehicle.getName() + "]: " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database failure in saveVehicle for: " + vehicle.getName(), sqlException);
+            safelyRollback(connection);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveVehicle: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
+            resetAutocommit(connection);
+            closeConnect(connection);
             closeResource(psEntity, psItem, psItemImageUrl, psVehicle);
         }
     }
 
-    public boolean saveArt(Art art) {
+    public boolean saveArt(Art art) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, creator, description, type) VALUES (?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
         String sqlArt = "INSERT INTO art (id, certificate) VALUES (?, ?)";
 
-        Connection conn = null;
-        PreparedStatement psEntity = null, psItem = null, psItemImageUrl = null, psArt = null;
-        try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+        Connection connection = null;
+        PreparedStatement psEntity = null;
+        PreparedStatement psItem = null;
+        PreparedStatement psItemImageUrl = null;
+        PreparedStatement psArt = null;
 
-            psEntity = conn.prepareStatement(sqlEntity);
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false);
+
+            psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, art.getId());
             psEntity.setString(2, art.getName());
             psEntity.executeUpdate();
 
-            psItem = conn.prepareStatement(sqlItem);
+            psItem = connection.prepareStatement(sqlItem);
             psItem.setString(1, art.getId());
             psItem.setString(2, art.getSellerId());
             psItem.setString(3, art.getCreator());
@@ -152,47 +191,48 @@ public class ItemDAO extends BaseDAO {
             psItem.setString(5, art.getType());
             psItem.executeUpdate();
 
-            psItemImageUrl = conn.prepareStatement(sqlItemImageUrl);
-            for (String url : art.getImageUrl()) {
+            psItemImageUrl = connection.prepareStatement(sqlItemImageUrl);
+            for (String imageUrl : art.getImageUrl()) {
                 psItemImageUrl.setString(1, art.getId());
-                psItemImageUrl.setString(2, url);
+                psItemImageUrl.setString(2, imageUrl);
                 psItemImageUrl.addBatch();
             }
             psItemImageUrl.executeBatch();
 
-            psArt = conn.prepareStatement(sqlArt);
+            psArt = connection.prepareStatement(sqlArt);
             psArt.setString(1, art.getId());
             psArt.setBoolean(2, art.getCertificate());
             psArt.executeUpdate();
 
-            conn.commit();
-            logger.info("Successfully saved art: " + art.getId() + " - " + art.getName());
+            connection.commit();
+            logger.log(Level.INFO, "Art item successfully persisted: " + art.getId());
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("saveArt constraint violation (possible duplicate item id or invalid seller): "
-                    + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
+            logger.log(Level.WARNING, "Constraint violation in saveArt: " + sqlConstraintException.getMessage());
+            safelyRollback(connection);
             return false;
-        } catch (SQLException e) {
-            logger.severe("Error saving art [" + art.getName() + "]: " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database failure in saveArt for: " + art.getName(), sqlException);
+            safelyRollback(connection);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveArt: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
+            resetAutocommit(connection);
+            closeConnect(connection);
             closeResource(psEntity, psItem, psItemImageUrl, psArt);
         }
     }
 
-    // Retrieve list of items
-    public List<Item> getItemList() {
-        List<Item> item = new ArrayList<>();
+    public List<Item> getItemList() throws SQLException, Exception {
+        List<Item> itemList = new ArrayList<>();
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "i.seller_id, i.creator, i.description, i.type, " +
                 "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
                 "art.certificate AS art_certificate, " +
-                "electronic.is_repaired AS electronic_is_repaired, electronic.warranty_period AS electronic_warranty_period, "
-                +
+                "electronic.is_repaired AS electronic_is_repaired, electronic.warranty_period AS electronic_warranty_period, " +
                 "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
                 "FROM entity e " +
                 "JOIN item i ON e.id = i.id " +
@@ -202,28 +242,32 @@ public class ItemDAO extends BaseDAO {
                 "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
                 "GROUP BY e.id;";
 
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
+
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             rs = ps.executeQuery();
             while (rs.next()) {
-                item.add(mapResultSetToItem(rs));
+                itemList.add(mapResultSetToItem(rs));
             }
-            logger.info("getAll Item: " + item.size() + " kết quả");
-            return item;
-        } catch (SQLException e) {
-            logger.severe("Lỗi khi lấy danh sách Item: " + e.getMessage());
-            return item;
+            logger.log(Level.INFO, "Successfully retrieved Item list: " + itemList.size() + " results");
+            return itemList;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error retrieving Item list: " + sqlException.getMessage(), sqlException);
+            return itemList;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.getItemList: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
-    public List<Item> findBySellerId(String sellerId) {
+    public List<Item> findBySellerId(String sellerId) throws SQLException, Exception {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "i.seller_id, i.creator, i.description, i.type, " +
@@ -239,31 +283,34 @@ public class ItemDAO extends BaseDAO {
                 "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
                 "WHERE i.seller_id = ? " +
                 "GROUP BY e.id";
-        Connection conn = null;
+
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
-        List<Item> list = new ArrayList<>();
+        List<Item> itemList = new ArrayList<>();
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             ps.setString(1, sellerId);
             rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapResultSetToItem(rs));
+                itemList.add(mapResultSetToItem(rs));
             }
-            return list;
-
-        } catch (SQLException e) {
-            logger.severe("Lỗi findBySellerId [" + sellerId + "]: " + e.getMessage());
-            return list;
+            return itemList;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findBySellerId for sellerId: " + sellerId, sqlException);
+            return itemList;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.findBySellerId: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
-    public Item findById(String id) {
+    public Item findById(String itemId) throws SQLException, Exception {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "i.seller_id, i.creator, i.description, i.type, " +
@@ -280,141 +327,144 @@ public class ItemDAO extends BaseDAO {
                 "WHERE e.id = ? " +
                 "GROUP BY e.id";
 
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, id);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, itemId);
             rs = ps.executeQuery();
 
             if (rs.next()) {
                 return mapResultSetToItem(rs);
             }
             return null;
-
-        } catch (SQLException e) {
-            logger.severe("Loi khi tim theo id " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findById for itemId: " + itemId, sqlException);
             return null;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.findById: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
-    public boolean deleteById(String itemId) {
+    public boolean deleteById(String itemId) throws SQLException, Exception {
         String sql = "DELETE FROM entity WHERE id = ? ";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
+
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             ps.setString(1, itemId);
             int rows = ps.executeUpdate();
             if (rows == 0) {
-                logger.warning("deleteItemId id=" + itemId + " - không thể xóa ");
+                logger.log(Level.WARNING, "Resource not found for deletion, itemId: " + itemId);
             }
             return rows > 0;
-
-        } catch (SQLException e) {
-            logger.severe("Lỗi deleteAuction id=" + itemId + ": " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in deleteById for itemId: " + itemId, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.deleteById: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(ps);
         }
     }
 
-    // ham ho tro
+    public boolean updateItemImages(String itemId, List<String> newUrlsList) throws SQLException, Exception {
+        String sqlDelete = "DELETE FROM item_image_url WHERE item_id = ?";
+        String sqlInsert = "INSERT INTO item_image_url (item_id, image_url) VALUES (?, ?)";
+
+        Connection connection = null;
+        PreparedStatement psDelete = null;
+        PreparedStatement psInsert = null;
+
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false);
+            
+            psDelete = connection.prepareStatement(sqlDelete);
+            psDelete.setString(1, itemId);
+            psDelete.executeUpdate();
+
+            if (newUrlsList != null && !newUrlsList.isEmpty()) {
+                psInsert = connection.prepareStatement(sqlInsert);
+                for (String imageUrl : newUrlsList) {
+                    psInsert.setString(1, itemId);
+                    psInsert.setString(2, imageUrl);
+                    psInsert.addBatch();
+                }
+                psInsert.executeBatch();
+            }
+
+            connection.commit();
+            logger.log(Level.INFO, "Item images updated successfully for itemId: " + itemId);
+            return true;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database failure in updateItemImages for itemId: " + itemId, sqlException);
+            safelyRollback(connection);
+            return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.updateItemImages: " + exception.getMessage(), exception);
+            throw exception;
+        } finally {
+            resetAutocommit(connection);
+            closeConnect(connection);
+            closeResource(psDelete, psInsert);
+        }
+    }
+
+    // --- PRIVATE METHODS ---
+
     public Item mapResultSetToItem(ResultSet rs) throws SQLException {
-        String id = rs.getString("id");
+        String itemId = rs.getString("id");
         String name = rs.getString("name");
         String sellerId = rs.getString("seller_id");
         String creator = rs.getString("creator");
         String description = rs.getString("description");
         String type = rs.getString("type");
-        List<String> imageUrl = parseStringToList(rs.getString("item_image_url"));
+        List<String> imageUrlsList = parseStringToList(rs.getString("item_image_url"));
+
         switch (type) {
             case "ART": {
                 boolean certificate = rs.getBoolean("art_certificate");
-                Art art = new Art(id, name, sellerId, creator, description, type, imageUrl, certificate);
-                return art;
+                return new Art(itemId, name, sellerId, creator, description, type, imageUrlsList, certificate);
             }
             case "VEHICLE": {
                 boolean isRepaired = rs.getBoolean("vehicle_is_repaired");
                 int warrantyPeriod = rs.getInt("vehicle_warranty_period");
-                Vehicle vehicle = new Vehicle(id, name, sellerId, creator, description, type, imageUrl, isRepaired,
-                        warrantyPeriod);
-                return vehicle;
+                return new Vehicle(itemId, name, sellerId, creator, description, type, imageUrlsList, isRepaired, warrantyPeriod);
             }
             case "ELECTRONIC": {
                 boolean isRepaired = rs.getBoolean("electronic_is_repaired");
                 int warrantyPeriod = rs.getInt("electronic_warranty_period");
-                Electronic electronic = new Electronic(id, name, sellerId, creator, description, type, imageUrl,
-                        isRepaired, warrantyPeriod);
-                return electronic;
+                return new Electronic(itemId, name, sellerId, creator, description, type, imageUrlsList, isRepaired, warrantyPeriod);
             }
             default:
-                throw new SQLException("ItemType khong xac dinh duoc type " + type);
+                throw new SQLException("Unknown Item type: " + type);
         }
     }
 
-    public List <String> parseStringToList (String input){
-        if (input == null || input.trim().isEmpty()) {
+    public List<String> parseStringToList(String inputString) {
+        if (inputString == null || inputString.trim().isEmpty()) {
             return new ArrayList<>();
         }
-        String[] parts = input.split(",");
-        List<String> result = new ArrayList<>();
-        for (String partString : parts) {
-            String trimmedUrl = partString.trim();
+        String[] parts = inputString.split(",");
+        List<String> urlList = new ArrayList<>();
+        for (String urlPart : parts) {
+            String trimmedUrl = urlPart.trim();
             if (!trimmedUrl.isEmpty()) {
-                result.add(trimmedUrl);
+                urlList.add(trimmedUrl);
             }
         }
-        return result;
-    }
-
-    public boolean updateItemImages(String itemId, List<String> newUrls) {
-        String sqlDelete = "DELETE FROM item_image_url WHERE item_id = ?";
-        String sqlInsert = "INSERT INTO item_image_url (item_id, image_url) VALUES (?, ?)";
-
-        Connection conn = null;
-        PreparedStatement psDelete = null;
-        PreparedStatement psInsert = null;
-
-        try {
-            conn = getConnection();
-            conn.setAutoCommit(false); // Bắt đầu Transaction
-            //Xóa ảnh cũ
-            psDelete = conn.prepareStatement(sqlDelete);
-            psDelete.setString(1, itemId);
-            psDelete.executeUpdate();
-
-            //Nhét mới
-            if (newUrls != null && !newUrls.isEmpty()) {
-                psInsert = conn.prepareStatement(sqlInsert);
-                for (String url : newUrls) {
-                    psInsert.setString(1, itemId);
-                    psInsert.setString(2, url);
-                    psInsert.addBatch();
-                }
-                psInsert.executeBatch(); // Chạy 1 phát insert tất cả
-            }
-
-            conn.commit();
-            logger.info("Đã cập nhật ảnh thành công cho Item ID: " + itemId);
-            return true;
-
-        } catch (SQLException e) {
-            safelyRollback(conn);
-            logger.severe("Lỗi updateItemImages cho Item [" + itemId + "]: " + e.getMessage());
-            return false;
-        } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
-            closeResource(psDelete, psInsert);
-        }
+        return urlList;
     }
 }
