@@ -163,6 +163,7 @@ public class AuctionService {
 
         auctionDto.setId(auction.getAuctionConfig().getId());
         auctionDto.setName(auction.getAuctionConfig().getName());
+        auctionDto.setStartPrice(auction.getAuctionConfig().getStartPrice());
         auctionDto.setMinIncrement(auction.getAuctionConfig().getMinIncrement());
         auctionDto.setStartTime(auction.getAuctionConfig().getStartTime());
         auctionDto.setEndTime(auction.getAuctionConfig().getEndTime());
