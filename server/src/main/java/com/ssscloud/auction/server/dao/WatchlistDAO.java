@@ -81,7 +81,7 @@ public class WatchlistDAO extends BaseDAO {
 
     /**
      * Retrieves the list of auction identifiers a specific user is following.
-     */
+     **/
     public List<String> findAuctionIdsByUser(String userId) throws SQLException, Exception {
         String sql = "SELECT auction_id FROM watchlist WHERE user_id = ?";
         Connection connection = null;
