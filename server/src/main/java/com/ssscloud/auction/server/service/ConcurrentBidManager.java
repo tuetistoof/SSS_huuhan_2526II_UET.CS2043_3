@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
@@ -15,11 +17,31 @@ import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
+/**
+ * ConcurrentBidManager handles asynchronous bid processing for active auctions.
+ * It utilizes a per-auction queue and worker thread model to ensure thread safety 
+ * and sequential consistency of bids within a single auction room.
+ */
 public class ConcurrentBidManager {
+    private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); // Logging Standards: Declared first
+
     private static volatile ConcurrentBidManager instance = null;
 
-    private ConcurrentBidManager() {
-    }
+    private BidTransactionDAO bidDAO; // Dependency Injection: Short name for DAO
+    private AutoBidService autoBidService;
+    private AuctionDAO auctionDAO;
+    private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
+    private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
+
+    private ConcurrentBidManager() {}
+
+    private ConcurrentBidManager(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) {
+        this.bidDAO = bidDAO;
+        this.autoBidService = autoBidService;
+        this.auctionDAO = auctionDAO;
+    } // Constructor section
+
+    // --- PUBLIC METHODS ---
 
     public static ConcurrentBidManager getInstance() {
         if (instance == null) {
@@ -32,126 +54,125 @@ public class ConcurrentBidManager {
         return instance;
     }
 
-    private BidTransactionDAO bidTransactionDAO;
-    private AutoBidService    autoBidService;
-    private AuctionDAO auctionDAO;
-
-    private ConcurrentBidManager(BidTransactionDAO dao, AutoBidService service, AuctionDAO auctionDAO) {
-        this.bidTransactionDAO = dao;
-        this.autoBidService = service;
-        this.auctionDAO = auctionDAO;
-    }
-
-    public static ConcurrentBidManager initialize(BidTransactionDAO dao, AutoBidService service, AuctionDAO auctionDAO  ) {
+    public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) {
         if (instance == null) {
             synchronized (ConcurrentBidManager.class) {
                 if (instance == null) {
-                    instance = new ConcurrentBidManager(dao, service, auctionDAO);
+                    instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO);
                 }
             }
         }
         return instance;
     }
-    private final Map<String, BlockingQueue<BidTask>> queues = new ConcurrentHashMap<>();
-    private final Map<String, Thread> workers = new ConcurrentHashMap<>();
-    
-    public void submitBid(Auction auction, String bidderId, String bidderUsername,
-                          long amount, BidType type) {
-        String auctionId = auction.getAuctionConfig().getId();
+
+    public void submitBid(Auction auctionEntity, String bidderId, String bidderUsername,
+                          long bidAmount, BidType bidType) { // Naming: full descriptive names
+        String auctionId = auctionEntity.getAuctionConfig().getId();
         ensureWorkerRunning(auctionId);
-        queues.get(auctionId).offer(new BidTask(
-                auction, bidderId, bidderUsername, amount, type));
-    }
-    public void shutdown(String auctionId) {
-        queues.remove(auctionId);
-        Thread worker = workers.remove(auctionId);
-        if (worker != null) worker.interrupt();
+        bidTaskQueues.get(auctionId).offer(new BidTask(
+                auctionEntity, bidderId, bidderUsername, bidAmount, bidType));
     }
 
+    public void shutdown(String auctionId) {
+        bidTaskQueues.remove(auctionId);
+        Thread workerThread = workerThreads.remove(auctionId);
+        if (workerThread != null) {
+            workerThread.interrupt();
+            logger.log(Level.INFO, "Bid worker thread terminated for auctionId: " + auctionId); // Log style
+        }
+    }
+
+    // --- PRIVATE METHODS ---
+
     private void ensureWorkerRunning(String auctionId) {
-        queues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
-        workers.computeIfAbsent(auctionId, k -> {
-            Thread worker = new Thread(() -> runWorker(auctionId));
-            worker.setDaemon(true);
-            worker.setName("bid-worker-" + auctionId);
-            worker.start();
-            return worker;
+        bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
+        workerThreads.computeIfAbsent(auctionId, k -> {
+            Thread workerThread = new Thread(() -> runWorker(auctionId));
+            workerThread.setDaemon(true);
+            workerThread.setName("bid-worker-" + auctionId);
+            workerThread.start();
+            logger.log(Level.INFO, "Sequential bid worker thread started for auctionId: " + auctionId);
+            return workerThread;
         });
     }
 
     private void runWorker(String auctionId) {
-        BlockingQueue<BidTask> queue = queues.get(auctionId);
-        if (queue == null) return;
+        BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
+        if (taskQueue == null) {
+            return;
+        }
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                BidTask task = queue.take();
+                BidTask task = taskQueue.take();
                 processTask(task);
             } catch (InterruptedException e) {
+                logger.log(Level.INFO, "Execution interrupted for bid worker associated with auctionId: " + auctionId);
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
-                System.err.println("[BidWorker-" + auctionId + "] Lỗi: " + e.getMessage());
+                logger.log(Level.SEVERE, "Unexpected critical failure while processing bid tasks for auctionId: " + auctionId, e);
             }
         }
     }
 
     private void processTask(BidTask task) {
-        Auction auction  = task.auction;
-        String auctionId = auction.getAuctionConfig().getId();
+        Auction auctionEntity = task.auction;
+        String auctionId = auctionEntity.getAuctionConfig().getId();
 
-        if (auction.getStatus().isEnded()) {
-            System.err.println("[BidWorker] Phiên đã kết thúc: " + task.bidderId);
+        if (auctionEntity.getStatus().isEnded()) {
+            logger.log(Level.WARNING, "Incoming bid rejected: the target auction has already concluded. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
             return;
         }
-        if (auction.isExpired()) {
-            System.err.println("[BidWorker] Phiên hết giờ: " + task.bidderId);
+        if (auctionEntity.isExpired()) {
+            logger.log(Level.WARNING, "Incoming bid rejected: the target auction has reached its expiration time. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
             return;
         }
 
-        BidTransaction bid = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
-                task.bidAmount, LocalDateTime.now(), task.type);
-        if (auction.getStatus() == AuctionStatus.OPEN)
+        BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
+                task.bidAmount, LocalDateTime.now(), task.bidType); // Naming: full descriptive name
+        
+        if (auctionEntity.getStatus() == AuctionStatus.OPEN)
         {
-            auction.setStatus(AuctionStatus.RUNNING);
+            auctionEntity.setStatus(AuctionStatus.RUNNING);
             auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
         }
-        auction.placeBid(bid);
-        LocalDateTime newEnd = AntiSnipingService.processAntiSniping(auction.getAuctionConfig());
-        if (newEnd != null && auctionDAO != null) {
-            auctionDAO.updateEndTime(auctionId, newEnd);
+
+        auctionEntity.placeBid(bidTransaction);
+        LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+        if (updatedEndTime != null && auctionDAO != null) {
+            auctionDAO.updateEndTime(auctionId, updatedEndTime);
         }
-        if (bidTransactionDAO != null) {
+
+        if (bidDAO != null) {
             try {
-                bidTransactionDAO.saveBidTransaction(bid);
+                bidDAO.saveBidTransaction(bidTransaction);
             } catch (Exception e) {
-                System.err.println("[BidWorker] Lưu DB thất bại: " + e.getMessage()
-                        + " — bid vẫn hợp lệ trong memory");
+                logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId + ". Bid remains valid in memory.", e);
             }
         }
 
-        ChangeManager.getInstance().notify(auction);
-        NotificationService.getInstance().notifyWatchers(auction, auction.getHighestBidderId());
+        ChangeManager.getInstance().notify(auctionEntity);
+        NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
 
         if (autoBidService != null) {
-            autoBidService.trigger(auction);
+            autoBidService.trigger(auctionEntity);
         }
     }
-
 
     private static class BidTask {
         final Auction auction;
         final String bidderId;
         final String bidderUsername;
         final long bidAmount;
-        final BidType type;
+        final BidType bidType;
 
-        BidTask(Auction auction, String bidderId, String bidderUsername,long bidAmount, BidType type) {
+        BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, BidType bidType) {
             this.auction = auction;
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
             this.bidAmount = bidAmount;
-            this.type = type;
+            this.bidType = bidType;
         }
     }
 }

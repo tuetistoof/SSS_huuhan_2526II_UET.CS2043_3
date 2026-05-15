@@ -13,6 +13,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -32,6 +34,8 @@ public class AuctionClientSocket {
     //Singleton
     private static AuctionClientSocket instance;
     private AuctionClientSocket() {}
+
+    private static final Logger logger = Logger.getLogger(AuctionClientSocket.class.getName());
  
     public static AuctionClientSocket getInstance() {
         if (instance == null) {
@@ -69,7 +73,7 @@ public class AuctionClientSocket {
                   
                 }
             } catch (Exception e) {
-                System.out.println("Mất kết nối với Server: " + e.getMessage());
+                logger.log(Level.WARNING, "Connection lost with server: " + e.getMessage());
             }
         });
         t.setDaemon(true);  //thread tự tắt khi app đóng
@@ -99,7 +103,7 @@ public class AuctionClientSocket {
             send(json);
             return responseQueue.poll(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            System.out.println("Bị gián đoạn khi chờ response");
+            logger.log(Level.WARNING, "Interrupted while waiting for server response");
             return null;
         }
     }

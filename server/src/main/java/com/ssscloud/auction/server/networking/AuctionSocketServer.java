@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;   
@@ -19,7 +20,6 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.ItemController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
@@ -36,27 +36,37 @@ import com.ssscloud.auction.server.service.NotificationService;
 import com.ssscloud.auction.server.service.UserService;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
+/**
+ * AuctionSocketServer is the primary entry point for the auction system backend.
+ * It initializes infrastructure services, recovers auction states from persistence, 
+ * and manages the main socket listener loop.
+ */
 public class AuctionSocketServer {
+    private static final Logger logger = Logger.getLogger(AuctionSocketServer.class.getName()); // Logging Standards: First Attribute
 
+    private static final ExecutorService workerPool = Executors.newCachedThreadPool(); // Naming: Descriptive Attributes
+
+    // --- PUBLIC METHODS ---
+
+    /**
+     * Configures the global logging system to output to a file in the project root.
+     */
     public static void setupLogger() {
         try {
-            // Tạo file tên là "server.log" nằm ngay ở thư mục gốc project
-            // Chữ 'true' có nghĩa là ghi nối tiếp vào cuối file (append), không xóa log cũ
+            // Create "server.log" in the root directory. Enable append mode to preserve historical data.
             FileHandler fileHandler = new FileHandler("server.log", true);
             
-            // Ép nó ghi dưới dạng Text dễ đọc (nếu không mặc định nó sẽ ghi ra file XML rất lằng nhằng)
+            // Enforce plain text formatting for better technical readability.
             fileHandler.setFormatter(new SimpleFormatter());
             
-            // Lấy Logger "tổ tiên" của toàn hệ thống và gắn bộ ghi file này vào
+            // Attach the file handler to the root logger for comprehensive system monitoring.
             Logger rootLogger = Logger.getLogger("");
             rootLogger.addHandler(fileHandler);
             
         } catch (Exception e) {
-            System.err.println("Không thể khởi tạo file log: " + e.getMessage());
+            logger.log(Level.SEVERE, "Log Initialization Failure: Unable to instantiate the server log file.", e);
         }
     }
-
-    private static ExecutorService pool = Executors.newCachedThreadPool();
 
     public static void main(String[] args) {
         setupLogger();
@@ -72,67 +82,67 @@ public class AuctionSocketServer {
         ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO);
 
         UserService userService = new UserService(userDAO);
-        UserController userCtrl = new UserController(userService);
+        UserController userController = new UserController(userService); // Naming: Clear descriptive names
 
-        BidController bidCtrl = new BidController(bidService, autoBidService, bidTransactionDAO);
+        BidController bidController = new BidController(bidService, autoBidService, bidTransactionDAO);
 
         ItemService itemService = new ItemService(itemDAO);
-        ItemController itemCtrl = new ItemController(itemDAO);
 
         AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService);
-        AuctionController auctionCtrl = new AuctionController(auctionService);
+        AuctionController auctionController = new AuctionController(auctionService);
 
-        WatchlistController watchlistCtrl = new WatchlistController(watchlistDAO);
+        WatchlistController watchlistController = new WatchlistController(watchlistDAO);
 
         NotificationService.getInstance().init(watchlistDAO);
+        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController);
 
-        MessageHandler  messageHandler = new MessageHandler(userCtrl, auctionCtrl, bidCtrl, itemCtrl, watchlistCtrl);
-
-        // Phục hồi auction còn sống sau restart + bật safety net 30s
+        // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService);
         startAuctionCloser(auctionDAO, auctionService);
 
-        System.out.println("[Server] Khởi động port 5000...");
+        logger.log(Level.INFO, "[Server] Initializing main networking listener on port 5000...");
 
         try (ServerSocket serverSocket = new ServerSocket(5000)) {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                pool.execute(new ClientHandler(clientSocket, messageHandler));
+                workerPool.execute(new ClientHandler(clientSocket, messageHandler));
             }
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            logger.log(Level.SEVERE, "Socket Initialization Error: Main listener loop terminated unexpectedly.", e);
         }
     }
 
+    // --- PRIVATE METHODS ---
+
     /**
-     * Khi server restart: load lại các auction OPEN/RUNNING từ DB,
-     * đăng ký vào Registry và schedule lại timer đóng.
+     * On server restart, reloads all auctions with OPEN or RUNNING status from the database,
+     * registers them into the AuctionRegistry, and schedules the closing timers.
      */
     private static void recoverLiveAuctions(AuctionDAO auctionDAO, AuctionService auctionService) {
-        List<Auction> live = new ArrayList<>();
-        live.addAll(auctionDAO.findByStatus(AuctionStatus.OPEN));
-        live.addAll(auctionDAO.findByStatus(AuctionStatus.RUNNING));
+        List<Auction> liveAuctionList = new ArrayList<>(); // List naming suffix
+        liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.OPEN));
+        liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.RUNNING));
 
         LocalDateTime now = LocalDateTime.now();
-        for (Auction auction : live) {
+        for (Auction auction : liveAuctionList) {
             if (auction.getAuctionConfig().getEndTime() != null
                     && auction.getAuctionConfig().getEndTime().isBefore(now)) {
-                // Quá hạn trong lúc server tắt → đóng luôn
+                // Finalize auctions that exceeded their conclusion time during server downtime.
                 auction.finish();
                 auctionDAO.updateStatus(auction.getAuctionConfig().getId(), AuctionStatus.FINISHED);
-                System.out.println("[Recovery] Đóng auction quá hạn: " + auction.getAuctionConfig().getId());
+                logger.log(Level.INFO, "[Recovery] Successfully finalized overdue auctionId: " + auction.getAuctionConfig().getId());
             } else {
-                // Còn hạn → đăng ký lại và schedule
+                // Re-register active auctions and reschedule automatic closure.
                 AuctionRegistry.getInstance().register(auction);
                 auctionService.scheduleClose(auction);
-                System.out.println("[Recovery] Khôi phục auction: " + auction.getAuctionConfig().getId());
+                logger.log(Level.INFO, "[Recovery] Re-registered active auctionId: " + auction.getAuctionConfig().getId());
             }
         }
     }
 
     /**
-     * Safety net: quét mỗi 30s để bắt những auction bị sót
-     * (không đi qua scheduleClose — trường hợp hiếm).
+     * Safety-net task: periodically scans for overdue auctions that might have been missed by 
+     * standard scheduling mechanisms (e.g., edge cases during high load).
      */
     private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -144,36 +154,36 @@ public class AuctionSocketServer {
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 LocalDateTime now = LocalDateTime.now();
-                List<Auction> overdue = new ArrayList<>();
+                List<Auction> overdueAuctionList = new ArrayList<>(); // List naming suffix
 
                 auctionDAO.findByStatus(AuctionStatus.RUNNING).stream()
                         .filter(a -> a.getAuctionConfig().getEndTime() != null
                                 && a.getAuctionConfig().getEndTime().isBefore(now))
-                        .forEach(overdue::add);
+                        .forEach(overdueAuctionList::add);
 
                 auctionDAO.findByStatus(AuctionStatus.OPEN).stream()
                         .filter(a -> a.getAuctionConfig().getEndTime() != null
                                 && a.getAuctionConfig().getEndTime().isBefore(now))
-                        .forEach(overdue::add);
+                        .forEach(overdueAuctionList::add);
 
-                for (Auction fromDB : overdue) {
-                    String id = fromDB.getAuctionConfig().getId();
+                for (Auction fromDB : overdueAuctionList) {
+                    String auctionId = fromDB.getAuctionConfig().getId(); // Id suffix
 
-                    // Ưu tiên object trong Registry vì nó có observer được attach
-                    Auction live = AuctionRegistry.getInstance().get(id);
-                    Auction target = (live != null) ? live : fromDB;
+                    // Prioritize objects in the AuctionRegistry as they have real-time observers attached.
+                    Auction liveAuction = AuctionRegistry.getInstance().get(auctionId);
+                    Auction target = (liveAuction != null) ? liveAuction : fromDB;
 
                     if (target.getStatus() == AuctionStatus.FINISHED) continue;
 
                     target.finish();
-                    auctionDAO.updateStatus(id, AuctionStatus.FINISHED);
-                    AuctionRegistry.getInstance().remove(id);
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                    AuctionRegistry.getInstance().remove(auctionId);
                     ChangeManager.getInstance().notify(target);
-                    NotificationService.getInstance().notifyAuctionEnded(target);
-                    System.out.println("[AuctionCloser] Safety net đóng: " + id);
+                    NotificationService.getInstance().notifyAuctionEnded(target); // Notify watchers
+                    logger.log(Level.INFO, "[AuctionCloser] Safety-net finalizing auctionId: " + auctionId);
                 }
             } catch (Exception e) {
-                System.err.println("[AuctionCloser] Lỗi: " + e.getMessage());
+                logger.log(Level.SEVERE, "[AuctionCloser] Maintenance task encountered a scheduled check failure.", e);
             }
         }, 30, 30, TimeUnit.SECONDS);
     }
