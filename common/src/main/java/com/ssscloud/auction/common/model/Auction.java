@@ -27,7 +27,9 @@ public class Auction implements Subject {
 
     // Lock riêng cho bidTransaction
     private final ReadWriteLock bidLock = new ReentrantReadWriteLock();
-
+    public ReadWriteLock getBidLock() {
+        return bidLock;
+    }
     public Auction() {
         this.auctionConfig = null;
         this.bidTransaction = new ArrayList<>();
@@ -38,8 +40,7 @@ public class Auction implements Subject {
             AuctionConfig auctionConfig,
             AuctionStatus status,
             String sellerId,
-            String itemId
-    ) {
+            String itemId) {
         this.auctionConfig = auctionConfig;
         this.status = status;
         this.sellerId = sellerId;
@@ -52,8 +53,7 @@ public class Auction implements Subject {
             AuctionStatus status,
             String sellerId,
             String itemId,
-            List<BidTransaction> bidTransaction
-    ) {
+            List<BidTransaction> bidTransaction) {
         this.auctionConfig = auctionConfig;
         this.status = status;
         this.sellerId = sellerId;
@@ -80,6 +80,18 @@ public class Auction implements Subject {
             this.bidTransaction = new ArrayList<>(bidTransaction);
         } finally {
             bidLock.writeLock().unlock();
+        }
+    }
+
+    public BidTransaction getLastBidTransaction (){
+        bidLock.readLock().lock();
+        try {
+            if (!bidTransaction.isEmpty()) {
+                return bidTransaction.getLast();
+            }
+            return null;
+        } finally {
+            bidLock.readLock().unlock();
         }
     }
 
@@ -270,15 +282,16 @@ public class Auction implements Subject {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         Auction auction = (Auction) o;
 
         return Objects.equals(
                 this.getAuctionConfig().getId(),
-                auction.getAuctionConfig().getId()
-        );
+                auction.getAuctionConfig().getId());
     }
 
     @Override

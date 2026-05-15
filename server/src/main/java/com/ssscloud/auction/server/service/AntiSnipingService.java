@@ -12,31 +12,43 @@ import java.util.logging.Level;
  * the auction duration if a bid is placed very close to the conclusion time.
  */
 public class AntiSnipingService {
-    private static final Logger logger = Logger.getLogger(AntiSnipingService.class.getName());
+    private static final Logger logger = Logger.getLogger(AntiSnipingService.class.getName()); // Logging Standards: First attribute
 
-    // Private constructor to prevent instantiation of this utility class.
+    // --- CONSTRUCTOR ---
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
     private AntiSnipingService() {
     }
 
-    public static LocalDateTime processAntiSniping(AuctionConfig auctionConfig) {
-        if (auctionConfig == null || auctionConfig.getEndTime() == null) {
-            logger.log(Level.FINE, "Anti-sniping processing skipped: target auction configuration or conclusion time is null.");
+    // --- PUBLIC METHODS ---
+
+    public static LocalDateTime processAntiSniping(AuctionConfig auctionConfig) throws Exception {
+        try {
+            if (auctionConfig == null || auctionConfig.getEndTime() == null) {
+                logger.log(Level.INFO, "Anti-sniping processing skipped: target auction configuration or conclusion time is null.");
+                return null;
+            } 
+    
+            LocalDateTime currentSystemTime = LocalDateTime.now();
+            LocalDateTime originalEndTime = auctionConfig.getEndTime();
+    
+            long remainingSeconds = Duration.between(currentSystemTime, originalEndTime).getSeconds();
+            int extensionThresholdSeconds = auctionConfig.getExtendSecond();
+    
+            if (remainingSeconds > 0 && remainingSeconds <= extensionThresholdSeconds) {
+                LocalDateTime updatedEndTime = originalEndTime.plusSeconds(extensionThresholdSeconds);
+                auctionConfig.setEndTime(updatedEndTime);
+                logger.log(Level.INFO, "Anti-sniping triggered for auction: " + auctionConfig.getName() + 
+                                       ". Duration extended by " + extensionThresholdSeconds + 
+                                       "s. Updated conclusion time: " + updatedEndTime);
+                return updatedEndTime;
+            }
             return null;
-        } 
-
-        LocalDateTime currentSystemTime = LocalDateTime.now();
-        LocalDateTime originalEndTime = auctionConfig.getEndTime();
-
-        long remainingSeconds = Duration.between(currentSystemTime, originalEndTime).getSeconds();
-        int extensionThresholdSeconds = auctionConfig.getExtendSecond();
-
-        if (remainingSeconds > 0 && remainingSeconds <= extensionThresholdSeconds) {
-            LocalDateTime updatedEndTime = originalEndTime.plusSeconds(extensionThresholdSeconds);
-            auctionConfig.setEndTime(updatedEndTime);
-            logger.log(Level.INFO, "Anti-sniping triggered for auction ''{0}''. Duration extended by {1}s. Updated conclusion time: {2}", 
-                new Object[]{auctionConfig.getName(), extensionThresholdSeconds, updatedEndTime});
-            return updatedEndTime;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AntiSnipingService.processAntiSniping: " + exception.getMessage(), exception);
+            throw exception;
         }
-        return null;
     }
 }

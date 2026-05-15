@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
 /**
@@ -49,6 +52,7 @@ public class ClientHandler implements Runnable {
             logger.log(Level.INFO, "Client connection terminated for userId: " + userId + ". Reason: " + ioException.getMessage());
         } finally {
             if (userId != null) {
+                cleanupObservers();
                 SessionRegistry.getInstance().unregister(userId);
             }
             try {
@@ -75,5 +79,15 @@ public class ClientHandler implements Runnable {
         this.userId = userId;
         this.username = username;
         SessionRegistry.getInstance().register(userId, this.writer);
+    }
+    private void cleanupObservers() {
+        try {
+            for (Auction auction : AuctionRegistry.getInstance().getAllLive()) {
+                ChangeManager.getInstance().detachByClientId(auction, userId);
+            }
+            logger.log(Level.INFO, "Cleaned up observers for disconnected userId: " + userId);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error during observer cleanup for userId: " + userId, e);
+        }
     }
 }

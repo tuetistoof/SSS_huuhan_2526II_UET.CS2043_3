@@ -71,7 +71,7 @@ public class NotificationController implements MessageListener {
  
         NotifItem item = new NotifItem(
                 "OUTBID",
-                "Bị vượt giá",
+                "Outbid",
                 auctionName + "\n" + String.format("%,d ₫", price),
                 auctionId,
                 LocalDateTime.now()
@@ -80,6 +80,7 @@ public class NotificationController implements MessageListener {
         updateBadge();
     }
     private void handleEnded(JsonObject data) {
+        System.out.println("Received auction ended notification: " + data);
         String auctionId   = data.get("auctionId").getAsString();
         String auctionName = data.get("auctionName").getAsString();
         String winner      = data.get("winner").getAsString();
@@ -87,8 +88,8 @@ public class NotificationController implements MessageListener {
  
         NotifItem item = new NotifItem(
                 "ENDED",
-                "Phiên kết thúc",
-                auctionName + "\nNgười thắng: " + winner
+                "Ended auction",
+                auctionName + "\nWinner: " + winner
                         + " — " + String.format("%,d ₫", finalPrice),
                 auctionId,
                 LocalDateTime.now()
@@ -109,8 +110,14 @@ public class NotificationController implements MessageListener {
     private void setupList() {
         if (listNotifs == null) return;
         listNotifs.setItems(notifs);
-        listNotifs.setPlaceholder(new Label("Không có thông báo nào."));
+        listNotifs.setPlaceholder(new Label("No notifications available."));
         listNotifs.setCellFactory(lv -> new NotifCell());
+    }
+    @FXML
+    private void handleMarkAllRead() {
+        notifs.forEach(n -> n.setRead(true));
+        listNotifs.refresh();
+        updateBadge();
     }
     private void onClickNotif(NotifItem item) {
         item.setRead(true);

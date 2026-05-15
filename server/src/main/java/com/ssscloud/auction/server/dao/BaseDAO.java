@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 
 public abstract class BaseDAO {
@@ -22,17 +22,21 @@ public abstract class BaseDAO {
     /**
      * Retrieves a managed database connection from the centralized infrastructure pool.
      * @return A valid Connection object.
-     * @throws DAOExceptions if a connection cannot be established.
+     * @throws DAOException, Exception if a connection cannot be established or an unexpected error occurs.
      * Lấy một kết nối cơ sở dữ liệu được quản lý từ pool hạ tầng tập trung.
      * @return Đối tượng Connection hợp lệ.
-     * @throws DAOExceptions nếu không thể thiết lập kết nối.
+     * @throws DAOException nếu không thể thiết lập kết nối.
+     * @throws Exception cho các lỗi hệ thống chưa xác định.
      */
-    protected Connection getConnection() throws DAOExceptions {
+    protected Connection getConnection() throws DAOException, Exception {
         try {
             return DatabaseConnection.getInstance().getConnection();
-        } catch (DAOExceptions daoException) {
+        } catch (DAOException daoException) {
             logger.log(Level.SEVERE, "[" + ErrorCode.CONNECTION_FAILURE + "] Lỗi tại " + getClass().getSimpleName() + ": Không thể lấy kết nối từ DatabaseConnection pool.", daoException);
             throw daoException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Lỗi hệ thống không xác định tại " + getClass().getSimpleName() + ": " + exception.getMessage(), exception);
+            throw exception;
         }
     }
 

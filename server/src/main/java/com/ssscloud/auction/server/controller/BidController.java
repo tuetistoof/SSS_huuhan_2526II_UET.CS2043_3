@@ -8,7 +8,7 @@ import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
-import com.ssscloud.auction.common.exception.ControllerExceptions;
+import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -29,77 +29,98 @@ public class BidController {
         this.bidTransactionDAO = bidTransactionDAO;
     }
 
-    public String placeBid(Object rawRequest, String bidderId, String bidderUsername) throws ControllerExceptions {
-        logger.log(Level.INFO, "Processing manual bid placement for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
-        String jsonPayload = JsonUtils.toJson(rawRequest);
-        PlaceBidRequest placeBidRequest = JsonUtils.fromJson(jsonPayload, PlaceBidRequest.class);
+    public String placeBid(Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Processing manual bid placement for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            PlaceBidRequest placeBidRequest = JsonUtils.fromJson(jsonPayload, PlaceBidRequest.class);
 
-        validatePlaceBidRequest(placeBidRequest);
+            validatePlaceBidRequest(placeBidRequest);
 
-        bidService.placeBid(placeBidRequest, bidderId, bidderUsername);
-        return JsonUtils.toJson(ApiResponse.success(null, "Bid has been placed successfully."));
+            bidService.placeBid(placeBidRequest, bidderId, bidderUsername);
+            return JsonUtils.toJson(ApiResponse.success(null, "Bid has been placed successfully."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected critical failure during manual bid placement.", exception);
+            throw exception;
+        }
     }
 
-    public String registerAutoBid(Object rawRequest, String bidderId, String bidderUsername) throws ControllerExceptions {
-        logger.log(Level.INFO, "Processing auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
-        String jsonPayload = JsonUtils.toJson(rawRequest);
-        AutoBidRequest autoBidRequest = JsonUtils.fromJson(jsonPayload, AutoBidRequest.class);
+    public String registerAutoBid(Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Processing auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            AutoBidRequest autoBidRequest = JsonUtils.fromJson(jsonPayload, AutoBidRequest.class);
 
-        validateAutoBidRequest(autoBidRequest);
+            validateAutoBidRequest(autoBidRequest);
 
-        autoBidService.register(autoBidRequest, bidderId, bidderUsername);
-        return JsonUtils.toJson(ApiResponse.success(null, "Auto-bid configuration has been registered successfully."));
+            autoBidService.register(autoBidRequest, bidderId, bidderUsername);
+            return JsonUtils.toJson(ApiResponse.success(null, "Auto-bid configuration has been registered successfully."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected critical failure during auto-bid registration.", exception);
+            throw exception;
+        }
     }
 
-    public String getBidHistory(Object rawRequest) throws ControllerExceptions {
-        logger.log(Level.INFO, "Retrieving bid history for the specified auction.");
-        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-        validateBidHistoryRequest(jsonPayload);
+    public String getBidHistory(Object rawRequest) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving bid history for the specified auction.");
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+            validateBidHistoryRequest(jsonPayload);
 
-        List<BidTransaction> transactionList = bidTransactionDAO.findByAuctionId(jsonPayload);
-        List<BidDTO> bidHistoryList = transactionList.stream().map(transaction -> {
-            BidDTO bidDto = new BidDTO();
-            bidDto.setAuctionId(transaction.getAuctionId());
-            bidDto.setBidderUsername(transaction.getBidderUsername());
-            bidDto.setBidAmount(transaction.getBidAmount());
-            bidDto.setBidTime(transaction.getBidTime());
-            bidDto.setBidType(transaction.getType().name());
-            return bidDto;
-        }).toList();
+            List<BidTransaction> transactionList = bidTransactionDAO.findByAuctionId(jsonPayload);
+            List<BidDTO> bidHistoryList = transactionList.stream().map(transaction -> {
+                BidDTO bidDto = new BidDTO();
+                bidDto.setAuctionId(transaction.getAuctionId());
+                bidDto.setBidderUsername(transaction.getBidderUsername());
+                bidDto.setBidAmount(transaction.getBidAmount());
+                bidDto.setBidTime(transaction.getBidTime());
+                bidDto.setBidType(transaction.getType().name());
+                return bidDto;
+            }).toList();
 
-        return JsonUtils.toJson(ApiResponse.success(bidHistoryList, "Bid history retrieved successfully for auctionId: " + jsonPayload));
+            return JsonUtils.toJson(ApiResponse.success(bidHistoryList, "Bid history retrieved successfully for auctionId: " + jsonPayload));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected critical failure while retrieving bid history.", exception);
+            throw exception;
+        }
     }
 
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) {
         if (placeBidRequest == null) {
-            throw new ControllerExceptions(ErrorCode.INVALID_BID_REQUEST, "The manual bid request payload cannot be null.");
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The manual bid request payload cannot be null.");
         }
         if (placeBidRequest.getAuctionId() == null || placeBidRequest.getAuctionId().isBlank()) {
-            throw new ControllerExceptions(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required.");
+            throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required.");
         }
         if (placeBidRequest.getBidAmount() <= 0) {
-            throw new ControllerExceptions(ErrorCode.INVALID_BID_AMOUNT, "The bid amount must be a positive value greater than zero.");
+            throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The bid amount must be a positive value greater than zero.");
         }
     }
 
     private void validateAutoBidRequest(AutoBidRequest autoBidRequest) {
         if (autoBidRequest == null) {
-            throw new ControllerExceptions(ErrorCode.INVALID_BID_REQUEST, "The auto-bid request payload cannot be null.");
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The auto-bid request payload cannot be null.");
         }
         if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
-            throw new ControllerExceptions(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required for auto-bid registration.");
+            throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required for auto-bid registration.");
         }
         if (autoBidRequest.getMaxBid() <= 0) {
-            throw new ControllerExceptions(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");
+            throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");
         }
         if (autoBidRequest.getIncrement() <= 0) {
-            throw new ControllerExceptions(ErrorCode.INVALID_INCREMENT, "The bid increment value must be greater than zero.");
+            throw new ControllerException(ErrorCode.INVALID_INCREMENT, "The bid increment value must be greater than zero.");
         }
     }
 
     private void validateBidHistoryRequest(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
-            throw new ControllerExceptions(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to retrieve bid history.");
+            throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to retrieve bid history.");
         }
     }
 }

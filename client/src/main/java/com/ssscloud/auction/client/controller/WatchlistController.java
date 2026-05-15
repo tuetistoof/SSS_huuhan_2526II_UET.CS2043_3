@@ -20,6 +20,14 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+/**
+ * quy tắc parse:
+ * server bọc trong listResponse rồi ApiResponse
+ * client phải parse 3 lần: ClientMessage -> ApiResponse -> ListResponse
+ * 1. Unwrap ClientMessage để lấy innerJson
+ * 2. Parse innerJson thành ApiResponse để kiểm tra success và lấy data
+ * 3. Parse tiếp data (lại là innerJson) thành ListResponse để lấy, dùng TypeToken vì fromJson(class,class) không parse được generic
+ */
 
 public class WatchlistController {
     @FXML private VBox listContainer;
@@ -42,16 +50,16 @@ public class WatchlistController {
     public void loadWatchlist() {
     new Thread(() -> {
         try {
-            String requestJson = JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST", null));
+            String requestJson = JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST", null)); 
             String responseJson = socket.sendAndReceive(requestJson);
             if (responseJson == null) return;
 
-            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class); // Bước 1: Parse ClientMessage
             if (serverMsg == null || serverMsg.getData() == null) return;
 
             String innerJson = JsonUtils.toJson(serverMsg.getData());
 
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
+            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class); // Bước 2: Parse ApiResponse
             if (apiResp == null || !apiResp.isSuccess()) {
                 renderUI(new ArrayList<>());
                 return;

@@ -1,9 +1,7 @@
 package com.ssscloud.auction.server.controller;
  
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
-import com.ssscloud.auction.common.exception.ControllerExceptions;
+import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
@@ -21,53 +19,81 @@ public class WatchlistController {
         this.watchlistDAO = watchlistDAO;
     }
 
-    public String follow(Object rawRequest, String userId) throws ControllerExceptions {
-        logger.log(Level.INFO, "Processing follow auction request for userId: {0}", userId);
-        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-        String auctionId = jsonPayload;
+    public String follow(Object rawRequest, String userId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Processing follow auction request for userId: {0}", userId);
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+            String auctionId = jsonPayload;
 
-        validateAuctionId(auctionId);
- 
-        boolean isAdded = watchlistDAO.add(auctionId, userId); 
-        if (!isAdded) {
-            throw new ControllerExceptions(ErrorCode.AUCTION_ALREADY_IN_WATCHLIST, "The specified auction is already present in the user's watchlist.");
+            validateAuctionId(auctionId);
+     
+            boolean isAdded = watchlistDAO.add(auctionId, userId); 
+            if (!isAdded) {
+                throw new ControllerException(ErrorCode.AUCTION_ALREADY_IN_WATCHLIST, "The specified auction is already present in the user's watchlist.");
+            }
+            return JsonUtils.toJson(ApiResponse.success(null, "Auction successfully added to the watchlist."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while following auction.", exception);
+            throw exception;
         }
-        return JsonUtils.toJson(ApiResponse.success(null, "Auction successfully added to the watchlist."));
     }
 
-    public String unfollow(Object rawRequest, String userId) throws ControllerExceptions {
-        logger.log(Level.INFO, "Processing unfollow auction request for userId: {0}", userId);
-        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-        String auctionId = jsonPayload;
+    public String unfollow(Object rawRequest, String userId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Processing unfollow auction request for userId: {0}", userId);
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+            String auctionId = jsonPayload;
 
-        validateAuctionId(auctionId);
+            validateAuctionId(auctionId);
 
-        boolean isRemoved = watchlistDAO.remove(auctionId, userId); 
-        if (!isRemoved) {
-            throw new ControllerExceptions(ErrorCode.AUCTION_NOT_IN_WATCHLIST, "The specified auction was not found in the user's watchlist.");
+            boolean isRemoved = watchlistDAO.remove(auctionId, userId); 
+            if (!isRemoved) {
+                throw new ControllerException(ErrorCode.AUCTION_NOT_IN_WATCHLIST, "The specified auction was not found in the user's watchlist.");
+            }
+            return JsonUtils.toJson(ApiResponse.success(null, "Auction successfully removed from the watchlist."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while unfollowing auction.", exception);
+            throw exception;
         }
-        return JsonUtils.toJson(ApiResponse.success(null, "Auction successfully removed from the watchlist."));
     }
 
-    public String checkFollowing(Object rawRequest, String userId) throws ControllerExceptions {
-        logger.log(Level.INFO, "Checking watchlist status for userId: {0}", userId);
-        String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-        String auctionId = jsonPayload;
+    public String checkFollowing(Object rawRequest, String userId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Checking watchlist status for userId: {0}", userId);
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+            String auctionId = jsonPayload;
 
-        validateAuctionId(auctionId);
-        boolean followingStatusResult = watchlistDAO.isFollowing(auctionId, userId); 
-        return JsonUtils.toJson(ApiResponse.success(followingStatusResult, "Watchlist status check completed successfully."));
+            validateAuctionId(auctionId);
+            boolean followingStatusResult = watchlistDAO.isFollowing(auctionId, userId); 
+            return JsonUtils.toJson(ApiResponse.success(followingStatusResult, "Watchlist status check completed successfully."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while checking watchlist status.", exception);
+            throw exception;
+        }
     }
 
-    public String getWatchlist(String userId) throws ControllerExceptions {
-        logger.log(Level.INFO, "Retrieving full watchlist for userId: {0}", userId);
-        List<AuctionDisplayInfoDTO> watchlistDetails = watchlistDAO.findWatchlistDetailsByUser(userId);
-        return JsonUtils.toJson(ApiResponse.success(new ListResponse<>(watchlistDetails), "User watchlist retrieved successfully."));
+    public String getWatchlist(String userId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving full watchlist for userId: {0}", userId);
+            List<String> auctionIdList = watchlistDAO.findAuctionIdsByUser(userId);
+            return JsonUtils.toJson(ApiResponse.success(auctionIdList, "User watchlist retrieved successfully."));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while retrieving user watchlist.", exception);
+            throw exception;
+        }
     }
 
     private void validateAuctionId(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
-            throw new ControllerExceptions(ErrorCode.INVALID_AUCTION_ID, "The auction identifier is mandatory and cannot be null or blank.");
+            throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The auction identifier is mandatory and cannot be null or blank.");
         }
     }
 }

@@ -54,109 +54,146 @@ public class ConcurrentBidManager {
         return instance;
     }
 
-    public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) {
-        if (instance == null) {
+    public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) throws Exception {
+        try {
             synchronized (ConcurrentBidManager.class) {
                 if (instance == null) {
                     instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO);
+                } else {
+                    instance.updateDependencies(bidDAO, autoBidService, auctionDAO);
                 }
             }
+            return instance;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error during ConcurrentBidManager initialization", exception);
+            throw exception;
         }
-        return instance;
     }
 
     public void submitBid(Auction auctionEntity, String bidderId, String bidderUsername,
-                          long bidAmount, BidType bidType) { // Naming: full descriptive names
-        String auctionId = auctionEntity.getAuctionConfig().getId();
-        ensureWorkerRunning(auctionId);
-        bidTaskQueues.get(auctionId).offer(new BidTask(
-                auctionEntity, bidderId, bidderUsername, bidAmount, bidType));
+                          long bidAmount, BidType bidType) throws Exception {
+        try {
+            String auctionId = auctionEntity.getAuctionConfig().getId();
+            ensureWorkerRunning(auctionId);
+            bidTaskQueues.get(auctionId).offer(new BidTask(
+                    auctionEntity, bidderId, bidderUsername, bidAmount, bidType));
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error while submitting bid for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
+            throw exception;
+        }
     }
 
-    public void shutdown(String auctionId) {
-        bidTaskQueues.remove(auctionId);
-        Thread workerThread = workerThreads.remove(auctionId);
-        if (workerThread != null) {
-            workerThread.interrupt();
-            logger.log(Level.INFO, "Bid worker thread terminated for auctionId: " + auctionId); // Log style
+    private void updateDependencies(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) throws Exception {
+        try {
+            this.bidDAO = bidDAO;
+            this.autoBidService = autoBidService;
+            this.auctionDAO = auctionDAO;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error updating dependencies", exception);
+            throw exception;
+        }
+    }
+
+    public void shutdown(String auctionId) throws Exception {
+        try {
+            bidTaskQueues.remove(auctionId);
+            Thread workerThread = workerThreads.remove(auctionId);
+            if (workerThread != null) {
+                workerThread.interrupt();
+                logger.log(Level.INFO, "Bid worker thread terminated for auctionId: " + auctionId);
+            }
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error during shutdown for auctionId: " + auctionId, exception);
+            throw exception;
         }
     }
 
     // --- PRIVATE METHODS ---
 
-    private void ensureWorkerRunning(String auctionId) {
-        bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
-        workerThreads.computeIfAbsent(auctionId, k -> {
-            Thread workerThread = new Thread(() -> runWorker(auctionId));
-            workerThread.setDaemon(true);
-            workerThread.setName("bid-worker-" + auctionId);
-            workerThread.start();
-            logger.log(Level.INFO, "Sequential bid worker thread started for auctionId: " + auctionId);
-            return workerThread;
-        });
+    private void ensureWorkerRunning(String auctionId) throws Exception {
+        try {
+            bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
+            workerThreads.computeIfAbsent(auctionId, k -> {
+                Thread workerThread = new Thread(() -> runWorker(auctionId));
+                workerThread.setDaemon(true);
+                workerThread.setName("bid-worker-" + auctionId);
+                workerThread.start();
+                logger.log(Level.INFO, "Sequential bid worker thread started for auctionId: " + auctionId);
+                return workerThread;
+            });
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error ensuring worker thread for auctionId: " + auctionId, exception);
+            throw exception;
+        }
     }
 
     private void runWorker(String auctionId) {
-        BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
-        if (taskQueue == null) {
-            return;
-        }
-
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                BidTask task = taskQueue.take();
-                processTask(task);
-            } catch (InterruptedException e) {
-                logger.log(Level.INFO, "Execution interrupted for bid worker associated with auctionId: " + auctionId);
-                Thread.currentThread().interrupt();
-                break;
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Unexpected critical failure while processing bid tasks for auctionId: " + auctionId, e);
+        try {
+            BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
+            if (taskQueue == null) {
+                return;
             }
+
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    BidTask task = taskQueue.take();
+                    processTask(task);
+                } catch (InterruptedException e) {
+                    logger.log(Level.INFO, "Execution interrupted for bid worker associated with auctionId: " + auctionId);
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
+                }
+            }
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
         }
     }
 
-    private void processTask(BidTask task) {
-        Auction auctionEntity = task.auction;
-        String auctionId = auctionEntity.getAuctionConfig().getId();
+    private void processTask(BidTask task) throws Exception {
+        try {
+            Auction auctionEntity = task.auction;
+            String auctionId = auctionEntity.getAuctionConfig().getId();
+            long currentAuctionPrice = auctionEntity.getCurrentPrice();
+            if (task.bidAmount > currentAuctionPrice) {
+                BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
+                        task.bidAmount, LocalDateTime.now(), task.bidType);
+                
+                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
+                    auctionEntity.setStatus(AuctionStatus.RUNNING);
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+                }
 
-        if (auctionEntity.getStatus().isEnded()) {
-            logger.log(Level.WARNING, "Incoming bid rejected: the target auction has already concluded. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
-            return;
-        }
-        if (auctionEntity.isExpired()) {
-            logger.log(Level.WARNING, "Incoming bid rejected: the target auction has reached its expiration time. AuctionId: " + auctionId + ", bidderId: " + task.bidderId);
-            return;
-        }
+                auctionEntity.placeBid(bidTransaction);
+                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+                if (updatedEndTime != null && auctionDAO != null) {
+                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
+                }
 
-        BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
-                task.bidAmount, LocalDateTime.now(), task.bidType); // Naming: full descriptive name
-        
-        if (auctionEntity.getStatus() == AuctionStatus.OPEN)
-        {
-            auctionEntity.setStatus(AuctionStatus.RUNNING);
-            auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
-        }
-
-        auctionEntity.placeBid(bidTransaction);
-        LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
-        if (updatedEndTime != null && auctionDAO != null) {
-            auctionDAO.updateEndTime(auctionId, updatedEndTime);
-        }
-
-        if (bidDAO != null) {
-            try {
-                bidDAO.saveBidTransaction(bidTransaction);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId + ". Bid remains valid in memory.", e);
+                if (bidDAO != null) {
+                    try {
+                        bidDAO.saveBidTransaction(bidTransaction);
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
+                    }
+                }
+                ChangeManager.getInstance().notify(auctionEntity);
+                NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
+            } else {
+                logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
             }
-        }
 
-        ChangeManager.getInstance().notify(auctionEntity);
-        NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
-
-        if (autoBidService != null) {
-            autoBidService.trigger(auctionEntity);
+            if (autoBidService != null) {
+                try {
+                    autoBidService.trigger(auctionEntity);
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Auto-bid trigger failed for auctionId: " + auctionId, e);
+                }
+            }
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error during bid task processing", exception);
+            throw exception;
         }
     }
 

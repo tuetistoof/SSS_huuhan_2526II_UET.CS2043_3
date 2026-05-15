@@ -5,14 +5,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,19 +25,22 @@ import com.ssscloud.auction.common.dto.ClientMessage;
  * 
  * listener: cơ chế khá giống observer, nhưng mà subject là mỗi lần server push json về, listener đăng kí và nghe
  * start listener thread: các listener đăng kí sẽ chạy thread ngầm 
- * 
- * nhiều controller đăng kí listener nhưng khi có tin nhắn không phải tất cả đều xử lí mà tin nhắn mà switch-case ở mỗi controller
+ *
+ * Thread safety: sử dụng ReentrantLock để đảm bảo chỉ có 1 sendAndReceive tại 1 thời điểm, tránh trường hợp response bị trộn lẫn khi có nhiều req-res cùng lúc
  */
 public class AuctionClientSocket {
-    //Singleton
+    private static final Logger logger = Logger.getLogger(AuctionClientSocket.class.getName());
     private static AuctionClientSocket instance;
     private AuctionClientSocket() {}
 
-    private static final Logger logger = Logger.getLogger(AuctionClientSocket.class.getName());
  
     public static AuctionClientSocket getInstance() {
         if (instance == null) {
-            instance = new AuctionClientSocket();
+            synchronized (AuctionClientSocket.class) {
+                if (instance == null) {
+                    instance = new AuctionClientSocket();
+                }
+            }
         }
         return instance;
     }
@@ -48,9 +49,10 @@ public class AuctionClientSocket {
     private PrintWriter out;
     private BufferedReader in;
     private boolean connected = false;
-    // private final List<MessageListener> listeners = new ArrayList<>();              //dùng cho pull
-    private final List<MessageListener> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();    
-    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();//dùng req-res
+
+    private final List<MessageListener> listeners = new CopyOnWriteArrayList<>(); // Thread-safe list for listeners
+    private final BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();// Queue to hold responses for sendAndReceive calls
+    private final ReentrantLock reqLock = new ReentrantLock(); //chỉ có 1 sendAndReceive tại 1 thời điểm
 
     private void startListenerThread() {  
         Thread t = new Thread(() -> {
@@ -58,8 +60,7 @@ public class AuctionClientSocket {
                 String line;
                 while ((line = in.readLine()) != null){
                     JsonObject obj = JsonParser.parseString(line).getAsJsonObject();
-                    String type = obj.has("type") ? obj.get("type").getAsString()
-                                                  : ClientMessage.TYPE_RESPONSE;
+                    String type = obj.has("type") ? obj.get("type").getAsString() : ClientMessage.TYPE_RESPONSE;
  
                     if (ClientMessage.TYPE_PUSH.equalsIgnoreCase(type)) {
                         // Push thì gửi cho listener xử lí
@@ -96,15 +97,17 @@ public class AuctionClientSocket {
 
     public String sendAndReceive(String json) {
         if (!connected || out == null) return null;
+        reqLock.lock(); //đảm bảo chỉ 1 sendAndReceive tại 1 thời điểm
         try {
-            // Flush các response cũ còn sót trong queue trước khi gửi request mới
-            // Tránh nhận nhầm response của request trước (xảy ra khi vào phòng nhiều lần)
             responseQueue.clear();
             send(json);
-            return responseQueue.poll(5, TimeUnit.SECONDS);
+            return responseQueue.poll(5, TimeUnit.SECONDS); //chờ tối đa 5s để lấy response, tránh trường hợp server không phản hồi
         } catch (InterruptedException e) {
             logger.log(Level.WARNING, "Interrupted while waiting for server response");
+            Thread.currentThread().interrupt(); 
             return null;
+        } finally {
+            reqLock.unlock();
         }
     }
 
