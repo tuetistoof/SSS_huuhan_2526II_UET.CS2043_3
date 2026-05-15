@@ -13,7 +13,7 @@ public class ItemDTOFactory {
 
     public static ItemDTO toDTO(Item item) {
         if (item == null) {
-            throw new IllegalArgumentException("Item không được để trống");
+            throw new IllegalArgumentException("Item cannot be empty");
         }
 
         ItemDTO dto = switch (item) {
@@ -34,7 +34,7 @@ public class ItemDTOFactory {
                 electricDTO.setWarrantyPeriod(electronic.getWarrantyPeriod());
                 yield electricDTO;
             }
-            default -> throw new IllegalArgumentException("Loại item không hợp lệ: " + item.getClass().getSimpleName());
+            default -> throw new IllegalArgumentException("Invalid item type: " + item.getClass().getSimpleName());
         };
 
         dto.setId(item.getId());
@@ -54,7 +54,7 @@ public class ItemDTOFactory {
      */
     public static ItemDTO castToSubDTO(ItemDTO itemDTO) {
         if (itemDTO == null) {
-            throw new IllegalArgumentException("ItemDTO không được để trống");
+            throw new IllegalArgumentException("ItemDTO cannot be empty");
         }
 
         if (itemDTO instanceof ArtDTO || itemDTO instanceof VehicleDTO || itemDTO instanceof ElectricDTO) {
@@ -63,14 +63,14 @@ public class ItemDTOFactory {
 
         String type = itemDTO.getItemType();
         if (type == null) {
-            throw new IllegalArgumentException("itemType không được để trống");
+            throw new IllegalArgumentException("itemType cannot be empty");
         }
 
         ItemDTO subDTO = switch (type.trim().toUpperCase()) {
             case "ART" -> new ArtDTO();
             case "VEHICLE" -> new VehicleDTO();
             case "ELECTRONIC" -> new ElectricDTO();
-            default -> throw new IllegalArgumentException("Loại item không hợp lệ: " + type);
+            default -> throw new IllegalArgumentException("Invalid item type: " + type);
         };
 
         subDTO.setId(itemDTO.getId());

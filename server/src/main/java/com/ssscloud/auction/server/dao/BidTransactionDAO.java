@@ -32,14 +32,14 @@ public class BidTransactionDAO extends BaseDAO {
             psBidTransaction.executeUpdate();
 
             conn.commit();
-            logger.info("da luu bidTransaction");
+            logger.info("Successfully saved bid transaction");
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + e.getMessage());
+            logger.warning("Constraint violation: " + e.getMessage());
             safelyRollback(conn);
             return false;
         } catch (SQLException e) {
-            logger.severe("Loi kh luu bidTransaction: " + e.getMessage());
+            logger.severe("Error saving bid transaction: " + e.getMessage());
             safelyRollback(conn);
             return false;
         } finally {
@@ -53,7 +53,7 @@ public class BidTransactionDAO extends BaseDAO {
         String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
         PreparedStatement psBidTransaction = null;
         try {
-            // KHÔNG setAutoCommit — caller (AuctionDAO) tự quản lý transaction
+            // Do not setAutoCommit - caller (AuctionDAO) manages transaction
             psBidTransaction = conn.prepareStatement(sqlBidTransaction);
             psBidTransaction.setString(1, bidTransaction.getAuctionId());
             psBidTransaction.setString(2, bidTransaction.getBidderId());
@@ -63,14 +63,14 @@ public class BidTransactionDAO extends BaseDAO {
             psBidTransaction.setString(6, bidTransaction.getType().name());
             psBidTransaction.executeUpdate();
 
-            logger.info("Đã lưu bidTransaction (shared conn)");
+            logger.info("Successfully saved bid transaction (shared connection)");
             return true;
         } catch (SQLException e) {
-            logger.severe("Lỗi saveBidTransaction (shared conn): " + e.getMessage());
-            // KHÔNG safelyRollback — để caller quyết định rollback hay không
+            logger.severe("Error saving bid transaction (shared connection): " + e.getMessage());
+            // Do not safelyRollback - let caller decide
             return false;
         } finally {
-            closeResource(psBidTransaction); // chỉ close PS, KHÔNG close conn
+            closeResource(psBidTransaction); // Only close PreparedStatement, not connection
         }
     }
 
@@ -94,7 +94,7 @@ public class BidTransactionDAO extends BaseDAO {
             while (rs.next()) {
                 return mapResultSetToBid(rs);
             }
-            logger.info("findByAuctionId auctionId=" + auctionId + " - " +  " bids");
+            logger.info("findHighest auctionId=" + auctionId);
             return null;
 
         } catch (SQLException e) {
@@ -125,11 +125,11 @@ public class BidTransactionDAO extends BaseDAO {
             while (rs.next()) {
                 list.add(mapResultSetToBid(rs));
             }
-            logger.info("findByBidderId auctionId=" + bidderId + " - " + list.size() + " bids");
+            logger.info("findByBidderId bidderId=" + bidderId + " - " + list.size() + " bids");
             return list;
 
         } catch (SQLException e) {
-            logger.severe("Lỗi findByBidderId auctionId=" + bidderId + ": " + e.getMessage());
+            logger.severe("Error in findByBidderId bidderId=" + bidderId + ": " + e.getMessage());
             return list;
         } finally {
             closeConnect(conn);
@@ -160,7 +160,7 @@ public class BidTransactionDAO extends BaseDAO {
             return list;
 
         } catch (SQLException e) {
-            logger.severe("Lỗi findByAuctionId auctionId=" + auctionId + ": " + e.getMessage());
+            logger.severe("Error in findByAuctionId auctionId=" + auctionId + ": " + e.getMessage());
             return list;
         } finally {
             closeConnect(conn);

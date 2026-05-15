@@ -1,8 +1,6 @@
 /**
  * BaseDAO provides shared utility methods for all Data Access Objects within the persistence layer.
  * It handles database connection acquisition, transaction rollbacks, and resource management.
- * BaseDAO cung cấp các phương thức tiện ích dùng chung cho tất cả các Đối tượng Truy cập Dữ liệu (DAO) trong tầng lưu trữ.
- * Lớp này xử lý việc lấy kết nối cơ sở dữ liệu, hoàn tác giao dịch (rollback) và quản lý tài nguyên.
  */
 package com.ssscloud.auction.server.dao;
 
@@ -15,7 +13,7 @@ import com.ssscloud.auction.common.exception.DAOExceptions;
 import com.ssscloud.auction.common.exception.ErrorCode;
 
 public abstract class BaseDAO {
-    protected static final Logger logger = Logger.getLogger(BaseDAO.class.getName()); // Tiêu chuẩn Logging: Thuộc tính đầu tiên
+    protected static final Logger logger = Logger.getLogger(BaseDAO.class.getName());
 
     // --- PROTECTED METHODS ---
 
@@ -23,15 +21,12 @@ public abstract class BaseDAO {
      * Retrieves a managed database connection from the centralized infrastructure pool.
      * @return A valid Connection object.
      * @throws DAOExceptions if a connection cannot be established.
-     * Lấy một kết nối cơ sở dữ liệu được quản lý từ pool hạ tầng tập trung.
-     * @return Đối tượng Connection hợp lệ.
-     * @throws DAOExceptions nếu không thể thiết lập kết nối.
      */
     protected Connection getConnection() throws DAOExceptions {
         try {
             return DatabaseConnection.getInstance().getConnection();
         } catch (DAOExceptions daoException) {
-            logger.log(Level.SEVERE, "[" + ErrorCode.CONNECTION_FAILURE + "] Lỗi tại " + getClass().getSimpleName() + ": Không thể lấy kết nối từ DatabaseConnection pool.", daoException);
+            logger.log(Level.SEVERE, "[" + ErrorCode.CONNECTION_FAILURE + "] Error in " + getClass().getSimpleName() + ": Unable to retrieve connection from DatabaseConnection pool.", daoException);
             throw daoException;
         }
     }
@@ -75,7 +70,7 @@ public abstract class BaseDAO {
                 logger.log(Level.INFO, "Infrastructure status: Centralized database connection has been returned to the pool.");
             }
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "[" + ErrorCode.CONNECTION_CLOSE_FAILED + "] Connectivity failure: Failed to close the database connection. Message: " + sqlException.getMessage());
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Unable to establish database connection", sqlException);
         }
     }
 }

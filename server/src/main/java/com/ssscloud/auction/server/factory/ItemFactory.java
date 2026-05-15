@@ -11,11 +11,11 @@ public class ItemFactory {
 
     public static Item createItem(CreateAuctionRequest request, String sellerId) {
         if (request.getItemData() == null) {
-            throw new IllegalArgumentException("Dữ liệu item không được để trống");
+            throw new IllegalArgumentException("Item data cannot be empty");
         }
         ItemData data = request.getItemData();
 
-        // ưu tiên lấy từ data, nếu data trống thì lấy từ request
+        // Prioritize data, fallback to request if data is empty
         String itemName = data.getName();
         if (itemName == null || itemName.isBlank()) {
             itemName = request.getName();
@@ -41,7 +41,7 @@ public class ItemFactory {
                 electronic.setWarrantyPeriod(data.getWarrantyPeriod());
                 yield electronic;
             }
-            default -> throw new IllegalArgumentException("Loại item không hợp lệ: " + type);
+            default -> throw new IllegalArgumentException("Invalid item type: " + type);
         };
 
         item.setName(itemName);

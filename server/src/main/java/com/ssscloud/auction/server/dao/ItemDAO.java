@@ -53,15 +53,15 @@ public class ItemDAO extends BaseDAO {
             psElectronic.executeUpdate();
 
             conn.commit();
-            logger.info("da luu electronic: " + electronic.getId() + " - " + electronic.getName());
+            logger.info("Successfully saved electronic: " + electronic.getId() + " - " + electronic.getName());
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("saveElectronic vi pham rang buoc (co the do id item trung hoac sellerid khong ton tai): "
+            logger.warning("saveElectronic constraint violation (possible duplicate item id or invalid seller): "
                     + e.getMessage());
             safelyRollback(conn);
             return false;
         } catch (SQLException e) {
-            logger.severe("Loi saveElectronic [" + electronic.getName() + "]: " + e.getMessage());
+            logger.severe("Error saving electronic [" + electronic.getName() + "]: " + e.getMessage());
             return false;
         } finally {
             resetAutocommit(conn);
@@ -110,15 +110,15 @@ public class ItemDAO extends BaseDAO {
             psVehicle.executeUpdate();
 
             conn.commit();
-            logger.info("da luu Vehicle: " + vehicle.getId() + " - " + vehicle.getName());
+            logger.info("Successfully saved vehicle: " + vehicle.getId() + " - " + vehicle.getName());
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("saveVehicle vi pham rang buoc (co the do id item trung hoac sellerid khong ton tai): "
+            logger.warning("saveVehicle constraint violation (possible duplicate item id or invalid seller): "
                     + e.getMessage());
             safelyRollback(conn);
             return false;
         } catch (SQLException e) {
-            logger.severe("Loi saveVehicle [" + vehicle.getName() + "]: " + e.getMessage());
+            logger.severe("Error saving vehicle [" + vehicle.getName() + "]: " + e.getMessage());
             return false;
         } finally {
             resetAutocommit(conn);
@@ -166,15 +166,15 @@ public class ItemDAO extends BaseDAO {
             psArt.executeUpdate();
 
             conn.commit();
-            logger.info("da luu art: " + art.getId() + " - " + art.getName());
+            logger.info("Successfully saved art: " + art.getId() + " - " + art.getName());
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("saveArt vi pham rang buoc (co the do id item trung hoac sellerid khong ton tai): "
+            logger.warning("saveArt constraint violation (possible duplicate item id or invalid seller): "
                     + e.getMessage());
             safelyRollback(conn);
             return false;
         } catch (SQLException e) {
-            logger.severe("Loi saveArt [" + art.getName() + "]: " + e.getMessage());
+            logger.severe("Error saving art [" + art.getName() + "]: " + e.getMessage());
             return false;
         } finally {
             resetAutocommit(conn);
@@ -183,7 +183,7 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    // lay danh sach cac item
+    // Retrieve list of items
     public List<Item> getItemList() {
         List<Item> item = new ArrayList<>();
         String sql = "SELECT " +

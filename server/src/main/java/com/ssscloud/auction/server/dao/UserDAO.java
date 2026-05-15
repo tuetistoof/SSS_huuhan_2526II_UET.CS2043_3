@@ -7,6 +7,9 @@ import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.exception.ServiceExceptions;
 import com.ssscloud.auction.common.model.Admin;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
@@ -43,16 +46,14 @@ public class UserDAO extends BaseDAO {
             psBidder.executeUpdate();
 
             conn.commit();
-            logger.info("da luu bidder: " + bidder.getUserName());
+            logger.info("Successfully saved bidder: " + bidder.getUserName());
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + bidder.getUserName() + " - " + e.getMessage());
             safelyRollback(conn);
-            return false;
-        } catch (SQLException e) {
-            logger.severe("Loi kh luu Bidder: " + bidder.getUserName() + " - " + e.getMessage());
+            throw new ServiceExceptions(ErrorCode.USERNAME_EXISTED, "Bidder already exists: " + bidder.getUserName(), e);
+        } catch (SQLException sqlException) {
             safelyRollback(conn);
-            return false;
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Error saving bidder: " + bidder.getUserName(), sqlException);
         } finally {
             resetAutocommit(conn);
             closeConnect(conn);
@@ -91,16 +92,14 @@ public class UserDAO extends BaseDAO {
             psSeller.executeUpdate();
 
             conn.commit();
-            logger.info("da luu seller: " + seller.getUserName());
+            logger.info("Successfully saved seller: " + seller.getUserName());
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + seller.getUserName() + " - " + e.getMessage());
             safelyRollback(conn);
-            return false;
-        } catch (SQLException e) {
-            logger.severe("Loi kh luu seller: " + seller.getUserName() + " - " + e.getMessage());
+            throw new ServiceExceptions(ErrorCode.USERNAME_EXISTED, "Seller already exists: " + seller.getUserName(), e);
+        } catch (SQLException sqlException) {
             safelyRollback(conn);
-            return false;
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Error saving seller: " + seller.getUserName(), sqlException);
         } finally {
             resetAutocommit(conn);
             closeConnect(conn);
@@ -131,12 +130,11 @@ public class UserDAO extends BaseDAO {
             if (rs.next())
                 return mapResultSetToUser(rs);
             else {
-                logger.info("Khong tim thay user: " + userName);
+                logger.info("User not found: " + userName);
                 return null;
             }
-        } catch (SQLException e) {
-            logger.info("Loi khi tim theo userName: " + userName + " - " + e.getMessage());
-            return null;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Error retrieving user by username: " + userName, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(rs, ps);
@@ -166,18 +164,17 @@ public class UserDAO extends BaseDAO {
             if (rs.next())
                 return mapResultSetToUser(rs);
             else {
-                logger.info("Khong tim thay user: " + email);
+                logger.info("User not found: " + email);
                 return null;
             }
-        } catch (SQLException e) {
-            logger.info("Loi khi tim theo userName: " + email + " - " + e.getMessage());
-            return null;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Error retrieving user by email: " + email, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(rs, ps);
         }
     }
-    // dung cho login register và mot so tac vu
+    // Used for login, register and other operations
     public User findById(String id) {
         String sql = "SELECT " +
                 "e.id, e.name, " +
@@ -204,15 +201,14 @@ public class UserDAO extends BaseDAO {
             }
             return null;
 
-        } catch (SQLException e) {
-            logger.severe("Loi khi tim theo id " + id + " - " + e.getMessage());
-            return null;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Error retrieving user by id: " + id, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(rs, ps);
         }
     }
-    // kiem tra ten dang nhap da ton tai chua
+    // Check if username already exists
     public boolean existByUsername(String userName) {
         String sql = "SELECT 1 FROM user WHERE username = ?";
         Connection conn = null;
@@ -226,16 +222,15 @@ public class UserDAO extends BaseDAO {
             rs = ps.executeQuery();
             return rs.next();
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi existsByUsername: " + userName + " - " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+           throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Error retrieving user by username: " + userName, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(rs, ps);
         }
     }
 
-    // cac ham update sua thong tin user
+    // User information update methods
     public boolean updatePassword(String id, String newPassword) {
         String sql = "UPDATE user SET password = ? WHERE id = ?";
         Connection conn = null;
@@ -250,9 +245,8 @@ public class UserDAO extends BaseDAO {
             logger.info("updatePassword userId = " + id + " - row =" + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update password id: " + id + " - " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Lỗi update password id: " + id, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(ps);
@@ -272,15 +266,14 @@ public class UserDAO extends BaseDAO {
             logger.info("update email userId = " + id + " - row =" + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update email id: " + id + " - " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Lỗi update email id: " + id, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(ps);
         }
     }
-    public boolean updateAccountBalance (String id, Long newAccountBlance) {
+    public boolean updateAccountBalance(String id, Long newAccountBalance) {
         String sql = "UPDATE bidder SET account_balance = ? WHERE id = ?";
         Connection conn = null;
         PreparedStatement ps = null;
@@ -288,15 +281,14 @@ public class UserDAO extends BaseDAO {
         try {
             conn = getConnection();
             ps = conn.prepareStatement(sql);
-            ps.setLong(1, newAccountBlance);
+            ps.setLong(1, newAccountBalance);
             ps.setString(2, id);
             int row = ps.executeUpdate();
             logger.info("update account balance userId = " + id + " - row =" + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Lỗi update balance của id: " + id, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(ps);
@@ -316,9 +308,8 @@ public class UserDAO extends BaseDAO {
             logger.info("update bank account userId = " + id + " - row =" + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi bank account blance id: " + id + " - " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "lỗi update bank account của userId: " + id, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(ps);
@@ -338,9 +329,8 @@ public class UserDAO extends BaseDAO {
             logger.info("update account balance userId = " + id + " - row =" + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Failed to updated balance for sellerId: " + id, sqlException);
         } finally {
             closeConnect(conn);
             closeResource(ps);

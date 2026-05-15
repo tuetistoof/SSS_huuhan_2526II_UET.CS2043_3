@@ -101,6 +101,8 @@ public class ErrorCode {
     /** Lỗi thêm/xóa khỏi watchlist */
     public static final String WATCHLIST_ERROR = "WATCHLIST_ERROR";
 
+    public static final String DATA_CONFLICT = "DATA_CONFLICT";
+
     // ==================== DATABASE ERRORS (DAO) ====================
     
     /** File application.properties không tìm thấy */
@@ -135,6 +137,8 @@ public class ErrorCode {
 
     /** Lỗi đóng kết nối database */
     public static final String CONNECTION_CLOSE_FAILED = "CONNECTION_CLOSE_FAILED";
+
+    public static final String INTERNAL_DB_ERROR = "INTERNAL_DB_ERROR";
 
     // ==================== AUTO BID ERRORS (AutoBidService) ====================
     
