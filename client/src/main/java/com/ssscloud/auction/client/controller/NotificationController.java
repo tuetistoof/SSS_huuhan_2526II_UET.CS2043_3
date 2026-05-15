@@ -80,6 +80,7 @@ public class NotificationController implements MessageListener {
         updateBadge();
     }
     private void handleEnded(JsonObject data) {
+        System.out.println("Received auction ended notification: " + data);
         String auctionId   = data.get("auctionId").getAsString();
         String auctionName = data.get("auctionName").getAsString();
         String winner      = data.get("winner").getAsString();

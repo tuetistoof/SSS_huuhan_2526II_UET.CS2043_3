@@ -123,6 +123,7 @@ public class NotificationService {
  
         try {
             synchronized (writer) {
+                System.out.println("Sending auction ended notification: " + payload);
                 writer.println(JsonUtils.toJson(ClientMessage.push("AUCTION_ENDED_NOTIFICATION", payload)));
             }
         } catch (Exception exception) {
