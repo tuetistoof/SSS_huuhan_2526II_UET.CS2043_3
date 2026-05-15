@@ -12,6 +12,8 @@ public class AuctionDisplayInfoDTO {
     private LocalDateTime endTime;
     private String sellerUsername;
     private List <String> imageUrl;
+    private long myLastBid;
+    private boolean leading;
 
     public AuctionDisplayInfoDTO () {};
     
@@ -26,6 +28,13 @@ public class AuctionDisplayInfoDTO {
         this.sellerUsername = sellerUsername;
         this.imageUrl = imageUrl;
     }
+
+    public AuctionDisplayInfoDTO(String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List<String> imageUrl, long myLastBid, boolean leading) {
+        this(id, auctionName, itemName, itemType, currentPrice, endTime, sellerUsername, imageUrl); // gọi lại constructor cũ
+        this.myLastBid = myLastBid;
+        this.leading = leading;
+    }
+
     public String getId() {
         return id;
     }
@@ -74,4 +83,18 @@ public class AuctionDisplayInfoDTO {
     public void setImageUrl(List<String> imageUrl) {
         this.imageUrl = imageUrl;
     }
+    public long getMyLastBid() {
+        return myLastBid;
+    }
+    public void setMyLastBid(long myLastBid) {
+        this.myLastBid = myLastBid;
+    }
+
+    public boolean isLeading() {
+        return leading;
+    }
+    public void setLeading(boolean leading) {
+        this.leading = leading; 
+    }
+
 }

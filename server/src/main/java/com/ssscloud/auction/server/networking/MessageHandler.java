@@ -2,7 +2,6 @@ package com.ssscloud.auction.server.networking;
 
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,6 +17,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.util.AuctionRegistry;
@@ -33,16 +33,19 @@ public class MessageHandler {
     private final UserController userController;
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
+    private final BiddedAuctionsListController biddedAuctionsListController;
 
     public MessageHandler(
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
-            WatchlistController watchlistController) {
+            WatchlistController watchlistController,
+            BiddedAuctionsListController biddedAuctionsListController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
+        this.biddedAuctionsListController = biddedAuctionsListController;
     }
 
     // --- PUBLIC METHODS ---
@@ -165,6 +168,12 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
                         JsonUtils.fromJson(watchlistController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
                 }
+
+                case "GET_BIDDED_AUCTIONS": {
+                    return JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(biddedAuctionsListController.getBiddedAuctionslist(clientHandler.getUserId()), ApiResponse.class)));
+                }
+
 
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();

@@ -223,7 +223,7 @@ public class MainLayoutController {
 
     @FXML
     void handleNavActiveBids(MouseEvent event) {
-
+        
     }
 
     @FXML
@@ -297,7 +297,7 @@ public class MainLayoutController {
         }
 
     }
-
+    // bỏ đi
     @FXML
     void handleNavMyItems(MouseEvent event) {
 

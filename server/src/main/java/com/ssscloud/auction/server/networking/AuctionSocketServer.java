@@ -20,10 +20,12 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
+import com.ssscloud.auction.server.dao.BiddedAuctionsListDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
@@ -76,6 +78,7 @@ public class AuctionSocketServer {
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
         WatchlistDAO watchlistDAO = new WatchlistDAO();
+        BiddedAuctionsListDAO biddedAuctionsListDAO = new BiddedAuctionsListDAO();
 
         AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
         BidService bidService = new BidService(auctionDAO, userDAO);
@@ -93,8 +96,10 @@ public class AuctionSocketServer {
 
         WatchlistController watchlistController = new WatchlistController(watchlistDAO);
 
+        BiddedAuctionsListController biddedAuctionsListController = new BiddedAuctionsListController(biddedAuctionsListDAO);
+
         NotificationService.getInstance().init(watchlistDAO);
-        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController);
+        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, biddedAuctionsListController);
 
         // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService);
