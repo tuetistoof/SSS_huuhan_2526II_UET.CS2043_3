@@ -1,7 +1,6 @@
 package com.ssscloud.auction.common.dto.response;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.List;
 
 /**

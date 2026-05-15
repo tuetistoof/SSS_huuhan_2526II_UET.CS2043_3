@@ -1,254 +1,269 @@
 package com.ssscloud.auction.common.exception;
 
 /**
- * Quản lý tập trung toàn bộ error code của hệ thống.
- * Giúp tránh lỗi typo khi gõ error code ở khắp nơi trong code.
- * Sử dụng auto-complete IDE để lấy error code an toàn.
+ * Centralized management of all system error codes.
+ * Helps avoid typos when using error codes throughout the codebase.
+ * Use IDE auto-complete to select error codes safely.
  */
 public class ErrorCode {
 
     // ==================== VALIDATION ERRORS (Controller) ====================
     
-    /** Lỗi request login không hợp lệ */
+    /** Invalid login request data */
     public static final String INVALID_LOGIN_REQUEST = "INVALID_LOGIN_REQUEST";
     
-    /** Lỗi request register không hợp lệ */
+    /** Invalid registration request data */
     public static final String INVALID_REGISTER_REQUEST = "INVALID_REGISTER_REQUEST";
     
-    /** Lỗi username không hợp lệ (null hoặc empty) */
+    /** Username is null or empty */
     public static final String INVALID_USERNAME = "INVALID_USERNAME";
     
-    /** Lỗi password không hợp lệ (null hoặc empty) */
+    /** Password is null or empty */
     public static final String INVALID_PASSWORD = "INVALID_PASSWORD";
     
-    /** Lỗi email không hợp lệ (null hoặc empty) */
+    /** Email is null or empty */
     public static final String INVALID_EMAIL = "INVALID_EMAIL";
     
-    /** Lỗi độ dài username không đúng */
+    /** Username length is invalid */
     public static final String INVALID_LENGTH_USERNAME = "INVALID_LENGTH_USERNAME";
     
-    /** Lỗi độ dài password không đúng */
+    /** Password length is invalid */
     public static final String INVALID_LENGTH_PASSWORD = "INVALID_LENGTH_PASSWORD";
     
-    /** Lỗi role không được định nghĩa */
+    /** Role is not defined */
     public static final String UNDEFINED_ROLE = "UNDEFINED_ROLE";
     
-    /** Lỗi số tiền deposit không hợp lệ (phải > 0) */
+    /** Deposit amount is invalid (must be greater than 0) */
     public static final String INVALID_DEPOSIT = "INVALID_DEPOSIT";
     
-    /** Lỗi ID auction không hợp lệ */
+    /** Auction ID is invalid */
     public static final String INVALID_AUCTION_ID = "INVALID_AUCTION_ID";
 
     // ==================== AUTHENTICATION & AUTHORIZATION ====================
     
-    /** Tài khoản không tồn tại */
+    /** Account does not exist */
     public static final String ACCOUNT_NOT_FOUND = "ACCOUNT_NOT_FOUND";
     
-    /** Mật khẩu không chính xác */
+    /** Password is incorrect */
     public static final String WRONG_PASSWORD = "WRONG_PASSWORD";
     
-    /** Username đã tồn tại */
+    /** Username already exists */
     public static final String USERNAME_EXISTED = "USERNAME_EXISTED";
     
-    /** Email đã tồn tại */
+    /** Email already exists */
     public static final String EMAIL_EXISTED = "EMAIL_EXISTED";
     
-    /** Role không hợp lệ */
+    /** Role is invalid */
     public static final String INVALID_ROLE = "INVALID_ROLE";
 
     // ==================== AUCTION ERRORS (Service) ====================
     
-    /** Phiên đấu giá không tồn tại */
+    /** Auction does not exist */
     public static final String AUCTION_NOT_FOUND = "AUCTION_NOT_FOUND";
     
-    /** Phiên đấu giá đã kết thúc */
+    /** Auction has already closed */
     public static final String AUCTION_CLOSED = "AUCTION_CLOSED";
     
-    /** Sản phẩm không tồn tại */
+    /** Item does not exist */
     public static final String ITEM_NOT_FOUND = "ITEM_NOT_FOUND";
     
-    /** Loại sản phẩm không hợp lệ */
+    /** Item type is invalid */
     public static final String INVALID_ITEM_TYPE = "INVALID_ITEM_TYPE";
 
     // ==================== BID ERRORS (Service) ====================
     
-    /** Lỗi request bid không hợp lệ */
+    /** Invalid bid request data */
     public static final String INVALID_BID_REQUEST = "INVALID_BID_REQUEST";
     
-    /** Thiếu auctionId trong request */
+    /** AuctionId is missing from request */
     public static final String MISSING_AUCTION_ID = "MISSING_AUCTION_ID";
     
-    /** Thiếu bidderId trong request */
+    /** BidderId is missing from request */
     public static final String MISSING_BIDDER_ID = "MISSING_BIDDER_ID";
     
-    /** Giá bid không hợp lệ (phải dương) */
+    /** Bid amount is invalid (must be positive) */
     public static final String INVALID_BID_AMOUNT = "INVALID_BID_AMOUNT";
     
-    /** Mức tăng giá không hợp lệ */
+    /** Bid increment is invalid */
     public static final String INVALID_INCREMENT = "INVALID_INCREMENT";
     
-    /** Người bán không thể đấu giá sản phẩm của mình */
+    /** Seller cannot place bid on their own item */
     public static final String SELLER_CANNOT_BID = "SELLER_CANNOT_BID";
     
-    /** Người dùng không phải bidder */
+    /** User is not a bidder */
     public static final String NOT_BIDDER = "NOT_BIDDER";
     
-    /** Số dư tài khoản không đủ để đặt giá */
+    /** Insufficient account balance to place bid */
     public static final String INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE";
 
     // ==================== WATCHLIST ERRORS (Controller) ====================
     
-    /** Lỗi thêm/xóa khỏi watchlist */
+    /** Error occurring during watchlist addition or removal */
     public static final String WATCHLIST_ERROR = "WATCHLIST_ERROR";
 
     // ==================== DATABASE ERRORS (DAO) ====================
     
-    /** File application.properties không tìm thấy */
+    /** application.properties configuration file not found */
     public static final String DB_CONFIG_NOT_FOUND = "DB_CONFIG_NOT_FOUND";
     
-    /** Cấu hình database bị thiếu (url/username/password) */
+    /** Database configuration is missing (url/username/password) */
     public static final String DB_CONFIG_MISSING = "DB_CONFIG_MISSING";
     
-    /** Lỗi đọc cấu hình database */
+    /** Failure while reading database configuration */
     public static final String DB_CONFIG_READ_ERROR = "DB_CONFIG_READ_ERROR";
     
-    /** Không thể xác định user role */
+    /** Failed to identify or map user role */
     public static final String INVALID_USER_ROLE = "INVALID_USER_ROLE";
 
-    /** Lỗi kết nối database (Connection Pool failure) */
+    /** Database connection failure (Connection Pool exhaustion or timeout) */
     public static final String CONNECTION_FAILURE = "CONNECTION_FAILURE";
 
-    /** Lỗi thực thi truy vấn SQL */
+    /** Failure during SQL query execution */
     public static final String SQL_EXECUTION_FAILURE = "SQL_EXECUTION_FAILURE";
 
-    /** Lỗi chuyển đổi dữ liệu từ ResultSet sang Object */
+    /** Error mapping data from ResultSet to Domain Object */
     public static final String DATA_MAPPING_FAILURE = "DATA_MAPPING_FAILURE";
 
-    /** Lỗi rollback transaction */
+    /** Database transaction rollback failure */
     public static final String TRANSACTION_ROLLBACK_FAILED = "TRANSACTION_ROLLBACK_FAILED";
 
-    /** Lỗi reset trạng thái auto-commit */
+    /** Failed to reset database auto-commit state */
     public static final String AUTO_COMMIT_RESET_FAILED = "AUTO_COMMIT_RESET_FAILED";
 
-    /** Lỗi đóng tài nguyên database (ResultSet/Statement) */
+    /** Failure while closing database resources (ResultSet/Statement) */
     public static final String RESOURCE_CLEANUP_FAILED = "RESOURCE_CLEANUP_FAILED";
 
-    /** Lỗi đóng kết nối database */
+    /** Failure while closing the database connection */
     public static final String CONNECTION_CLOSE_FAILED = "CONNECTION_CLOSE_FAILED";
 
     // ==================== AUTO BID ERRORS (AutoBidService) ====================
     
-    /** Đăng ký auto bid thất bại */
+    /** Auto-bid registration process failed */
     public static final String AUTO_BID_REGISTRATION_FAILED = "AUTO_BID_REGISTRATION_FAILED";
     
     /** Auto bid validation error */
     public static final String AUTO_BID_VALIDATION_ERROR = "AUTO_BID_VALIDATION_ERROR";
     
-    /** Người bán không thể đăng ký auto bid */
+    /** Sellers are prohibited from registering auto-bids on their own auctions */
     public static final String AUTO_SELLER_CANNOT_AUTOBID = "AUTO_SELLER_CANNOT_AUTOBID";
     
-    /** Auto bid tối đa nhỏ hơn mức tăng giá */
+    /** Maximum auto-bid amount is less than the required increment */
     public static final String AUTO_BID_INVALID_RANGE = "AUTO_BID_INVALID_RANGE";
 
     // ==================== BID ERRORS - ADVANCED ====================
     
-    /** Giá đặt thấp hơn giá hiện tại */
+    /** Bid amount is lower than the current auction price */
     public static final String BID_LOWER_THAN_CURRENT = "BID_LOWER_THAN_CURRENT";
     
-    /** Mức tăng giá quá thấp */
+    /** Bid increment does not meet the minimum requirement */
     public static final String INCREMENT_TOO_LOW = "INCREMENT_TOO_LOW";
     
-    /** Giá đặt không hợp lệ */
+    /** General bid validation failure */
     public static final String INVALID_BID_VALIDATION = "INVALID_BID_VALIDATION";
 
     // ==================== ITEM ERRORS (ItemService) ====================
     
-    /** Lỗi lưu item vào database */
+    /** Persistence failure when saving item entity */
     public static final String ITEM_SAVE_FAILED = "ITEM_SAVE_FAILED";
     
-    /** Loại item không được hỗ trợ */
+    /** The specified item type is not supported by the system */
     public static final String ITEM_TYPE_UNSUPPORTED = "ITEM_TYPE_UNSUPPORTED";
     
-    /** Dữ liệu item không hợp lệ */
+    /** Provided item data is invalid or incomplete */
     public static final String INVALID_ITEM_DATA = "INVALID_ITEM_DATA";
 
     // ==================== AUCTION ERRORS - ADVANCED ====================
     
-    /** Lỗi tạo phiên đấu giá */
+    /** Failure during auction creation process */
     public static final String AUCTION_CREATION_FAILED = "AUCTION_CREATION_FAILED";
     
-    /** Phiên đấu giá chưa bắt đầu */
+    /** The target auction has not started yet */
     public static final String AUCTION_NOT_STARTED = "AUCTION_NOT_STARTED";
     
-    /** Item lưu thất bại, phiên đấu giá không được tạo */
+    /** Auction creation aborted due to item persistence failure */
     public static final String AUCTION_ITEM_NOT_SAVED = "AUCTION_ITEM_NOT_SAVED";
     
-    /** Phiên đấu giá được hỗ trợ không còn hoạt động */
+    /** The requested auction is no longer active */
     public static final String AUCTION_NOT_ACTIVE = "AUCTION_NOT_ACTIVE";
 
     // ==================== NOTIFICATION ERRORS (NotificationService) ====================
     
-    /** Lỗi gửi thông báo */
+    /** NotificationService is not properly initialized with its dependencies */
+    public static final String NOTIFICATION_SERVICE_NOT_INITIALIZED = "NOTIFICATION_SERVICE_NOT_INITIALIZED";
+
+    /** Failure during notification delivery */
     public static final String NOTIFICATION_FAILED = "NOTIFICATION_FAILED";
     
-    /** Người dùng không online */
+    /** Target user is currently offline */
     public static final String USER_OFFLINE = "USER_OFFLINE";
     
-    /** Session người dùng không tồn tại */
+    /** Active user session not found */
     public static final String USER_SESSION_NOT_FOUND = "USER_SESSION_NOT_FOUND";
 
     // ==================== ANTI-SNIPING ERRORS (AntiSnipingService) ====================
     
-    /** Lỗi xử lý anti-sniping */
+    /** Error occurring during anti-sniping processing */
     public static final String ANTI_SNIPING_ERROR = "ANTI_SNIPING_ERROR";
     
-    /** Cấu hình anti-sniping không hợp lệ */
+    /** Provided anti-sniping configuration is invalid */
     public static final String INVALID_ANTI_SNIPING_CONFIG = "INVALID_ANTI_SNIPING_CONFIG";
 
     // ==================== WATCHLIST ERRORS - ADVANCED ====================
     
-    /** Auction đã trong watchlist */
+    /** Auction entity is already present in the user watchlist */
     public static final String AUCTION_ALREADY_IN_WATCHLIST = "AUCTION_ALREADY_IN_WATCHLIST";
     
-    /** Auction không trong watchlist */
+    /** Auction entity not found in the user watchlist */
     public static final String AUCTION_NOT_IN_WATCHLIST = "AUCTION_NOT_IN_WATCHLIST";
 
     // ==================== FACTORY ERRORS ====================
 
-    /** Lỗi khởi tạo đối tượng trong Factory */
+    /** Failure during object instantiation within the Factory layer */
     public static final String FACTORY_CREATION_FAILED = "FACTORY_CREATION_FAILED";
 
-    /** Loại đối tượng không được hỗ trợ trong Factory mapping */
+    /** Unsupported object type encountered during Factory mapping */
     public static final String UNKNOWN_TYPE_MAPPING = "UNKNOWN_TYPE_MAPPING";
 
 
     // ==================== TRANSACTION ERRORS (BidTransactionDAO) ====================
     
-    /** Lỗi lưu giao dịch bid */
+    /** Failure while recording bid transaction */
     public static final String BID_TRANSACTION_FAILED = "BID_TRANSACTION_FAILED";
     
-    /** Lỗi cập nhật số dư tài khoản */
+    /** Failure while updating account balance */
     public static final String ACCOUNT_BALANCE_UPDATE_FAILED = "ACCOUNT_BALANCE_UPDATE_FAILED";
 
     // ==================== CONCURRENCY ERRORS (ConcurrentBidManager) ====================
     
-    /** Lỗi xử lý bid đồng thời */
+    /** Error during concurrent bid task execution */
     public static final String CONCURRENT_BID_PROCESSING_ERROR = "CONCURRENT_BID_PROCESSING_ERROR";
     
-    /** Worker bid bị gián đoạn */
+    /** Sequential bid worker thread was interrupted */
     public static final String BID_WORKER_INTERRUPTED = "BID_WORKER_INTERRUPTED";
 
     // ==================== GENERAL ERRORS ====================
     
-    /** Lỗi lưu dữ liệu vào database */
+    /** General persistence failure */
     public static final String SAVE_ERROR = "SAVE_ERROR";
     
-    /** Lỗi chung không xác định */
+    /** Unidentified general system error */
     public static final String GENERAL_ERROR = "GENERAL_ERROR";
     
-    /** Tài nguyên không tìm thấy */
+    /** Requested resource not found */
     public static final String RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND";
     
-    /** Dữ liệu không hợp lệ */
+    /** Provided data is invalid or malformed */
     public static final String INVALID_DATA = "INVALID_DATA";
+
+    /** Unexpected internal server error */
+    public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";
+
+    /** System-level input/output operation failure */
+    public static final String IO_ERROR = "IO_ERROR";
+
+    /** Null value encountered where an object reference was required */
+    public static final String NULL_VALUE_ENCOUNTERED = "NULL_VALUE_ENCOUNTERED";
+
+    /** Operation aborted due to invalid system state */
+    public static final String ILLEGAL_STATE_ERROR = "ILLEGAL_STATE_ERROR";
 }

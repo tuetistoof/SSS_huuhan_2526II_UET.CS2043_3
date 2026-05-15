@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.model.Admin;
 import com.ssscloud.auction.common.model.Bidder;
@@ -13,23 +16,29 @@ import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.User;
 
 public class UserDAO extends BaseDAO {
-    public boolean saveBidder(Bidder bidder) {
+    private static final Logger logger = Logger.getLogger(UserDAO.class.getName());
+
+    // --- PUBLIC METHODS ---
+
+    public boolean saveBidder(Bidder bidder) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
         String sqlBidder = "INSERT INTO bidder (id, account_balance) VALUES (?, ?)";
 
-        Connection conn = null;
-        PreparedStatement psEntity = null, psUser = null, psBidder = null;
+        Connection connection = null;
+        PreparedStatement psEntity = null;
+        PreparedStatement psUser = null;
+        PreparedStatement psBidder = null;
         try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+            connection = getConnection();
+            connection.setAutoCommit(false);
 
-            psEntity = conn.prepareStatement(sqlEntity);
+            psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, bidder.getId());
             psEntity.setString(2, bidder.getName());
             psEntity.executeUpdate();
 
-            psUser = conn.prepareStatement(sqlUser);
+            psUser = connection.prepareStatement(sqlUser);
             psUser.setString(1, bidder.getId());
             psUser.setString(2, bidder.getUserName());
             psUser.setString(3, bidder.getPassword());
@@ -37,46 +46,51 @@ public class UserDAO extends BaseDAO {
             psUser.setString(5, bidder.getRole().name());
             psUser.executeUpdate();
 
-            psBidder = conn.prepareStatement(sqlBidder);
+            psBidder = connection.prepareStatement(sqlBidder);
             psBidder.setString(1, bidder.getId());
             psBidder.setLong(2, bidder.getAccountBalance());
             psBidder.executeUpdate();
 
-            conn.commit();
-            logger.info("da luu bidder: " + bidder.getUserName());
+            connection.commit();
+            logger.log(Level.INFO, "Bidder successfully persisted: " + bidder.getUserName());
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + bidder.getUserName() + " - " + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
+            logger.log(Level.WARNING, "Constraint violation in saveBidder (username already exists): " + bidder.getUserName() + " - " + sqlConstraintException.getMessage());
+            safelyRollback(connection);
             return false;
-        } catch (SQLException e) {
-            logger.severe("Loi kh luu Bidder: " + bidder.getUserName() + " - " + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database failure in saveBidder for username: " + bidder.getUserName(), sqlException);
+            safelyRollback(connection);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.saveBidder: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
+            resetAutocommit(connection);
+            closeConnect(connection);
             closeResource(psEntity, psUser, psBidder);
         }
     }
 
-    public boolean saveSeller(Seller seller) {
+    public boolean saveSeller(Seller seller) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
         String sqlSeller = "INSERT INTO seller (id, bank_account, account_balance) VALUES (?, ?, ?)";
 
-        Connection conn = null;
-        PreparedStatement psEntity = null, psUser = null, psSeller = null;
+        Connection connection = null;
+        PreparedStatement psEntity = null;
+        PreparedStatement psUser = null;
+        PreparedStatement psSeller = null;
         try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+            connection = getConnection();
+            connection.setAutoCommit(false);
 
-            psEntity = conn.prepareStatement(sqlEntity);
+            psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, seller.getId());
             psEntity.setString(2, seller.getName());
             psEntity.executeUpdate();
 
-            psUser = conn.prepareStatement(sqlUser);
+            psUser = connection.prepareStatement(sqlUser);
             psUser.setString(1, seller.getId());
             psUser.setString(2, seller.getUserName());
             psUser.setString(3, seller.getPassword());
@@ -84,31 +98,34 @@ public class UserDAO extends BaseDAO {
             psUser.setString(5, seller.getRole().name());
             psUser.executeUpdate();
 
-            psSeller = conn.prepareStatement(sqlSeller);
+            psSeller = connection.prepareStatement(sqlSeller);
             psSeller.setString(1, seller.getId());
             psSeller.setString(2, seller.getBankAccount());
             psSeller.setLong(3, seller.getAccountBalance()); 
             psSeller.executeUpdate();
 
-            conn.commit();
-            logger.info("da luu seller: " + seller.getUserName());
+            connection.commit();
+            logger.log(Level.INFO, "Seller successfully persisted: " + seller.getUserName());
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + seller.getUserName() + " - " + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
+            logger.log(Level.WARNING, "Constraint violation in saveSeller (username already exists): " + seller.getUserName() + " - " + sqlConstraintException.getMessage());
+            safelyRollback(connection);
             return false;
-        } catch (SQLException e) {
-            logger.severe("Loi kh luu seller: " + seller.getUserName() + " - " + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database failure in saveSeller for username: " + seller.getUserName(), sqlException);
+            safelyRollback(connection);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.saveSeller: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
+            resetAutocommit(connection);
+            closeConnect(connection);
             closeResource(psEntity, psUser, psSeller);
         }
     }
 
-    public User findByUsername(String userName) {
+    public User findByUsername(String username) throws SQLException, Exception {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
@@ -118,32 +135,35 @@ public class UserDAO extends BaseDAO {
                 "LEFT JOIN bidder b ON u.id = b.id " +
                 "LEFT JOIN seller s ON u.id = s.id " +
                 "WHERE u.username = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, userName);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, username);
             rs = ps.executeQuery();
 
             if (rs.next())
                 return mapResultSetToUser(rs);
             else {
-                logger.info("Khong tim thay user: " + userName);
+                logger.log(Level.INFO, "User not found for username: " + username);
                 return null;
             }
-        } catch (SQLException e) {
-            logger.info("Loi khi tim theo userName: " + userName + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findByUsername for username: " + username, sqlException);
             return null;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.findByUsername: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
     
-    public User findByEmail(String email) {
+    public User findByEmail(String userEmail) throws SQLException, Exception {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
@@ -153,32 +173,35 @@ public class UserDAO extends BaseDAO {
                 "LEFT JOIN bidder b ON u.id = b.id " +
                 "LEFT JOIN seller s ON u.id = s.id " +
                 "WHERE u.email = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, email);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, userEmail);
             rs = ps.executeQuery();
 
             if (rs.next())
                 return mapResultSetToUser(rs);
             else {
-                logger.info("Khong tim thay user: " + email);
+                logger.log(Level.INFO, "User not found for email: " + userEmail);
                 return null;
             }
-        } catch (SQLException e) {
-            logger.info("Loi khi tim theo userName: " + email + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findByEmail for email: " + userEmail, sqlException);
             return null;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.findByEmail: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
     // dung cho login register và mot so tac vu
-    public User findById(String id) {
+    public User findById(String userId) throws SQLException, Exception {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
@@ -189,14 +212,14 @@ public class UserDAO extends BaseDAO {
                 "LEFT JOIN seller s ON u.id = s.id " +
                 "WHERE e.id = ?";
 
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, id);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, userId);
             rs = ps.executeQuery();
 
             if (rs.next()) {
@@ -204,174 +227,195 @@ public class UserDAO extends BaseDAO {
             }
             return null;
 
-        } catch (SQLException e) {
-            logger.severe("Loi khi tim theo id " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findById for userId: " + userId, sqlException);
             return null;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.findById: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
     // kiem tra ten dang nhap da ton tai chua
-    public boolean existByUsername(String userName) {
+    public boolean existByUsername(String username) throws SQLException, Exception {
         String sql = "SELECT 1 FROM user WHERE username = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, userName);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, username);
             rs = ps.executeQuery();
             return rs.next();
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi existsByUsername: " + userName + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in existByUsername for username: " + username, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.existByUsername: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
     // cac ham update sua thong tin user
-    public boolean updatePassword(String id, String newPassword) {
+    public boolean updatePassword(String userId, String newPassword) throws SQLException, Exception {
         String sql = "UPDATE user SET password = ? WHERE id = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             ps.setString(1, newPassword);
-            ps.setString(2, id);
+            ps.setString(2, userId);
             int row = ps.executeUpdate();
-            logger.info("updatePassword userId = " + id + " - row =" + row);
+            logger.log(Level.INFO, "Password updated for userId: " + userId + ". Rows affected: " + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update password id: " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error updating password for userId: " + userId, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.updatePassword: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(ps);
         }
     }
-    public boolean updateEmail(String id, String email) {
+    public boolean updateEmail(String userId, String userEmail) throws SQLException, Exception {
         String sql = "UPDATE user SET email = ? WHERE id = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, email);
-            ps.setString(2, id);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, userEmail);
+            ps.setString(2, userId);
             int row = ps.executeUpdate();
-            logger.info("update email userId = " + id + " - row =" + row);
+            logger.log(Level.INFO, "Email updated for userId: " + userId + ". Rows affected: " + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update email id: " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error updating email for userId: " + userId, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.updateEmail: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(ps);
         }
     }
-    public boolean updateAccountBalance (String id, Long newAccountBlance) {
+    public boolean updateAccountBalance (String userId, Long newAccountBalance) throws SQLException, Exception {
         String sql = "UPDATE bidder SET account_balance = ? WHERE id = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, newAccountBlance);
-            ps.setString(2, id);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setLong(1, newAccountBalance);
+            ps.setString(2, userId);
             int row = ps.executeUpdate();
-            logger.info("update account balance userId = " + id + " - row =" + row);
+            logger.log(Level.INFO, "Bidder account balance updated for userId: " + userId + ". Rows affected: " + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error updating bidder account balance for userId: " + userId, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.updateAccountBalance: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(ps);
         }
     }
-    public boolean updateBankAccount (String id, String newBankAccount) {
+    public boolean updateBankAccount (String userId, String newBankAccountNumber) throws SQLException, Exception {
         String sql = "UPDATE seller SET bank_account = ? WHERE id = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, newBankAccount);
-            ps.setString(2, id);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, newBankAccountNumber);
+            ps.setString(2, userId);
             int row = ps.executeUpdate();
-            logger.info("update bank account userId = " + id + " - row =" + row);
+            logger.log(Level.INFO, "Seller bank account updated for userId: " + userId + ". Rows affected: " + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi bank account blance id: " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error updating seller bank account for userId: " + userId, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.updateBankAccount: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(ps);
         }
     }
-    public boolean updateSellerBalance(String id, long newBalance) {
+    public boolean updateSellerBalance(String userId, long newSellerBalance) throws SQLException, Exception {
         String sql = "UPDATE seller SET account_balance = ? WHERE id = ?";
-        Connection conn = null;
+        Connection connection = null;
         PreparedStatement ps = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setLong(1, newBalance);
-            ps.setString(2, id);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setLong(1, newSellerBalance);
+            ps.setString(2, userId);
             int row = ps.executeUpdate();
-            logger.info("update account balance userId = " + id + " - row =" + row);
+            logger.log(Level.INFO, "Seller account balance updated for userId: " + userId + ". Rows affected: " + row);
             return row > 0;
 
-        } catch (SQLException e) {
-            logger.severe("Lỗi update account balance id: " + id + " - " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error updating seller account balance for userId: " + userId, sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in UserDAO.updateSellerBalance: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(ps);
         }
     }
     // ham ho tro
     public User mapResultSetToUser(ResultSet rs) throws SQLException {
-        String id = rs.getString("id");
+        String userId = rs.getString("id");
         String name = rs.getString("name");
-        String userName = rs.getString("username");
+        String username = rs.getString("username");
         String password = rs.getString("password");
         String email = rs.getString("email");
         UserRole role = UserRole.valueOf(rs.getString("role"));
         switch (role) {
             case BIDDER: {
                 long balance = rs.getLong("account_balance");
-                Bidder b = new Bidder(id, name, userName, password, email, role, balance);
+                Bidder b = new Bidder(userId, name, username, password, email, role, balance);
                 return b;
             }
             case SELLER: {
                 String bankAccount = rs.getString("bank_account");
                 long balance = rs.getLong("seller_balance");
-                Seller s = new Seller(id, name, userName, password, email, role, bankAccount, balance);
+                Seller s = new Seller(userId, name, username, password, email, role, bankAccount, balance);
                 return s;
             }
             case ADMIN: {
-                Admin a = new Admin(id, name, userName, password, email, role);
+                Admin a = new Admin(userId, name, username, password, email, role);
                 return a;
             }
             default:
-                throw new SQLException("UserRole khong xac dinh duoc role " + role);
+                throw new SQLException("Unknown UserRole encountered: " + role);
         }
     }
 

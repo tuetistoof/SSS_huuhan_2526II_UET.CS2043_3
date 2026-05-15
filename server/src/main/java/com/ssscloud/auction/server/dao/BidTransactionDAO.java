@@ -9,166 +9,185 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.BidTransaction;
 
 public class BidTransactionDAO extends BaseDAO {
-    public boolean saveBidTransaction(BidTransaction bidTransaction) {
+
+    private static final Logger logger = Logger.getLogger(BidTransactionDAO.class.getName());
+
+    // --- PUBLIC METHODS ---
+
+    public boolean saveBidTransaction(BidTransaction bidTransaction) throws SQLException, Exception {
         String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
-        Connection conn = null;
-        PreparedStatement psBidTransaction = null;
+        Connection        connection = null;
+        PreparedStatement ps         = null;
         try {
-            conn = getConnection();
-            conn.setAutoCommit(false);
+            connection = getConnection();
+            connection.setAutoCommit(false);
 
-            psBidTransaction = conn.prepareStatement(sqlBidTransaction);
-            psBidTransaction.setString(1, bidTransaction.getAuctionId());
-            psBidTransaction.setString(2, bidTransaction.getBidderId());
-            psBidTransaction.setString(3, bidTransaction.getBidderUsername());
-            psBidTransaction.setLong(4, bidTransaction.getBidAmount());
-            psBidTransaction.setObject(5, bidTransaction.getBidTime());
-            psBidTransaction.setString(6, bidTransaction.getType().name());
-            psBidTransaction.executeUpdate();
+            ps = connection.prepareStatement(sqlBidTransaction);
+            ps.setString(1, bidTransaction.getAuctionId());
+            ps.setString(2, bidTransaction.getBidderId());
+            ps.setString(3, bidTransaction.getBidderUsername());
+            ps.setLong(4, bidTransaction.getBidAmount());
+            ps.setObject(5, bidTransaction.getBidTime());
+            ps.setString(6, bidTransaction.getType().name());
+            ps.executeUpdate();
 
-            conn.commit();
-            logger.info("da luu bidTransaction");
+            connection.commit();
+            logger.log(Level.INFO, "Bid transaction successfully persisted.");
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("User name da ton tai: " + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
+            logger.log(Level.WARNING, "Constraint violation during bid save: " + sqlConstraintException.getMessage());
+            safelyRollback(connection);
             return false;
-        } catch (SQLException e) {
-            logger.severe("Loi kh luu bidTransaction: " + e.getMessage());
-            safelyRollback(conn);
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error saving bid transaction.", sqlException);
+            safelyRollback(connection);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.saveBidTransaction: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            resetAutocommit(conn);
-            closeConnect(conn);
-            closeResource(psBidTransaction);
+            resetAutocommit(connection);
+            closeConnect(connection);
+            closeResource(ps);
         }
     }
 
-    public boolean saveBidTransaction(Connection conn, BidTransaction bidTransaction) {
+    public boolean saveBidTransaction(Connection connection, BidTransaction bidTransaction) throws SQLException, Exception {
         String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
-        PreparedStatement psBidTransaction = null;
+        PreparedStatement ps         = null;
         try {
-            // KHÔNG setAutoCommit — caller (AuctionDAO) tự quản lý transaction
-            psBidTransaction = conn.prepareStatement(sqlBidTransaction);
-            psBidTransaction.setString(1, bidTransaction.getAuctionId());
-            psBidTransaction.setString(2, bidTransaction.getBidderId());
-            psBidTransaction.setString(3, bidTransaction.getBidderUsername());
-            psBidTransaction.setLong(4, bidTransaction.getBidAmount());
-            psBidTransaction.setObject(5, bidTransaction.getBidTime());
-            psBidTransaction.setString(6, bidTransaction.getType().name());
-            psBidTransaction.executeUpdate();
+            // Transaction management is handled by the caller (shared connection)
+            ps = connection.prepareStatement(sqlBidTransaction);
+            ps.setString(1, bidTransaction.getAuctionId());
+            ps.setString(2, bidTransaction.getBidderId());
+            ps.setString(3, bidTransaction.getBidderUsername());
+            ps.setLong(4, bidTransaction.getBidAmount());
+            ps.setObject(5, bidTransaction.getBidTime());
+            ps.setString(6, bidTransaction.getType().name());
+            ps.executeUpdate();
 
-            logger.info("Đã lưu bidTransaction (shared conn)");
+            logger.log(Level.INFO, "Bid transaction successfully persisted using shared connection.");
             return true;
-        } catch (SQLException e) {
-            logger.severe("Lỗi saveBidTransaction (shared conn): " + e.getMessage());
-            // KHÔNG safelyRollback — để caller quyết định rollback hay không
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error saving bid transaction with shared connection.", sqlException);
             return false;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.saveBidTransaction (shared): " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeResource(psBidTransaction); // chỉ close PS, KHÔNG close conn
+            closeResource(ps);
         }
     }
 
-    public BidTransaction findHighest (String auctionId) {
+    public BidTransaction findHighest(String auctionId) throws SQLException, Exception {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
                 "ORDER BY b.bid_amount DESC, b.bid_time ASC " +
                 "LIMIT 1";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        
+        Connection        connection = null;
+        PreparedStatement ps         = null;
+        ResultSet         rs         = null;
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             ps.setString(1, auctionId);
             rs = ps.executeQuery();
 
-            while (rs.next()) {
-                return mapResultSetToBid(rs);
+            if (rs.next()) {
+                return mapRowToBidTransaction(rs);
             }
-            logger.info("findByAuctionId auctionId=" + auctionId + " - " +  " bids");
+            logger.log(Level.INFO, "No bids found for auctionId: " + auctionId);
             return null;
-
-        } catch (SQLException e) {
-            logger.severe("Lỗi findByAuctionId auctionId=" + auctionId + ": " + e.getMessage());
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findHighest for auctionId: " + auctionId, sqlException);
             return null;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findHighest: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
-    public List<BidTransaction> findByBidderId(String bidderId) {
+    public List<BidTransaction> findByBidderId(String bidderId) throws SQLException, Exception {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.bidder_id = ? " +
                 "ORDER BY b.bid_time ASC";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        List<BidTransaction> list = new ArrayList<>();
+        Connection           connection         = null;
+        PreparedStatement    ps                 = null;
+        ResultSet            rs                 = null;
+        List<BidTransaction> bidTransactionList = new ArrayList<>();
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             ps.setString(1, bidderId);
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(mapResultSetToBid(rs));
+                bidTransactionList.add(mapRowToBidTransaction(rs));
             }
-            logger.info("findByBidderId auctionId=" + bidderId + " - " + list.size() + " bids");
-            return list;
-
-        } catch (SQLException e) {
-            logger.severe("Lỗi findByBidderId auctionId=" + bidderId + ": " + e.getMessage());
-            return list;
+            logger.log(Level.INFO, "Retrieved " + bidTransactionList.size() + " bids for bidderId: " + bidderId);
+            return bidTransactionList;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findByBidderId for bidderId: " + bidderId, sqlException);
+            return bidTransactionList;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findByBidderId: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
-    public List<BidTransaction> findByAuctionId(String auctionId) {
+    public List<BidTransaction> findByAuctionId(String auctionId) throws SQLException, Exception {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
                 "ORDER BY b.bid_time ASC";
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        List<BidTransaction> list = new ArrayList<>();
+        Connection           connection         = null;
+        PreparedStatement    ps                 = null;
+        ResultSet            rs                 = null;
+        List<BidTransaction> bidTransactionList = new ArrayList<>();
 
         try {
-            conn = getConnection();
-            ps = conn.prepareStatement(sql);
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
             ps.setString(1, auctionId);
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                list.add(mapResultSetToBid(rs));
+                bidTransactionList.add(mapRowToBidTransaction(rs));
             }
-            logger.info("findByAuctionId auctionId=" + auctionId + " - " + list.size() + " bids");
-            return list;
-
-        } catch (SQLException e) {
-            logger.severe("Lỗi findByAuctionId auctionId=" + auctionId + ": " + e.getMessage());
-            return list;
+            logger.log(Level.INFO, "Retrieved " + bidTransactionList.size() + " bids for auctionId: " + auctionId);
+            return bidTransactionList;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error in findByAuctionId for auctionId: " + auctionId, sqlException);
+            return bidTransactionList;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findByAuctionId: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeConnect(conn);
+            closeConnect(connection);
             closeResource(rs, ps);
         }
     }
 
-    private BidTransaction mapResultSetToBid(ResultSet rs) throws SQLException {
+    // --- PRIVATE METHODS ---
+
+    private BidTransaction mapRowToBidTransaction(ResultSet rs) throws SQLException {
         String auctionId = rs.getString("auction_id");
         String bidderId = rs.getString("bidder_id");
         String bidderUsername = rs.getString("bidder_username");

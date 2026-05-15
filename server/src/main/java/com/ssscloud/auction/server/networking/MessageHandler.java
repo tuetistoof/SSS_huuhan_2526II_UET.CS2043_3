@@ -10,9 +10,9 @@ import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
-import com.ssscloud.auction.common.exception.ControllerExceptions;
-import com.ssscloud.auction.common.exception.DAOExceptions;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ControllerException;
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -195,15 +195,15 @@ public class MessageHandler {
                 }
             }
             
-        } catch (ControllerExceptions controllerException) {
+        } catch (ControllerException controllerException) {
             logger.log(Level.WARNING, "Controller validation failure: " + controllerException.getMessage(), controllerException);
             return JsonUtils.toJson(ClientMessage.request("VALIDATE_ERROR", ApiResponse.error(controllerException.getMessage(), controllerException.getErrorCode())));
 
-        } catch (ServiceExceptions serviceException) {
+        } catch (ServiceException serviceException) {
             logger.log(Level.WARNING, "Service execution failure: " + serviceException.getMessage(), serviceException);
             return JsonUtils.toJson(ClientMessage.request("BUSINESS_ERROR", ApiResponse.error(serviceException.getMessage(), serviceException.getErrorCode())));
             
-        } catch (DAOExceptions daoException) {
+        } catch (DAOException daoException) {
             logger.log(Level.SEVERE, "Persistence layer failure: " + daoException.getMessage(), daoException);
             return JsonUtils.toJson(ClientMessage.request("DAO_ERROR", ApiResponse.error("Database access error. Please contact the administrator.")));
             
