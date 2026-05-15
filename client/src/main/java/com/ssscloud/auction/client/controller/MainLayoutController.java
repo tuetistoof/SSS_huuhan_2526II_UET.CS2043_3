@@ -223,7 +223,22 @@ public class MainLayoutController {
 
     @FXML
     void handleNavActiveBids(MouseEvent event) {
-        
+        updateActiveStyle(navActiveBids); 
+        clearContent();
+
+        FXMLLoader loader = new FXMLLoader();
+        try {
+            loader = new FXMLLoader(getClass().getResource("/fxml/bidded-auction-list.fxml"));
+            Parent biddedAuctionListView = loader.load();
+            BiddedAuctionsListController ctrl = loader.getController();
+            ctrl.setOnOpenAuction(this::loadBiddingRoom);
+
+            contentArea.getChildren().add(biddedAuctionListView);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Lỗi load file bidded-auction-list.fxml");
+        }
+
     }
 
     @FXML
