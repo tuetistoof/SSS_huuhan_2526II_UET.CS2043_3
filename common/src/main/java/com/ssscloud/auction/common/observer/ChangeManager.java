@@ -6,37 +6,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 /**
- *  Observer cũ (mỗi Subject tự giữ list):
- *    Auction_A.observers = [C1, C2]
- *    Auction_B.observers = [C3]
- *    → Muốn biết "C1 đang xem phiên nào?" → phải duyệt tất cả Auction
- *    → Auction phải biết Observer → coupling cao
- *
- *  ChangeManager mới (1 HashMap tập trung):
- *    map = {
- *      Auction_A → [C1, C2],
- *      Auction_B → [C3]
- *    }
- *    → Auction KHÔNG biết Observer tồn tại → coupling thấp hơn
- *    → Tất cả mapping nằm 1 chỗ 
- * 
- * các method: attach, detach, notify
+ * ChangeManager holds the registry of Subjects and their Observers, and provides methods to attach/detach observers and notify them of changes.
+ * It is implemented as a thread-safe singleton to ensure consistent state across the application.
  */
 
-
-
-public class ChangeManager {
-    //danh bạ 
+public class ChangeManager { 
     private final Map<Subject, List<Observer>> registry = new ConcurrentHashMap<>();
-
     private static final Logger logger = Logger.getLogger(ChangeManager.class.getName());
 
-    //Singleton
     private static volatile ChangeManager instance = null;
     private ChangeManager(){}
-
     public static ChangeManager getInstance(){
         if (instance == null){
             synchronized (ChangeManager.class) {
@@ -56,10 +36,7 @@ public class ChangeManager {
         registry.remove(subject);
     }
 
-    /**
-     * Detach observer theo clientId — dùng khi client rời phòng (UNSUBSCRIBE_AUCTION).
-     * ClientObserver không expose ra ngoài nên cần method này thay vì gọi detach() trực tiếp.
-     */
+
     public void detachByClientId(Subject subject, String clientId) {
         List<Observer> observers = registry.get(subject);
         if (observers == null || clientId == null) return;

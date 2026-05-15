@@ -149,6 +149,18 @@ public class MessageHandler {
                     return null;
                 }
 
+                case "UNSUBSCRIBE_AUCTION": {
+                    String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
+                    if (auctionId != null && !auctionId.isBlank()) {
+                        Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+                        if (liveAuctionEntity != null) {
+                            ChangeManager.getInstance().detachByClientId(liveAuctionEntity, clientHandler.getUserId());
+                            logger.log(Level.INFO, "[Server] ClientHandler for userId: " + clientHandler.getUserId() + " unsubscribed from auctionId: " + auctionId);
+                        }
+                    }
+                    return null;
+                }
+                
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",

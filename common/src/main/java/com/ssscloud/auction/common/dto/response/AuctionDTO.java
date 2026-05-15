@@ -110,6 +110,7 @@ public class AuctionDTO implements Serializable {
         return "AuctionDTO{" +
             "id='"                + id                + '\'' +
             ", name='"            + name              + '\'' +
+            ", startPrice="       + startPrice        +
             ", currentPrice="     + currentPrice      +
             ", minIncrement="     + minIncrement      +
             ", status="           + status            +
