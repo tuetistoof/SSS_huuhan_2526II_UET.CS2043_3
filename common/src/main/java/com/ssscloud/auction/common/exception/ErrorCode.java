@@ -103,6 +103,7 @@ public class ErrorCode {
 
     public static final String DATA_CONFLICT = "DATA_CONFLICT";
 
+
     // ==================== DATABASE ERRORS (DAO) ====================
     
     /** File application.properties không tìm thấy */

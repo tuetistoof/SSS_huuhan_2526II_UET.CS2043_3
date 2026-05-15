@@ -10,12 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.exception.ServiceExceptions;
 
 public class WatchlistDAO extends BaseDAO {
 
     // ── Watch ─────────────────────────────────────────────────────────────────
 
-    public boolean add(String auctionId, String userId) {
+    public boolean add(String auctionId, String userId) throws ServiceExceptions,DAOExceptions{
         // auction_id trước, user_id sau — khớp PRIMARY KEY (auction_id, user_id)
         String sql = "INSERT INTO watchlist (auction_id, user_id) VALUES (?, ?)";
         Connection        conn = null;
@@ -29,11 +32,9 @@ public class WatchlistDAO extends BaseDAO {
             logger.info("Watchlist: user " + userId + " watch auction " + auctionId);
             return true;
         } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("Watchlist: user " + userId + " đã watch auction " + auctionId);
-            return false;
-        } catch (SQLException e) {
-            logger.severe("Lỗi add watchlist: " + e.getMessage());
-            return false;
+            throw new ServiceExceptions(ErrorCode.WATCHLIST_ERROR, "Watchlist: user " + userId + " đã watch auction " + auctionId, e);
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR,"Adding watchlist error: " + sqlException.getMessage(), sqlException);
         } finally {
             closeResource(ps);
             closeConnect(conn);
@@ -42,7 +43,7 @@ public class WatchlistDAO extends BaseDAO {
 
     // ── Unwatch ───────────────────────────────────────────────────────────────
 
-    public boolean remove(String auctionId, String userId) {
+    public boolean remove(String auctionId, String userId) throws DAOExceptions{
         String sql = "DELETE FROM watchlist WHERE auction_id = ? AND user_id = ?";
         Connection        conn = null;
         PreparedStatement ps   = null;
@@ -54,9 +55,8 @@ public class WatchlistDAO extends BaseDAO {
             int rows = ps.executeUpdate();
             logger.info("Watchlist: user " + userId + " unwatch auction " + auctionId);
             return rows > 0;
-        } catch (SQLException e) {
-            logger.severe("Lỗi remove watchlist: " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Removing watchlist error: " + sqlException.getMessage(), sqlException);
         } finally {
             closeResource(ps);
             closeConnect(conn);
@@ -65,7 +65,7 @@ public class WatchlistDAO extends BaseDAO {
 
     // ── Query ─────────────────────────────────────────────────────────────────
 
-    public List<AuctionDisplayInfoDTO> findWatchlistDetailsByUser(String userId) {
+    public List<AuctionDisplayInfoDTO> findWatchlistDetailsByUser(String userId) throws DAOExceptions{
     List<AuctionDisplayInfoDTO> list = new ArrayList<>();
     
     // SQL được xây dựng dựa trên cấu trúc findSellerAuction của bạn
@@ -123,8 +123,8 @@ public class WatchlistDAO extends BaseDAO {
             list.add(dto);
         }
         logger.info("[Watchlist] Loaded " + list.size() + " detailed items for user " + userId);
-    } catch (SQLException e) {
-        logger.severe("Lỗi SQL Watchlist (Chi tiết): " + e.getMessage());
+    } catch (SQLException sqlException) {
+        throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "SQL Watchlist Error (Details): " + sqlException.getMessage(), sqlException);
     } finally {
         closeResource(rs, ps);
         closeConnect(conn);
@@ -133,7 +133,7 @@ public class WatchlistDAO extends BaseDAO {
 }
 
     /** Lấy list auction_id mà user đang follow — dùng cho màn hình Follow List. */
-    public List<String> findAuctionIdsByUser(String userId) {
+    public List<String> findAuctionIdsByUser(String userId) throws {
         String sql = "SELECT auction_id FROM watchlist WHERE user_id = ?";
         Connection        conn   = null;
         PreparedStatement ps     = null;

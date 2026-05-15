@@ -76,11 +76,7 @@ public class AuctionService {
 
         Auction auction = new Auction(auctionConfig, AuctionStatus.OPEN, sellerId, item.getId());
         
-        boolean isAuctionSaved = auctionDAO.saveAuction(auction);
-        if (!isAuctionSaved) {
-            logger.log(Level.SEVERE, "Critical failure: Unable to persist auction record for name: " + auctionConfig.getName());
-            throw new ServiceExceptions(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
-        }
+        auctionDAO.saveAuction(auction);
 
         AuctionRegistry.getInstance().register(auction); // Step 5: Register auction in the registry
 
@@ -117,7 +113,7 @@ public class AuctionService {
         if (sellerId == null || sellerId.isBlank()) {
             throw new ServiceExceptions(ErrorCode.INVALID_DATA, "Operation failed: The seller identifier is mandatory to retrieve auctions.");
         }
-        List<AuctionDisplayInfoDTO> myAuctionsList = auctionDAO.findSellerAuction(sellerId);
+        List<AuctionDisplayInfoDTO> myAuctionsList = auctionDAO.findSellerAuctions(sellerId);
         return myAuctionsList;
     }
 

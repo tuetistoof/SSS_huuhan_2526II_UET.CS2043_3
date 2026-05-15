@@ -50,13 +50,11 @@ public class AuctionDAO extends BaseDAO {
             connection = getConnection();
             connection.setAutoCommit(false);
 
-            // Persist Entity
             psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, auction.getAuctionConfig().getId());
             psEntity.setString(2, auction.getAuctionConfig().getName());
             psEntity.executeUpdate();
 
-            // Persist AuctionConfig
             psAuctionConfig = connection.prepareStatement(sqlAuctionConfig);
             psAuctionConfig.setString(1, auction.getAuctionConfig().getId());
             psAuctionConfig.setLong(2,   auction.getAuctionConfig().getStartPrice());
@@ -66,7 +64,6 @@ public class AuctionDAO extends BaseDAO {
             psAuctionConfig.setInt(6,    auction.getAuctionConfig().getExtendSecond());
             psAuctionConfig.executeUpdate();
 
-            // Persist Auction
             psAuction = connection.prepareStatement(sqlAuction);
             psAuction.setString(1, auction.getAuctionConfig().getId());
             psAuction.setString(2, auction.getStatus().name());
@@ -74,23 +71,20 @@ public class AuctionDAO extends BaseDAO {
             psAuction.setString(4, auction.getItemId());
             psAuction.executeUpdate();
 
-            // Persist BidTransactions (if any)
-            BidTransactionDAO bidTransactionDAO = new BidTransactionDAO();
+            BidTransactionDAO bidTransactionDao = new BidTransactionDAO();
             for (BidTransaction bidTransaction : auction.getBidTransaction()) {
-                bidTransactionDAO.saveBidTransaction(connection, bidTransaction);
+                bidTransactionDao.saveBidTransaction(connection, bidTransaction);
             }
 
             connection.commit();
-            logger.log(Level.INFO, "Successfully persisted auction: {0}", auction.getAuctionConfig().getName());
+            logger.log(Level.INFO, "Auction persisted successfully: {0}", auction.getAuctionConfig().getName());
 
         } catch (SQLIntegrityConstraintViolationException e) {
             safelyRollback(connection);
-            logger.log(Level.WARNING, "Constraint violation during auction persistence: {0}", e.getMessage());
-            throw new ServiceExceptions(ErrorCode.DATA_CONFLICT, "Data conflict: Auction ID already exists or foreign key violated.", e);
+            throw new ServiceExceptions(ErrorCode.DATA_CONFLICT, "Data conflict: auction ID already exists or foreign key violated.", e);
 
         } catch (SQLException e) {
             safelyRollback(connection);
-            logger.log(Level.SEVERE, "Database infrastructure failure during auction persistence.", e);
             throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error during auction persistence.", e);
 
         } finally {
@@ -104,17 +98,19 @@ public class AuctionDAO extends BaseDAO {
         String sql = "UPDATE auction_config SET end_time = ? WHERE id = ?";
         Connection        connection = null;
         PreparedStatement ps         = null;
-        
+
         try {
             connection = getConnection();
             ps = connection.prepareStatement(sql);
             ps.setObject(1, newEndTime);
             ps.setString(2, auctionId);
             ps.executeUpdate();
-            
-            logger.log(Level.INFO, "Successfully updated end time for auction ID: {0}", auctionId);
+
+            logger.log(Level.INFO, "End time updated for auctionId: {0}", auctionId);
+
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error updating end time for auction ID: " + auctionId, e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while updating end time for auctionId: " + auctionId, e);
+
         } finally {
             closeResource(ps);
             closeConnect(connection);
@@ -125,17 +121,19 @@ public class AuctionDAO extends BaseDAO {
         String sql = "UPDATE auction SET status = ? WHERE id = ?";
         Connection        connection = null;
         PreparedStatement ps         = null;
-        
+
         try {
             connection = getConnection();
             ps = connection.prepareStatement(sql);
             ps.setString(1, newStatus.name());
             ps.setString(2, auctionId);
             ps.executeUpdate();
-            
-            logger.log(Level.INFO, "Successfully updated status for auction ID: {0}", auctionId);
+
+            logger.log(Level.INFO, "Status updated to {0} for auctionId: {1}", new Object[]{newStatus.name(), auctionId});
+
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error updating status for auction ID: " + auctionId, e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while updating status for auctionId: " + auctionId, e);
+
         } finally {
             closeResource(ps);
             closeConnect(connection);
@@ -146,16 +144,18 @@ public class AuctionDAO extends BaseDAO {
         String sql = "DELETE FROM auction WHERE id = ?";
         Connection        connection = null;
         PreparedStatement ps         = null;
-        
+
         try {
             connection = getConnection();
             ps = connection.prepareStatement(sql);
             ps.setString(1, auctionId);
             ps.executeUpdate();
-            
-            logger.log(Level.INFO, "Successfully deleted auction ID: {0}", auctionId);
+
+            logger.log(Level.INFO, "Auction deleted successfully for auctionId: {0}", auctionId);
+
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error deleting auction ID: " + auctionId, e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while deleting auctionId: " + auctionId, e);
+
         } finally {
             closeResource(ps);
             closeConnect(connection);
@@ -190,7 +190,7 @@ public class AuctionDAO extends BaseDAO {
             while (rs.next()) {
                 String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
-                
+
                 if (auction == null) {
                     auction = mapRowToAuction(rs);
                     auctionMap.put(auctionId, auction);
@@ -202,7 +202,8 @@ public class AuctionDAO extends BaseDAO {
             return new ArrayList<>(auctionMap.values());
 
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error retrieving auctions for seller ID: " + sellerId, e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while fetching auctions for sellerId: " + sellerId, e);
+
         } finally {
             closeResource(rs, ps);
             closeConnect(connection);
@@ -240,10 +241,11 @@ public class AuctionDAO extends BaseDAO {
                     auction.placeBid(mapRowToBidTransaction(rs));
                 }
             }
-            return auction; 
+            return auction;
 
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error retrieving auction by ID: " + auctionId, e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while fetching auctionId: " + auctionId, e);
+
         } finally {
             closeResource(rs, ps);
             closeConnect(connection);
@@ -276,7 +278,7 @@ public class AuctionDAO extends BaseDAO {
             while (rs.next()) {
                 String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
-                
+
                 if (auction == null) {
                     auction = mapRowToAuction(rs);
                     auctionMap.put(auctionId, auction);
@@ -288,7 +290,8 @@ public class AuctionDAO extends BaseDAO {
             return new ArrayList<>(auctionMap.values());
 
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error retrieving auctions by status: " + status.name(), e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while fetching auctions by status: " + status.name(), e);
+
         } finally {
             closeResource(rs, ps);
             closeConnect(connection);
@@ -328,14 +331,15 @@ public class AuctionDAO extends BaseDAO {
             ps.setString(1, sellerId);
             rs = ps.executeQuery();
 
-            List<AuctionDisplayInfoDTO> resultList = new ArrayList<>();
+            List<AuctionDisplayInfoDTO> sellerAuctions = new ArrayList<>();
             while (rs.next()) {
-                resultList.add(mapRowToDisplayDto(rs));
+                sellerAuctions.add(mapRowToDisplayDto(rs));
             }
-            return resultList;
+            return sellerAuctions;
 
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error retrieving display DTOs for seller ID: " + sellerId, e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while fetching seller auctions for sellerId: " + sellerId, e);
+
         } finally {
             closeResource(rs, ps);
             closeConnect(connection);
@@ -374,14 +378,15 @@ public class AuctionDAO extends BaseDAO {
             ps = connection.prepareStatement(sql);
             rs = ps.executeQuery();
 
-            List<AuctionDisplayInfoDTO> resultList = new ArrayList<>();
+            List<AuctionDisplayInfoDTO> activeAuctions = new ArrayList<>();
             while (rs.next()) {
-                resultList.add(mapRowToDisplayDto(rs));
+                activeAuctions.add(mapRowToDisplayDto(rs));
             }
-            return resultList;
+            return activeAuctions;
 
         } catch (SQLException e) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database infrastructure error retrieving active auctions.", e);
+            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Database error while fetching active auctions.", e);
+
         } finally {
             closeResource(rs, ps);
             closeConnect(connection);
@@ -400,7 +405,7 @@ public class AuctionDAO extends BaseDAO {
             toLocalDateTime(rs.getTimestamp("end_time")),
             rs.getInt("extend_second")
         );
-        
+
         return new Auction(
             auctionConfig,
             AuctionStatus.valueOf(rs.getString("status")),
@@ -411,12 +416,9 @@ public class AuctionDAO extends BaseDAO {
     }
 
     /**
-     * Maps a row from a JOIN query to a BidTransaction object.
-     * * Reason for using alias "b_auction_id" instead of "auction_id":
-     * - The JOIN query already has 'a.id AS auction_id' (used for auction mapping).
-     * - If we read rs.getString("auction_id"), JDBC returns the first matching column, 
-     * which would be 'a.id' instead of 'b.auction_id', causing a silent bug.
-     * - Setting a distinct alias 'b.auction_id AS b_auction_id' completely eliminates this ambiguity.
+     * Maps a ResultSet row to a BidTransaction.
+     * Uses alias "b_auction_id" to avoid column name ambiguity with "a.id AS auction_id"
+     * from the parent JOIN query — reading "auction_id" directly would return the wrong column.
      */
     private BidTransaction mapRowToBidTransaction(ResultSet rs) throws SQLException {
         return new BidTransaction(
@@ -434,7 +436,7 @@ public class AuctionDAO extends BaseDAO {
         List<String> imageUrls = (imageUrlRaw != null)
                 ? List.of(imageUrlRaw.split(", "))
                 : new ArrayList<>();
-                
+
         return new AuctionDisplayInfoDTO(
             rs.getString("id"),
             rs.getString("auction_name"),
