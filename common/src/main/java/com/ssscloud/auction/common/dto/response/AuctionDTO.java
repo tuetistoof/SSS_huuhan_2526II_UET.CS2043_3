@@ -119,5 +119,5 @@ public class AuctionDTO implements Serializable {
             ", startTime="        + startTime         +
             ", endTime="          + endTime           +
             '}';
-}
+    }
 }

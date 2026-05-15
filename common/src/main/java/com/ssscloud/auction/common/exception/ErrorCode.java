@@ -1,99 +1,99 @@
 package com.ssscloud.auction.common.exception;
 
 /**
- * Quản lý tập trung toàn bộ error code của hệ thống.
- * Giúp tránh lỗi typo khi gõ error code ở khắp nơi trong code.
- * Sử dụng auto-complete IDE để lấy error code an toàn.
+ * Centralized management of all system error codes.
+ * Helps avoid typos when using error codes throughout the codebase.
+ * Use IDE auto-complete to select error codes safely.
  */
 public class ErrorCode {
 
     // ==================== VALIDATION ERRORS (Controller) ====================
     
-    /** Lỗi request login không hợp lệ */
+    /** Invalid login request data */
     public static final String INVALID_LOGIN_REQUEST = "INVALID_LOGIN_REQUEST";
     
-    /** Lỗi request register không hợp lệ */
+    /** Invalid registration request data */
     public static final String INVALID_REGISTER_REQUEST = "INVALID_REGISTER_REQUEST";
     
-    /** Lỗi username không hợp lệ (null hoặc empty) */
+    /** Username is null or empty */
     public static final String INVALID_USERNAME = "INVALID_USERNAME";
     
-    /** Lỗi password không hợp lệ (null hoặc empty) */
+    /** Password is null or empty */
     public static final String INVALID_PASSWORD = "INVALID_PASSWORD";
     
-    /** Lỗi email không hợp lệ (null hoặc empty) */
+    /** Email is null or empty */
     public static final String INVALID_EMAIL = "INVALID_EMAIL";
     
-    /** Lỗi độ dài username không đúng */
+    /** Username length is invalid */
     public static final String INVALID_LENGTH_USERNAME = "INVALID_LENGTH_USERNAME";
     
-    /** Lỗi độ dài password không đúng */
+    /** Password length is invalid */
     public static final String INVALID_LENGTH_PASSWORD = "INVALID_LENGTH_PASSWORD";
     
-    /** Lỗi role không được định nghĩa */
+    /** Role is not defined */
     public static final String UNDEFINED_ROLE = "UNDEFINED_ROLE";
     
-    /** Lỗi số tiền deposit không hợp lệ (phải > 0) */
+    /** Deposit amount is invalid (must be greater than 0) */
     public static final String INVALID_DEPOSIT = "INVALID_DEPOSIT";
     
-    /** Lỗi ID auction không hợp lệ */
+    /** Auction ID is invalid */
     public static final String INVALID_AUCTION_ID = "INVALID_AUCTION_ID";
 
     // ==================== AUTHENTICATION & AUTHORIZATION ====================
     
-    /** Tài khoản không tồn tại */
+    /** Account does not exist */
     public static final String ACCOUNT_NOT_FOUND = "ACCOUNT_NOT_FOUND";
     
-    /** Mật khẩu không chính xác */
+    /** Password is incorrect */
     public static final String WRONG_PASSWORD = "WRONG_PASSWORD";
     
-    /** Username đã tồn tại */
+    /** Username already exists */
     public static final String USERNAME_EXISTED = "USERNAME_EXISTED";
     
-    /** Email đã tồn tại */
+    /** Email already exists */
     public static final String EMAIL_EXISTED = "EMAIL_EXISTED";
     
-    /** Role không hợp lệ */
+    /** Role is invalid */
     public static final String INVALID_ROLE = "INVALID_ROLE";
 
     // ==================== AUCTION ERRORS (Service) ====================
     
-    /** Phiên đấu giá không tồn tại */
+    /** Auction does not exist */
     public static final String AUCTION_NOT_FOUND = "AUCTION_NOT_FOUND";
     
-    /** Phiên đấu giá đã kết thúc */
+    /** Auction has already closed */
     public static final String AUCTION_CLOSED = "AUCTION_CLOSED";
     
-    /** Sản phẩm không tồn tại */
+    /** Item does not exist */
     public static final String ITEM_NOT_FOUND = "ITEM_NOT_FOUND";
     
-    /** Loại sản phẩm không hợp lệ */
+    /** Item type is invalid */
     public static final String INVALID_ITEM_TYPE = "INVALID_ITEM_TYPE";
 
     // ==================== BID ERRORS (Service) ====================
     
-    /** Lỗi request bid không hợp lệ */
+    /** Invalid bid request data */
     public static final String INVALID_BID_REQUEST = "INVALID_BID_REQUEST";
     
-    /** Thiếu auctionId trong request */
+    /** AuctionId is missing from request */
     public static final String MISSING_AUCTION_ID = "MISSING_AUCTION_ID";
     
-    /** Thiếu bidderId trong request */
+    /** BidderId is missing from request */
     public static final String MISSING_BIDDER_ID = "MISSING_BIDDER_ID";
     
-    /** Giá bid không hợp lệ (phải dương) */
+    /** Bid amount is invalid (must be positive) */
     public static final String INVALID_BID_AMOUNT = "INVALID_BID_AMOUNT";
     
-    /** Mức tăng giá không hợp lệ */
+    /** Bid increment is invalid */
     public static final String INVALID_INCREMENT = "INVALID_INCREMENT";
     
-    /** Người bán không thể đấu giá sản phẩm của mình */
+    /** Seller cannot place bid on their own item */
     public static final String SELLER_CANNOT_BID = "SELLER_CANNOT_BID";
     
-    /** Người dùng không phải bidder */
+    /** User is not a bidder */
     public static final String NOT_BIDDER = "NOT_BIDDER";
     
-    /** Số dư tài khoản không đủ để đặt giá */
+    /** Insufficient account balance to place bid */
     public static final String INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE";
 
     // ==================== WATCHLIST ERRORS (Controller) ====================

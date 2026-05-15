@@ -43,7 +43,8 @@ public class ItemService {
         if (item == null) {
             throw new ServiceExceptions(ErrorCode.ITEM_NOT_FOUND, "Resource not found: Item with identifier " + itemId + " does not exist.");
         }
-        ItemDTO itemDto = ItemDTOFactory.toDTO(item);
+        ItemDTO itemDto = ItemDTOFactory.toDto
+        (item);
         return itemDto;
     }
 

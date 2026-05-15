@@ -88,7 +88,7 @@ public class AuctionService {
         logger.log(Level.INFO, "Auction successfully created and registered with ID: " + auctionConfig.getId());
 
         UserDTO sellerDto = userService.getByUserId(sellerId);
-        ItemDTO itemDto = ItemDTOFactory.toDTO(item);
+        ItemDTO itemDto = ItemDTOFactory.toDto(item);
         
         return toAuctionDto(auction, sellerDto, itemDto);
     }
