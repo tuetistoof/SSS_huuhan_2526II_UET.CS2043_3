@@ -389,6 +389,38 @@ LOCK TABLES `watchlist` WRITE;
 /*!40000 ALTER TABLE `watchlist` DISABLE KEYS */;
 /*!40000 ALTER TABLE `watchlist` ENABLE KEYS */;
 UNLOCK TABLES;
+--
+-- Table structure for table `notification`
+--
+
+DROP TABLE IF EXISTS `notification`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notification` (
+  `id`           VARCHAR(36)  NOT NULL,
+  `user_id`      VARCHAR(36)  NOT NULL,
+  `type`         VARCHAR(20)  NOT NULL,
+  `auction_id`   VARCHAR(36)  NOT NULL,
+  `auction_name` VARCHAR(255) NOT NULL,
+  `price`        BIGINT       NOT NULL,
+  `winner`       VARCHAR(100) DEFAULT NULL,
+  `is_read`      TINYINT(1)   NOT NULL DEFAULT '0',
+  `created_at`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_unread` (`user_id`, `is_read`),
+  CONSTRAINT `notification_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notification`
+--
+
+LOCK TABLES `notification` WRITE;
+/*!40000 ALTER TABLE `notification` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notification` ENABLE KEYS */;
+UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

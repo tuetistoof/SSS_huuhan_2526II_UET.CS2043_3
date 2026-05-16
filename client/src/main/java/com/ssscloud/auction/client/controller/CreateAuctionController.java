@@ -93,7 +93,7 @@ public class CreateAuctionController{
         updateWizard();
         updateStepIndicators();
         clearError();
-        cbDuration.getItems().addAll( 1, 3, 5, 7, 14, 30);
+        cbDuration.getItems().addAll( 0, 1, 3, 5, 7, 14, 30);
         cmbItemType.getItems().addAll(
                 "Nghệ thuật (Art)",
                 "Phương tiện (Vehicle)",
