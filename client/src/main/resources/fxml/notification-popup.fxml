@@ -4,10 +4,11 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.ssscloud.auction.client.controller.NotificationController"
-      prefWidth="340"
-      maxHeight="500"
-      style="-fx-background-color: #ffffff;
+       stylesheets="@../css/notification.css"
+       fx:controller="com.ssscloud.auction.client.controller.NotificationController"
+       prefWidth="340"
+       maxHeight="500"
+       style="-fx-background-color: #ffffff;
              -fx-background-radius: 12;
              -fx-border-color: #e0e0e0;
              -fx-border-radius: 12;
@@ -15,7 +16,7 @@
              -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0, 0, 5);">
 
     <HBox alignment="CENTER_LEFT" style="-fx-padding: 16 16 12 16;">
-        <Label text="Thông báo"
+        <Label text="Notification"
                style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #72243E;"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="lblBadge"
@@ -40,7 +41,7 @@
           style="-fx-padding: 10 16 10 16;
                  -fx-border-color: #f0f0f0 transparent transparent transparent;
                  -fx-border-width: 1 0 0 0;">
-        <Button text="Đánh dấu tất cả đã đọc"
+        <Button text="Mark all as read"
                 onAction="#handleMarkAllRead"
                 style="-fx-background-color: transparent;
                        -fx-border-color: #D4537E;

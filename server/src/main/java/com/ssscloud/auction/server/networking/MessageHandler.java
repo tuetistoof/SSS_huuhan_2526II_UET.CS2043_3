@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
@@ -18,6 +19,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.util.AuctionRegistry;
@@ -33,16 +35,20 @@ public class MessageHandler {
     private final UserController userController;
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
+    private final NotificationController notificationController;
+
 
     public MessageHandler(
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
-            WatchlistController watchlistController) {
+            WatchlistController watchlistController,
+            NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
+        this.notificationController = notificationController;
     }
 
     // --- PUBLIC METHODS ---
@@ -74,6 +80,13 @@ public class MessageHandler {
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
                 }
+                case "GET_PENDING_NOTIFICATIONS": {
+                    String pendingJson = notificationController.getPendingNotifications(clientHandler.getUserId());
+                    Type pendingType = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
+                    ApiResponse<List<NotificationDTO>> pendingResult = JsonUtils.fromJsonGeneric(pendingJson, pendingType);
+                    return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE", pendingResult));
+                }
+
 
                 case "REGISTER": {
                     String controllerResponse = userController.register(clientMessage.getData());
@@ -149,6 +162,18 @@ public class MessageHandler {
                     return null;
                 }
 
+                case "UNSUBSCRIBE_AUCTION": {
+                    String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
+                    if (auctionId != null && !auctionId.isBlank()) {
+                        Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+                        if (liveAuctionEntity != null) {
+                            ChangeManager.getInstance().detachByClientId(liveAuctionEntity, clientHandler.getUserId());
+                            logger.log(Level.INFO, "[Server] ClientHandler for userId: " + clientHandler.getUserId() + " unsubscribed from auctionId: " + auctionId);
+                        }
+                    }
+                    return null;
+                }
+                
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
