@@ -190,6 +190,11 @@ public class MessageHandler {
                         JsonUtils.fromJson(watchlistController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
                 }
 
+                case "GET_BIDDED_AUCTIONS": {
+                    return JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(biddedAuctionsListController.getBiddedAuctionslist(clientHandler.getUserId()), ApiResponse.class)));
+                }
+
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
