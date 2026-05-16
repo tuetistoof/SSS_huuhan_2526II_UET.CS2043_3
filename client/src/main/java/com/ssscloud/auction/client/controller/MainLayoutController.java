@@ -57,6 +57,8 @@ public class MainLayoutController {
     @FXML private Label lblSidebarTitleW;
     @FXML private Label lblSidebarTitleWI;
     @FXML private Label lblAccountBalance;
+    @FXML private Label lblLockBalance;
+    @FXML private Label lblAvailableBalance;
     @FXML private Label lblUsername;
     @FXML private Label lblOverview;
     @FXML private Label lblAuction;
@@ -102,7 +104,11 @@ public class MainLayoutController {
     }
     public void initialize() {
         lblUsername.setText(user.getUsername());
+        //
         lblAccountBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
+        lblAvailableBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
+        lblLockBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
+        //
         applyRole(user.getRole());
         initNotification();
         handleNavDashboard(null);
@@ -186,8 +192,6 @@ public class MainLayoutController {
         navMyItems.setManaged(false);
         navNewAuctionRoom.setVisible(false);
         navNewAuctionRoom.setManaged(false);
-        lblAccountBalance.setVisible(false);
-        lblAccountBalance.setManaged(false);
         navMyAuctionRooms.setVisible(false);
         navMyAuctionRooms.setManaged(false);
         navActiveBids.setVisible(false);
@@ -492,28 +496,6 @@ public class MainLayoutController {
             ctrl.setOnOpenAuction(this::loadBiddingRoom);
 
             contentArea.getChildren().add(watchlistView);
-        // Chưa load đc
-        //     CreateAuctionController controller = loader.getController();
-        //     controller.setOnSuccessCallback(newAuction -> {
-        //         updateActiveStyle(null);
-        //         clearContent();
-        //         try {
-        //             FXMLLoader roomLoader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));z`
-        //             Parent view = roomLoader.load();
-
-        //             BiddingRoomController ctrl = roomLoader.getController();
-        //             ctrl.setAuction(newAuction); 
-        //             ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); 
-                    
-        //             currentController = ctrl;
-        //             contentArea.getChildren().add(view);
-        //         } catch (IOException e) {
-        //             e.printStackTrace();
-        //         }
-        //     });
-
-        //     contentArea.getChildren().clear();
-        //     contentArea.getChildren().add(createAuctionView);
             
         } catch (IOException e) {
             e.printStackTrace();

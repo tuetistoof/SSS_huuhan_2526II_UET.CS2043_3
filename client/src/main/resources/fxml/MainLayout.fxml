@@ -47,6 +47,8 @@
                </ImageView>
                <Region HBox.hgrow="ALWAYS" />
                <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
+               <Label fx:id="lblLockBalance" styleClass="header-balance-label" text="Label" />
+               <Label fx:id="lblAvailableBalance" styleClass="header-balance-label" text="Label" />
                <Button mnemonicParsing="false" onAction="#handleDeposit" prefHeight="30.0" styleClass="btn-primary" text="Deposit" />
                <StackPane>
                   <children>
@@ -59,7 +61,7 @@
                            </ImageView>
                         </graphic>
                      </Button>
-                     <Label fx:id="lblBellBadge" styleClass="notification-badge"  mouseTransparent="true" />
+                     <Label fx:id="lblBellBadge" mouseTransparent="true" styleClass="notification-badge" />
                   </children>
                </StackPane>
                    <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
