@@ -26,15 +26,11 @@ import com.ssscloud.auction.server.util.AuctionRegistry;
 public class NotificationService {
     private static final Logger logger = Logger.getLogger(NotificationService.class.getName()); // Logging Standards: Declared first
 
-    private static final NotificationService instance = new NotificationService();
     private WatchlistDAO watchlistDAO; // Dependency Injection: Short name
     private NotificationDAO notificationDAO;
 
-    private NotificationService() {}
 
-    public static NotificationService getInstance() { return instance; }
-
-    public void init(WatchlistDAO watchlistDAO, NotificationDAO notificationDAO) {
+    public NotificationService(WatchlistDAO watchlistDAO, NotificationDAO notificationDAO) {
         this.watchlistDAO    = watchlistDAO;
         this.notificationDAO = notificationDAO; 
         logger.log(Level.INFO, "[NotificationService] Initialized — watchlistDAO={0}, notificationDAO={1}",

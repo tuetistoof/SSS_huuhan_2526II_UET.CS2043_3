@@ -87,8 +87,8 @@ public class AuctionSocketServer {
 
         UserService userService = new UserService(userDAO);
         ItemService itemService = new ItemService(itemDAO);
-        AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService);
-        NotificationService notificationService = NotificationService.getInstance();
+        NotificationService notificationService = new NotificationService(watchlistDAO, notificationDAO);
+        AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService, notificationService);
 
         BidController bidController = new BidController(bidService, autoBidService, bidDAO);
         UserController userController = new UserController(userService); // Naming: Clear descriptive names
@@ -96,7 +96,6 @@ public class AuctionSocketServer {
         WatchlistController watchlistController = new WatchlistController(watchlistDAO);
         NotificationController notificationController = new NotificationController(notificationService, notificationDAO);
 
-        NotificationService.getInstance().init(watchlistDAO, notificationDAO);
         ConcurrentBidManager.initialize(bidDAO, autoBidService, auctionDAO, notificationController);
         MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, notificationController );
 
@@ -166,6 +165,10 @@ public class AuctionSocketServer {
             return t;
         });
 
+        NotificationDAO notificationDAO = new NotificationDAO();
+        WatchlistDAO watchlistDAO = new WatchlistDAO();
+        NotificationService notificationService = new NotificationService(watchlistDAO, notificationDAO);
+
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 LocalDateTime now = LocalDateTime.now();
@@ -194,7 +197,7 @@ public class AuctionSocketServer {
                     auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
                     AuctionRegistry.getInstance().remove(auctionId);
                     ChangeManager.getInstance().notify(target);
-                    NotificationService.getInstance().notifyAuctionEnded(target); // Notify watchers
+                    notificationService.notifyAuctionEnded(target); // Notify watchers
                     logger.log(Level.INFO, "[AuctionCloser] Safety-net finalizing auctionId: " + auctionId);
                 }
             } catch (Exception e) {
