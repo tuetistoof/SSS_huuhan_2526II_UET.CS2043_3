@@ -93,53 +93,6 @@ public class AuctionDAO extends BaseDAO {
         }
     }
 
-    public List<Auction> findBySellerId(String sellerId) throws SQLException, Exception {
-        String sql =
-            "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
-            "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
-            "FROM auction a " +
-            "JOIN auction_config ac ON a.id = ac.id " +
-            "JOIN entity e ON a.id = e.id " +
-            "LEFT JOIN bid_transaction b ON a.id = b.auction_id " +
-            "WHERE a.seller_id = ? " +
-            "ORDER BY b.bid_time ASC";
-
-        Connection           connection = null;
-        PreparedStatement    ps         = null;
-        ResultSet            rs         = null;
-        Map<String, Auction> auctionMap = new LinkedHashMap<>();
-
-        try {
-            connection = getConnection();
-            ps         = connection.prepareStatement(sql);
-            ps.setString(1, sellerId);
-            rs = ps.executeQuery();
-
-            while (rs.next()) {
-                String auctionId = rs.getString("auction_id");
-                Auction auction = auctionMap.get(auctionId);
-                if (auction == null) {
-                    auction = mapRowToAuction(rs);
-                    auctionMap.put(auctionId, auction);
-                }
-                if (rs.getString("bidder_id") != null) {
-                    auction.placeBid(mapRowToBid(rs));
-                }
-            }
-            return new ArrayList<>(auctionMap.values());
-        } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error retrieving auctions for sellerId: " + sellerId, sqlException);
-            return new ArrayList<>();
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionDAO.findBySellerId: " + exception.getMessage(), exception);
-            throw exception;
-        } finally {
-            closeResource(rs, ps);
-            closeConnect(connection);
-        }
-    }
-
     public Auction findByAuctionId(String auctionId) throws SQLException, Exception {
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
@@ -241,6 +194,7 @@ public class AuctionDAO extends BaseDAO {
             "       GROUP_CONCAT(img.image_url SEPARATOR ', ') AS image_url " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
+            "JOIN auction a ON a.status = a/status" +
             "JOIN entity e ON a.id = e.id " +
             "JOIN user u ON a.seller_id = u.id " +
             "JOIN item i ON a.item_id = i.id " +

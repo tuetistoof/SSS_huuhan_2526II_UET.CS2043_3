@@ -254,48 +254,6 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public List<Item> findBySellerId(String sellerId) throws SQLException, Exception {
-        String sql = "SELECT " +
-                "e.id, e.name, " +
-                "i.seller_id, i.creator, i.description, i.type, " +
-                "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
-                "art.certificate AS art_certificate, " +
-                "elec.is_repaired AS electronic_is_repaired, elec.warranty_period AS electronic_warranty_period, " +
-                "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
-                "FROM entity e " +
-                "JOIN item i ON e.id = i.id " +
-                "LEFT JOIN item_image_url img ON i.id = img.item_id " +
-                "LEFT JOIN art art ON i.id = art.id " +
-                "LEFT JOIN electronic elec ON i.id = elec.id " +
-                "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
-                "WHERE i.seller_id = ? " +
-                "GROUP BY e.id";
-
-        Connection connection = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        List<Item> itemList = new ArrayList<>();
-
-        try {
-            connection = getConnection();
-            ps = connection.prepareStatement(sql);
-            ps.setString(1, sellerId);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                itemList.add(mapResultSetToItem(rs));
-            }
-            return itemList;
-        } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error in findBySellerId for sellerId: " + sellerId, sqlException);
-            return itemList;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.findBySellerId: " + exception.getMessage(), exception);
-            throw exception;
-        } finally {
-            closeConnect(connection);
-            closeResource(rs, ps);
-        }
-    }
 
     public Item findById(String itemId) throws SQLException, Exception {
         String sql = "SELECT " +

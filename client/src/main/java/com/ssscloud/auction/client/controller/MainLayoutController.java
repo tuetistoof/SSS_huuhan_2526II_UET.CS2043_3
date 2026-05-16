@@ -65,9 +65,6 @@ public class MainLayoutController {
 
     @FXML private HBox navActiveBids;
     @FXML private HBox navDashboard;
-    @FXML private HBox navHistory;
-    @FXML private HBox navMyAuctionRooms;
-    @FXML private HBox navMyItems;
     @FXML private HBox navNewAuctionRoom;
     @FXML private Circle navUserInfo;
     @FXML private HBox navWatchlist;
@@ -184,16 +181,10 @@ public class MainLayoutController {
         // Ẩn hết trước
         navWonItems.setVisible(false);
         navWonItems.setManaged(false);
-        navHistory.setVisible(false);
-        navHistory.setManaged(false);
         navWatchlist.setVisible(false);
         navWatchlist.setManaged(false);
-        navMyItems.setVisible(false);
-        navMyItems.setManaged(false);
         navNewAuctionRoom.setVisible(false);
         navNewAuctionRoom.setManaged(false);
-        navMyAuctionRooms.setVisible(false);
-        navMyAuctionRooms.setManaged(false);
         navActiveBids.setVisible(false);
         navActiveBids.setManaged(false);
 
@@ -210,12 +201,6 @@ public class MainLayoutController {
                 navActiveBids.setManaged(true);
             }
             case SELLER -> {
-                navMyItems.setVisible(true);
-                navMyItems.setManaged(true);
-                navHistory.setVisible(true);
-                navHistory.setManaged(true);
-                navMyAuctionRooms.setVisible(true);
-                navMyAuctionRooms.setManaged(true);
                 navNewAuctionRoom.setVisible(true);
                 navNewAuctionRoom.setManaged(true);
             }
@@ -335,33 +320,6 @@ public class MainLayoutController {
             e.printStackTrace();
         }
     }
-    @FXML
-    void handleNavHistory(MouseEvent event) {
-
-    }
-
-    @FXML
-    void handleNavMyAuctionRooms(MouseEvent event) {
-        updateActiveStyle(navMyAuctionRooms);
-        clearContent();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-list.fxml"));
-            Parent view = loader.load();
-            AuctionListController ctrl = loader.getController();
-            // ctrl.setOnOpenAuction(this::loadAuctionList);
-            currentController = ctrl;
-            contentArea.getChildren().add(view);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-    // bỏ đi
-    @FXML
-    void handleNavMyItems(MouseEvent event) {
-
-    }
 
     @FXML
     void handleNavNewAuctionRoom(MouseEvent event) {
@@ -465,8 +423,7 @@ public class MainLayoutController {
 
         HBox[] allNavItems = {
             navDashboard, navActiveBids, navWatchlist, 
-            navWonItems, navHistory, navMyItems, 
-            navNewAuctionRoom, navMyAuctionRooms
+            navWonItems, navNewAuctionRoom
         };
 
         // 2. Đi dọn dẹp: Xóa cái class "active" ở TẤT CẢ các menu
