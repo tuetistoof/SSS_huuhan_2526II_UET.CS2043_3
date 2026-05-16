@@ -55,8 +55,7 @@ public class NotificationController implements MessageListener {
     public void fetchPending() {
         new Thread(() -> {
             try {
-                String json = JsonUtils.toJson(
-                    ClientMessage.request("GET_PENDING_NOTIFICATIONS", null));
+                String json = JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS", null));
                 String responseJson = socket.sendAndReceive(json);
                 if (responseJson == null) return;
 
@@ -69,6 +68,8 @@ public class NotificationController implements MessageListener {
                 String dataJson = JsonUtils.toJson(serverMsg.getData());
                 Type type = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
                 ApiResponse<List<NotificationDTO>> apiResp = JsonUtils.fromJsonGeneric(dataJson, type);
+                System.out.println("[fetchPending] parsed " + (apiResp != null ? apiResp.getData() : null));
+
 
                 if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return;
 
