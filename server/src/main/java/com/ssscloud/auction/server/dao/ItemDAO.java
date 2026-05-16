@@ -64,18 +64,6 @@ public class ItemDAO extends BaseDAO {
             psElectronic.setInt(3, electronic.getWarrantyPeriod());
             psElectronic.executeUpdate();
 
-<<<<<<< HEAD
-            conn.commit();
-            logger.info("Successfully saved electronic: " + electronic.getId() + " - " + electronic.getName());
-            return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("saveElectronic constraint violation (possible duplicate item id or invalid seller): "
-                    + e.getMessage());
-            safelyRollback(conn);
-            return false;
-        } catch (SQLException e) {
-            logger.severe("Error saving electronic [" + electronic.getName() + "]: " + e.getMessage());
-=======
             connection.commit();
             logger.log(Level.INFO, "Electronic item successfully persisted: " + electronic.getId());
             return true;
@@ -86,7 +74,6 @@ public class ItemDAO extends BaseDAO {
         } catch (SQLException sqlException) {
             logger.log(Level.SEVERE, "Database failure in saveElectronic for: " + electronic.getName(), sqlException);
             safelyRollback(connection);
->>>>>>> origin/twe
             return false;
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveElectronic: " + exception.getMessage(), exception);

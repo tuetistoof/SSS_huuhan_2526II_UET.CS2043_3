@@ -12,9 +12,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
-import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ServiceException;
 
 public class WatchlistDAO extends BaseDAO {
 

@@ -77,7 +77,7 @@ public abstract class BaseDAO {
                 logger.log(Level.INFO, "Infrastructure status: Centralized database connection has been returned to the pool.");
             }
         } catch (SQLException sqlException) {
-            throw new DAOExceptions(ErrorCode.INTERNAL_DB_ERROR, "Unable to establish database connection", sqlException);
+             logger.log(Level.SEVERE, "[" + ErrorCode.CONNECTION_CLOSE_FAILED + "] Connectivity failure: Failed to close the database connection. Message: " + sqlException.getMessage());
         }
     }
 }

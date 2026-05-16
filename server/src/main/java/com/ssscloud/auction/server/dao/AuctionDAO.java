@@ -17,9 +17,6 @@ import java.util.logging.Logger;
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
-import com.ssscloud.auction.common.exception.DAOExceptions;
-import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
@@ -122,13 +119,12 @@ public class AuctionDAO extends BaseDAO {
             while (rs.next()) {
                 String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
-
                 if (auction == null) {
                     auction = mapRowToAuction(rs);
                     auctionMap.put(auctionId, auction);
                 }
                 if (rs.getString("bidder_id") != null) {
-                    auction.placeBid(mapRowToBidTransaction(rs));
+                    auction.placeBid(mapRowToBid(rs));
                 }
             }
             return new ArrayList<>(auctionMap.values());
@@ -172,7 +168,7 @@ public class AuctionDAO extends BaseDAO {
                     auction = mapRowToAuction(rs);
                 }
                 if (rs.getString("bidder_id") != null) {
-                    auction.placeBid(mapRowToBidTransaction(rs));
+                    auction.placeBid(mapRowToBid(rs));
                 }
             }
             return auction;
@@ -214,13 +210,12 @@ public class AuctionDAO extends BaseDAO {
             while (rs.next()) {
                 String auctionId = rs.getString("auction_id");
                 Auction auction = auctionMap.get(auctionId);
-
                 if (auction == null) {
                     auction = mapRowToAuction(rs);
                     auctionMap.put(auctionId, auction);
                 }
                 if (rs.getString("bidder_id") != null) {
-                    auction.placeBid(mapRowToBidTransaction(rs));
+                    auction.placeBid(mapRowToBid(rs));
                 }
             }
             return new ArrayList<>(auctionMap.values());
@@ -413,18 +408,17 @@ public class AuctionDAO extends BaseDAO {
     // --- PRIVATE METHODS ---
 
     private Auction mapRowToAuction(ResultSet rs) throws SQLException {
-        AuctionConfig auctionConfig = new AuctionConfig(
-            rs.getString("auction_id"),
-            rs.getString("name"),
+        AuctionConfig config = new AuctionConfig(
+            rs.getString("auction_id"),                         // a.id AS auction_id
+            rs.getString("name"),                               // e.name
             rs.getLong("start_price"),
             rs.getLong("min_increment"),
             toLocalDateTime(rs.getTimestamp("start_time")),
             toLocalDateTime(rs.getTimestamp("end_time")),
             rs.getInt("extend_second")
         );
-
         return new Auction(
-            auctionConfig,
+            config,
             AuctionStatus.valueOf(rs.getString("status")),
             rs.getString("seller_id"),
             rs.getString("item_id"),
@@ -433,13 +427,18 @@ public class AuctionDAO extends BaseDAO {
     }
 
     /**
-     * Maps a ResultSet row to a BidTransaction.
-     * Uses alias "b_auction_id" to avoid column name ambiguity with "a.id AS auction_id"
-     * from the parent JOIN query — reading "auction_id" directly would return the wrong column.
+     * Map một row từ JOIN query sang BidTransaction.
+     *
+     * Lý do dùng alias "b_auction_id" thay vì "auction_id":
+     *   - JOIN query đã có  a.id AS auction_id  (dùng cho auction)
+     *   - Nếu đọc rs.getString("auction_id") thì JDBC trả về cột đầu tiên
+     *     khớp tên, tức là a.id — không phải b.auction_id — gây bug silent.
+     *   - Đặt alias riêng b.auction_id AS b_auction_id loại bỏ hoàn toàn
+     *     sự nhập nhằng này.
      */
-    private BidTransaction mapRowToBidTransaction(ResultSet rs) throws SQLException {
+    private BidTransaction mapRowToBid(ResultSet rs) throws SQLException {
         return new BidTransaction(
-            rs.getString("b_auction_id"),
+            rs.getString("b_auction_id"),                       // b.auction_id AS b_auction_id
             rs.getString("bidder_id"),
             rs.getString("bidder_username"),
             rs.getLong("bid_amount"),
@@ -448,12 +447,11 @@ public class AuctionDAO extends BaseDAO {
         );
     }
 
-    private AuctionDisplayInfoDTO mapRowToDisplayDto(ResultSet rs) throws SQLException {
+    private AuctionDisplayInfoDTO mapRowToDisplayDTO(ResultSet rs) throws SQLException {
         String imageUrlRaw = rs.getString("image_url");
         List<String> imageUrls = (imageUrlRaw != null)
                 ? List.of(imageUrlRaw.split(", "))
                 : new ArrayList<>();
-
         return new AuctionDisplayInfoDTO(
             rs.getString("id"),
             rs.getString("auction_name"),

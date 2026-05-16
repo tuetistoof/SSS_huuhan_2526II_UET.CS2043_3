@@ -12,9 +12,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.enums.UserRole;
-import com.ssscloud.auction.common.exception.DAOExceptions;
+import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceExceptions;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Admin;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
@@ -74,7 +74,7 @@ public class UserDAO extends BaseDAO {
             resetAutocommit(connection);
             closeConnect(connection);
             closeResource(psEntity, psUser, psBidder);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
 
@@ -128,7 +128,7 @@ public class UserDAO extends BaseDAO {
             resetAutocommit(connection);
             closeConnect(connection);
             closeResource(psEntity, psUser, psSeller);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
 
@@ -167,7 +167,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     
@@ -206,7 +206,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     // dung cho login register và mot so tac vu
@@ -245,7 +245,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     // kiem tra ten dang nhap da ton tai chua
@@ -271,7 +271,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
 
@@ -299,7 +299,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     public boolean updateEmail(String userId, String userEmail) throws SQLException, Exception {
@@ -325,7 +325,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     public boolean updateAccountBalance (String userId, Long newAccountBalance) throws SQLException, Exception {
@@ -351,7 +351,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     public boolean updateBankAccount (String userId, String newBankAccountNumber) throws SQLException, Exception {
@@ -377,7 +377,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
-            closeConnect(conn);
+            closeConnect(connection);
         }
     }
     public boolean updateSellerBalance(String userId, long newSellerBalance) throws SQLException, Exception {
@@ -406,33 +406,6 @@ public class UserDAO extends BaseDAO {
         }
     }
     // ham ho tro
-    public User mapResultSetToUser(ResultSet rs) throws SQLException {
-        String userId = rs.getString("id");
-        String name = rs.getString("name");
-        String username = rs.getString("username");
-        String password = rs.getString("password");
-        String email = rs.getString("email");
-        UserRole role = UserRole.valueOf(rs.getString("role"));
-        switch (role) {
-            case BIDDER: {
-                long balance = rs.getLong("account_balance");
-                Bidder b = new Bidder(userId, name, username, password, email, role, balance);
-                return b;
-            }
-            case SELLER: {
-                String bankAccount = rs.getString("bank_account");
-                long balance = rs.getLong("seller_balance");
-                Seller s = new Seller(userId, name, username, password, email, role, bankAccount, balance);
-                return s;
-            }
-            case ADMIN: {
-                Admin a = new Admin(userId, name, username, password, email, role);
-                return a;
-            }
-            default:
-                throw new SQLException("Unknown UserRole encountered: " + role);
-        }
-    }
 
     // 5. Private Methods (Helper)
 
