@@ -1,6 +1,8 @@
 package com.ssscloud.auction.server.networking;
 
 import com.google.gson.reflect.TypeToken;
+
+import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.logging.Level;
@@ -24,6 +26,7 @@ import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.util.AuctionRegistry;
+import com.ssscloud.auction.server.util.SessionRegistry;
     
 /**
  * MessageHandler processes incoming JSON payloads from clients and routes them 
@@ -80,6 +83,18 @@ public class MessageHandler {
                     ApiResponse<UserDTO> loginResult = JsonUtils.fromJsonGeneric(controllerResponse, apiUserType);
 
                     if (loginResult != null && loginResult.isSuccess() && loginResult.getData() != null) {
+                        String incomingUserId = loginResult.getData().getId();
+                        if (SessionRegistry.getInstance().isOnline(incomingUserId)) {
+                            PrintWriter oldWriter = SessionRegistry.getInstance().getWriter(incomingUserId);
+                            if (oldWriter != null) {
+                                oldWriter.println(JsonUtils.toJson(
+                                    ClientMessage.push("SESSION_KICKED", "Tài khoản của bạn đã đăng nhập ở nơi khác.")
+                                ));
+                                oldWriter.flush(); // nhanh chong day thong tin len client (gui ngay thong tin trong buffer)
+                            }
+                            SessionRegistry.getInstance().unregister(incomingUserId);
+                        }
+                        
                         clientHandler.setSession(loginResult.getData().getId(), loginResult.getData().getUsername());
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));

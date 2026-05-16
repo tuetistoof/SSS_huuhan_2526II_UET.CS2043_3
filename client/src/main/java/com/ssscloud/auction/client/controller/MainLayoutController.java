@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
@@ -22,6 +23,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -89,6 +91,7 @@ public class MainLayoutController {
     private long currentBalance = user.getAccountBalance();
 
     private AuctionClientSocket socket =  AuctionClientSocket.getInstance();
+    private MessageListener sessionKickedListener;
 
     private Runnable onSuccessCallback;
     
@@ -103,6 +106,40 @@ public class MainLayoutController {
         applyRole(user.getRole());
         initNotification();
         handleNavDashboard(null);
+        sessionKickedListener = message -> {
+            ClientMessage msg = JsonUtils.fromJson(message, ClientMessage.class);
+            if ("SESSION_KICKED".equals(msg.getAction())) {
+                Platform.runLater(this::handleSessionKicked);
+            }
+        };
+        socket.addListener(sessionKickedListener);
+    }
+    private void handleSessionKicked() {
+        // Dọn listener tránh leak
+        socket.removeListener(sessionKickedListener);
+
+        // Dọn notification controller
+        if (notificationController != null) notificationController.destroy();
+
+        // Dọn session client
+        SessionManager.getInstance().logout();
+
+        // Thông báo
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Phiên đăng nhập hết hạn");
+        alert.setHeaderText(null);
+        alert.setContentText("Tài khoản của bạn đã đăng nhập ở nơi khác. Bạn đã bị đăng xuất.");
+        alert.showAndWait();
+
+        // Về màn hình login
+        try {
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
+            Stage stage = (Stage) contentArea.getScene().getWindow(); // dùng contentArea có sẵn
+            stage.getScene().setRoot(loginRoot);
+            stage.setMaximized(false);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     private void initNotification() {
         try {

@@ -169,7 +169,6 @@ public class AuctionService {
 
         scheduler.schedule(() -> {
             try {
-                // Re-verify conclusion time in case anti-sniping has extended the duration
                 if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
                     scheduleClose(auction); // Reschedule with updated end time
                     return;

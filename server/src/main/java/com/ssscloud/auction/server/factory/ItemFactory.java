@@ -19,8 +19,7 @@ public class ItemFactory {
         /* Private constructor to prevent instantiation of utility class */
     }
 
-    public static Item createItem(CreateAuctionRequest createAuctionRequest, String sellerId) 
-            throws FactoryException, Exception {
+    public static Item createItem(CreateAuctionRequest createAuctionRequest, String sellerId) throws FactoryException, Exception {
         try {
             logger.log(Level.INFO, "Initiating item creation from request for sellerId: " + sellerId);
             
@@ -46,8 +45,7 @@ public class ItemFactory {
         }
     }
 
-    private static void validateCreateAuctionRequest(CreateAuctionRequest createAuctionRequest, String sellerId) 
-            throws FactoryException {
+    private static void validateCreateAuctionRequest(CreateAuctionRequest createAuctionRequest, String sellerId) throws FactoryException {
         if (createAuctionRequest == null) {
             logger.log(Level.SEVERE, "Validation failure: CreateAuctionRequest object is null.");
             throw new FactoryException(ErrorCode.INVALID_AUCTION_ID, "The CreateAuctionRequest object cannot be null.");
