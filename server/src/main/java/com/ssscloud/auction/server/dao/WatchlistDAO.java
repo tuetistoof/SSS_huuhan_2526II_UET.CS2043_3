@@ -8,93 +8,94 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
-import com.ssscloud.auction.common.exception.DAOException;
-import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceException;
 
+/**
+ * WatchlistDAO handles persistence operations for user watchlists.
+ */
 public class WatchlistDAO extends BaseDAO {
+    private static final Logger logger = Logger.getLogger(WatchlistDAO.class.getName());
 
     // ── Watch ─────────────────────────────────────────────────────────────────
 
-    public boolean add(String auctionId, String userId) {
-        // auction_id trước, user_id sau — khớp PRIMARY KEY (auction_id, user_id)
+    public boolean add(String auctionId, String userId) throws SQLException, Exception {
         String sql = "INSERT INTO watchlist (auction_id, user_id) VALUES (?, ?)";
-        Connection        conn = null;
-        PreparedStatement ps   = null;
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
         try {
-            conn = getConnection();
-            ps   = conn.prepareStatement(sql);
-            ps.setString(1, auctionId);   // auction_id — cột 1 trong PK
-            ps.setString(2, userId);      // user_id    — cột 2 trong PK
-            ps.executeUpdate();
-            logger.info("Watchlist: user " + userId + " watch auction " + auctionId);
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            preparedStatement.setString(2, userId);
+            preparedStatement.executeUpdate();
+            logger.log(Level.INFO, "Watchlist entry created: userId " + userId + " watching auctionId " + auctionId);
             return true;
-        } catch (SQLIntegrityConstraintViolationException e) {
-            logger.warning("Watchlist: user " + userId + " đã watch auction " + auctionId);
+        } catch (SQLIntegrityConstraintViolationException constraintException) {
+            logger.log(Level.WARNING, "Watchlist entry already exists: userId " + userId + " is already watching auctionId " + auctionId);
             return false;
-        } catch (SQLException e) {
-            logger.severe("Lỗi add watchlist: " + e.getMessage());
-            return false;
-        } catch (Exception e) {
-            logger.severe("Lỗi add watchlist: " + e.getMessage());
-            return false;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error adding watchlist entry for userId: " + userId, sqlException);
+            throw sqlException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.add: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeResource(ps);
-            closeConnect(conn);
+            closeResource(preparedStatement);
+            closeConnect(connection);
         }
     }
 
     // ── Unwatch ───────────────────────────────────────────────────────────────
 
-    public boolean remove(String auctionId, String userId) {
+    public boolean remove(String auctionId, String userId) throws SQLException, Exception {
         String sql = "DELETE FROM watchlist WHERE auction_id = ? AND user_id = ?";
-        Connection        conn = null;
-        PreparedStatement ps   = null;
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
         try {
-            conn = getConnection();
-            ps   = conn.prepareStatement(sql);
-            ps.setString(1, auctionId);   // auction_id trước
-            ps.setString(2, userId);
-            int rows = ps.executeUpdate();
-            logger.info("Watchlist: user " + userId + " unwatch auction " + auctionId);
-            return rows > 0;
-        } catch (SQLException e) {
-            logger.severe("Lỗi remove watchlist: " + e.getMessage());
-            return false;
-        } catch (Exception e) {
-            logger.severe("Lỗi remove watchlist: " + e.getMessage());
-            return false;
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            preparedStatement.setString(2, userId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            logger.log(Level.INFO, "Watchlist entry removed: userId " + userId + " unwatching auctionId " + auctionId);
+            return rowsAffected > 0;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error removing watchlist entry for userId: " + userId, sqlException);
+            throw sqlException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.remove: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeResource(ps);
-            closeConnect(conn);
+            closeResource(preparedStatement);
+            closeConnect(connection);
         }
     }
 
     // ── Query ─────────────────────────────────────────────────────────────────
 
-    public List<AuctionDisplayInfoDTO> findWatchlistDetailsByUser(String userId) {
-    List<AuctionDisplayInfoDTO> list = new ArrayList<>();
+    public List<AuctionDisplayInfoDTO> findWatchlistDetailsByUser(String userId) throws SQLException, Exception {
+    List<AuctionDisplayInfoDTO> auctionDetailsList = new ArrayList<>();
     
-    // SQL được xây dựng dựa trên cấu trúc findSellerAuction của bạn
     String sql = 
         "SELECT a.id, " +
-        "       e.name AS auction_name, " +          // Tên cuộc đấu giá lấy từ entity
-        "       ac.end_time, " +                     // Thời gian kết thúc từ auction_config
-        "       u_seller.username AS seller_username, " + // Người bán
-        "       ei.name AS item_name, " +            // Tên vật phẩm lấy từ entity (alias ei)
-        "       i.type AS item_type, " +             // Loại vật phẩm (electronic/vehicle...)
-        "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " + // Giá hiện tại
+        "       e.name AS auction_name, " +          
+        "       ac.end_time, " +                     
+        "       u_seller.username AS seller_username, " + 
+        "       ei.name AS item_name, " +            
+        "       i.type AS item_type, " +             
+        "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " + 
         "       (SELECT img.image_url FROM item_image_url img " +
-        "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + // Lấy 1 ảnh đại diện
+        "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + 
         "FROM watchlist w " +
         "JOIN auction a ON w.auction_id = a.id " +
         "JOIN auction_config ac ON a.id = ac.id " +
-        "JOIN entity e ON a.id = e.id " +            // JOIN entity để lấy tên auction
+        "JOIN entity e ON a.id = e.id " +            
         "JOIN user u_seller ON a.seller_id = u_seller.id " + 
         "JOIN item i ON a.item_id = i.id " +
-        "JOIN entity ei ON i.id = ei.id " +          // JOIN entity lần nữa để lấy tên item
+        "JOIN entity ei ON i.id = ei.id " +          
         "LEFT JOIN ( " +
         "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
         "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
@@ -102,95 +103,96 @@ public class WatchlistDAO extends BaseDAO {
         ") AS last_bid ON last_bid.auction_id = a.id " +
         "WHERE w.user_id = ?";
 
-    Connection conn = null;
-    PreparedStatement ps = null;
-    ResultSet rs = null;
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet resultSet = null;
 
     try {
-        conn = getConnection();
-        ps = conn.prepareStatement(sql);
-        ps.setString(1, userId);
-        rs = ps.executeQuery();
+        connection = getConnection();
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setString(1, userId);
+        resultSet = preparedStatement.executeQuery();
 
-        while (rs.next()) {
+        while (resultSet.next()) {
             AuctionDisplayInfoDTO dto = new AuctionDisplayInfoDTO();
-            dto.setId(rs.getString("id"));
-            dto.setAuctionName(rs.getString("auction_name"));
-            dto.setItemName(rs.getString("item_name"));
-            dto.setItemType(rs.getString("item_type"));
-            dto.setCurrentPrice(rs.getLong("current_price"));
+            dto.setId(resultSet.getString("id"));
+            dto.setAuctionName(resultSet.getString("auction_name"));
+            dto.setItemName(resultSet.getString("item_name"));
+            dto.setItemType(resultSet.getString("item_type"));
+            dto.setCurrentPrice(resultSet.getLong("current_price"));
             
-            Timestamp ts = rs.getTimestamp("end_time");
-            if (ts != null) {
-                dto.setEndTime(ts.toLocalDateTime());
+            Timestamp endTimeStamp = resultSet.getTimestamp("end_time");
+            if (endTimeStamp != null) {
+                dto.setEndTime(endTimeStamp.toLocalDateTime());
             }
             
-            dto.setSellerUsername(rs.getString("seller_username"));
-            dto.setImageUrl(List.of(rs.getString("image_url")));
+            dto.setSellerUsername(resultSet.getString("seller_username"));
+            dto.setImageUrl(List.of(resultSet.getString("image_url")));
             
-
-            list.add(dto);
+            auctionDetailsList.add(dto);
         }
-        logger.info("[Watchlist] Loaded " + list.size() + " detailed items for user " + userId);
-    } catch (SQLException e) {
-        logger.severe("Lỗi SQL Watchlist (Chi tiết): " + e.getMessage());
-    } catch (Exception e) {
-        logger.severe("Lỗi SQL Watchlist (Chi tiết): " + e.getMessage());
+        logger.log(Level.INFO, "Retrieved " + auctionDetailsList.size() + " detailed watchlist items for userId: " + userId);
+    } catch (SQLException sqlException) {
+        logger.log(Level.SEVERE, "Database error retrieving detailed watchlist for userId: " + userId, sqlException);
+        throw sqlException;
+    } catch (Exception exception) {
+        logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.findWatchlistDetailsByUser: " + exception.getMessage(), exception);
+        throw exception;
     } finally {
-        closeResource(rs, ps);
-        closeConnect(conn);
+        closeResource(resultSet, preparedStatement);
+        closeConnect(connection);
     }
-    return list;
+    return auctionDetailsList;
 }
 
-    /** Lấy list user_id đang watch auction — dùng để push OUTBID_NOTIFICATION. */
-    public List<String> findUserIdsByAuction(String auctionId) {
+    public List<String> findUserIdsByAuction(String auctionId) throws SQLException, Exception {
         String sql = "SELECT user_id FROM watchlist WHERE auction_id = ?";
-        Connection        conn   = null;
-        PreparedStatement ps     = null;
-        ResultSet         rs     = null;
-        List<String>      result = new ArrayList<>();
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+        List<String>      userIdList        = new ArrayList<>();
         try {
-            conn = getConnection();
-            ps   = conn.prepareStatement(sql);
-            ps.setString(1, auctionId);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                result.add(rs.getString("user_id"));
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                userIdList.add(resultSet.getString("user_id"));
             }
-        } catch (SQLException e) {
-            logger.severe("Lỗi findUserIdsByAuction: " + e.getMessage());
-        } catch (Exception e) {
-            logger.severe("Lỗi findUserIdsByAuction: " + e.getMessage());
+            return userIdList;
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error retrieving userIds for auctionId: " + auctionId, sqlException);
+            throw sqlException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.findUserIdsByAuction: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeResource(rs, ps);
-            closeConnect(conn);
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
         }
-        return result;
     }
 
-    /** Kiểm tra user có đang follow auction không — dùng để render nút Follow/Unfollow. */
-    public boolean isFollowing(String auctionId, String userId) {
+    public boolean isFollowing(String auctionId, String userId) throws SQLException, Exception {
         String sql = "SELECT 1 FROM watchlist WHERE auction_id = ? AND user_id = ?";
-        Connection        conn = null;
-        PreparedStatement ps   = null;
-        ResultSet         rs   = null;
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
         try {
-            conn = getConnection();
-            ps   = conn.prepareStatement(sql);
-            ps.setString(1, auctionId);   // auction_id trước — tận dụng PK index
-            ps.setString(2, userId);
-            rs = ps.executeQuery();
-            return rs.next();
-        } catch (SQLException e) {
-            logger.severe("Lỗi isFollowing: " + e.getMessage());
-            return false;
-        } catch (Exception e) {
-            logger.severe("Lỗi isFollowing: " + e.getMessage());
-            return false;
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            preparedStatement.setString(2, userId);
+            resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database error checking follow status for userId: " + userId, sqlException);
+            throw sqlException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.isFollowing: " + exception.getMessage(), exception);
+            throw exception;
         } finally {
-            closeResource(rs, ps);
-            closeConnect(conn);
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
         }
     }
 }
