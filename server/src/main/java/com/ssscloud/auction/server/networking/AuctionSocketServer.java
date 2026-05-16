@@ -96,7 +96,7 @@ public class AuctionSocketServer {
         WatchlistController watchlistController = new WatchlistController(watchlistDAO);
         NotificationController notificationController = new NotificationController(notificationService, notificationDAO);
 
-        NotificationService.getInstance().init(watchlistDAO);
+        NotificationService.getInstance().init(watchlistDAO, notificationDAO);
         ConcurrentBidManager.initialize(bidDAO, autoBidService, auctionDAO, notificationController);
         MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, notificationController );
 

@@ -34,9 +34,11 @@ public class NotificationService {
 
     public static NotificationService getInstance() { return instance; }
 
-    public void init(WatchlistDAO watchlistDAO) {
-        this.watchlistDAO = watchlistDAO;
-        logger.log(Level.INFO, "[NotificationService] Successfully initialized with WatchlistDAO.");
+    public void init(WatchlistDAO watchlistDAO, NotificationDAO notificationDAO) {
+        this.watchlistDAO    = watchlistDAO;
+        this.notificationDAO = notificationDAO; 
+        logger.log(Level.INFO, "[NotificationService] Initialized — watchlistDAO={0}, notificationDAO={1}",
+                new Object[]{watchlistDAO != null ? "OK" : "NULL", notificationDAO != null ? "OK" : "NULL"});
     }
 
     public void notifyWatchers(Auction auction, String highestBidderId) throws ServiceException, Exception {
@@ -156,7 +158,13 @@ public class NotificationService {
     }
     private void savePending(String userId, String type, String auctionId,
                              String auctionName, long price, String winner) {
-        if (notificationDAO == null) return;
+        if (notificationDAO == null) {
+            logger.log(Level.WARNING, "[DEBUG] savePending SKIP — notificationDAO is NULL. userId={0} type={1}",
+                    new Object[]{userId, type});
+            return;
+        }
+        logger.log(Level.INFO, "[DEBUG] savePending userId={0} type={1} auction={2}",
+                new Object[]{userId, type, auctionName});
         NotificationDTO dto = new NotificationDTO();
         dto.setUserId     (userId);
         dto.setType       (type);

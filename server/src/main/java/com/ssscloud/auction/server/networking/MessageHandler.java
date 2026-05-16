@@ -77,19 +77,16 @@ public class MessageHandler {
 
                     if (loginResult != null && loginResult.isSuccess() && loginResult.getData() != null) {
                         clientHandler.setSession(loginResult.getData().getId(), loginResult.getData().getUsername());
-
-                        String pendingJson = notificationController.getPendingNotifications(loginResult.getData().getId());
-                        Type pendingType = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
-                        ApiResponse<List<NotificationDTO>> pendingResult = JsonUtils.fromJsonGeneric(pendingJson, pendingType);
-
-        if (pendingResult.isSuccess() && pendingResult.getData() != null
-                && !pendingResult.getData().isEmpty()) {
-            clientHandler.getWriter().println(
-                JsonUtils.toJson(ClientMessage.push("PENDING_NOTIFICATIONS", pendingResult.getData())));
-        }
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
                 }
+                case "GET_PENDING_NOTIFICATIONS": {
+                    String pendingJson = notificationController.getPendingNotifications(clientHandler.getUserId());
+                    Type pendingType = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
+                    ApiResponse<List<NotificationDTO>> pendingResult = JsonUtils.fromJsonGeneric(pendingJson, pendingType);
+                    return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE", pendingResult));
+                }
+
 
                 case "REGISTER": {
                     String controllerResponse = userController.register(clientMessage.getData());

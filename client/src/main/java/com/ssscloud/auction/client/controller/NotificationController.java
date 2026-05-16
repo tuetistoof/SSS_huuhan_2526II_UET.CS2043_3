@@ -12,6 +12,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
+import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
@@ -50,6 +52,56 @@ public class NotificationController implements MessageListener {
         socket.addListener(this);   // add 1 lần, tồn tại xuyên suốt session
         setupList();
     }
+    public void fetchPending() {
+        new Thread(() -> {
+            try {
+                String json = JsonUtils.toJson(
+                    ClientMessage.request("GET_PENDING_NOTIFICATIONS", null));
+                String responseJson = socket.sendAndReceive(json);
+                if (responseJson == null) return;
+
+            // Bước 1: parse ClientMessage
+                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                if (serverMsg == null || serverMsg.getData() == null) return;
+                if (!"GET_PENDING_NOTIFICATIONS_RESPONSE".equals(serverMsg.getAction())) return;
+
+            // Bước 2: data là ApiResponse<List<NotificationDTO>>
+                String dataJson = JsonUtils.toJson(serverMsg.getData());
+                Type type = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
+                ApiResponse<List<NotificationDTO>> apiResp = JsonUtils.fromJsonGeneric(dataJson, type);
+
+                if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return;
+
+            // Bước 3: lấy List thực sự rồi xử lý
+                List<NotificationDTO> list = apiResp.getData();
+                Platform.runLater(() -> handlePendingList(list));
+
+            } catch (Exception e) {
+                System.err.println("[NotificationController] fetchPending lỗi: " + e.getMessage());
+            }
+        }).start();
+    }
+    private void handlePendingList(List<NotificationDTO> list) {
+        if (list == null || list.isEmpty()) return;
+        for (NotificationDTO dto : list) {
+            LocalDateTime time = dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now();
+            NotifItem item;
+            if ("OUTBID".equals(dto.getType())) {
+                item = new NotifItem("OUTBID", "Outbid",
+                    dto.getAuctionName() + "\n" + String.format("%,d ₫", dto.getPrice()),
+                    dto.getAuctionId(), time);
+            } else {
+                item = new NotifItem("ENDED", "Ended auction",
+                    dto.getAuctionName() + "\nWinner: " + dto.getWinner()
+                        + " — " + String.format("%,d ₫", dto.getPrice()),
+                    dto.getAuctionId(), time);
+            }
+            notifs.add(item);
+        }
+        notifs.sort((a, b) -> b.getTime().compareTo(a.getTime()));
+        updateBadge();
+    }
+
     public void destroy() {
         socket.removeListener(this); // chỉ gọi khi logout
         notifs.clear();
@@ -64,45 +116,12 @@ public class NotificationController implements MessageListener {
                 switch (action) {
                     case "OUTBID_NOTIFICATION"        -> handleOutbid(root.getAsJsonObject("data"));
                     case "AUCTION_ENDED_NOTIFICATION" -> handleEnded(root.getAsJsonObject("data"));
-                    case "PENDING_NOTIFICATIONS"      -> handlePending(root.get("data").toString());
                 }
             } catch (Exception ignored) {}
         });
     }
 
-    private void handlePending(String dataJson){ 
-       try {
-            Type listType = new TypeToken<List<NotificationDTO>>() {}.getType();
-            List<NotificationDTO> list = JsonUtils.fromJsonGeneric(dataJson, listType);
-            if (list == null || list.isEmpty()) return;
 
-            for (NotificationDTO dto : list){
-                NotifItem item; 
-                LocalDateTime time = dto.getCreatedAt() != null ? dto.getCreatedAt() : LocalDateTime.now();
-
-                if ("OUTBID".equals(dto.getType())) {
-                    item = new NotifItem(
-                            "OUTBID", "Outbid",
-                            dto.getAuctionName() + "\n" + String.format("%,d ₫", dto.getPrice()),
-                            dto.getAuctionId(), time);
-                } else {
-                    item = new NotifItem(
-                            "ENDED", "Ended auction",
-                            dto.getAuctionName() + "\nWinner: " + dto.getWinner()
-                                    + " — " + String.format("%,d ₫", dto.getPrice()),
-                            dto.getAuctionId(), time);
-                }
-                notifs.add(item);  
-            }
-
-            notifs.sort((a, b) -> b.getTime().compareTo(a.getTime()));
-            updateBadge();
-        } catch (Exception e) {
-            System.err.println("[NotificationController] handlePending lỗi: " + e.getMessage());
-    
-        }
-
-    }
     private void handleOutbid(JsonObject data) {
         String auctionId   = data.get("auctionId").getAsString();
         String auctionName = data.get("auctionName").getAsString();
