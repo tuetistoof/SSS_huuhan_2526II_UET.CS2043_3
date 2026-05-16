@@ -44,11 +44,14 @@ public class AuctionService {
     private final UserService userService;
     private final ItemService itemService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final NotificationService notificationService;
 
-    public AuctionService(AuctionDAO auctionDAO, UserService userService, ItemService itemService) {
+
+    public AuctionService(AuctionDAO auctionDAO, UserService userService, ItemService itemService, NotificationService notificationService) {
         this.auctionDAO = auctionDAO;
         this.userService = userService;
         this.itemService = itemService;
+        this.notificationService = notificationService;
     }
 
     // --- PUBLIC METHODS ---
@@ -179,7 +182,7 @@ public class AuctionService {
                     AuctionRegistry.getInstance().remove(auctionId);
                     ConcurrentBidManager.getInstance().shutdown(auctionId); 
                     ChangeManager.getInstance().notify(auction);
-                    NotificationService.getInstance().notifyAuctionEnded(auction);
+                    notificationService.notifyAuctionEnded(auction);
                     logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
                 }
             } catch (ServiceException serviceException) {

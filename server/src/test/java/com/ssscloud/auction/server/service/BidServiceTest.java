@@ -52,10 +52,11 @@ public class BidServiceTest {
             UserRole.BIDDER, 100000L
         );
 
+        // Remove from Registry to force auctionDAO mock usage
         AuctionRegistry.getInstance().remove("auction-config-1");
     }
 
-    // --- Validation tests ---
+    // --- Validation Tests ---
 
     @Test
     void testNullRequest() {
@@ -65,79 +66,76 @@ public class BidServiceTest {
 
     @Test
     void testBlankAuctionId() {
-        PlaceBidRequest req = new PlaceBidRequest("", 50000L);
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("", 50000L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "bidder123", "Kphong"));
+            bidService.placeBid(placeBidRequest, "bidder123", "Kphong"));
     }
 
     @Test
     void testBlankBidderId() {
-        PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("auction-config-1", 50000L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "", "Kphong"));
+            bidService.placeBid(placeBidRequest, "", "Kphong"));
     }
 
     @Test
     void testNegativeBidAmount() {
-        PlaceBidRequest req = new PlaceBidRequest("auction-config-1", -1000L);
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("auction-config-1", -1000L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "bidder123", "Kphong"));
+            bidService.placeBid(placeBidRequest, "bidder123", "Kphong"));
     }
 
     @Test
     void testZeroBidAmount() {
-        PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 0L);
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("auction-config-1", 0L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "bidder123", "Kphong"));
+            bidService.placeBid(placeBidRequest, "bidder123", "Kphong"));
     }
 
-    // --- Business logic tests ---
+    // --- Business Logic Tests ---
 
     @Test
-    void testAuctionNotFound() {
+    void testAuctionNotFound() throws Exception{
         when(auctionDAO.findByAuctionId("notfound")).thenReturn(null);
 
-        PlaceBidRequest req = new PlaceBidRequest("notfound", 50000L);
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("notfound", 50000L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "bidder123", "Kphong"));
+            bidService.placeBid(placeBidRequest, "bidder123", "Kphong"));
     }
 
     @Test
-    void testSellerCannotBidOnOwnAuction() {
+    void testSellerCannotBidOnOwnAuction() throws Exception{
         when(auctionDAO.findByAuctionId("auction-config-1")).thenReturn(mockAuction);
 
-        PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
-        // seller123 là người tạo auction, không được đặt giá
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("auction-config-1", 50000L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "seller123", "seller"));
+            bidService.placeBid(placeBidRequest, "seller123", "seller"));
     }
 
     @Test
-    void testUserNotBidder() {
+    void testUserNotBidder() throws Exception{
         when(auctionDAO.findByAuctionId("auction-config-1")).thenReturn(mockAuction);
 
-        // Trả về null → không phải Bidder instance
         Seller seller = new Seller("seller", "seller", "123456", "seller@gmail.com", UserRole.SELLER);
-        when(userDAO.findById("bidder123")).thenReturn(seller);
+        when(userDAO.findById("sellerId")).thenReturn(seller);
 
-        PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
-        assertThrows(IllegalArgumentException.class, () ->
-            bidService.placeBid(req, "bidder123", "Kphong"));
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("auction-config-1", 50000L);
+        assertThrows(ServiceException.class, () ->
+            bidService.placeBid(placeBidRequest, "sellerId", "seller"));
     }
 
     @Test
-    void testInsufficientBalance() {
+    void testInsufficientBalance() throws Exception{
         when(auctionDAO.findByAuctionId("auction-config-1")).thenReturn(mockAuction);
 
-        // Bidder chỉ có 10000 nhưng đặt 50000
         Bidder poorBidder = new Bidder(
             "Poor", "poor", "123456", "poor@gmail.com",
             UserRole.BIDDER, 10000L
         );
         when(userDAO.findById("poorBidder")).thenReturn(poorBidder);
 
-        PlaceBidRequest req = new PlaceBidRequest("auction-config-1", 50000L);
+        PlaceBidRequest placeBidRequest = new PlaceBidRequest("auction-config-1", 50000L);
         assertThrows(ServiceException.class, () ->
-            bidService.placeBid(req, "poorBidder", "poor"));
+            bidService.placeBid(placeBidRequest, "poorBidder", "poor"));
     }
 }

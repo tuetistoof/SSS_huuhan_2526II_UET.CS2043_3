@@ -101,6 +101,9 @@ public class ErrorCode {
     /** Error occurring during watchlist addition or removal */
     public static final String WATCHLIST_ERROR = "WATCHLIST_ERROR";
 
+    public static final String DATA_CONFLICT = "DATA_CONFLICT";
+
+
     // ==================== DATABASE ERRORS (DAO) ====================
     
     /** application.properties configuration file not found */
@@ -135,6 +138,8 @@ public class ErrorCode {
 
     /** Failure while closing the database connection */
     public static final String CONNECTION_CLOSE_FAILED = "CONNECTION_CLOSE_FAILED";
+
+    public static final String INTERNAL_DB_ERROR = "INTERNAL_DB_ERROR";
 
     // ==================== AUTO BID ERRORS (AutoBidService) ====================
     

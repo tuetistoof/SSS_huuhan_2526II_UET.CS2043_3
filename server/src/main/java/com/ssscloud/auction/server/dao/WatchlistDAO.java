@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.exception.ServiceException;
 
 public class WatchlistDAO extends BaseDAO {
 

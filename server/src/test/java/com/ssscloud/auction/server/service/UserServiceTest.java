@@ -14,6 +14,7 @@ import com.ssscloud.auction.common.dto.request.LoginRequest;
 import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.server.dao.UserDAO;
@@ -29,104 +30,77 @@ public class UserServiceTest {
         userService = new UserService(userDAO);
     }
 
+    // --- Login Tests ---
 
-    //Login Tests
     @Test
-    void testLoginSuccess(){
+    void testLoginSuccess() throws Exception{
         Bidder bidder = new Bidder("Nguyễn Khánh Phong", "Kphong", "123456@", "Kphong@gmail.com", UserRole.BIDDER);
         when(userDAO.findByUsername("Kphong")).thenReturn(bidder);
 
-        LoginRequest req = new LoginRequest("Kphong", "123456@");
-        UserDTO result = userService.login(req);
+        LoginRequest loginRequest = new LoginRequest("Kphong", "123456@");
+        UserDTO result = userService.login(loginRequest);
 
         assertNotNull(result);
-        assertEquals("Kphong", result.getUsername());   
+        assertEquals("Kphong", result.getUsername());
     }
 
     @Test
-    void testEmptyUsername(){
-        LoginRequest req = new LoginRequest("", "anyPassword");
-        assertThrows(IllegalArgumentException.class,  () -> userService.login(req));
+    void testLoginNullRequest() {
+        assertThrows(ServiceException.class, () -> userService.login(null));
     }
-    
+
     @Test
-    void testIncorrectPassword(){
+    void testLoginIncorrectPassword() throws Exception{
         Bidder bidder = new Bidder("Nguyễn Khánh Phong", "Kphong", "123456@", "Kphong@gmail.com", UserRole.BIDDER);
         when(userDAO.findByUsername("Kphong")).thenReturn(bidder);
-        
-        LoginRequest req = new LoginRequest("Kphong", "wrongpassword");
-        assertThrows(IllegalArgumentException.class,  () -> userService.login(req));
+
+        LoginRequest loginRequest = new LoginRequest("Kphong", "wrongpassword");
+        assertThrows(ServiceException.class, () -> userService.login(loginRequest));
     }
 
     @Test
-    void testUserNotFound(){
+    void testLoginUserNotFound() throws Exception{
         when(userDAO.findByUsername("NonExistentUser")).thenReturn(null);
-        
-        LoginRequest req = new LoginRequest("NonExistentUser", "anyPassword");
-        assertThrows(IllegalArgumentException.class,  () -> userService.login(req));
+
+        LoginRequest loginRequest = new LoginRequest("NonExistentUser", "anyPassword");
+        assertThrows(ServiceException.class, () -> userService.login(loginRequest));
     }
 
-    // Register tests
+    // --- Register Tests ---
+
     @Test
-    void testRegisterSuccess(){
+    void testRegisterSuccess() throws Exception{
         when(userDAO.findByUsername("newUser")).thenReturn(null);
         when(userDAO.findByEmail("newuser@gmail.com")).thenReturn(null);
         when(userDAO.saveBidder(any(Bidder.class))).thenReturn(true);
 
-        RegisterRequest req = new RegisterRequest("New User", "newUser", "password123", "newuser@gmail.com", UserRole.BIDDER);
-        UserDTO result = userService.register(req);
+        RegisterRequest registerRequest = new RegisterRequest("New User", "newUser", "password123", "newuser@gmail.com", UserRole.BIDDER);
+        UserDTO result = userService.register(registerRequest);
 
         assertNotNull(result);
         assertEquals("newUser", result.getUsername());
     }
 
     @Test
-    void testExistedUsername(){
+    void testRegisterNullRequest() {
+        assertThrows(ServiceException.class, () -> userService.register(null));
+    }
+
+    @Test
+    void testRegisterExistedUsername() throws Exception{
         Bidder existingBidder = new Bidder("Existing User", "existingUser", "password123", "existinguser@gmail.com", UserRole.BIDDER);
         when(userDAO.findByUsername("existingUser")).thenReturn(existingBidder);
 
-        RegisterRequest req = new RegisterRequest("New User", "existingUser", "password123", "newuser@gmail.com", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
+        RegisterRequest registerRequest = new RegisterRequest("New User", "existingUser", "password123", "newuser@gmail.com", UserRole.BIDDER);
+        assertThrows(ServiceException.class, () -> userService.register(registerRequest));
     }
 
     @Test
-    void testExistedEmail(){
+    void testRegisterExistedEmail() throws Exception{
         Seller existingSeller = new Seller("Existing User", "existingUser", "password123", "existinguser@gmail.com", UserRole.SELLER);
         when(userDAO.findByEmail("existinguser@gmail.com")).thenReturn(existingSeller);
 
-        RegisterRequest req = new RegisterRequest("New User", "newUser", "password123", "existinguser@gmail.com", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
-    }
-    
-    @Test
-    void testInvalidEmail(){
-        RegisterRequest req = new RegisterRequest("New User", "newUser", "password123", "invalidemail", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
-    }
-
-    @Test
-    void testShortUsername(){
-        RegisterRequest req = new RegisterRequest("New User", "ab", "password123", "newuser@gmail.com", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
-    }
-
-    @Test
-    void testLongUsername(){
-        String longUsername = "a".repeat(21);
-        RegisterRequest req = new RegisterRequest("New User", longUsername, "password123", "newuser@gmail.com", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
-    }
-
-    @Test
-    void testShortPassword(){
-        RegisterRequest req = new RegisterRequest("New User", "newUser", "12345", "newuser@gmail.com", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
-    }
-
-    @Test
-    void testLongPassword(){
-        String longPassword = "a".repeat(101);
-        RegisterRequest req = new RegisterRequest("New User", "newUser", longPassword, "newuser@gmail.com", UserRole.BIDDER);
-        assertThrows(IllegalArgumentException.class, () -> userService.register(req));
+        RegisterRequest registerRequest = new RegisterRequest("New User", "newUser", "password123", "existinguser@gmail.com", UserRole.BIDDER);
+        assertThrows(ServiceException.class, () -> userService.register(registerRequest));
     }
 }

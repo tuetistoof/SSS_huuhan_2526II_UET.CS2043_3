@@ -51,32 +51,32 @@ public class WatchlistController {
     new Thread(() -> {
         try {
             String requestJson = JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST", null)); 
+            System.out.println("[WatchlistController] Sending request: " + requestJson);
             String responseJson = socket.sendAndReceive(requestJson);
             if (responseJson == null) return;
 
-            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class); // Bước 1: Parse ClientMessage
+            // Bước 1: Parse ClientMessage để lấy Object data (lúc này là một LinkedTreeMap hoặc String)
+            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
             if (serverMsg == null || serverMsg.getData() == null) return;
 
-            String innerJson = JsonUtils.toJson(serverMsg.getData());
+            // Bước 2: Ép kiểu data về ApiResponse<ListResponse<AuctionDisplayInfoDTO>>
+            // Chúng ta chuyển data ngược lại thành JSON string để parse chuẩn generic
+            String dataJson = JsonUtils.toJson(serverMsg.getData());
+            System.out.println("[WatchlistController] Raw data JSON: " + dataJson);
+            
+            Type responseType = new TypeToken<ApiResponse<ListResponse<AuctionDisplayInfoDTO>>>(){}.getType();
+            ApiResponse<ListResponse<AuctionDisplayInfoDTO>> apiResp = JsonUtils.fromJsonGeneric(dataJson, responseType);
 
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class); // Bước 2: Parse ApiResponse
-            if (apiResp == null || !apiResp.isSuccess()) {
+            if (apiResp != null && apiResp.isSuccess() && apiResp.getData() != null) {
+                List<AuctionDisplayInfoDTO> auctions = apiResp.getData().getData();
+                renderUI(auctions != null ? auctions : new ArrayList<>());
+            } else {
                 renderUI(new ArrayList<>());
-                return;
             }
 
-            String listJson = JsonUtils.toJson(apiResp.getData());
-            Type listRespType = new TypeToken<ListResponse<AuctionDisplayInfoDTO>>(){}.getType();
-            ListResponse<AuctionDisplayInfoDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listRespType);
-
-            List<AuctionDisplayInfoDTO> auctions =
-                    (listResp != null && listResp.getData() != null)
-                    ? listResp.getData() : new ArrayList<>();
-
-            renderUI(auctions);
-
         } catch (Exception e) {
-            System.err.println("[WatchlistController] parse error: " + e.getMessage());
+            System.err.println("[WatchlistController] Parse error: " + e.getMessage());
+            e.printStackTrace();
             renderUI(new ArrayList<>());
         }
     }).start();

@@ -2,11 +2,13 @@ package com.ssscloud.auction.server.networking;
 
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
@@ -17,9 +19,10 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
+import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.util.AuctionRegistry;
     
 /**
@@ -34,18 +37,22 @@ public class MessageHandler {
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
     private final BiddedAuctionsListController biddedAuctionsListController;
+    private final NotificationController notificationController;
+
 
     public MessageHandler(
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
             WatchlistController watchlistController,
-            BiddedAuctionsListController biddedAuctionsListController) {
+            BiddedAuctionsListController biddedAuctionsListController,
+            NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
         this.biddedAuctionsListController = biddedAuctionsListController;
+        this.notificationController = notificationController;
     }
 
     // --- PUBLIC METHODS ---
@@ -77,6 +84,13 @@ public class MessageHandler {
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
                 }
+                case "GET_PENDING_NOTIFICATIONS": {
+                    String pendingJson = notificationController.getPendingNotifications(clientHandler.getUserId());
+                    Type pendingType = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
+                    ApiResponse<List<NotificationDTO>> pendingResult = JsonUtils.fromJsonGeneric(pendingJson, pendingType);
+                    return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE", pendingResult));
+                }
+
 
                 case "REGISTER": {
                     String controllerResponse = userController.register(clientMessage.getData());

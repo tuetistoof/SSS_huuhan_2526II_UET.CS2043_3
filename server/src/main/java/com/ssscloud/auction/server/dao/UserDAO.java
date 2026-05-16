@@ -5,11 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Admin;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
@@ -22,7 +27,7 @@ public class UserDAO extends BaseDAO {
 
     public boolean saveBidder(Bidder bidder) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
+        String sqlUser   = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
         String sqlBidder = "INSERT INTO bidder (id, account_balance) VALUES (?, ?)";
 
         Connection connection = null;
@@ -69,12 +74,13 @@ public class UserDAO extends BaseDAO {
             resetAutocommit(connection);
             closeConnect(connection);
             closeResource(psEntity, psUser, psBidder);
+            closeConnect(connection);
         }
     }
 
     public boolean saveSeller(Seller seller) throws SQLException, Exception {
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
-        String sqlUser = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
+        String sqlUser   = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
         String sqlSeller = "INSERT INTO seller (id, bank_account, account_balance) VALUES (?, ?, ?)";
 
         Connection connection = null;
@@ -101,7 +107,7 @@ public class UserDAO extends BaseDAO {
             psSeller = connection.prepareStatement(sqlSeller);
             psSeller.setString(1, seller.getId());
             psSeller.setString(2, seller.getBankAccount());
-            psSeller.setLong(3, seller.getAccountBalance()); 
+            psSeller.setLong(3, seller.getAccountBalance());
             psSeller.executeUpdate();
 
             connection.commit();
@@ -122,6 +128,7 @@ public class UserDAO extends BaseDAO {
             resetAutocommit(connection);
             closeConnect(connection);
             closeResource(psEntity, psUser, psSeller);
+            closeConnect(connection);
         }
     }
 
@@ -160,6 +167,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
+            closeConnect(connection);
         }
     }
     
@@ -198,6 +206,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
+            closeConnect(connection);
         }
     }
     // dung cho login register và mot so tac vu
@@ -222,9 +231,9 @@ public class UserDAO extends BaseDAO {
             ps.setString(1, userId);
             rs = ps.executeQuery();
 
-            if (rs.next()) {
+            if (rs.next())
                 return mapResultSetToUser(rs);
-            }
+
             return null;
 
         } catch (SQLException sqlException) {
@@ -236,6 +245,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
+            closeConnect(connection);
         }
     }
     // kiem tra ten dang nhap da ton tai chua
@@ -261,6 +271,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(rs, ps);
+            closeConnect(connection);
         }
     }
 
@@ -288,6 +299,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
+            closeConnect(connection);
         }
     }
     public boolean updateEmail(String userId, String userEmail) throws SQLException, Exception {
@@ -313,6 +325,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
+            closeConnect(connection);
         }
     }
     public boolean updateAccountBalance (String userId, Long newAccountBalance) throws SQLException, Exception {
@@ -338,6 +351,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
+            closeConnect(connection);
         }
     }
     public boolean updateBankAccount (String userId, String newBankAccountNumber) throws SQLException, Exception {
@@ -363,6 +377,7 @@ public class UserDAO extends BaseDAO {
         } finally {
             closeConnect(connection);
             closeResource(ps);
+            closeConnect(connection);
         }
     }
     public boolean updateSellerBalance(String userId, long newSellerBalance) throws SQLException, Exception {
@@ -391,32 +406,29 @@ public class UserDAO extends BaseDAO {
         }
     }
     // ham ho tro
-    public User mapResultSetToUser(ResultSet rs) throws SQLException {
-        String userId = rs.getString("id");
-        String name = rs.getString("name");
-        String username = rs.getString("username");
-        String password = rs.getString("password");
-        String email = rs.getString("email");
-        UserRole role = UserRole.valueOf(rs.getString("role"));
-        switch (role) {
-            case BIDDER: {
-                long balance = rs.getLong("account_balance");
-                Bidder b = new Bidder(userId, name, username, password, email, role, balance);
-                return b;
-            }
-            case SELLER: {
-                String bankAccount = rs.getString("bank_account");
-                long balance = rs.getLong("seller_balance");
-                Seller s = new Seller(userId, name, username, password, email, role, bankAccount, balance);
-                return s;
-            }
-            case ADMIN: {
-                Admin a = new Admin(userId, name, username, password, email, role);
-                return a;
-            }
-            default:
-                throw new SQLException("Unknown UserRole encountered: " + role);
-        }
-    }
 
+    // 5. Private Methods (Helper)
+
+    public User mapResultSetToUser(ResultSet rs) throws SQLException {
+        String   userId   = rs.getString("id");
+        String   name     = rs.getString("name");
+        String   userName = rs.getString("username");
+        String   password = rs.getString("password");
+        String   email    = rs.getString("email");
+        UserRole role     = UserRole.valueOf(rs.getString("role"));
+
+        return switch (role) {
+            case BIDDER -> {
+                long balance = rs.getLong("account_balance");
+                yield new Bidder(userId, name, userName, password, email, role, balance);
+            }
+            case SELLER -> {
+                String bankAccount    = rs.getString("bank_account");
+                long   sellerBalance  = rs.getLong("seller_balance");
+                yield new Seller(userId, name, userName, password, email, role, bankAccount, sellerBalance);
+            }
+            case ADMIN -> new Admin(userId, name, userName, password, email, role);
+            default -> throw new SQLException("Unrecognized user role: " + role);
+        };
+    }
 }

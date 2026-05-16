@@ -14,6 +14,7 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
+import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 
@@ -30,15 +31,18 @@ public class ConcurrentBidManager {
     private BidTransactionDAO bidDAO; // Dependency Injection: Short name for DAO
     private AutoBidService autoBidService;
     private AuctionDAO auctionDAO;
+    private NotificationController notificationController;
     private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
 
     private ConcurrentBidManager() {}
 
-    private ConcurrentBidManager(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) {
+    private ConcurrentBidManager(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController ) {
         this.bidDAO = bidDAO;
         this.autoBidService = autoBidService;
         this.auctionDAO = auctionDAO;
+        this.notificationController = notificationController;
+
     } // Constructor section
 
     // --- PUBLIC METHODS ---
@@ -54,13 +58,13 @@ public class ConcurrentBidManager {
         return instance;
     }
 
-    public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) throws Exception {
+    public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
             synchronized (ConcurrentBidManager.class) {
                 if (instance == null) {
-                    instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO);
+                    instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO, notificationController);
                 } else {
-                    instance.updateDependencies(bidDAO, autoBidService, auctionDAO);
+                    instance.updateDependencies(bidDAO, autoBidService, auctionDAO, notificationController);
                 }
             }
             return instance;
@@ -83,11 +87,13 @@ public class ConcurrentBidManager {
         }
     }
 
-    private void updateDependencies(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO) throws Exception {
+    private void updateDependencies(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
             this.bidDAO = bidDAO;
             this.autoBidService = autoBidService;
             this.auctionDAO = auctionDAO;
+            this.notificationController = notificationController;
+
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error updating dependencies", exception);
             throw exception;
@@ -179,7 +185,7 @@ public class ConcurrentBidManager {
                     }
                 }
                 ChangeManager.getInstance().notify(auctionEntity);
-                NotificationService.getInstance().notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
+                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(), auctionEntity.getHighestBidderId());
             } else {
                 logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
             }
