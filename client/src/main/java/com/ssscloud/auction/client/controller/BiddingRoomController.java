@@ -1,4 +1,6 @@
 package com.ssscloud.auction.client.controller;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +11,7 @@ import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 
@@ -643,36 +646,74 @@ public class BiddingRoomController implements MessageListener{
         resetPlaceBidButton();
     }
     private void handleAuctionEnded(JsonObject root) {
-        // Khóa toàn bộ UI đấu giá
+        JsonObject data = root.has("data") ? root.get("data").getAsJsonObject() : new JsonObject();
+        String winner     = data.has("winner")     ? data.get("winner").getAsString()          : "Không xác định";
+        long   finalPrice = data.has("finalPrice") ? data.get("finalPrice").getAsLong()        : 0;
+
+        if (countdownTimer != null) { countdownTimer.stop(); countdownTimer = null; }
+
+        // Disable toàn bộ UI đấu giá
         btnPlaceBid.setDisable(true);
+        btnPlaceBid.setText("Đã kết thúc");
         btnAutoToggle.setDisable(true);
         txtManualBid.setDisable(true);
- 
-        String winner = root.has("data") && root.get("data").getAsJsonObject().has("winner")
-                ? root.get("data").getAsJsonObject().get("winner").getAsString()
-                : "Không xác định";
- 
-        showInfo("Phiên đấu giá đã kết thúc. Người thắng: " + winner);
+        if (txtMaxBid != null) txtMaxBid.setDisable(true);
+        if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+
+        if (lblStatusBadge != null) {
+            lblStatusBadge.setText("Đã kết thúc");
+            //lblStatusBadge.getStyleClass().removeAll("badge-open","badge-running");
+            lblStatusBadge.getStyleClass().add("br-badge-finished");
+        }
+
+        if (finalPrice > 0) lblCurrentPrice.setText(String.format("%,d ₫", finalPrice));
+        if (lblTimer != null) lblTimer.setText("Đã kết thúc");
+
+        String myUsername = SessionManager.getInstance().getCurrentUser() != null
+                ? SessionManager.getInstance().getCurrentUser().getUsername()
+                : "";
+        if (myUsername.equals(winner)) {
+            showInfo("Congrats! You WIN "
+                    + String.format("%,d ₫", finalPrice));
+        } else {
+            showInfo("Auction ended. Winner: " + winner
+                    + " (" + String.format("%,d ₫", finalPrice) + ")");
+        }
+    
     }
 
 
     // Setters — màn hình trước inject context 
-    public void setAuction(AuctionDTO auction)  { 
-        this.currentAuction  = auction; 
+    public void setAuction(AuctionDTO auction) {
+        this.currentAuction = auction;
         itemUrls = auction.getItemDTO().getImageUrls();
+
+        boolean isFinished = auction.getStatus() == AuctionStatus.FINISHED;
+
         Platform.runLater(() -> {
             populateUI();
-            setUpItemImage(itemUrls);});
+            setUpItemImage(itemUrls);
+            if (isFinished) {
+                btnPlaceBid.setDisable(true);
+                btnPlaceBid.setText("Đã kết thúc");
+                btnAutoToggle.setDisable(true);
+                txtManualBid.setDisable(true);
+                if (txtMaxBid != null) txtMaxBid.setDisable(true);
+                if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+                if (lblTimer != null) lblTimer.setText("Đã kết thúc");
+            }
+        });
+
         new Thread(() -> {
             subcribeToAuction();
             loadBidHistory();
-            Platform.runLater(() -> btnPlaceBid.setDisable(false));
+            // Chỉ enable nút nếu auction còn đang chạy
+            if (!isFinished) Platform.runLater(() -> btnPlaceBid.setDisable(false));
         }).start();
+
         checkFollowStatus();
-        startTimer();
-
+        if (!isFinished) startTimer();  // không chạy timer nếu đã kết thúc
     }
-
 
     private void populateUI() {
         if (currentAuction == null) return;
@@ -737,8 +778,8 @@ public class BiddingRoomController implements MessageListener{
         if (currentAuction == null || currentAuction.getEndTime() == null) return;
 
         countdownTimer = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), e -> {
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            java.time.Duration remaining = java.time.Duration.between(now, currentAuction.getEndTime());
+            LocalDateTime now = LocalDateTime.now();
+            Duration remaining = Duration.between(now, currentAuction.getEndTime());
             if (remaining.isNegative() || remaining.isZero()) {
                 if (lblTimer != null) lblTimer.setText("Time remaining: 00:00:00");
                 countdownTimer.stop();
