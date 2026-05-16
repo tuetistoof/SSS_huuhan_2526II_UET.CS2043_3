@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
@@ -21,10 +20,10 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
-import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
     
@@ -99,13 +98,6 @@ public class MessageHandler {
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
                 }
-                case "GET_PENDING_NOTIFICATIONS": {
-                    String pendingJson = notificationController.getPendingNotifications(clientHandler.getUserId());
-                    Type pendingType = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
-                    ApiResponse<List<NotificationDTO>> pendingResult = JsonUtils.fromJsonGeneric(pendingJson, pendingType);
-                    return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE", pendingResult));
-                }
-
 
                 case "REGISTER": {
                     String controllerResponse = userController.register(clientMessage.getData());
@@ -117,11 +109,10 @@ public class MessageHandler {
                 } 
 
                 case "CREATE_AUCTION": {
-                    // com.google.gson.JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
-                    // String internalJsonPayload = rootObject.get("data").toString(); // Parse inner data as raw JSON payload
+                    com.google.gson.JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
+                    String internalJsonPayload = rootObject.get("data").toString(); // Parse inner data as raw JSON payload
                     
-                    // String controllerResponse = auctionController.createAuction(internalJsonPayload, clientHandler.getUserId());
-                    String controllerResponse = auctionController.createAuction(clientMessage.getData(), clientHandler.getUserId());
+                    String controllerResponse = auctionController.createAuction(internalJsonPayload, clientHandler.getUserId());
 
                     Type auctionResponseType = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
                     ApiResponse<AuctionDTO> auctionResult = JsonUtils.fromJsonGeneric(controllerResponse, auctionResponseType);
@@ -182,18 +173,6 @@ public class MessageHandler {
                     return null;
                 }
 
-                case "UNSUBSCRIBE_AUCTION": {
-                    String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
-                    if (auctionId != null && !auctionId.isBlank()) {
-                        Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
-                        if (liveAuctionEntity != null) {
-                            ChangeManager.getInstance().detachByClientId(liveAuctionEntity, clientHandler.getUserId());
-                            logger.log(Level.INFO, "[Server] ClientHandler for userId: " + clientHandler.getUserId() + " unsubscribed from auctionId: " + auctionId);
-                        }
-                    }
-                    return null;
-                }
-                
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
@@ -210,12 +189,6 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
                         JsonUtils.fromJson(watchlistController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
                 }
-
-                case "GET_BIDDED_AUCTIONS": {
-                    return JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS_RESPONSE",
-                        JsonUtils.fromJson(biddedAuctionsListController.getBiddedAuctionslist(clientHandler.getUserId()), ApiResponse.class)));
-                }
-
 
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
