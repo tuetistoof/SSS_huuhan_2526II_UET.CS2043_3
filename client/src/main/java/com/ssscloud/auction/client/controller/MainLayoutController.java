@@ -147,11 +147,12 @@ public class MainLayoutController {
     private void initNotification() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/fxml/notification-popup.fxml"));
-            notifPopupRoot = loader.load();
+            getClass().getResource("/fxml/notification-popup.fxml"));
+            notifPopupRoot = loader.load(); 
             notificationController = loader.getController();
             notificationController.init(this::navigateToAuction);
-
+            
+            // Gắn badge listener: mỗi lần badge thay đổi → cập nhật lblBellBadge
             notificationController.setBadgeListener(count -> {
                 if (lblBellBadge != null) {
                     lblBellBadge.setText(count > 0 ? String.valueOf(count) : "");
@@ -159,10 +160,6 @@ public class MainLayoutController {
                     lblBellBadge.setManaged(count > 0);
                 }
             });
-
-            // Listener đã đăng ký → giờ mới fetch pending an toàn
-            notificationController.fetchPending();
-
         } catch (IOException e) {
             System.err.println("Không load được notification-popup.fxml: " + e.getMessage());
         }
@@ -206,7 +203,6 @@ public class MainLayoutController {
             }
         }
     }
-    
     //__CLEANUP___
 
     private void cleanupCurrentController() {
@@ -253,21 +249,6 @@ public class MainLayoutController {
 
     @FXML
     void handleNavActiveBids(MouseEvent event) {
-        updateActiveStyle(navActiveBids); 
-        clearContent();
-
-        FXMLLoader loader = new FXMLLoader();
-        try {
-            loader = new FXMLLoader(getClass().getResource("/fxml/bidded-auction-list.fxml"));
-            Parent biddedAuctionListView = loader.load();
-            BiddedAuctionsListController ctrl = loader.getController();
-            ctrl.setOnOpenAuction(this::loadBiddingRoom);
-
-            contentArea.getChildren().add(biddedAuctionListView);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load file bidded-auction-list.fxml");
-        }
 
     }
 
