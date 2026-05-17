@@ -99,6 +99,7 @@ public class UserServiceTest {
     void testRegisterExistedEmail() throws Exception{
         Seller existingSeller = new Seller("Existing User", "existingUser", "password123", "existinguser@gmail.com", UserRole.SELLER);
         when(userDAO.findByEmail("existinguser@gmail.com")).thenReturn(existingSeller);
+        when(userDAO.findByUsername("newUser")).thenReturn(null);
 
         RegisterRequest registerRequest = new RegisterRequest("New User", "newUser", "password123", "existinguser@gmail.com", UserRole.BIDDER);
         assertThrows(ServiceException.class, () -> userService.register(registerRequest));
