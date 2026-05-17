@@ -80,4 +80,10 @@ public class SessionRegistry {
             logger.log(Level.WARNING, "addUnsettledBalance: no session found for userId: {0}", userId);
         }
     }
+
+    public Map<String, PrintWriter> getAllWriters() {
+        Map<String, PrintWriter> writers = new ConcurrentHashMap<>();
+        sessions.forEach((userId, session) -> writers.put(userId, session.writer));
+        return writers;
+    }
 }
