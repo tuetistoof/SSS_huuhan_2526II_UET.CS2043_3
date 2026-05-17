@@ -10,7 +10,7 @@ import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 
@@ -29,9 +29,9 @@ public class BiddedAuctionsListController {
     @FXML private ScrollPane scrollPane;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private Consumer<AuctionDisplayInfoDTO> onOpenAuction;
+    private Consumer<BidderDisplayDTO> onOpenAuction;
 
-    public void setOnOpenAuction(Consumer<AuctionDisplayInfoDTO> onOpenAction) {
+    public void setOnOpenAuction(Consumer<BidderDisplayDTO> onOpenAction) {
         this.onOpenAuction = onOpenAction;
     }
 
@@ -58,10 +58,10 @@ public class BiddedAuctionsListController {
             }
 
             String listJson = JsonUtils.toJson(apiResp.getData());
-            Type listRespType = new TypeToken<ListResponse<AuctionDisplayInfoDTO>>(){}.getType();
-            ListResponse<AuctionDisplayInfoDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listRespType);
+            Type listRespType = new TypeToken<ListResponse<BidderDisplayDTO>>(){}.getType();
+            ListResponse<BidderDisplayDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listRespType);
 
-            List<AuctionDisplayInfoDTO> auctions =
+            List<BidderDisplayDTO> auctions =
                     (listResp != null && listResp.getData() != null)
                     ? listResp.getData() : new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class BiddedAuctionsListController {
     }).start();
 }
 
-    private void renderUI(List<AuctionDisplayInfoDTO> auctions) {
+    private void renderUI(List<BidderDisplayDTO> auctions) {
         Platform.runLater(() -> {
             
             listContainer.getChildren().clear();
@@ -99,7 +99,7 @@ public class BiddedAuctionsListController {
                 scrollPane.setManaged(true);
 
             // 3. Lặp qua danh sách để tạo Row FXML
-                for (AuctionDisplayInfoDTO auction : auctions) {
+                for (BidderDisplayDTO auction : auctions) {
                     try {
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidded-auction-list-row.fxml"));
                         Parent rowNode = loader.load();

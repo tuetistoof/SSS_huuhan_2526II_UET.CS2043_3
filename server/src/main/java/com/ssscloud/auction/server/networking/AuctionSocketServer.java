@@ -20,13 +20,13 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
+import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
-import com.ssscloud.auction.server.dao.BiddedAuctionsListDAO;
+import com.ssscloud.auction.server.dao.DisplayDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
@@ -81,7 +81,7 @@ public class AuctionSocketServer {
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidDAO = new BidTransactionDAO();
         WatchlistDAO watchlistDAO = new WatchlistDAO();
-        BiddedAuctionsListDAO biddedAuctionsListDAO = new BiddedAuctionsListDAO();
+        DisplayDAO displayDAO = new DisplayDAO();
         NotificationDAO notificationDAO = new NotificationDAO();
 
         AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
@@ -97,11 +97,11 @@ public class AuctionSocketServer {
         UserController userController = new UserController(userService); // Naming: Clear descriptive names
         AuctionController auctionController = new AuctionController(auctionService);
         WatchlistController watchlistController = new WatchlistController(watchlistDAO);
-        BiddedAuctionsListController biddedAuctionsListController = new BiddedAuctionsListController(biddedAuctionsListDAO);
+        DisplayController displayController = new DisplayController(displayDAO);
         NotificationController notificationController = new NotificationController(notificationService, notificationDAO);
 
         ConcurrentBidManager.initialize(bidDAO, autoBidService, auctionDAO, notificationController);
-        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, biddedAuctionsListController, notificationController );
+        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, displayController, notificationController );
 
         // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService);

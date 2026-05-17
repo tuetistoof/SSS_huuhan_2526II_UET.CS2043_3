@@ -10,18 +10,21 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.Art;
 import com.ssscloud.auction.common.model.Electronic;
 import com.ssscloud.auction.common.model.Vehicle;
 import com.ssscloud.auction.common.model.base.Item;
 
 public class ItemDAO extends BaseDAO {
-
+    // Logging Standards: Declared first as a private static final attribute
     private static final Logger logger = Logger.getLogger(ItemDAO.class.getName());
 
     // --- PUBLIC METHODS ---
 
-    public boolean saveElectronic(Electronic electronic) throws SQLException, Exception {
+    public boolean saveElectronic(Electronic electronic) throws DAOException, Exception {
+        logger.log(Level.INFO, "Initiating persistence for electronic item: {0}", electronic.getId());
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, creator, description, type) VALUES (?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
@@ -65,18 +68,16 @@ public class ItemDAO extends BaseDAO {
             psElectronic.executeUpdate();
 
             connection.commit();
-            logger.log(Level.INFO, "Electronic item successfully persisted: " + electronic.getId());
+            logger.log(Level.INFO, "Electronic item successfully persisted with ID: {0}", electronic.getId());
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
-            logger.log(Level.WARNING, "Constraint violation in saveElectronic: " + sqlConstraintException.getMessage());
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Electronic item or entity already exists.");
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database failure in saveElectronic for: " + electronic.getName(), sqlException);
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving electronic item.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveElectronic: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.saveElectronic", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -85,7 +86,8 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public boolean saveVehicle(Vehicle vehicle) throws SQLException, Exception {
+    public boolean saveVehicle(Vehicle vehicle) throws DAOException, Exception {
+        logger.log(Level.INFO, "Initiating persistence for vehicle item: {0}", vehicle.getId());
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, creator, description, type) VALUES (?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
@@ -129,18 +131,16 @@ public class ItemDAO extends BaseDAO {
             psVehicle.executeUpdate();
 
             connection.commit();
-            logger.log(Level.INFO, "Vehicle item successfully persisted: " + vehicle.getId());
+            logger.log(Level.INFO, "Vehicle item successfully persisted with ID: {0}", vehicle.getId());
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
-            logger.log(Level.WARNING, "Constraint violation in saveVehicle: " + sqlConstraintException.getMessage());
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Vehicle item or entity already exists.");
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database failure in saveVehicle for: " + vehicle.getName(), sqlException);
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving vehicle item.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveVehicle: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.saveVehicle", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -149,7 +149,8 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public boolean saveArt(Art art) throws SQLException, Exception {
+    public boolean saveArt(Art art) throws DAOException, Exception {
+        logger.log(Level.INFO, "Initiating persistence for art item: {0}", art.getId());
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlItem = "INSERT INTO item (id, seller_id, creator, description, type) VALUES (?, ?, ?, ?, ?)";
         String sqlItemImageUrl = "INSERT INTO item_image_url (item_id, image_url) VALUES (?,?)";
@@ -192,18 +193,16 @@ public class ItemDAO extends BaseDAO {
             psArt.executeUpdate();
 
             connection.commit();
-            logger.log(Level.INFO, "Art item successfully persisted: " + art.getId());
+            logger.log(Level.INFO, "Art item successfully persisted with ID: {0}", art.getId());
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
-            logger.log(Level.WARNING, "Constraint violation in saveArt: " + sqlConstraintException.getMessage());
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Art item or entity already exists.");
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database failure in saveArt for: " + art.getName(), sqlException);
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving art item.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.saveArt: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.saveArt", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -212,7 +211,7 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public List<Item> getItemList() throws SQLException, Exception {
+    public List<Item> getItemList() throws DAOException, Exception {
         List<Item> itemList = new ArrayList<>();
         String sql = "SELECT " +
                 "e.id, e.name, " +
@@ -240,13 +239,12 @@ public class ItemDAO extends BaseDAO {
             while (rs.next()) {
                 itemList.add(mapResultSetToItem(rs));
             }
-            logger.log(Level.INFO, "Successfully retrieved Item list: " + itemList.size() + " results");
+            logger.log(Level.INFO, "Successfully retrieved Item list: {0} result(s).", itemList.size());
             return itemList;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error retrieving Item list: " + sqlException.getMessage(), sqlException);
-            return itemList;
+            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving global item list.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.getItemList: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.getItemList", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -254,8 +252,50 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
+    public List<Item> findBySellerId(String sellerId) throws DAOException, Exception {
+        String sql = "SELECT " +
+                "e.id, e.name, " +
+                "i.seller_id, i.creator, i.description, i.type, " +
+                "GROUP_CONCAT(img.image_url SEPARATOR ', ') AS item_image_url, " +
+                "art.certificate AS art_certificate, " +
+                "elec.is_repaired AS electronic_is_repaired, elec.warranty_period AS electronic_warranty_period, " +
+                "vehicle.is_repaired AS vehicle_is_repaired, vehicle.warranty_period AS vehicle_warranty_period " +
+                "FROM entity e " +
+                "JOIN item i ON e.id = i.id " +
+                "LEFT JOIN item_image_url img ON i.id = img.item_id " +
+                "LEFT JOIN art art ON i.id = art.id " +
+                "LEFT JOIN electronic elec ON i.id = elec.id " +
+                "LEFT JOIN vehicle vehicle ON i.id = vehicle.id " +
+                "WHERE i.seller_id = ? " +
+                "GROUP BY e.id";
 
-    public Item findById(String itemId) throws SQLException, Exception {
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<Item> itemList = new ArrayList<>();
+
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, sellerId);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                itemList.add(mapResultSetToItem(rs));
+            }
+            logger.log(Level.INFO, "Successfully retrieved {0} item(s) for sellerId: {1}", new Object[]{itemList.size(), sellerId});
+            return itemList;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving items by sellerId.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.findBySellerId", exception);
+            throw exception;
+        } finally {
+            closeConnect(connection);
+            closeResource(rs, ps);
+        }
+    }
+
+    public Item findById(String itemId) throws DAOException, Exception {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "i.seller_id, i.creator, i.description, i.type, " +
@@ -285,12 +325,12 @@ public class ItemDAO extends BaseDAO {
             if (rs.next()) {
                 return mapResultSetToItem(rs);
             }
+            logger.log(Level.INFO, "No item found for identifier: {0}", itemId);
             return null;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error in findById for itemId: " + itemId, sqlException);
-            return null;
+            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving item by ID.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.findById: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.findById", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -298,7 +338,7 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public boolean deleteById(String itemId) throws SQLException, Exception {
+    public boolean deleteById(String itemId) throws DAOException, Exception {
         String sql = "DELETE FROM entity WHERE id = ? ";
         Connection connection = null;
         PreparedStatement ps = null;
@@ -309,14 +349,14 @@ public class ItemDAO extends BaseDAO {
             ps.setString(1, itemId);
             int rows = ps.executeUpdate();
             if (rows == 0) {
-                logger.log(Level.WARNING, "Resource not found for deletion, itemId: " + itemId);
+                logger.log(Level.WARNING, "Resource not found for deletion: itemId {0}", itemId);
             }
+            logger.log(Level.INFO, "Item deletion completed for ID: {0}", itemId);
             return rows > 0;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error in deleteById for itemId: " + itemId, sqlException);
-            return false;
+            throw new DAOException(ErrorCode.ITEM_DELETE_FAILED, "Database interaction failure during item deletion.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.deleteById: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.deleteById", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -324,7 +364,7 @@ public class ItemDAO extends BaseDAO {
         }
     }
 
-    public boolean updateItemImages(String itemId, List<String> newUrlsList) throws SQLException, Exception {
+    public boolean updateItemImages(String itemId, List<String> newUrlsList) throws DAOException, Exception {
         String sqlDelete = "DELETE FROM item_image_url WHERE item_id = ?";
         String sqlInsert = "INSERT INTO item_image_url (item_id, image_url) VALUES (?, ?)";
 
@@ -351,14 +391,13 @@ public class ItemDAO extends BaseDAO {
             }
 
             connection.commit();
-            logger.log(Level.INFO, "Item images updated successfully for itemId: " + itemId);
+            logger.log(Level.INFO, "Successfully updated image records for itemId: {0}", itemId);
             return true;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database failure in updateItemImages for itemId: " + itemId, sqlException);
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.ITEM_UPDATE_FAILED, "Database interaction failure while updating item images.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in ItemDAO.updateItemImages: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.updateItemImages", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);

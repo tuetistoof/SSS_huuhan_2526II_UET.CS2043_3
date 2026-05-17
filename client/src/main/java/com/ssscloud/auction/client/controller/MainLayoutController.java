@@ -12,7 +12,7 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 
 import javafx.animation.KeyFrame;
@@ -169,7 +169,7 @@ public class MainLayoutController {
         if (notifPopup != null && notifPopup.isShowing()) {
             notifPopup.hide();
         }
-        AuctionDisplayInfoDTO dummy = new AuctionDisplayInfoDTO();
+        BidderDisplayDTO dummy = new BidderDisplayDTO();
         dummy.setId(auctionId);
         loadBiddingRoom(dummy);
     }
@@ -353,7 +353,7 @@ public class MainLayoutController {
         }
     }
 
-    public void loadBiddingRoom(AuctionDisplayInfoDTO basicInfo) {
+    public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { 
             handleNavDashboard(null);
             return;

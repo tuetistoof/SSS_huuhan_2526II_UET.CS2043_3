@@ -3,7 +3,7 @@ package com.ssscloud.auction.common.dto.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class AuctionDisplayInfoDTO {
+public class BidderDisplayDTO {
     private String id;
     private String auctionName;
     private String itemName;
@@ -15,9 +15,9 @@ public class AuctionDisplayInfoDTO {
     private long myLastBid;
     private boolean leading;
 
-    public AuctionDisplayInfoDTO () {};
+    public BidderDisplayDTO () {};
     
-    public AuctionDisplayInfoDTO (String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List <String> imageUrl)
+    public BidderDisplayDTO (String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List <String> imageUrl)
     {
         this.id = id;
         this.auctionName = auctionName;
@@ -29,7 +29,7 @@ public class AuctionDisplayInfoDTO {
         this.imageUrl = imageUrl;
     }
 
-    public AuctionDisplayInfoDTO(String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List<String> imageUrl, long myLastBid, boolean leading) {
+    public BidderDisplayDTO(String id, String auctionName, String itemName, String itemType, long currentPrice, LocalDateTime endTime, String sellerUsername, List<String> imageUrl, long myLastBid, boolean leading) {
         this(id, auctionName, itemName, itemType, currentPrice, endTime, sellerUsername, imageUrl); // gọi lại constructor cũ
         this.myLastBid = myLastBid;
         this.leading = leading;

@@ -2,7 +2,7 @@ package com.ssscloud.auction.server.service;
 
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
@@ -13,6 +13,7 @@ import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.DisplayDAO;
 import com.ssscloud.auction.server.factory.ItemDTOFactory;
 import com.ssscloud.auction.server.factory.ItemFactory;
 import com.ssscloud.auction.server.util.AuctionRegistry;
@@ -86,10 +87,10 @@ public class AuctionService {
                 throw new ServiceException(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
             }
     
-            AuctionRegistry.getInstance().register(auction); // Step 5: Register auction in the registry
+            AuctionRegistry.getInstance().register(auction); 
     
-            scheduleClose(auction); // Step 6: Schedule automatic closure
-            logger.log(Level.INFO, "Auction successfully created and registered with ID: " + auctionConfig.getId());
+            scheduleClose(auction); 
+            logger.log(Level.INFO, "Auction successfully created and registered with ID: {0}", auctionConfig.getId());
     
             UserDTO sellerDto = userService.getByUserId(sellerId);
             ItemDTO itemDto = ItemDTOFactory.toDto(item);
@@ -98,7 +99,7 @@ public class AuctionService {
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.createAuction: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.createAuction", exception);
             throw exception;
         }
     }
@@ -129,34 +130,6 @@ public class AuctionService {
         }
     }
 
-    public List<AuctionDisplayInfoDTO> getMyAuctions(String sellerId) throws ServiceException, Exception {
-        try {
-            logger.log(Level.INFO, "Retrieving auction list for sellerId: " + sellerId);
-            if (sellerId == null || sellerId.isBlank()) {
-                throw new ServiceException(ErrorCode.INVALID_DATA, "Operation failed: The seller identifier is mandatory to retrieve auctions.");
-            }
-            List<AuctionDisplayInfoDTO> myAuctionsList = auctionDAO.findSellerAuction(sellerId);
-            return myAuctionsList;
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getMyAuctions: " + exception.getMessage(), exception);
-            throw exception;
-        }
-    }
-
-    public List<AuctionDisplayInfoDTO> getActiveAuctions() throws ServiceException, Exception {
-        try {
-            logger.log(Level.INFO, "Retrieving all currently active auctions.");
-            List<AuctionDisplayInfoDTO> activeAuctionsList = auctionDAO.findActiveAuctions();
-            return activeAuctionsList;
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getActiveAuctions: " + exception.getMessage(), exception);
-            throw exception;
-        }
-    }
 
     public void scheduleClose(Auction auction) throws Exception {
         String auctionId = auction.getAuctionConfig().getId();

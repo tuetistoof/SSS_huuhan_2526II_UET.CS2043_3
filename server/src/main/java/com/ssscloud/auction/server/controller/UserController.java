@@ -1,22 +1,26 @@
 package com.ssscloud.auction.server.controller;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.dto.request.LoginRequest;
 import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
+import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.server.dao.DisplayDAO;
 import com.ssscloud.auction.server.service.UserService;
 
 public class UserController {
     private static final Logger logger = Logger.getLogger(UserController.class.getName());
 
     private final UserService userService; // Dependency Injection: Short name for Service
-
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -37,6 +41,7 @@ public class UserController {
             throw exception;
         }
     }
+
 
     public String register(Object rawRequest) throws ControllerException, Exception {
         try {
@@ -71,6 +76,7 @@ public class UserController {
         }
     }
 
+
     private void validateLoginRequest(LoginRequest loginRequest){ // Validation: validateLoginRequest
         if (loginRequest == null)
             throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The login request payload cannot be null."); // Language Policy: English
@@ -103,5 +109,10 @@ public class UserController {
     private void validateDepositRequest(long depositAmount){ // Validation: validateDepositRequest
         if (depositAmount <= 0)
             throw new ControllerException(ErrorCode.INVALID_DEPOSIT, "The deposit amount must be a positive value greater than zero."); // Language Policy: English
+    }
+
+    private void validateGetMyAuctionsRequest(String sellerId) {
+        if (sellerId == null || sellerId.isBlank())
+            throw new ControllerException(ErrorCode.INVALID_DATA, "The seller identifier is mandatory to retrieve auctions.");
     }
 }
