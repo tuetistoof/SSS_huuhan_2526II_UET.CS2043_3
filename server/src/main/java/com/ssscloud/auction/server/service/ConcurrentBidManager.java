@@ -206,18 +206,8 @@ public class ConcurrentBidManager {
 
                 BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, LocalDateTime.now(), task.bidType);
-                
-                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
-                    auctionEntity.setStatus(AuctionStatus.RUNNING);
-                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
-                }
 
                 auctionEntity.placeBid(bidTransaction);
-                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
-                if (updatedEndTime != null && auctionDAO != null) {
-                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
-                }
-
                 if (bidTransactionDAO != null) {
                     try {
                         bidTransactionDAO.saveBidTransaction(bidTransaction);
@@ -227,6 +217,16 @@ public class ConcurrentBidManager {
                 }
                 ChangeManager.getInstance().notify(auctionEntity);
                 notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(), auctionEntity.getHighestBidderId());
+                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
+                    auctionEntity.setStatus(AuctionStatus.RUNNING);
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+                }
+                
+                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+                if (updatedEndTime != null && auctionDAO != null) {
+                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
+                }
+
             } else {
                 logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
             }

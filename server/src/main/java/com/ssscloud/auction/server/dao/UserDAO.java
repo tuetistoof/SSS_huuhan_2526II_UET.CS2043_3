@@ -130,7 +130,8 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, b.locked_balance, s.bank_account, s.account_balance, s.pending_balance AS seller_balance " +
+                "b.account_balance AS bidder_balance, b.locked_balance, " +
+                "s.bank_account, s.account_balance AS seller_balance, s.pending_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -168,7 +169,8 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, b.locked_balance, s.bank_account, s.account_balance, s.pending_balance AS seller_balance " +
+                "b.account_balance AS bidder_balance, b.locked_balance, " +
+                "s.bank_account, s.account_balance AS seller_balance, s.pending_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -206,7 +208,8 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, b.locked_balance, s.bank_account, s.account_balance, s.pending_balance AS seller_balance " +
+                "b.account_balance AS bidder_balance, b.locked_balance, " +
+                "s.bank_account, s.account_balance AS seller_balance, s.pending_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -230,6 +233,7 @@ public class UserDAO extends BaseDAO {
             return null;
 
         } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "SQLException trong UserDAO.findById cho userId: " + userId, sqlException);
             throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by ID.");
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.findById", exception);
@@ -538,7 +542,7 @@ public class UserDAO extends BaseDAO {
 
         return switch (role) {
             case BIDDER -> {
-                long balance = resultSet.getLong("account_balance");
+                long balance = resultSet.getLong("bidder_balance");
                 long lockedBalance = resultSet.getLong("locked_balance");
                 yield new Bidder(userId, name, userName, password, email, role, balance, lockedBalance);
             }
