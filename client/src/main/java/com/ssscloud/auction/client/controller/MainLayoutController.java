@@ -2,6 +2,7 @@ package com.ssscloud.auction.client.controller;
 
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.util.Optional;
 
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -25,6 +26,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -243,8 +245,32 @@ public class MainLayoutController {
     }
     @FXML
     void handleLogout(ActionEvent event) {
+        socket.removeListener(sessionKickedListener);
+
+        // Dọn notification controller
         if (notificationController != null) notificationController.destroy();
 
+        // Dọn session client
+        SessionManager.getInstance().logout();
+
+        // Thông báo
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Logout Confirmation");
+        alert.setHeaderText(null); // Giữ nguyên null cho gọn
+        alert.setContentText("Are you sure you want to log out?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {            
+            try {
+                Parent loginRoot = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
+                Stage stage = (Stage) contentArea.getScene().getWindow(); // dùng contentArea có sẵn
+                stage.getScene().setRoot(loginRoot);
+                stage.setMaximized(false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @FXML
