@@ -99,7 +99,7 @@ public class AuctionSocketServer {
 
         // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService);
-        startAuctionCloser(auctionDAO, auctionService);
+        startAuctionCloser(auctionDAO, auctionService, notificationService);
 
         logger.log(Level.INFO, "[Server] Initializing main networking listener on port 5000...");
 
@@ -156,16 +156,12 @@ public class AuctionSocketServer {
      * Safety-net task: periodically scans for overdue auctions that might have been missed by 
      * standard scheduling mechanisms (e.g., edge cases during high load).
      */
-    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService) throws Exception {
+    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService, NotificationService notificationService) throws Exception {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "auction-closer");
             t.setDaemon(true);
             return t;
         });
-
-        NotificationDAO notificationDAO = new NotificationDAO();
-        QueryDAO queryDAO = new QueryDAO();
-        NotificationService notificationService = new NotificationService(queryDAO, notificationDAO);
 
         scheduler.scheduleAtFixedRate(() -> {
             try {

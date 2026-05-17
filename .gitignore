@@ -33,8 +33,8 @@ build/
 .vscode/
 
 ### Database & Environment ###
-.env
-**/src/main/resources/application.properties
+# .env
+# **/src/main/resources/application.properties
 
 # Ignore Repomix output
 repomix-output.txt

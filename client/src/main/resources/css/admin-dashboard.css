@@ -1,0 +1,411 @@
+/*
+===========================================
+  CloudBid Admin Dashboard – admin-dashboard.css
+  Palette chính: #f75667 (accent), trắng/xám nhạt (surface)
+  Nhất quán với seller-dashboard.css
+===========================================
+*/
+
+/* ── ROOT ── */
+.adm-root {
+    -fx-background-color: #f0f0f0;
+    -fx-font-family: "Arial";
+}
+
+/* ── TOPBAR ── */
+.adm-topbar {
+    -fx-background-color: #ffffff;
+    -fx-pref-height: 46px;
+    -fx-min-height: 46px;
+    -fx-border-color: #e8e8e8;
+    -fx-border-width: 0 0 1 0;
+}
+
+.adm-brand-bold {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+}
+
+.adm-brand-light {
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #666666;
+}
+
+.adm-role-badge {
+    -fx-background-color: #fde8e8;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #993556;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8;
+}
+
+.adm-topbar-user {
+    -fx-font-size: 13px;
+    -fx-text-fill: #555555;
+}
+
+/* ── BODY ── */
+.adm-body {
+    -fx-background-color: #f0f0f0;
+}
+
+/* ── METRIC CARDS ── */
+.adm-metric-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #eeeeee;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+.adm-metric-val-blue {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #185FA5;
+}
+
+.adm-metric-val-red {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #A32D2D;
+}
+
+.adm-metric-val-green {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #27500A;
+}
+
+.adm-metric-lbl {
+    -fx-font-size: 11px;
+    -fx-text-fill: #888888;
+}
+
+/* ── MAIN CARD ── */
+.adm-main-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10px;
+    -fx-border-color: #eeeeee;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+}
+
+/* ── TAB BAR ── */
+.adm-tab-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #eeeeee;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 10 10 0 0;
+}
+
+.adm-tab-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-font-size: 13px;
+    -fx-padding: 11 18 11 18;
+    -fx-background-radius: 0;
+    -fx-cursor: hand;
+}
+
+.adm-tab-btn:hover {
+    -fx-text-fill: #f75667;
+    -fx-background-color: transparent;
+}
+
+.adm-tab-btn:selected {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f75667;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent transparent #f75667 transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+/* ── TOOLBAR ── */
+.adm-toolbar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ── FILTER BUTTONS ── */
+.adm-filter-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-text-fill: #666666;
+    -fx-font-size: 12px;
+    -fx-padding: 4 12 4 12;
+    -fx-cursor: hand;
+}
+
+.adm-filter-btn:hover {
+    -fx-background-color: #f5f5f5;
+    -fx-text-fill: #333333;
+}
+
+.adm-filter-btn:selected {
+    -fx-background-color: #e6f1fb;
+    -fx-border-color: #185FA5;
+    -fx-text-fill: #185FA5;
+    -fx-font-weight: bold;
+}
+
+/* ── SEARCH FIELD ── */
+.adm-search {
+    -fx-background-color: #f8f8f8;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-font-size: 12px;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #aaaaaa;
+    -fx-padding: 5 10 5 10;
+    -fx-pref-height: 30px;
+}
+
+.adm-search:focused {
+    -fx-border-color: #f75667;
+    -fx-background-color: #ffffff;
+}
+
+/* ── TABLE ── */
+.adm-table {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: #f0f0f0;
+}
+
+.adm-table .column-header-background {
+    -fx-background-color: #ffffff;
+}
+
+.adm-table .column-header {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #eeeeee transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-size: 36px;
+}
+
+.adm-table .column-header .label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 6;
+}
+
+.adm-table .filler {
+    -fx-background-color: #ffffff;
+}
+
+.adm-table .table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent #f5f5f5 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 36px;
+}
+
+.adm-table .table-row-cell:odd {
+    -fx-background-color: #fafafa;
+}
+
+.adm-table .table-row-cell:hover {
+    -fx-background-color: #fff3f4;
+}
+
+.adm-table .table-row-cell:selected {
+    -fx-background-color: #ffdde0;
+}
+
+.adm-table .table-row-cell:selected .text {
+    -fx-fill: #333333;
+}
+
+.adm-table-placeholder {
+    -fx-font-size: 13px;
+    -fx-text-fill: #aaaaaa;
+}
+
+/* ── STATUS BADGES (dùng trong CellFactory qua Label.getStyleClass()) ── */
+.badge-running {
+    -fx-background-color: #e6f1fb;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #185FA5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-open {
+    -fx-background-color: #eaf3de;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #27500A;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-finished {
+    -fx-background-color: #fcebeb;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #A32D2D;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-canceled {
+    -fx-background-color: #f1efe8;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #5F5E5A;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-active {
+    -fx-background-color: #eaf3de;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #27500A;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-banned {
+    -fx-background-color: #fcebeb;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #A32D2D;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-seller {
+    -fx-background-color: #eeedfe;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #3C3489;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.badge-bidder {
+    -fx-background-color: #e1f5ee;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #085041;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+/* ── ACTION BUTTONS trong cell ── */
+.btn-cancel-row {
+    -fx-background-color: transparent;
+    -fx-border-color: #f09595;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #A32D2D;
+    -fx-font-size: 11px;
+    -fx-padding: 3 10 3 10;
+    -fx-cursor: hand;
+}
+
+.btn-cancel-row:hover {
+    -fx-background-color: #fcebeb;
+}
+
+.btn-ban-row {
+    -fx-background-color: transparent;
+    -fx-border-color: #f09595;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #A32D2D;
+    -fx-font-size: 11px;
+    -fx-padding: 3 10 3 10;
+    -fx-cursor: hand;
+}
+
+.btn-ban-row:hover {
+    -fx-background-color: #fcebeb;
+}
+
+.btn-unban-row {
+    -fx-background-color: transparent;
+    -fx-border-color: #b4b2a9;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #444441;
+    -fx-font-size: 11px;
+    -fx-padding: 3 10 3 10;
+    -fx-cursor: hand;
+}
+
+.btn-unban-row:hover {
+    -fx-background-color: #f1efe8;
+}
+
+/* ── PRIMARY BUTTON (tạo mới, v.v.) ── */
+.btn-primary {
+    -fx-background-color: #f75667;
+    -fx-background-radius: 6px;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 16 6 16;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #e0455a;
+}
+
+.btn-primary:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* ── SCROLLBAR ── */
+.scroll-bar:vertical {
+    -fx-pref-width: 6px;
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #dedede;
+    -fx-background-radius: 3px;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #c0c0c0;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-opacity: 0;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+/* ── FOCUS ── */
+.button:focused,
+.toggle-button:focused,
+.text-field:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
