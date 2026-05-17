@@ -377,7 +377,7 @@ public class SellerDashboardController {
 
     private void loadBiddingRoomAsViewer(AuctionDTO auction) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/BiddingRoom.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
             Parent roomView = loader.load();
 
             BiddingRoomController ctrl = loader.getController();
@@ -390,8 +390,7 @@ public class SellerDashboardController {
             ctrl.setAuction(auction);
             Platform.runLater(ctrl::enableSellerViewMode);
 
-            StackPane contentArea =
-                    (StackPane) tblAuctions.getScene().lookup("#contentArea");
+            StackPane contentArea = (StackPane) tblAuctions.getScene().lookup("#contentArea");
  
             if (contentArea != null) {
                 contentArea.getChildren().setAll(roomView);

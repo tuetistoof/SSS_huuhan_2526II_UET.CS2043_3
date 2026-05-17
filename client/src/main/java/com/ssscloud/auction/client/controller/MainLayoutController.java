@@ -324,6 +324,7 @@ public class MainLayoutController {
         try {
             contentArea.getChildren().clear();
             String fxmlPath = (user.getRole() == UserRole.BIDDER) ? "/fxml/BidderDashboard.fxml" : "/fxml/SellerDashboard.fxml";
+            //String fxmlPath = (user.getRole() == UserRole.BIDDER) ? "/fxml/BidderDashboard.fxml" : "/fxml/SellerDashboard.fxml";
             
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent dashboardView = loader.load();
@@ -331,6 +332,11 @@ public class MainLayoutController {
             if (user.getRole() == UserRole.BIDDER) {
                 BidderDashboardController ctrl = loader.getController();
                 ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                currentController = ctrl;
+            
+            } else if (user.getRole() == UserRole.SELLER) {
+                SellerDashboardController ctrl = loader.getController();
+                ctrl.setOnBackCallback(() -> handleNavDashboard(null)); 
                 currentController = ctrl;
             }
             
