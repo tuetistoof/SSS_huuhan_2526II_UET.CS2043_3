@@ -8,12 +8,12 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 
 public class BiddedAuctionsListDAO extends BaseDAO{
     // ── Query ─────────────────────────────────────────────────────────────────
-    public List<AuctionDisplayInfoDTO> findBiddedAuctionsDetailsByUser(String userId) {
-        List<AuctionDisplayInfoDTO> list = new ArrayList<>();
+    public List<BidderDisplayDTO> findBiddedAuctionsDetailsByUser(String userId) {
+        List<BidderDisplayDTO> list = new ArrayList<>();
 
         String sql =
                     "SELECT a.id, " +
@@ -80,7 +80,7 @@ public class BiddedAuctionsListDAO extends BaseDAO{
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                AuctionDisplayInfoDTO dto = new AuctionDisplayInfoDTO();
+                BidderDisplayDTO dto = new BidderDisplayDTO();
                 dto.setId(rs.getString("id"));
                 dto.setAuctionName(rs.getString("auction_name"));
                 dto.setItemName(rs.getString("item_name"));

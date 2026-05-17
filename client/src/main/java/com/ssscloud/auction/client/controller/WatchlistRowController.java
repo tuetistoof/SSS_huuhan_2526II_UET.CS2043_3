@@ -3,7 +3,7 @@ package com.ssscloud.auction.client.controller;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -16,12 +16,12 @@ public class WatchlistRowController {
     @FXML private Label lblAuctionName, lblItemType, lblSeller, lblCurrentPrice, lblEndTime;
     @FXML private StackPane imgThumb;
 
-    private AuctionDisplayInfoDTO data;
+    private BidderDisplayDTO data;
     private Runnable onUnfollowSuccess;
     private Runnable onViewRoom;
     private String finalImageURL;
 
-    public void setData(AuctionDisplayInfoDTO data) {
+    public void setData(BidderDisplayDTO data) {
         this.data = data;
         lblAuctionName.setText(data.getAuctionName());
         lblItemType.setText(data.getItemType());

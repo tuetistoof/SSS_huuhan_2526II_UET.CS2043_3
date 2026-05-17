@@ -1,7 +1,7 @@
 package com.ssscloud.auction.server.controller;
 
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -23,7 +23,7 @@ public class BiddedAuctionsListController {
     // Hiển thị bidded auctions
     public String getBiddedAuctionslist(String userId) throws ControllerException {
         logger.log(Level.INFO, "Retrieving full bidded auctions for userId: {0}", userId);
-        List<AuctionDisplayInfoDTO> auctionIdList = biddedAuctionsListDAO.findBiddedAuctionsDetailsByUser(userId);
+        List<BidderDisplayDTO> auctionIdList = biddedAuctionsListDAO.findBiddedAuctionsDetailsByUser(userId);
         return JsonUtils.toJson(ApiResponse.success(new ListResponse<>(auctionIdList), "User's bidded auctions retrieved successfully."));
     }
 }

@@ -4,7 +4,7 @@ import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import javafx.application.Platform;
@@ -36,9 +36,9 @@ public class WatchlistController {
     @FXML private Label lblTotalCount;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private Consumer<AuctionDisplayInfoDTO> onOpenAuction;
+    private Consumer<BidderDisplayDTO> onOpenAuction;
 
-    public void setOnOpenAuction(Consumer<AuctionDisplayInfoDTO> onOpenAuction) {
+    public void setOnOpenAuction(Consumer<BidderDisplayDTO> onOpenAuction) {
         this.onOpenAuction = onOpenAuction;
     }
 
@@ -64,11 +64,11 @@ public class WatchlistController {
             String dataJson = JsonUtils.toJson(serverMsg.getData());
             System.out.println("[WatchlistController] Raw data JSON: " + dataJson);
             
-            Type responseType = new TypeToken<ApiResponse<ListResponse<AuctionDisplayInfoDTO>>>(){}.getType();
-            ApiResponse<ListResponse<AuctionDisplayInfoDTO>> apiResp = JsonUtils.fromJsonGeneric(dataJson, responseType);
+            Type responseType = new TypeToken<ApiResponse<ListResponse<BidderDisplayDTO>>>(){}.getType();
+            ApiResponse<ListResponse<BidderDisplayDTO>> apiResp = JsonUtils.fromJsonGeneric(dataJson, responseType);
 
             if (apiResp != null && apiResp.isSuccess() && apiResp.getData() != null) {
-                List<AuctionDisplayInfoDTO> auctions = apiResp.getData().getData();
+                List<BidderDisplayDTO> auctions = apiResp.getData().getData();
                 renderUI(auctions != null ? auctions : new ArrayList<>());
             } else {
                 renderUI(new ArrayList<>());
@@ -81,7 +81,7 @@ public class WatchlistController {
         }
     }).start();
 }
-    private void renderUI(List<AuctionDisplayInfoDTO> auctions) {
+    private void renderUI(List<BidderDisplayDTO> auctions) {
         Platform.runLater(() -> {
             listContainer.getChildren().clear();
             lblTotalCount.setText(String.valueOf(auctions.size()));
@@ -97,7 +97,7 @@ public class WatchlistController {
                 scrollPane.setVisible(true);
                 scrollPane.setManaged(true);
 
-                for (AuctionDisplayInfoDTO auction : auctions) {
+                for (BidderDisplayDTO auction : auctions) {
                     try {
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/watchlist-row.fxml"));
                         Parent rowNode = loader.load();

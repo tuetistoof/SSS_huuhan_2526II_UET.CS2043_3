@@ -1,16 +1,23 @@
 /*
 ===========================================
-  CloudBid Seller Center – styles.css
+  CloudBid Seller Center – seller-dashboard.css
+  Màu chủ đạo: hồng pastel  #f2a8b0 / #fde8e8
+  Accent:                    #f75667
 ===========================================
 */
 
-/* ── ROOT ── */
+/* ══════════════════════════════════════════
+   ROOT
+══════════════════════════════════════════ */
 .seller-root {
     -fx-background-color: #f0f0f0;
     -fx-font-family: "Arial";
 }
 
-/* ── TOPBAR ── */
+
+/* ══════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════ */
 .topbar {
     -fx-background-color: #ffffff;
     -fx-pref-height: 46px;
@@ -25,10 +32,23 @@
     -fx-text-fill: #1a1a1a;
 }
 
+/* "Bid" in đỏ hồng */
+.topbar-brand-pink {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f75667;
+}
+
+.topbar-sep {
+    -fx-font-size: 14px;
+    -fx-text-fill: #e0e0e0;
+    -fx-padding: 0 4 0 4;
+}
+
 .topbar-brand-light {
     -fx-font-size: 14px;
     -fx-font-weight: normal;
-    -fx-text-fill: #666666;
+    -fx-text-fill: #888888;
 }
 
 .topbar-shop {
@@ -37,8 +57,11 @@
 }
 
 .avatar-circle {
-    -fx-background-color: #e0e0e0;
+    -fx-background-color: #fde8e8;
     -fx-background-radius: 14px;
+    -fx-border-color: #f2a8b0;
+    -fx-border-radius: 14px;
+    -fx-border-width: 1.5px;
     -fx-min-width: 28px;
     -fx-min-height: 28px;
     -fx-max-width: 28px;
@@ -46,14 +69,19 @@
     -fx-alignment: center;
     -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-text-fill: #555555;
+    -fx-text-fill: #f75667;
 }
 
-/* ── SIDEBAR ── */
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
 .sidebar {
     -fx-background-color: #ffffff;
     -fx-border-color: #e8e8e8;
     -fx-border-width: 0 1 0 0;
+    -fx-min-width: 160px;
+    -fx-pref-width: 160px;
 }
 
 .nav-section {
@@ -69,9 +97,10 @@
     -fx-text-fill: #333333;
     -fx-font-size: 13px;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 7 16 7 16;
+    -fx-padding: 8 16 8 16;
     -fx-cursor: hand;
     -fx-background-radius: 0;
+    -fx-pref-width: Infinity;
 }
 
 .nav-item:hover {
@@ -79,18 +108,24 @@
     -fx-text-fill: #f75667;
 }
 
-/* Active item: viền đỏ trái 3px */
+/* Active: viền trái đỏ 3px */
 .nav-active {
     -fx-background-color: #fff0f1;
     -fx-text-fill: #f75667;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 7 16 7 13;
+    -fx-padding: 8 16 8 13;
     -fx-cursor: hand;
     -fx-background-radius: 0;
     -fx-border-color: transparent transparent transparent #f75667;
     -fx-border-width: 0 0 0 3;
+    -fx-pref-width: Infinity;
+}
+
+/* Wrapper cho logout để có padding */
+.nav-logout-wrap {
+    -fx-background-color: transparent;
 }
 
 /* Logout button */
@@ -113,15 +148,18 @@
     -fx-text-fill: #ffffff;
 }
 
-/* ── MAIN CONTENT BACKGROUND ── */
+
+/* ══════════════════════════════════════════
+   MAIN CONTENT BACKGROUND
+══════════════════════════════════════════ */
 .main-content {
     -fx-background-color: #f0f0f0;
 }
 
-/* ── PINK DASHBOARD CARD ──
-   Màu hồng #f2a8b0, bo góc 12px
-   Metric cards bên trong dùng #fde8e8 (hồng nhạt hơn) để tương phản
-*/
+
+/* ══════════════════════════════════════════
+   DASHBOARD CARD  (hồng #f2a8b0, bo 12px)
+══════════════════════════════════════════ */
 .dashboard-card {
     -fx-background-color: #f2a8b0;
     -fx-background-radius: 12px;
@@ -133,7 +171,10 @@
     -fx-text-fill: #1a1a1a;
 }
 
-/* ── PRIMARY BUTTON ── */
+
+/* ══════════════════════════════════════════
+   PRIMARY BUTTON
+══════════════════════════════════════════ */
 .btn-primary {
     -fx-background-color: #f75667;
     -fx-text-fill: #ffffff;
@@ -145,36 +186,51 @@
     -fx-border-color: transparent;
 }
 
-.btn-primary:hover  { -fx-background-color: #e0455a; }
+.btn-primary:hover   { -fx-background-color: #e0455a; }
 .btn-primary:pressed { -fx-background-color: #c73a4d; }
 
-/* ── METRIC CARDS ──
-   Nền hồng nhạt #fde8e8, viền nhẹ, bo góc 8px
-   maxHeight/minHeight được đặt từ FXML để giữ layout gọn
-*/
+
+/* ══════════════════════════════════════════
+   METRIC CARDS  (hồng nhạt #fde8e8, bo 8px)
+══════════════════════════════════════════ */
 .metric-card {
     -fx-background-color: #fde8e8;
     -fx-background-radius: 8px;
     -fx-border-color: transparent;
 }
 
+/* Giá trị lớn – 4 biến thể màu */
 .metric-value-green {
-    -fx-font-size: 26px;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #2e9e44;
 }
 
+.metric-value-red {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e04040;
+}
+
 .metric-value-dash {
-    -fx-font-size: 26px;
+    -fx-font-size: 20px;
     -fx-font-weight: bold;
     -fx-text-fill: #222222;
 }
 
+.metric-value-bank {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+/* Label mô tả (nhỏ, xám) */
 .metric-label {
     -fx-font-size: 11px;
     -fx-text-fill: #555555;
 }
 
+/* Phụ đề (10px) – 3 biến thể màu */
 .metric-sub {
     -fx-font-size: 10px;
     -fx-text-fill: #888888;
@@ -185,15 +241,39 @@
     -fx-text-fill: #2e9e44;
 }
 
-/* ── WHITE CONTENT AREA (tabs + table) ──
-   Nằm ngay dưới dashboard-card, nền trắng
-*/
+.metric-sub-red {
+    -fx-font-size: 10px;
+    -fx-text-fill: #e04040;
+}
+
+/* Link "Thay đổi STK" */
+.metric-action-link {
+    -fx-font-size: 11px;
+    -fx-text-fill: #f75667;
+    -fx-underline: true;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.metric-action-link:hover {
+    -fx-text-fill: #c73a4d;
+}
+
+
+/* ══════════════════════════════════════════
+   CONTENT AREA  (trắng, bo 12px)
+══════════════════════════════════════════ */
 .content-area {
     -fx-background-color: #ffffff;
     -fx-background-radius: 12px;
 }
 
-/* ── TAB BAR ── */
+
+/* ══════════════════════════════════════════
+   TAB BAR
+══════════════════════════════════════════ */
 .tab-bar {
     -fx-background-color: #ffffff;
     -fx-border-color: #e8e8e8;
@@ -206,7 +286,7 @@
     -fx-border-color: transparent;
     -fx-text-fill: #777777;
     -fx-font-size: 13px;
-    -fx-padding: 9 16 9 16;
+    -fx-padding: 9 18 9 18;
     -fx-background-radius: 0;
     -fx-cursor: hand;
 }
@@ -216,6 +296,7 @@
     -fx-background-color: transparent;
 }
 
+/* Tab được chọn: chữ đỏ hồng, gạch dưới 2px */
 .tab-btn:selected {
     -fx-background-color: transparent;
     -fx-text-fill: #f75667;
@@ -231,7 +312,10 @@
     -fx-faint-focus-color: transparent;
 }
 
-/* ── TABLE ── */
+
+/* ══════════════════════════════════════════
+   AUCTION TABLE
+══════════════════════════════════════════ */
 .auction-table {
     -fx-background-color: #ffffff;
     -fx-border-color: transparent;
@@ -246,7 +330,7 @@
     -fx-background-color: #ffffff;
     -fx-border-color: transparent transparent #eeeeee transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-size: 38px;
+    -fx-size: 40px;
 }
 
 .auction-table .column-header .label {
@@ -265,7 +349,7 @@
     -fx-background-color: #ffffff;
     -fx-border-color: transparent transparent #f5f5f5 transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-cell-size: 36px;
+    -fx-cell-size: 38px;
 }
 
 .auction-table .table-row-cell:odd {
@@ -273,7 +357,7 @@
 }
 
 .auction-table .table-row-cell:hover {
-    -fx-background-color: #fff3f4;
+    -fx-background-color: #fff0f1;
 }
 
 .auction-table .table-row-cell:selected {
@@ -289,33 +373,39 @@
     -fx-text-fill: #aaaaaa;
 }
 
-/* ── SCROLLBAR ── */
+
+/* ══════════════════════════════════════════
+   SCROLLBAR – mỏng, tối giản
+══════════════════════════════════════════ */
 .scroll-bar:vertical {
     -fx-pref-width: 6px;
     -fx-background-color: transparent;
 }
+
 .scroll-bar:vertical .thumb {
-    -fx-background-color: #dedede;
+    -fx-background-color: #e0c8cc;
     -fx-background-radius: 3px;
 }
+
 .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #c0c0c0;
+    -fx-background-color: #c9a0a8;
 }
+
 .scroll-bar .increment-button,
 .scroll-bar .decrement-button {
     -fx-pref-height: 0;
     -fx-pref-width: 0;
     -fx-opacity: 0;
 }
+
 .scroll-bar .track {
     -fx-background-color: transparent;
 }
 
-/*
-===========================================
-  Login / Signup pages (giữ nguyên)
-===========================================
-*/
+
+/* ══════════════════════════════════════════
+   LOGIN / SIGNUP  (giữ nguyên từ bản gốc)
+══════════════════════════════════════════ */
 .bg-login-signup {
     -fx-background-image: url("../images/BPbg2.png");
     -fx-background-size: cover;

@@ -8,7 +8,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 
 public class AuctionCardController {
 
@@ -19,7 +19,7 @@ public class AuctionCardController {
     @FXML private Label lblSellerUsername;
     @FXML private VBox auctionCard;
 
-    public void setAuctionDisplayData(AuctionDisplayInfoDTO auctionInfo, Consumer<AuctionDisplayInfoDTO> onClickListener) {
+    public void setAuctionDisplayData(BidderDisplayDTO auctionInfo, Consumer<BidderDisplayDTO> onClickListener) {
         String finalImageURL = "https://i.pinimg.com/736x/14/dd/b1/14ddb197526f8ca30d420c750f32d36c.jpg";
         String auctionName = "Không rõ tên";
         String itemName = "Không rõ tên hàng";

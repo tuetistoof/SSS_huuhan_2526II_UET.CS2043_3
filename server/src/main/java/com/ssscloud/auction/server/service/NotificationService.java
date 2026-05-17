@@ -24,17 +24,17 @@ import com.ssscloud.auction.server.util.SessionRegistry;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class NotificationService {
-    private static final Logger logger = Logger.getLogger(NotificationService.class.getName()); // Logging Standards: Declared first
+    // Logging Standards: Declared first as a private static final attribute
+    private static final Logger logger = Logger.getLogger(NotificationService.class.getName()); 
 
-    private WatchlistDAO watchlistDAO; // Dependency Injection: Short name
-    private NotificationDAO notificationDAO;
-
+    private final WatchlistDAO watchlistDAO; // Dependency Injection: Short name
+    private final NotificationDAO notificationDAO;
 
     public NotificationService(WatchlistDAO watchlistDAO, NotificationDAO notificationDAO) {
         this.watchlistDAO    = watchlistDAO;
         this.notificationDAO = notificationDAO; 
-        logger.log(Level.INFO, "[NotificationService] Initialized — watchlistDAO={0}, notificationDAO={1}",
-                new Object[]{watchlistDAO != null ? "OK" : "NULL", notificationDAO != null ? "OK" : "NULL"});
+        logger.log(Level.INFO, "NotificationService initialized with dependencies: WatchlistDAO={0}, NotificationDAO={1}",
+                new Object[]{watchlistDAO != null ? "READY" : "MISSING", notificationDAO != null ? "READY" : "MISSING"});
     }
 
     public void notifyWatchers(Auction auction, String highestBidderId) throws ServiceException, Exception {
@@ -59,11 +59,11 @@ public class NotificationService {
                 try {
                     PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
                     if (writer == null) { 
-                        savePending(watcherId, "OUTBID", auctionId, auctionName, currentPrice, null);
+                        savePendingNotification(watcherId, "OUTBID", auctionId, auctionName, currentPrice, null);
                         logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
                         continue;
                     }
-                    pushOutbid(writer, auctionId, auctionName, currentPrice);
+                    pushOutbidNotification(writer, auctionId, auctionName, currentPrice);
                 } catch (Exception deliveryException) { 
                     logger.log(Level.WARNING, "[NotificationService] Failed to deliver outbid notification to watcherId " + watcherId + " for auctionId " + auctionId, deliveryException);
                 }
@@ -71,9 +71,8 @@ public class NotificationService {
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
-            // Final safety net for system-level failures
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationService.notifyWatchers: " + exception.getMessage(), exception);
-            throw new ServiceException(ErrorCode.NOTIFICATION_FAILED, "An unexpected system error occurred while notifying watchers.");
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in NotificationService.notifyWatchers", exception);
+            throw exception;
         }
     }
 
@@ -97,27 +96,26 @@ public class NotificationService {
                 try {
                     PrintWriter writer = SessionRegistry.getInstance().getWriter(watcherId);
                     if (writer == null) { 
-                        savePending(watcherId, "ENDED", auctionId, auctionName, finalPrice, winnerName);
+                        savePendingNotification(watcherId, "ENDED", auctionId, auctionName, finalPrice, winnerName);
                         logger.log(Level.FINE, "Notification skipped: WatcherId " + watcherId + " is currently offline.");
                         continue;
                     }
-                    pushAuctionEnded(writer, auctionId, auctionName, finalPrice, winnerName);
+                    pushAuctionEndedNotification(writer, auctionId, auctionName, finalPrice, winnerName);
                 } catch (Exception exception) { 
-                    logger.log(Level.WARNING, "[NotificationService] Failed to deliver auction ended notification to watcherId " + watcherId + " for auctionId " + auctionId, exception); // Specific problem logging
+                    logger.log(Level.WARNING, "Failed to deliver auction end notification to watcherId " + watcherId, exception);
                 }
             }
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
-            // Final safety net for system-level failures
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationService.notifyAuctionEnded: " + exception.getMessage(), exception);
-            throw new ServiceException(ErrorCode.NOTIFICATION_FAILED, "An unexpected system error occurred during auction end notification.");
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in NotificationService.notifyAuctionEnded", exception);
+            throw exception;
         }
     }
 
     // --- PRIVATE METHODS ---
 
-    private void pushOutbid(PrintWriter writer, String auctionId,
+    private void pushOutbidNotification(PrintWriter writer, String auctionId,
                             String auctionName, long currentPrice) {
         Map<String, Object> jsonPayload = new HashMap<>(); // Internal Logic: jsonPayload
         jsonPayload.put("auctionId", auctionId);
@@ -130,11 +128,11 @@ public class NotificationService {
                 writer.println(JsonUtils.toJson(ClientMessage.push("OUTBID_NOTIFICATION", jsonPayload)));
             }
         } catch (Exception exception) {
-            logger.log(Level.WARNING, "[NotificationService] Error transmitting outbid notification to client.", exception);
+            logger.log(Level.WARNING, "Transmission failure: Unable to deliver outbid notification payload.", exception);
         }
     }
  
-    private void pushAuctionEnded(PrintWriter writer, String auctionId,
+    private void pushAuctionEndedNotification(PrintWriter writer, String auctionId,
                                   String auctionName, long finalPrice, String winnerName) {
         Map<String, Object> jsonPayload = new HashMap<>(); // Internal Logic: jsonPayload
         jsonPayload.put("auctionId", auctionId);
@@ -145,32 +143,33 @@ public class NotificationService {
  
         try {
             synchronized (writer) {
-                System.out.println("Sending auction ended notification: " + jsonPayload);
                 writer.println(JsonUtils.toJson(ClientMessage.push("AUCTION_ENDED_NOTIFICATION", jsonPayload)));
             }
         } catch (Exception exception) {
-            logger.log(Level.WARNING, "[NotificationService] Error transmitting auction ended notification to client.", exception);
+            logger.log(Level.WARNING, "Transmission failure: Unable to deliver auction end notification payload.", exception);
         }
     }
-    private void savePending(String userId, String type, String auctionId,
+
+    private void savePendingNotification(String userId, String type, String auctionId,
                              String auctionName, long price, String winner) {
         if (notificationDAO == null) {
-            logger.log(Level.WARNING, "[DEBUG] savePending SKIP — notificationDAO is NULL. userId={0} type={1}",
-                    new Object[]{userId, type});
+            logger.log(Level.WARNING, "Persistence skipped: NotificationDAO dependency is not available for userId: {0}", userId);
             return;
         }
-        logger.log(Level.INFO, "[DEBUG] savePending userId={0} type={1} auction={2}",
-                new Object[]{userId, type, auctionName});
-        NotificationDTO dto = new NotificationDTO();
-        dto.setUserId     (userId);
-        dto.setType       (type);
-        dto.setAuctionId  (auctionId);
-        dto.setAuctionName(auctionName);
-        dto.setPrice      (price);
-        dto.setWinner     (winner);
-        dto.setCreatedAt  (LocalDateTime.now());
-        boolean saved = notificationDAO.save(dto);
-        if (!saved) logger.log(Level.WARNING, "Không lưu được pending notification cho user " + userId);
+
+        try {
+            NotificationDTO notificationDto = new NotificationDTO(); // DTO suffix
+            notificationDto.setUserId(userId);
+            notificationDto.setType(type);
+            notificationDto.setAuctionId(auctionId);
+            notificationDto.setAuctionName(auctionName);
+            notificationDto.setPrice(price);
+            notificationDto.setWinner(winner);
+            notificationDto.setCreatedAt(LocalDateTime.now());
+            notificationDAO.save(notificationDto);
+        } catch (Exception exception) {
+            logger.log(Level.WARNING, "Database failure: Unable to save pending notification for offline user: " + userId, exception);
+        }
     }
 
     private boolean isInRoom(String auctionId, String watcherId) {

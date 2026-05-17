@@ -12,7 +12,7 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 
 import javafx.animation.KeyFrame;
@@ -57,15 +57,14 @@ public class MainLayoutController {
     @FXML private Label lblSidebarTitleW;
     @FXML private Label lblSidebarTitleWI;
     @FXML private Label lblAccountBalance;
+    @FXML private Label lblLockBalance;
+    @FXML private Label lblAvailableBalance;
     @FXML private Label lblUsername;
     @FXML private Label lblOverview;
     @FXML private Label lblAuction;
 
     @FXML private HBox navActiveBids;
     @FXML private HBox navDashboard;
-    @FXML private HBox navHistory;
-    @FXML private HBox navMyAuctionRooms;
-    @FXML private HBox navMyItems;
     @FXML private HBox navNewAuctionRoom;
     @FXML private Circle navUserInfo;
     @FXML private HBox navWatchlist;
@@ -102,7 +101,11 @@ public class MainLayoutController {
     }
     public void initialize() {
         lblUsername.setText(user.getUsername());
+        //
         lblAccountBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
+        lblAvailableBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
+        lblLockBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
+        //
         applyRole(user.getRole());
         initNotification();
         handleNavDashboard(null);
@@ -144,11 +147,12 @@ public class MainLayoutController {
     private void initNotification() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/fxml/notification-popup.fxml"));
-            notifPopupRoot = loader.load();
+            getClass().getResource("/fxml/notification-popup.fxml"));
+            notifPopupRoot = loader.load(); 
             notificationController = loader.getController();
             notificationController.init(this::navigateToAuction);
-
+            
+            // Gắn badge listener: mỗi lần badge thay đổi → cập nhật lblBellBadge
             notificationController.setBadgeListener(count -> {
                 if (lblBellBadge != null) {
                     lblBellBadge.setText(count > 0 ? String.valueOf(count) : "");
@@ -156,10 +160,6 @@ public class MainLayoutController {
                     lblBellBadge.setManaged(count > 0);
                 }
             });
-
-            // Listener đã đăng ký → giờ mới fetch pending an toàn
-            notificationController.fetchPending();
-
         } catch (IOException e) {
             System.err.println("Không load được notification-popup.fxml: " + e.getMessage());
         }
@@ -169,7 +169,7 @@ public class MainLayoutController {
         if (notifPopup != null && notifPopup.isShowing()) {
             notifPopup.hide();
         }
-        AuctionDisplayInfoDTO dummy = new AuctionDisplayInfoDTO();
+        BidderDisplayDTO dummy = new BidderDisplayDTO();
         dummy.setId(auctionId);
         loadBiddingRoom(dummy);
     }
@@ -178,18 +178,10 @@ public class MainLayoutController {
         // Ẩn hết trước
         navWonItems.setVisible(false);
         navWonItems.setManaged(false);
-        navHistory.setVisible(false);
-        navHistory.setManaged(false);
         navWatchlist.setVisible(false);
         navWatchlist.setManaged(false);
-        navMyItems.setVisible(false);
-        navMyItems.setManaged(false);
         navNewAuctionRoom.setVisible(false);
         navNewAuctionRoom.setManaged(false);
-        lblAccountBalance.setVisible(false);
-        lblAccountBalance.setManaged(false);
-        navMyAuctionRooms.setVisible(false);
-        navMyAuctionRooms.setManaged(false);
         navActiveBids.setVisible(false);
         navActiveBids.setManaged(false);
 
@@ -206,18 +198,11 @@ public class MainLayoutController {
                 navActiveBids.setManaged(true);
             }
             case SELLER -> {
-                navMyItems.setVisible(true);
-                navMyItems.setManaged(true);
-                navHistory.setVisible(true);
-                navHistory.setManaged(true);
-                navMyAuctionRooms.setVisible(true);
-                navMyAuctionRooms.setManaged(true);
                 navNewAuctionRoom.setVisible(true);
                 navNewAuctionRoom.setManaged(true);
             }
         }
     }
-    
     //__CLEANUP___
 
     private void cleanupCurrentController() {
@@ -279,7 +264,6 @@ public class MainLayoutController {
             e.printStackTrace();
             System.err.println("Lỗi load file bidded-auction-list.fxml");
         }
-
     }
 
     @FXML
@@ -331,33 +315,6 @@ public class MainLayoutController {
             e.printStackTrace();
         }
     }
-    @FXML
-    void handleNavHistory(MouseEvent event) {
-
-    }
-
-    @FXML
-    void handleNavMyAuctionRooms(MouseEvent event) {
-        updateActiveStyle(navMyAuctionRooms);
-        clearContent();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-list.fxml"));
-            Parent view = loader.load();
-            AuctionListController ctrl = loader.getController();
-            // ctrl.setOnOpenAuction(this::loadAuctionList);
-            currentController = ctrl;
-            contentArea.getChildren().add(view);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-    // bỏ đi
-    @FXML
-    void handleNavMyItems(MouseEvent event) {
-
-    }
 
     @FXML
     void handleNavNewAuctionRoom(MouseEvent event) {
@@ -396,7 +353,7 @@ public class MainLayoutController {
         }
     }
 
-    public void loadBiddingRoom(AuctionDisplayInfoDTO basicInfo) {
+    public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { 
             handleNavDashboard(null);
             return;
@@ -461,8 +418,7 @@ public class MainLayoutController {
 
         HBox[] allNavItems = {
             navDashboard, navActiveBids, navWatchlist, 
-            navWonItems, navHistory, navMyItems, 
-            navNewAuctionRoom, navMyAuctionRooms
+            navWonItems, navNewAuctionRoom
         };
 
         // 2. Đi dọn dẹp: Xóa cái class "active" ở TẤT CẢ các menu
@@ -492,28 +448,6 @@ public class MainLayoutController {
             ctrl.setOnOpenAuction(this::loadBiddingRoom);
 
             contentArea.getChildren().add(watchlistView);
-        // Chưa load đc
-        //     CreateAuctionController controller = loader.getController();
-        //     controller.setOnSuccessCallback(newAuction -> {
-        //         updateActiveStyle(null);
-        //         clearContent();
-        //         try {
-        //             FXMLLoader roomLoader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));z`
-        //             Parent view = roomLoader.load();
-
-        //             BiddingRoomController ctrl = roomLoader.getController();
-        //             ctrl.setAuction(newAuction); 
-        //             ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); 
-                    
-        //             currentController = ctrl;
-        //             contentArea.getChildren().add(view);
-        //         } catch (IOException e) {
-        //             e.printStackTrace();
-        //         }
-        //     });
-
-        //     contentArea.getChildren().clear();
-        //     contentArea.getChildren().add(createAuctionView);
             
         } catch (IOException e) {
             e.printStackTrace();
