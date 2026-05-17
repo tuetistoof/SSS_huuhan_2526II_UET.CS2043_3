@@ -20,10 +20,10 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
+import com.ssscloud.auction.server.controller.QueryController;
 import com.ssscloud.auction.server.controller.UserController;
-import com.ssscloud.auction.server.controller.WatchlistController;
+import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
     
@@ -37,8 +37,7 @@ public class MessageHandler {
     private final BidController bidController;
     private final UserController userController;
     private final AuctionController auctionController;
-    private final WatchlistController watchlistController;
-    private final DisplayController displayController;
+    private final QueryController queryController;
     private final NotificationController notificationController;
 
 
@@ -46,14 +45,12 @@ public class MessageHandler {
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
-            WatchlistController watchlistController,
-            DisplayController displayController,
+            QueryController queryController,
             NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
-        this.watchlistController = watchlistController;
-        this.displayController = displayController;
+        this.queryController = queryController;
         this.notificationController = notificationController;
     }
 
@@ -135,12 +132,12 @@ public class MessageHandler {
                 }
 
                 case "GET_MY_AUCTIONS": {
-                    String controllerResponse = displayController.getMyAuctions(clientHandler.getUserId());
+                    String controllerResponse = queryController.getMyAuctions(clientHandler.getUserId());
                     return JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 
                 case "GET_ACTIVE_AUCTIONS": {
-                    String controllerResponse = displayController.getActiveAuctions();
+                    String controllerResponse = queryController.getActiveAuctions();
                     return JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 
@@ -176,24 +173,24 @@ public class MessageHandler {
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.follow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.follow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
                 }
  
                 case "UNFOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("UNFOLLOW_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.unfollow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.unfollow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
                 }
  
                 case "GET_WATCHLIST": {
                     return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.checkFollowing(auctionId, clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.checkFollowing(auctionId, clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "DEPOSIT": {

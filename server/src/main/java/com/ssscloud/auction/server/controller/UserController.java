@@ -14,7 +14,6 @@ import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.util.JsonUtils;
-import com.ssscloud.auction.server.dao.DisplayDAO;
 import com.ssscloud.auction.server.service.UserService;
 
 public class UserController {

@@ -1,6 +1,8 @@
 package com.ssscloud.auction.server.service;
 
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8,15 +10,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.BidValidator;
+import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
+import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.util.SessionRegistry;
 
 /**
  * ConcurrentBidManager handles asynchronous bid processing for active auctions.
@@ -28,7 +34,8 @@ public class ConcurrentBidManager {
 
     private static volatile ConcurrentBidManager instance = null;
 
-    private BidTransactionDAO bidDAO; // Dependency Injection: Short name for DAO
+    private UserDAO userDAO;
+    private BidTransactionDAO bidTransactionDAO; // Dependency Injection: Short name for DAO
     private AutoBidService autoBidService;
     private AuctionDAO auctionDAO;
     private NotificationController notificationController;
@@ -37,8 +44,9 @@ public class ConcurrentBidManager {
 
     private ConcurrentBidManager() {}
 
-    private ConcurrentBidManager(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController ) {
-        this.bidDAO = bidDAO;
+    private ConcurrentBidManager(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController ) {
+        this.userDAO = userDAO;
+        this.bidTransactionDAO = bidTransactionDAO;
         this.autoBidService = autoBidService;
         this.auctionDAO = auctionDAO;
         this.notificationController = notificationController;
@@ -58,13 +66,13 @@ public class ConcurrentBidManager {
         return instance;
     }
 
-    public static ConcurrentBidManager initialize(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
+    public static ConcurrentBidManager initialize(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
             synchronized (ConcurrentBidManager.class) {
                 if (instance == null) {
-                    instance = new ConcurrentBidManager(bidDAO, autoBidService, auctionDAO, notificationController);
+                    instance = new ConcurrentBidManager(userDAO,bidTransactionDAO, autoBidService, auctionDAO, notificationController);
                 } else {
-                    instance.updateDependencies(bidDAO, autoBidService, auctionDAO, notificationController);
+                    instance.updateDependencies(userDAO, bidTransactionDAO, autoBidService, auctionDAO, notificationController);
                 }
             }
             return instance;
@@ -87,9 +95,10 @@ public class ConcurrentBidManager {
         }
     }
 
-    private void updateDependencies(BidTransactionDAO bidDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
+    private void updateDependencies(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
-            this.bidDAO = bidDAO;
+            this.userDAO = userDAO;
+            this.bidTransactionDAO = bidTransactionDAO;
             this.autoBidService = autoBidService;
             this.auctionDAO = auctionDAO;
             this.notificationController = notificationController;
@@ -161,8 +170,15 @@ public class ConcurrentBidManager {
         try {
             Auction auctionEntity = task.auction;
             String auctionId = auctionEntity.getAuctionConfig().getId();
-            long currentAuctionPrice = auctionEntity.getCurrentPrice();
+            BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
+            long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();
             if (task.bidAmount > currentAuctionPrice) {
+                String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
+                if (previousBidderId != null)
+                    userDAO.unlockBidderBalance(previousBidderId, currentAuctionPrice);
+                userDAO.lockBidderBalance(task.bidderId, task.bidAmount);
+                notifyOutbid(previousBidderId, auctionEntity, task.bidAmount);
+
                 BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, LocalDateTime.now(), task.bidType);
                 
@@ -177,9 +193,9 @@ public class ConcurrentBidManager {
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
 
-                if (bidDAO != null) {
+                if (bidTransactionDAO != null) {
                     try {
-                        bidDAO.saveBidTransaction(bidTransaction);
+                        bidTransactionDAO.saveBidTransaction(bidTransaction);
                     } catch (Exception e) {
                         logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
                     }
@@ -200,6 +216,24 @@ public class ConcurrentBidManager {
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error during bid task processing", exception);
             throw exception;
+        }
+    }
+    private void notifyOutbid(String previousBidderId, Auction auction, long newPrice) {
+        PrintWriter writer = SessionRegistry.getInstance().getWriter(previousBidderId);
+        if (writer == null) return; // offline thì thôi
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("auctionId", auction.getAuctionConfig().getId());
+        payload.put("auctionName", auction.getAuctionConfig().getName());
+        payload.put("newPrice", newPrice);
+
+        try {
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(ClientMessage.push("OUTBID_IN_ROOM", payload)));
+                writer.flush();
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to notify outbid for bidderId: " + previousBidderId, e);
         }
     }
 
