@@ -493,7 +493,7 @@ public class UserDAO extends BaseDAO {
     public long getUnsettledBalance(String userId, UserRole role) throws DAOException, Exception {
         String sql = switch (role) {
             case BIDDER -> "SELECT locked_balance AS unsettled FROM bidder WHERE id = ?";
-            case SELLER -> "SELECT account_balance AS unsettled FROM seller WHERE id = ?";
+            case SELLER -> "SELECT pending_balance AS unsettled FROM seller WHERE id = ?";
             default -> null;
         };
 
