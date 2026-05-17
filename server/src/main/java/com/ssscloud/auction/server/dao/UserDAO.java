@@ -455,8 +455,77 @@ public class UserDAO extends BaseDAO {
             closeResource(preparedStatement);
             closeConnect(connection);
         }
-}
+    }
 
+    public boolean updatePendingBalance(String userId, long amount) throws DAOException, Exception {
+        String sql = "UPDATE seller SET pending_balance = pending_balance + ? " +
+                    "WHERE id = ?";
+        Connection        connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, amount);
+            preparedStatement.setString(2, userId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                logger.log(Level.INFO, "Balance lock: {0} locked for userId: {1}", new Object[]{amount, userId});
+            }
+            return rowsAffected > 0;
+
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while locking bidder balance.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.lockBidderBalance", exception);
+            throw exception;
+        } finally {
+            closeResource(preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    public long getUnsettledBalance(String userId, UserRole role) throws DAOException, Exception {
+        String sql = switch (role) {
+            case BIDDER -> "SELECT locked_balance AS unsettled FROM bidder WHERE id = ?";
+            case SELLER -> "SELECT account_balance AS unsettled FROM seller WHERE id = ?";
+            default -> null;
+        };
+
+        if (sql == null) {
+            logger.log(Level.INFO, "getUnsettledBalance: role {0} has no unsettled balance, returning 0 for userId: {1}",
+                    new Object[]{role, userId});
+            return -1 * 1L;
+        }
+
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, userId);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                long unsettled = rs.getLong("unsettled");
+                logger.log(Level.INFO, "getUnsettledBalance: userId={0}, role={1}, unsettled={2}",
+                        new Object[]{userId, role, unsettled});
+                return unsettled;
+            } else {
+                logger.log(Level.WARNING, "getUnsettledBalance: no record found for userId: {0}, role: {1}",
+                        new Object[]{userId, role});
+                return 0L;
+            }
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "getUnsettledBalance: database error for userId: " + userId, e);
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Failed to get unsettled balance for userId: " + userId);
+        } finally {
+            closeResource(rs, ps);
+            closeConnect(connection);
+        }
+    }
     // --- PRIVATE METHODS ---
 
     private User mapResultSetToUser(ResultSet resultSet) throws SQLException {
