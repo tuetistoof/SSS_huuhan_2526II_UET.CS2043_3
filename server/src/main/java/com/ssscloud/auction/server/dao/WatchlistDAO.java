@@ -11,17 +11,20 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
 
 /**
  * WatchlistDAO handles persistence operations for user watchlists.
  */
 public class WatchlistDAO extends BaseDAO {
+    // Logging Standards: Declared as the first attribute
     private static final Logger logger = Logger.getLogger(WatchlistDAO.class.getName());
 
     // ── Watch ─────────────────────────────────────────────────────────────────
 
-    public boolean add(String auctionId, String userId) throws SQLException, Exception {
+    public boolean add(String auctionId, String userId) throws DAOException, Exception {
         String sql = "INSERT INTO watchlist (auction_id, user_id) VALUES (?, ?)";
         Connection        connection        = null;
         PreparedStatement preparedStatement = null;
@@ -31,16 +34,14 @@ public class WatchlistDAO extends BaseDAO {
             preparedStatement.setString(1, auctionId);
             preparedStatement.setString(2, userId);
             preparedStatement.executeUpdate();
-            logger.log(Level.INFO, "Watchlist entry created: userId " + userId + " watching auctionId " + auctionId);
+            logger.log(Level.INFO, "Watchlist entry successfully created for userId: {0}, auctionId: {1}", new Object[]{userId, auctionId});
             return true;
         } catch (SQLIntegrityConstraintViolationException constraintException) {
-            logger.log(Level.WARNING, "Watchlist entry already exists: userId " + userId + " is already watching auctionId " + auctionId);
-            return false;
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: User is already following this auction.");
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error adding watchlist entry for userId: " + userId, sqlException);
-            throw sqlException;
+            throw new DAOException(ErrorCode.WATCHLIST_ADD_FAILED, "Database interaction failure while adding auction to watchlist.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.add: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in WatchlistDAO.add", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -50,7 +51,7 @@ public class WatchlistDAO extends BaseDAO {
 
     // ── Unwatch ───────────────────────────────────────────────────────────────
 
-    public boolean remove(String auctionId, String userId) throws SQLException, Exception {
+    public boolean remove(String auctionId, String userId) throws DAOException, Exception {
         String sql = "DELETE FROM watchlist WHERE auction_id = ? AND user_id = ?";
         Connection        connection        = null;
         PreparedStatement preparedStatement = null;
@@ -60,13 +61,12 @@ public class WatchlistDAO extends BaseDAO {
             preparedStatement.setString(1, auctionId);
             preparedStatement.setString(2, userId);
             int rowsAffected = preparedStatement.executeUpdate();
-            logger.log(Level.INFO, "Watchlist entry removed: userId " + userId + " unwatching auctionId " + auctionId);
+            logger.log(Level.INFO, "Watchlist entry successfully removed for userId: {0}, auctionId: {1}", new Object[]{userId, auctionId});
             return rowsAffected > 0;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error removing watchlist entry for userId: " + userId, sqlException);
-            throw sqlException;
+            throw new DAOException(ErrorCode.WATCHLIST_REMOVE_FAILED, "Database interaction failure while removing auction from watchlist.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.remove: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.remove", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -76,8 +76,8 @@ public class WatchlistDAO extends BaseDAO {
 
     // ── Query ─────────────────────────────────────────────────────────────────
 
-    public List<AuctionDisplayInfoDTO> findWatchlistDetailsByUser(String userId) throws SQLException, Exception {
-    List<AuctionDisplayInfoDTO> auctionDetailsList = new ArrayList<>();
+    public List<BidderDisplayDTO> findWatchlistDetailsByUser(String userId) throws DAOException, Exception {
+    List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
     
     String sql = 
         "SELECT a.id, " +
@@ -114,29 +114,31 @@ public class WatchlistDAO extends BaseDAO {
         resultSet = preparedStatement.executeQuery();
 
         while (resultSet.next()) {
-            AuctionDisplayInfoDTO dto = new AuctionDisplayInfoDTO();
+            BidderDisplayDTO dto = new BidderDisplayDTO();
             dto.setId(resultSet.getString("id"));
             dto.setAuctionName(resultSet.getString("auction_name"));
             dto.setItemName(resultSet.getString("item_name"));
             dto.setItemType(resultSet.getString("item_type"));
             dto.setCurrentPrice(resultSet.getLong("current_price"));
             
-            Timestamp endTimeStamp = resultSet.getTimestamp("end_time");
-            if (endTimeStamp != null) {
-                dto.setEndTime(endTimeStamp.toLocalDateTime());
+            Timestamp endTimeTimestamp = resultSet.getTimestamp("end_time");
+            if (endTimeTimestamp != null) {
+                dto.setEndTime(endTimeTimestamp.toLocalDateTime());
             }
             
             dto.setSellerUsername(resultSet.getString("seller_username"));
-            dto.setImageUrl(List.of(resultSet.getString("image_url")));
+            
+            String imageUrlRaw = resultSet.getString("image_url");
+            List<String> imageUrlList = (imageUrlRaw != null) ? List.of(imageUrlRaw) : new ArrayList<>();
+            dto.setImageUrl(imageUrlList);
             
             auctionDetailsList.add(dto);
         }
-        logger.log(Level.INFO, "Retrieved " + auctionDetailsList.size() + " detailed watchlist items for userId: " + userId);
+        logger.log(Level.INFO, "Successfully retrieved {0} detailed watchlist items for userId: {1}", new Object[]{auctionDetailsList.size(), userId});
     } catch (SQLException sqlException) {
-        logger.log(Level.SEVERE, "Database error retrieving detailed watchlist for userId: " + userId, sqlException);
-        throw sqlException;
+        throw new DAOException(ErrorCode.WATCHLIST_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user watchlist details.");
     } catch (Exception exception) {
-        logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.findWatchlistDetailsByUser: " + exception.getMessage(), exception);
+        logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findWatchlistDetailsByUser", exception);
         throw exception;
     } finally {
         closeResource(resultSet, preparedStatement);
@@ -145,7 +147,7 @@ public class WatchlistDAO extends BaseDAO {
     return auctionDetailsList;
 }
 
-    public List<String> findUserIdsByAuction(String auctionId) throws SQLException, Exception {
+    public List<String> findUserIdsByAuction(String auctionId) throws DAOException, Exception {
         String sql = "SELECT user_id FROM watchlist WHERE auction_id = ?";
         Connection        connection        = null;
         PreparedStatement preparedStatement = null;
@@ -161,10 +163,9 @@ public class WatchlistDAO extends BaseDAO {
             }
             return userIdList;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error retrieving userIds for auctionId: " + auctionId, sqlException);
-            throw sqlException;
+            throw new DAOException(ErrorCode.WATCHLIST_WATCHER_FETCH_FAILED, "Database failure while retrieving watcher IDs for auction.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.findUserIdsByAuction: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findUserIdsByAuction", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -172,7 +173,7 @@ public class WatchlistDAO extends BaseDAO {
         }
     }
 
-    public boolean isFollowing(String auctionId, String userId) throws SQLException, Exception {
+    public boolean isFollowing(String auctionId, String userId) throws DAOException, Exception {
         String sql = "SELECT 1 FROM watchlist WHERE auction_id = ? AND user_id = ?";
         Connection        connection        = null;
         PreparedStatement preparedStatement = null;
@@ -185,10 +186,9 @@ public class WatchlistDAO extends BaseDAO {
             resultSet = preparedStatement.executeQuery();
             return resultSet.next();
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error checking follow status for userId: " + userId, sqlException);
-            throw sqlException;
+            throw new DAOException(ErrorCode.WATCHLIST_STATUS_CHECK_FAILED, "Database failure while checking watchlist following status.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.isFollowing: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in isFollowing", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);

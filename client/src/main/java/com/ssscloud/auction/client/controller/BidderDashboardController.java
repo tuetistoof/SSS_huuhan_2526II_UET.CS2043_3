@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
@@ -36,10 +36,10 @@ public class BidderDashboardController {
     @FXML private LoadingController loadingController;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private List<AuctionDisplayInfoDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
-    private Consumer<AuctionDisplayInfoDTO> onOpenBidRoomHandler;
+    private List<BidderDisplayDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
+    private Consumer<BidderDisplayDTO> onOpenBidRoomHandler;
 
-    public void setOnOpenBidRoom(Consumer<AuctionDisplayInfoDTO> handler) {
+    public void setOnOpenBidRoom(Consumer<BidderDisplayDTO> handler) {
         this.onOpenBidRoomHandler = handler;
     }
 
@@ -50,13 +50,13 @@ public class BidderDashboardController {
         }).start();
     }
 
-    public void updateDashboard(List<AuctionDisplayInfoDTO> auctions) {
+    public void updateDashboard(List<BidderDisplayDTO> auctions) {
         Platform.runLater(() -> {
             initData(auctions); // có auction nào thỏa mãn thì ném tất vô
         });
     }
 
-    public void initData(List<AuctionDisplayInfoDTO> dataFromServer) {
+    public void initData(List<BidderDisplayDTO> dataFromServer) {
         this.allAuctionsDisplayInfo = dataFromServer;
         handleTabSelection("ALL"); // Mặc định mở lên là hiện tất cả
     }
@@ -71,10 +71,10 @@ public class BidderDashboardController {
             
             if ("GET_ACTIVE_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
                 String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<ListResponse <AuctionDisplayInfoDTO>>>() {}.getType();
-                ApiResponse<ListResponse <AuctionDisplayInfoDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
+                Type type = new TypeToken<ApiResponse<ListResponse <BidderDisplayDTO>>>() {}.getType();
+                ApiResponse<ListResponse <BidderDisplayDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
                 if (response != null && response.isSuccess()) {
-                    ListResponse <AuctionDisplayInfoDTO> listResponse = response.getData();
+                    ListResponse <BidderDisplayDTO> listResponse = response.getData();
                     updateDashboard(listResponse.getData());
                 }
             } else {
@@ -128,7 +128,7 @@ public class BidderDashboardController {
         if (tabArts.isSelected()) activeCategories.add("ART");
         if (tabVehicles.isSelected()) activeCategories.add("VEHICLE");
 
-        List<AuctionDisplayInfoDTO> filteredList = allAuctionsDisplayInfo.stream()
+        List<BidderDisplayDTO> filteredList = allAuctionsDisplayInfo.stream()
             .filter(auctioncard -> {
                 if (auctioncard.getItemType() == null) return false;
                 return activeCategories.contains(String.valueOf(auctioncard.getItemType()));
@@ -138,11 +138,11 @@ public class BidderDashboardController {
         loadAuctionsToDashboard(filteredList);
     }
 
-    public void loadAuctionsToDashboard(List<AuctionDisplayInfoDTO> auctionsFromDB) {
+    public void loadAuctionsToDashboard(List<BidderDisplayDTO> auctionsFromDB) {
         // Xóa sạch dữ liệu cũ trước khi nạp mới
         auctionContainer.getChildren().clear();
 
-        for (AuctionDisplayInfoDTO auction : auctionsFromDB) {
+        for (BidderDisplayDTO auction : auctionsFromDB) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/auction-card.fxml"));
                 Node card = loader.load();

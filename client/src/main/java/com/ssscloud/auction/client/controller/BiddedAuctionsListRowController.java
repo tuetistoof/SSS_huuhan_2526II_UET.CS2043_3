@@ -2,7 +2,7 @@ package com.ssscloud.auction.client.controller;
 
 import java.time.format.DateTimeFormatter;
 
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,11 +18,11 @@ public class BiddedAuctionsListRowController {
     @FXML private Label lblAuctionName, lblCurrentPrice, lblEndTime, lblItemType, lblMyBid, lblSeller, lblStatus;
     @FXML private HBox rowRoot;
 
-    private AuctionDisplayInfoDTO data;
+    private BidderDisplayDTO data;
     private Runnable onViewRoom;
     private String finalImageURL;
 
-    public void setData(AuctionDisplayInfoDTO data) {
+    public void setData(BidderDisplayDTO data) {
         this.data = data;
         lblAuctionName.setText(data.getAuctionName());
         lblItemType.setText(data.getItemType());

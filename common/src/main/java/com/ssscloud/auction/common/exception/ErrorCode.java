@@ -106,6 +106,49 @@ public class ErrorCode {
 
     // ==================== DATABASE ERRORS (DAO) ====================
     
+    /** General database interaction failure. */
+    public static final String DATABASE_ERROR = "DATABASE_ERROR";
+
+    public static final String USER_PERSISTENCE_FAILED = "USER_PERSISTENCE_FAILED";
+    public static final String USER_RETRIEVAL_FAILED = "USER_RETRIEVAL_FAILED";
+    public static final String USER_MODIFICATION_FAILED = "USER_MODIFICATION_FAILED";
+    public static final String ITEM_FETCH_FAILED = "ITEM_FETCH_FAILED";
+    public static final String WATCHLIST_QUERY_FAILED = "WATCHLIST_QUERY_FAILED";
+    public static final String WATCHLIST_DETAILS_RETRIEVAL_FAILED = "WATCHLIST_DETAILS_RETRIEVAL_FAILED";
+    public static final String WATCHLIST_ADD_FAILED = "WATCHLIST_ADD_FAILED";
+    public static final String WATCHLIST_REMOVE_FAILED = "WATCHLIST_REMOVE_FAILED";
+    public static final String WATCHLIST_STATUS_CHECK_FAILED = "WATCHLIST_STATUS_CHECK_FAILED";
+    public static final String WATCHLIST_WATCHER_FETCH_FAILED = "WATCHLIST_WATCHER_FETCH_FAILED";
+    
+    public static final String NOTIFICATION_SAVE_FAILED = "NOTIFICATION_SAVE_FAILED";
+    public static final String NOTIFICATION_FETCH_FAILED = "NOTIFICATION_FETCH_FAILED";
+    public static final String NOTIFICATION_UPDATE_FAILED = "NOTIFICATION_UPDATE_FAILED";
+    public static final String NOTIFICATION_PERSISTENCE_FAILED = "NOTIFICATION_PERSISTENCE_FAILED";
+    
+    public static final String BID_HISTORY_FETCH_FAILED = "BID_HISTORY_FETCH_FAILED";
+    public static final String BIDDED_AUCTIONS_FETCH_FAILED = "BIDDED_AUCTIONS_FETCH_FAILED";
+    public static final String SELLER_AUCTION_FETCH_FAILED = "SELLER_AUCTION_FETCH_FAILED";
+    public static final String ACTIVE_AUCTION_FETCH_FAILED = "ACTIVE_AUCTION_FETCH_FAILED";
+    public static final String ITEM_DELETE_FAILED = "ITEM_DELETE_FAILED";
+    public static final String ITEM_UPDATE_FAILED = "ITEM_UPDATE_FAILED";
+    public static final String BID_SAVE_FAILED = "BID_SAVE_FAILED";
+    public static final String BID_FETCH_FAILED = "BID_FETCH_FAILED";
+
+    /** Violation of database constraints (unique, foreign key, etc.). */
+    public static final String DATA_INTEGRITY_VIOLATION = "DATA_INTEGRITY_VIOLATION";
+
+    /** Failed to persist auction record. */
+    public static final String AUCTION_SAVE_FAILED = "AUCTION_SAVE_FAILED";
+
+    /** Failed to retrieve auction data. */
+    public static final String AUCTION_FETCH_FAILED = "AUCTION_FETCH_FAILED";
+
+    /** Failed to update auction attributes. */
+    public static final String AUCTION_UPDATE_FAILED = "AUCTION_UPDATE_FAILED";
+
+    /** Failed to remove auction record. */
+    public static final String AUCTION_DELETE_FAILED = "AUCTION_DELETE_FAILED";
+
     /** application.properties configuration file not found */
     public static final String DB_CONFIG_NOT_FOUND = "DB_CONFIG_NOT_FOUND";
     
@@ -140,6 +183,9 @@ public class ErrorCode {
     public static final String CONNECTION_CLOSE_FAILED = "CONNECTION_CLOSE_FAILED";
 
     public static final String INTERNAL_DB_ERROR = "INTERNAL_DB_ERROR";
+
+    /** Unexpected system failure within the persistence layer */
+    public static final String SYSTEM_FAILURE = "SYSTEM_FAILURE";
 
     // ==================== AUTO BID ERRORS (AutoBidService) ====================
     

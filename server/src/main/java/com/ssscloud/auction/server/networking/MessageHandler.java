@@ -20,7 +20,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
+import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.controller.WatchlistController;
@@ -38,7 +38,7 @@ public class MessageHandler {
     private final UserController userController;
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
-    private final BiddedAuctionsListController biddedAuctionsListController;
+    private final DisplayController displayController;
     private final NotificationController notificationController;
 
 
@@ -47,13 +47,13 @@ public class MessageHandler {
             AuctionController auctionController,
             BidController bidController,
             WatchlistController watchlistController,
-            BiddedAuctionsListController biddedAuctionsListController,
+            DisplayController displayController,
             NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
-        this.biddedAuctionsListController = biddedAuctionsListController;
+        this.displayController = displayController;
         this.notificationController = notificationController;
     }
 
@@ -135,12 +135,12 @@ public class MessageHandler {
                 }
 
                 case "GET_MY_AUCTIONS": {
-                    String controllerResponse = auctionController.getMyAuctions(clientHandler.getUserId());
+                    String controllerResponse = displayController.getMyAuctions(clientHandler.getUserId());
                     return JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 
                 case "GET_ACTIVE_AUCTIONS": {
-                    String controllerResponse = auctionController.getActiveAuctions();
+                    String controllerResponse = displayController.getActiveAuctions();
                     return JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 

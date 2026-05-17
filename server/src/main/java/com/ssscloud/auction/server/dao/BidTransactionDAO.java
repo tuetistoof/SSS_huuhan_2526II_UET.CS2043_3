@@ -13,15 +13,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.enums.BidType;
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.BidTransaction;
 
 public class BidTransactionDAO extends BaseDAO {
-
+    // Logging Standards: Declared first
     private static final Logger logger = Logger.getLogger(BidTransactionDAO.class.getName());
 
     // --- PUBLIC METHODS ---
 
-    public boolean saveBidTransaction(BidTransaction bidTransaction) throws SQLException, Exception {
+    public boolean saveBidTransaction(BidTransaction bidTransaction) throws DAOException, Exception {
+        logger.log(Level.INFO, "Initiating bid transaction persistence for auctionId: {0}", bidTransaction.getAuctionId());
         String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
         Connection        connection = null;
         PreparedStatement ps         = null;
@@ -42,15 +45,13 @@ public class BidTransactionDAO extends BaseDAO {
             logger.log(Level.INFO, "Bid transaction successfully persisted.");
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
-            logger.log(Level.WARNING, "Constraint violation during bid save: " + sqlConstraintException.getMessage());
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Bid transaction already exists.");
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error saving bid transaction.", sqlException);
             safelyRollback(connection);
-            return false;
+            throw new DAOException(ErrorCode.BID_SAVE_FAILED, "Database interaction failure during bid persistence.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.saveBidTransaction: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in BidTransactionDAO.saveBidTransaction", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -59,7 +60,7 @@ public class BidTransactionDAO extends BaseDAO {
         }
     }
 
-    public boolean saveBidTransaction(Connection connection, BidTransaction bidTransaction) throws SQLException, Exception {
+    public boolean saveBidTransaction(Connection connection, BidTransaction bidTransaction) throws DAOException, Exception {
         String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
         PreparedStatement ps         = null;
         try {
@@ -76,17 +77,16 @@ public class BidTransactionDAO extends BaseDAO {
             logger.log(Level.INFO, "Bid transaction successfully persisted using shared connection.");
             return true;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error saving bid transaction with shared connection.", sqlException);
-            return false;
+            throw new DAOException(ErrorCode.BID_SAVE_FAILED, "Database interaction failure during shared connection bid persistence.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.saveBidTransaction (shared): " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in BidTransactionDAO.saveBidTransaction (shared)", exception);
             throw exception;
         } finally {
             closeResource(ps);
         }
     }
 
-    public BidTransaction findHighest(String auctionId) throws SQLException, Exception {
+    public BidTransaction findHighest(String auctionId) throws DAOException, Exception {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
@@ -105,13 +105,12 @@ public class BidTransactionDAO extends BaseDAO {
             if (rs.next()) {
                 return mapRowToBidTransaction(rs);
             }
-            logger.log(Level.INFO, "No bids found for auctionId: " + auctionId);
+            logger.log(Level.INFO, "No bid records found for auctionId: {0}", auctionId);
             return null;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error in findHighest for auctionId: " + auctionId, sqlException);
-            return null;
+            throw new DAOException(ErrorCode.BID_FETCH_FAILED, "Database failure while retrieving the highest bid.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findHighest: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findHighest", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -119,7 +118,7 @@ public class BidTransactionDAO extends BaseDAO {
         }
     }
 
-    public List<BidTransaction> findByBidderId(String bidderId) throws SQLException, Exception {
+    public List<BidTransaction> findByBidderId(String bidderId) throws DAOException, Exception {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.bidder_id = ? " +
@@ -138,13 +137,12 @@ public class BidTransactionDAO extends BaseDAO {
             while (rs.next()) {
                 bidTransactionList.add(mapRowToBidTransaction(rs));
             }
-            logger.log(Level.INFO, "Retrieved " + bidTransactionList.size() + " bids for bidderId: " + bidderId);
+            logger.log(Level.INFO, "Successfully retrieved {0} bid(s) for bidderId: {1}", new Object[]{bidTransactionList.size(), bidderId});
             return bidTransactionList;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error in findByBidderId for bidderId: " + bidderId, sqlException);
-            return bidTransactionList;
+            throw new DAOException(ErrorCode.BID_FETCH_FAILED, "Database failure while retrieving bids by bidderId.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findByBidderId: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findByBidderId", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -152,7 +150,7 @@ public class BidTransactionDAO extends BaseDAO {
         }
     }
 
-    public List<BidTransaction> findByAuctionId(String auctionId) throws SQLException, Exception {
+    public List<BidTransaction> findByAuctionId(String auctionId) throws DAOException, Exception {
         String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
@@ -171,13 +169,12 @@ public class BidTransactionDAO extends BaseDAO {
             while (rs.next()) {
                 bidTransactionList.add(mapRowToBidTransaction(rs));
             }
-            logger.log(Level.INFO, "Retrieved " + bidTransactionList.size() + " bids for auctionId: " + auctionId);
+            logger.log(Level.INFO, "Successfully retrieved {0} bid(s) for auctionId: {1}", new Object[]{bidTransactionList.size(), auctionId});
             return bidTransactionList;
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database error in findByAuctionId for auctionId: " + auctionId, sqlException);
-            return bidTransactionList;
+            throw new DAOException(ErrorCode.BID_FETCH_FAILED, "Database failure while retrieving bid history by auctionId.");
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findByAuctionId: " + exception.getMessage(), exception);
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BidTransactionDAO.findByAuctionId", exception);
             throw exception;
         } finally {
             closeConnect(connection);

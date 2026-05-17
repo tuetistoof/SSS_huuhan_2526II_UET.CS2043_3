@@ -8,7 +8,7 @@ import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AuctionDisplayInfoDTO;
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
@@ -38,49 +38,11 @@ public class AuctionController {
 
             AuctionDTO auctionDto = auctionService.createAuction(createAuctionRequest, sellerId);
 
-            return JsonUtils.toJson(ApiResponse.success(auctionDto, "Auction has been created successfully: " + auctionDto.getName()));
+            return JsonUtils.toJson(ApiResponse.success(auctionDto, "Auction created successfully."));
         } catch (ControllerException controllerException) {
             throw controllerException;
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unhandled system error during auction creation.", exception);
-            throw exception;
-        }
-    }
-
-    public String getActiveAuctions() throws ControllerException, Exception {
-        try {
-            logger.info("Retrieving current active auctions list.");
-            
-            List<AuctionDisplayInfoDTO> activeAuctions = auctionService.getActiveAuctions();
-            ListResponse<AuctionDisplayInfoDTO> activeAuctionsList = new ListResponse<>(activeAuctions);
-            
-            return JsonUtils.toJson(ApiResponse.success(activeAuctionsList,
-                    "Active auctions retrieved successfully. Total items: " + activeAuctions.size()));
-        } catch (ControllerException controllerException) {
-            throw controllerException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unhandled system error while retrieving active auctions.", exception);
-            throw exception;
-        }
-    }
-
-    public String getMyAuctions(String sellerId) throws ControllerException, Exception {
-        try {
-            logger.log(Level.INFO, "Retrieving owned auctions for sellerId: {0}", sellerId);
-            
-            if (sellerId == null || sellerId.isBlank()) {
-                throw new ControllerException(ErrorCode.INVALID_DATA, "SellerId identifier is required and cannot be empty.");
-            }
-
-            List<AuctionDisplayInfoDTO> myAuctions = auctionService.getMyAuctions(sellerId);
-            ListResponse<AuctionDisplayInfoDTO> myAuctionsList = new ListResponse<>(myAuctions);
-            
-            return JsonUtils.toJson(ApiResponse.success(myAuctionsList,
-                    "Seller auctions retrieved successfully. Total items: " + myAuctions.size()));
-        } catch (ControllerException controllerException) {
-            throw controllerException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unhandled system error while retrieving seller auctions.", exception);
             throw exception;
         }
     }

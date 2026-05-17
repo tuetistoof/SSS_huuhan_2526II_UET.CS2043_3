@@ -1,0 +1,270 @@
+package com.ssscloud.auction.server.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
+import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
+
+/**
+ * DisplayDAO handles specialized queries for displaying auction information 
+ * to sellers and bidders, involving complex joins and aggregations.
+ */
+public class DisplayDAO extends BaseDAO{
+    // Logging Standards: Declared as the first attribute
+    private static final Logger logger = Logger.getLogger(DisplayDAO.class.getName());
+
+    // --- PUBLIC METHODS ---
+
+    public List<SellerDisplayDTO> findSellerAuction(String sellerId) throws DAOException, Exception {
+        String sql =
+            "SELECT a.id, " +
+            "       e.name AS auction_name, ac.end_time, a.status, " +
+            "       ei.name AS item_name, " +
+            "       ac.start_price, " +
+            "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " +
+            "       COALESCE(bid_count.count, 0) AS bid_count " +
+            "FROM auction a " +
+            "JOIN auction_config ac ON a.id = ac.id " +
+            "JOIN entity e ON a.id = e.id " +
+            "JOIN item i ON a.item_id = i.id " +
+            "JOIN entity ei ON i.id = ei.id " +
+            "LEFT JOIN ( " +
+            "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
+            "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
+            "                         WHERE b2.auction_id = b1.auction_id) " +
+            ") AS last_bid ON last_bid.auction_id = a.id " +
+            "LEFT JOIN ( " +
+            "    SELECT auction_id, COUNT(*) AS count FROM bid_transaction GROUP BY auction_id " +
+            ") AS bid_count ON bid_count.auction_id = a.id " +
+            "WHERE a.seller_id = ? " +
+            "GROUP BY a.id, e.name, ac.end_time, a.status, ei.name, ac.start_price, last_bid.bid_amount, bid_count.count";
+
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+        List<SellerDisplayDTO> sellerAuctionsList = new ArrayList<>();
+
+        try {
+            logger.log(Level.INFO, "Initiating query to retrieve seller auctions for sellerId: {0}", sellerId);
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, sellerId);
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                sellerAuctionsList.add(mapRowToSellerDisplayDto(resultSet));
+            }
+            logger.log(Level.INFO, "Successfully retrieved {0} auction(s) for sellerId: {1}", new Object[]{sellerAuctionsList.size(), sellerId});
+            return sellerAuctionsList;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.SELLER_AUCTION_FETCH_FAILED, "Database interaction failure while retrieving seller-specific auctions.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in DisplayDAO.findSellerAuction", exception);
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+
+    // ── Query ─────────────────────────────────────────────────────────────────
+    public List<BidderDisplayDTO> findBiddedAuctionsDetailsByUser(String userId) throws DAOException, Exception {
+        logger.log(Level.INFO, "Retrieving bidded auction details for userId: {0}", userId);
+        List<BidderDisplayDTO> biddedAuctionsList = new ArrayList<>();
+
+        String sql =
+                    "SELECT a.id, " +
+            "       e.name                                              AS auction_name, " +
+            "       ac.end_time, " +
+            "       u.username                                          AS seller_username, " +
+            "       ei.name                                             AS item_name, " +
+            "       i.type                                              AS item_type, " +
+            "       COALESCE(last_bid.bid_amount, ac.start_price)       AS current_price, " +
+            "       GROUP_CONCAT(DISTINCT img.image_url SEPARATOR ', ') AS image_url, " +
+            "       my_bid.bid_amount                                   AS my_last_bid, " +
+            "       (my_bid.bid_amount = COALESCE(last_bid.bid_amount, ac.start_price)) AS is_leading " +
+            "FROM auction a " +
+            "JOIN bid_transaction bt_user ON bt_user.auction_id = a.id AND bt_user.bidder_id = ? " +
+            "JOIN auction_config ac       ON a.id = ac.id " +
+            "JOIN entity e                ON a.id = e.id " +
+            "JOIN user u                  ON a.seller_id = u.id " +
+            "JOIN item i                  ON a.item_id = i.id " +
+            "JOIN entity ei               ON i.id = ei.id " +
+            "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
+            
+            // Lấy bid cao nhất hiện tại
+            "LEFT JOIN ( " +
+            "    SELECT auction_id, MAX(bid_amount) AS bid_amount " +
+            "    FROM bid_transaction " +
+            "    WHERE (auction_id, bid_time) IN ( " +
+            "        SELECT auction_id, MAX(bid_time) " +
+            "        FROM bid_transaction " +
+            "        GROUP BY auction_id " +
+            "    ) " +
+            "    GROUP BY auction_id " +
+            ") AS last_bid ON last_bid.auction_id = a.id " +
+            
+            // Lấy bid mới nhất của user đang xem
+            "LEFT JOIN ( " +
+            "    SELECT auction_id, MAX(bid_amount) AS bid_amount " +
+            "    FROM bid_transaction " +
+            "    WHERE bidder_id = ? " +
+            "      AND (auction_id, bid_time) IN ( " +
+            "          SELECT auction_id, MAX(bid_time) " +
+            "          FROM bid_transaction " +
+            "          WHERE bidder_id = ? " +
+            "          GROUP BY auction_id " +
+            "      ) " +
+            "    GROUP BY auction_id " +
+            ") AS my_bid ON my_bid.auction_id = a.id " +
+            
+            "WHERE a.status IN ('OPEN', 'RUNNING') " +
+            
+            // Fix Bug 1: thêm các cột cần thiết vào GROUP BY
+            "GROUP BY a.id, e.name, ac.end_time, u.username, ei.name, i.type, " +
+            "         ac.start_price, last_bid.bid_amount, my_bid.bid_amount";
+
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, userId);  // bt_user.bidder_id
+            preparedStatement.setString(2, userId);  // b3.bidder_id
+            preparedStatement.setString(3, userId);  // b4.bidder_id
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                BidderDisplayDTO dto = new BidderDisplayDTO();
+                dto.setId(resultSet.getString("id"));
+                dto.setAuctionName(resultSet.getString("auction_name"));
+                dto.setItemName(resultSet.getString("item_name"));
+                dto.setItemType(resultSet.getString("item_type"));
+                dto.setCurrentPrice(resultSet.getLong("current_price"));
+                dto.setSellerUsername(resultSet.getString("seller_username"));
+                dto.setMyLastBid(resultSet.getLong("my_last_bid"));
+                dto.setLeading(resultSet.getBoolean("is_leading"));
+
+                java.sql.Timestamp endTimeTimestamp = resultSet.getTimestamp("end_time");
+                if (endTimeTimestamp != null) dto.setEndTime(endTimeTimestamp.toLocalDateTime());
+
+                String imageUrlsRaw = resultSet.getString("image_url");
+                if (imageUrlsRaw != null && !imageUrlsRaw.isEmpty()) {
+                    dto.setImageUrl(List.of(imageUrlsRaw.split(", ")));
+                }
+
+                biddedAuctionsList.add(dto);
+            }
+            logger.log(Level.INFO, "Successfully loaded {0} bidded auction items for userId: {1}", new Object[]{biddedAuctionsList.size(), userId});
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.BIDDED_AUCTIONS_FETCH_FAILED, "Database failure while fetching user bidded auction history.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BiddedAuctionsListDAO.findBiddedAuctionsDetailsByUser", exception);
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+        return biddedAuctionsList;
+    }
+
+    public List<BidderDisplayDTO> findActiveAuctions() throws DAOException, Exception {
+        String sql =
+            "SELECT a.id, " +
+            "       e.name AS auction_name, ac.end_time, " +
+            "       u.username AS seller_username, " +
+            "       ei.name AS item_name, i.type AS item_type, " +
+            "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " +
+            "       GROUP_CONCAT(img.image_url SEPARATOR ', ') AS image_url " +
+            "FROM auction a " +
+            "JOIN auction_config ac ON a.id = ac.id " +
+            "JOIN entity e ON a.id = e.id " +
+            "JOIN user u ON a.seller_id = u.id " +
+            "JOIN item i ON a.item_id = i.id " +
+            "JOIN entity ei ON i.id = ei.id " +
+            "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
+            "LEFT JOIN ( " +
+            "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
+            "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
+            "                         WHERE b2.auction_id = b1.auction_id) " +
+            ") AS last_bid ON last_bid.auction_id = a.id " +
+            "WHERE a.status IN ('OPEN', 'RUNNING') " +
+            "GROUP BY a.id, e.name, ac.end_time, u.username, ei.name, i.type, ac.start_price, last_bid.bid_amount";
+
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+        List<BidderDisplayDTO> activeAuctionsList = new ArrayList<>();
+
+        try {
+            logger.log(Level.INFO, "Retrieving all active auctions for bidder display.");
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+
+            while (resultSet.next()) {
+                activeAuctionsList.add(mapRowToBidderDisplayDto(resultSet));
+            }
+            logger.log(Level.INFO, "Successfully loaded {0} active auctions for public display.", activeAuctionsList.size());
+            return activeAuctionsList;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.ACTIVE_AUCTION_FETCH_FAILED, "Database failure while retrieving all active auctions.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in DisplayDAO.findActiveAuctions", exception);
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    // --- PRIVATE METHODS ---
+
+    private BidderDisplayDTO mapRowToBidderDisplayDto(ResultSet resultSet) throws SQLException {
+        String imageUrlRaw = resultSet.getString("image_url");
+        List<String> imageUrlList = (imageUrlRaw != null)
+                ? List.of(imageUrlRaw.split(", "))
+                : new ArrayList<>();
+
+        return new BidderDisplayDTO(
+            resultSet.getString("id"),
+            resultSet.getString("auction_name"),
+            resultSet.getString("item_name"),
+            resultSet.getString("item_type"),
+            resultSet.getLong("current_price"),
+            resultSet.getObject("end_time", LocalDateTime.class),
+            resultSet.getString("seller_username"),
+            imageUrlList
+        );
+    }
+
+    private SellerDisplayDTO mapRowToSellerDisplayDto(ResultSet resultSet) throws SQLException {
+        String statusString = resultSet.getString("status");
+        AuctionStatus auctionStatus = AuctionStatus.valueOf(statusString);
+        
+        return new SellerDisplayDTO(
+            resultSet.getString("id"),
+            resultSet.getString("auction_name"),
+            resultSet.getString("item_name"),
+            resultSet.getLong("start_price"),
+            resultSet.getLong("current_price"),
+            resultSet.getInt("bid_count"),
+            resultSet.getObject("end_time", LocalDateTime.class),
+            auctionStatus
+        );
+    }
+}
