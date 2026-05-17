@@ -10,9 +10,11 @@ import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.UserService;
 
@@ -71,6 +73,23 @@ public class UserController {
             throw controllerException;
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unhandled system error during deposit processing.", exception);
+            throw exception;
+        }
+    }
+    public long getUnsettledBalance (String userId, UserRole role) throws ControllerException, Exception{
+        try {
+            logger.log(Level.INFO, "Retrieving unsettled balance for userId: {0}, role: {1}",
+                new Object[]{userId, role});
+
+            if (userId == null || userId.isBlank()) {
+                throw new ControllerException(ErrorCode.INVALID_DATA,
+                        "Validation failure: userId cannot be null or blank.");
+            }
+            return userService.getUnsettledBalance(userId, role);
+        } catch (ControllerException controllerException){
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error during getting unsettled balance.", exception);
             throw exception;
         }
     }

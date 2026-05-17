@@ -13,6 +13,7 @@ import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ServiceException;
@@ -94,8 +95,15 @@ public class MessageHandler {
                             }
                             SessionRegistry.getInstance().unregister(incomingUserId);
                         }
-
-                        clientHandler.setSession(loginResult.getData().getId(), loginResult.getData().getUsername());
+                        long unsettledBalance = 0L;
+                        try {
+                            UserRole role = loginResult.getData().getRole();
+                            unsettledBalance = userController.getUnsettledBalance(incomingUserId, role);
+                        } catch (Exception e) {
+                            logger.log(Level.WARNING, "Failed to load unsettledBalance for userId: " + incomingUserId, e);
+                        }
+                        
+                        clientHandler.setSession(incomingUserId, loginResult.getData().getUsername(), unsettledBalance);
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
                 }

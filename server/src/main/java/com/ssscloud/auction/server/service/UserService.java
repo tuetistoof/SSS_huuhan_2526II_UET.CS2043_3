@@ -139,6 +139,33 @@ public class UserService {
         }
     }
 
+    public long getUnsettledBalance(String userId, UserRole role) throws ServiceException, Exception {
+    try {
+        logger.log(Level.INFO, "Retrieving unsettled balance for userId: {0}, role: {1}",
+                new Object[]{userId, role});
+
+        if (userId == null || userId.isBlank()) {
+            throw new ServiceException(ErrorCode.INVALID_DATA,
+                    "Validation failure: userId cannot be null or blank.");
+        }
+
+        long unsettled = userDAO.getUnsettledBalance(userId, role);
+
+        logger.log(Level.INFO, "Unsettled balance retrieved successfully for userId: {0}, amount: {1}",
+                new Object[]{userId, unsettled});
+        return unsettled;
+
+    } catch (ServiceException serviceException) {
+        logger.log(Level.WARNING, "Service exception retrieving unsettled balance for userId: " + userId,
+                serviceException);
+        throw serviceException;
+    } catch (Exception exception) {
+        logger.log(Level.SEVERE, "Unexpected error retrieving unsettled balance for userId: " + userId,
+                exception);
+        throw exception;
+    }
+}
+
     // --- PRIVATE HELPERS ---
 
     private User buildUser(RegisterRequest registerRequest) throws ServiceException, Exception {
