@@ -6,7 +6,7 @@ import com.ssscloud.auction.common.model.BidTransaction;
 
 import java.io.PrintWriter;
 import java.util.List;
-
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.ssscloud.auction.common.dto.ClientMessage;
@@ -80,9 +80,10 @@ public class ClientObserver implements Observer {
     }
 
     private void pushAuctionEnded(Auction auction) {
-        java.util.Map<String, Object> auctionEndedPayload = new java.util.HashMap<>(); // Descriptive internal logic name
+        Map<String, Object> auctionEndedPayload = new java.util.HashMap<>(); // Descriptive internal logic name
         auctionEndedPayload.put("auctionId",  auction.getAuctionConfig().getId());
         auctionEndedPayload.put("finalPrice", auction.getCurrentPrice());
+        auctionEndedPayload.put("winnerId", auction.getHighestBidderId() != null ? auction.getHighestBidderId() : "");
         auctionEndedPayload.put("winner",     auction.getHighestBidderName() != null
                                   ? auction.getHighestBidderName() : "No bids placed"); // Language Policy: Technical English
 

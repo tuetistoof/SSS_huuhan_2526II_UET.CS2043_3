@@ -192,6 +192,20 @@ public class MainLayoutController implements MessageListener {
                     long newUnsettled = root.get("data").getAsLong();
                     Platform.runLater(() -> updateUnsettledBalance(newUnsettled));
                 }
+                case "BALANCE_UPDATE" -> {
+                    System.out.println("[DEBUG] đã nhận balance update");
+                    long newBalance = root.get("data").getAsLong();
+                    Platform.runLater(() -> updateBalance(newBalance));
+                }
+                case "AUCTION_ENDED" -> {
+                    System.out.println("[DEBUG] đã nhận auction ended");
+                    JsonObject data     = root.getAsJsonObject("data");
+                    String     winnerId = data.has("winnerId") ? data.get("winnerId").getAsString() : "";
+                    String     winner   = data.has("winner")   ? data.get("winner").getAsString()   : "N/A";
+                    long       price    = data.has("finalPrice") ? data.get("finalPrice").getAsLong() : 0L;
+                    String     myId     = user.getId();
+                    //Platform.runLater(() -> showAuctionEndedAlert(winnerId, winner, price, myId));
+                }
             }
         } catch (Exception e) {
             System.err.println("[MainLayout] onMessageReceived error: " + e.getMessage());

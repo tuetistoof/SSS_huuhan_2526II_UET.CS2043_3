@@ -403,6 +403,7 @@ public class UserDAO extends BaseDAO {
         }
     }
 
+
     public boolean lockBidderBalance(String userId, long amount) throws DAOException, Exception {
         String sql = "UPDATE bidder SET locked_balance = locked_balance + ? " +
                     "WHERE id = ? AND (account_balance - locked_balance) >= ?";
@@ -527,6 +528,75 @@ public class UserDAO extends BaseDAO {
             throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Failed to get unsettled balance for userId: " + userId);
         } finally {
             closeResource(rs, ps);
+            closeConnect(connection);
+        }
+    }
+    public boolean settleWinnerBalance(String winnerId, long finalPrice) throws DAOException, Exception {
+        String sql = "UPDATE bidder SET " +
+                     "account_balance = account_balance - ?, " +
+                     "locked_balance  = locked_balance  - ? " +
+                     "WHERE id = ? AND locked_balance >= ?";
+        Connection        connection = null;
+        PreparedStatement ps         = null;
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setLong(1, finalPrice);
+            ps.setLong(2, finalPrice);
+            ps.setString(3, winnerId);
+            ps.setLong(4, finalPrice);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                logger.log(Level.INFO, "Settle winner: deducted {0} from account and lock for userId: {1}",
+                        new Object[]{finalPrice, winnerId});
+            } else {
+                logger.log(Level.WARNING, "settleWinnerBalance: no rows affected for winnerId: {0} — insufficient lock?", winnerId);
+            }
+            return rows > 0;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling winner balance.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.settleWinnerBalance", exception);
+            throw exception;
+        } finally {
+            closeResource(ps);
+            closeConnect(connection);
+        }
+    }
+ 
+    /**
+     * Settle the seller's account after auction ends.
+     * Moves finalPrice from pending_balance into account_balance atomically.
+     */
+    public boolean settleSellerBalance(String sellerId, long finalPrice) throws DAOException, Exception {
+        String sql = "UPDATE seller SET " +
+                     "account_balance  = account_balance  + ?, " +
+                     "pending_balance  = pending_balance  - ? " +
+                     "WHERE id = ? AND pending_balance >= ?";
+        Connection        connection = null;
+        PreparedStatement ps         = null;
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setLong(1, finalPrice);
+            ps.setLong(2, finalPrice);
+            ps.setString(3, sellerId);
+            ps.setLong(4, finalPrice);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                logger.log(Level.INFO, "Settle seller: moved {0} from pending to account for userId: {1}",
+                        new Object[]{finalPrice, sellerId});
+            } else {
+                logger.log(Level.WARNING, "settleSellerBalance: no rows affected for sellerId: {0} — pending insufficient?", sellerId);
+            }
+            return rows > 0;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling seller balance.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.settleSellerBalance", exception);
+            throw exception;
+        } finally {
+            closeResource(ps);
             closeConnect(connection);
         }
     }
