@@ -20,6 +20,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
@@ -38,6 +39,7 @@ public class MessageHandler {
     private final UserController userController;
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
+    private final BiddedAuctionsListController biddedAuctionsListController;
     private final DisplayController displayController;
     private final NotificationController notificationController;
 
@@ -47,12 +49,14 @@ public class MessageHandler {
             AuctionController auctionController,
             BidController bidController,
             WatchlistController watchlistController,
+            BiddedAuctionsListController biddedAuctionsListController,
             DisplayController displayController,
             NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
+        this.biddedAuctionsListController = biddedAuctionsListController;
         this.displayController = displayController;
         this.notificationController = notificationController;
     }

@@ -94,9 +94,6 @@ public class AuctionDAO extends BaseDAO {
         }
     }
 
-<<<<<<< HEAD
-    public Auction findByAuctionId(String auctionId) throws SQLException, Exception {
-=======
     public List<Auction> findBySellerId(String sellerId) throws DAOException, Exception {
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
@@ -144,7 +141,6 @@ public class AuctionDAO extends BaseDAO {
     }
 
     public Auction findByAuctionId(String auctionId) throws DAOException, Exception {
->>>>>>> b626f29e2fe0d06baebc9e910bdbf19bd790c217
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
