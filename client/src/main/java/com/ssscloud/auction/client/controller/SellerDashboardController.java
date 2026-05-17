@@ -1,16 +1,15 @@
 package com.ssscloud.auction.client.controller;
 
-import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.google.gson.reflect.TypeToken;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;
@@ -26,7 +25,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -65,7 +63,7 @@ public class SellerDashboardController {
     private final ObservableList<SellerDisplayDTO> masterList   = FXCollections.observableArrayList();
     private final FilteredList<SellerDisplayDTO>   filteredList = new FilteredList<>(masterList, p -> true);
 
-    private Runnable onBackCallback;
+    private Consumer<SellerDisplayDTO> onOpenBidRoom;
 
     @FXML
     public void initialize() {
@@ -124,12 +122,11 @@ public class SellerDashboardController {
             private final HBox container = new HBox(btnView);
             {
                 btnView.getStyleClass().add("btn-view-row");
-                container.setAlignment(Pos.CENTER);
-                setGraphic(container);
                 btnView.setOnAction(e -> {
                     int idx = getIndex();
                     if (idx >= 0 && idx < getTableView().getItems().size()) {
-                        openBiddingRoom(getTableView().getItems().get(idx).getId());
+                        if (onOpenBidRoom != null)
+                            onOpenBidRoom.accept(getTableView().getItems().get(idx));
                     }
                 });
             }
@@ -349,63 +346,8 @@ public class SellerDashboardController {
     }
 
 
-    private void openBiddingRoom(String auctionId) {
-        new Thread(() -> {
-            try {
-                GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(auctionId);
-                String requestJson = JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req));
-                String responseJson = socket.sendAndReceive(requestJson);
- 
-                if (responseJson == null) return;
- 
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || !"GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) return;
- 
-                String innerJson = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
-                ApiResponse<AuctionDTO> resp = JsonUtils.fromJsonGeneric(innerJson, type);
- 
-                if (resp == null || !resp.isSuccess() || resp.getData() == null) return;
- 
-                Platform.runLater(() -> loadBiddingRoomAsViewer(resp.getData()));
- 
-            } catch (Exception e) {
-                System.err.println("[SellerDashboard] openBiddingRoom: " + e.getMessage());
-            }
-        }).start();  
-    }
-
-    private void loadBiddingRoomAsViewer(AuctionDTO auction) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-            Parent roomView = loader.load();
-
-            BiddingRoomController ctrl = loader.getController();
-
-            ctrl.setOnSuccessCallback(() -> {
-                ctrl.cleanup();
-                if (onBackCallback != null) onBackCallback.run();
-            });
-
-            ctrl.setAuction(auction);
-            Platform.runLater(ctrl::enableSellerViewMode);
-
-            StackPane contentArea = (StackPane) tblAuctions.getScene().lookup("#contentArea");
- 
-            if (contentArea != null) {
-                contentArea.getChildren().setAll(roomView);
-            } else {
-                // Fallback nếu không tìm được contentArea
-                Stage stage = (Stage) tblAuctions.getScene().getWindow();
-                stage.getScene().setRoot(roomView);
-            }
-
-        } catch (IOException e) {
-            System.err.println("[SellerDashboard] loadBiddingRoomAsViewer error: " + e.getMessage());
-        }
-    }
-    public void setOnBackCallback(Runnable callback) {
-        this.onBackCallback = callback;
+    public void setOnOpenBidRoom(Consumer<SellerDisplayDTO> callback) {
+        this.onOpenBidRoom = callback;
     }
 
     private String badgeStyleClass(AuctionStatus s) {
