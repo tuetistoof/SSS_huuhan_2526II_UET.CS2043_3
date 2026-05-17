@@ -2,9 +2,9 @@ package com.ssscloud.auction.client.controller;
 
 import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
-import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
@@ -20,10 +20,13 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -31,24 +34,22 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SellerDashboardController {
 
-    // ── FXML: metric cards ─────────────────────────────────────────────────
-    @FXML private Label lblRunningCount;   // "Phiên đang chạy"
-    @FXML private Label lblFinishedCount;  // "Phiên đã kết thúc"
-    @FXML private Label lblAccountBalance; // "Số dư tài khoản"
-    @FXML private Label lblBankAccount;    // "Số tài khoản"
+    @FXML private Label lblRunningCount;   
+    @FXML private Label lblFinishedCount; 
+    @FXML private Label lblAccountBalance;
+    @FXML private Label lblBankAccount; 
 
-    // ── FXML: filter tabs ──────────────────────────────────────────────────
     @FXML private ToggleButton tabAll;
     @FXML private ToggleButton tabRunning;
     @FXML private ToggleButton tabOpen;
     @FXML private ToggleButton tabDone;
 
-    // ── FXML: table ────────────────────────────────────────────────────────
     @FXML private TableView<SellerDisplayDTO>         tblAuctions;
     @FXML private TableColumn<SellerDisplayDTO, String> colTitle;
     @FXML private TableColumn<SellerDisplayDTO, String> colStartingPrice;
@@ -58,18 +59,13 @@ public class SellerDashboardController {
     @FXML private TableColumn<SellerDisplayDTO, String> colStatus;
     @FXML private TableColumn<SellerDisplayDTO, Void>   colActions;
 
-    // ── Internal state ─────────────────────────────────────────────────────
     private final AuctionClientSocket socket  = AuctionClientSocket.getInstance();
     private final SessionManager      session = SessionManager.getInstance();
 
     private final ObservableList<SellerDisplayDTO> masterList   = FXCollections.observableArrayList();
     private final FilteredList<SellerDisplayDTO>   filteredList = new FilteredList<>(masterList, p -> true);
 
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    // Số tài khoản ngân hàng — load từ UserDTO sau khi đăng nhập
-    private String currentBankAccount = null;
-
+    private Runnable onBackCallback;
 
     @FXML
     public void initialize() {
@@ -79,24 +75,17 @@ public class SellerDashboardController {
         loadMyAuctions();
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // TABLE SETUP
-    // ══════════════════════════════════════════════════════════════════════
 
     private void setupTable() {
-        colTitle.setCellValueFactory(
-                c -> new SimpleStringProperty(c.getValue().getItemName()));
+        colTitle.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getItemName())); // bọc trong Observable lamde expr để tự động cập nhật
 
-        colStartingPrice.setCellValueFactory(
-                c -> new SimpleStringProperty(
-                        String.format("%,d ₫", c.getValue().getStartPrice())));
+        colStartingPrice.setCellValueFactory(c -> new SimpleStringProperty(
+            String.format("%,d ₫", c.getValue().getStartPrice())));
 
-        colCurrentPrice.setCellValueFactory(
-                c -> new SimpleStringProperty(
-                        String.format("%,d ₫", c.getValue().getCurrentPrice())));
+        colCurrentPrice.setCellValueFactory(c -> new SimpleStringProperty(
+            String.format("%,d ₫", c.getValue().getCurrentPrice())));
 
-        colBidCount.setCellValueFactory(
-                c -> new SimpleStringProperty(String.valueOf(c.getValue().getBidCount())));
+        colBidCount.setCellValueFactory(c -> new SimpleStringProperty(String.valueOf(c.getValue().getBidCount())));
 
         colTimeLeft.setCellValueFactory(c -> {
             LocalDateTime end = c.getValue().getEndTime();
@@ -109,63 +98,166 @@ public class SellerDashboardController {
             return new SimpleStringProperty(String.format("%02d:%02d:%02d", h, m, s));
         });
 
-        colStatus.setCellValueFactory(
-                c -> new SimpleStringProperty(statusLabel(c.getValue().getStatus())));
+        // Trạng thái — badge màu (cần cả cellValueFactory và cellFactory)
+        colStatus.setCellValueFactory(c ->
+                new SimpleStringProperty(statusLabel(c.getValue().getStatus())));
+ 
+        colStatus.setCellFactory(col -> new TableCell<>() {
+            private final Label badge = new Label();
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    return;
+                }
+                AuctionStatus st = getTableRow().getItem().getStatus();
+                badge.setText(statusLabel(st));
+                badge.getStyleClass().setAll(badgeStyleClass(st));
+                setGraphic(badge);
+                setText(null);
+            }
+        });
 
         colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button btnView = new Button("View room");
-
+            private final Button btnView = new Button("Xem phòng");
+            private final HBox container = new HBox(btnView);
             {
-                btnView.getStyleClass().add("btn-primary");
+                btnView.getStyleClass().add("btn-view-row");
                 btnView.setOnAction(e -> {
-                    SellerDisplayDTO row = getTableView().getItems().get(getIndex());
-                    openBiddingRoom(row.getId());
+                    int idx = getIndex();
+                    if (idx >= 0 && idx < getTableView().getItems().size()) {
+                        openBiddingRoom(getTableView().getItems().get(idx).getId());
+                    }
                 });
             }
-
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : new HBox(btnView));
+        
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    setPadding(Insets.EMPTY);
+                    setAlignment(Pos.CENTER);
+                    setGraphic(container);
+                    setText(null); // Đảm bảo ô trống chữ, chỉ chứa graphic nút bấm
+                }
             }
         });
     }
 
 
-    private void loadMyAuctions() {
-        String sellerId = session.getCurrentUser() != null
-                ? session.getCurrentUser().getId() : null;
-        if (sellerId == null) return;
-
+    public void loadMyAuctions() {
+        if (session.getCurrentUser() == null) {
+            System.err.println("[SellerDashboard][DEBUG] getCurrentUser() == null, abort");
+            return;
+        }
+ 
         new Thread(() -> {
             try {
-                ClientMessage msg = new ClientMessage("GET_MY_AUCTIONS", null);
-                String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(msg));
-                if (jsonResponse == null) return;
-
-                ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                if (!"GET_MY_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) return;
-
-                String rawData = JsonUtils.toJson(serverMsg.getData());
-                Type respType = new TypeToken<ApiResponse<ListResponse<SellerDisplayDTO>>>() {}.getType();
-                ApiResponse<ListResponse<SellerDisplayDTO>> resp = JsonUtils.fromJsonGeneric(rawData, respType);
-                if (resp == null || !resp.isSuccess()) return;
-
-                String listJson = JsonUtils.toJson(resp.getData());
-                ListResponse<SellerDisplayDTO> listResp = JsonUtils.fromJson(listJson, ListResponse.class, SellerDisplayDTO.class);
-                if (listResp == null) return;
-
-                List<SellerDisplayDTO> items = listResp.getData();
-
-                Platform.runLater(() -> {
-                    masterList.setAll(items);
-                    refreshMetrics(items);
-                });
-
+                String requestJson = JsonUtils.toJson(
+                        ClientMessage.request("GET_MY_AUCTIONS", null));
+                System.out.println("[SellerDashboard][DEBUG] Sending: " + requestJson);
+ 
+                String responseJson = socket.sendAndReceive(requestJson);
+                System.out.println("[SellerDashboard][DEBUG] Raw response: " + responseJson);
+ 
+                if (responseJson == null) {
+                    System.err.println("[SellerDashboard][DEBUG] responseJson == null");
+                    renderList(new ArrayList<>()); return;
+                }
+ 
+                // ── Bước 1: unwrap ClientMessage ──────────────────────────
+                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                System.out.println("[SellerDashboard][DEBUG] serverMsg action: "
+                        + (serverMsg != null ? serverMsg.getAction() : "NULL"));
+                System.out.println("[SellerDashboard][DEBUG] serverMsg.getData(): "
+                        + (serverMsg != null ? serverMsg.getData() : "NULL"));
+ 
+                if (serverMsg == null || serverMsg.getData() == null) {
+                    System.err.println("[SellerDashboard][DEBUG] serverMsg or getData() is null");
+                    renderList(new ArrayList<>()); return;
+                }
+ 
+                // ── Bước 2: unwrap ApiResponse ────────────────────────────
+                String innerJson = JsonUtils.toJson(serverMsg.getData());
+                System.out.println("[SellerDashboard][DEBUG] innerJson (ApiResponse): " + innerJson);
+ 
+                ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
+                System.out.println("[SellerDashboard][DEBUG] apiResp == null: " + (apiResp == null));
+                if (apiResp != null) {
+                    System.out.println("[SellerDashboard][DEBUG] apiResp.isSuccess(): " + apiResp.isSuccess());
+                    System.out.println("[SellerDashboard][DEBUG] apiResp.getData(): " + apiResp.getData());
+                }
+ 
+                if (apiResp == null || !apiResp.isSuccess()) {
+                    System.err.println("[SellerDashboard][DEBUG] apiResp failed, message: "
+                            + (apiResp != null ? apiResp.getMessage() : "null"));
+                    renderList(new ArrayList<>()); return;
+                }
+ 
+                // ── Bước 3: unwrap ListResponse<SellerDisplayDTO> ─────────
+                String listJson = JsonUtils.toJson(apiResp.getData());
+                System.out.println("[SellerDashboard][DEBUG] listJson (ListResponse): " + listJson);
+ 
+                Type listType = new TypeToken<ListResponse<SellerDisplayDTO>>() {}.getType();
+                ListResponse<SellerDisplayDTO> listResp =
+                        JsonUtils.fromJsonGeneric(listJson, listType);
+ 
+                System.out.println("[SellerDashboard][DEBUG] listResp == null: " + (listResp == null));
+                if (listResp != null) {
+                    System.out.println("[SellerDashboard][DEBUG] listResp.getData() == null: "
+                            + (listResp.getData() == null));
+                    if (listResp.getData() != null) {
+                        System.out.println("[SellerDashboard][DEBUG] item count: "
+                                + listResp.getData().size());
+                        // In ra item đầu tiên để kiểm tra field mapping
+                        if (!listResp.getData().isEmpty()) {
+                            SellerDisplayDTO first = listResp.getData().get(0);
+                            System.out.println("[SellerDashboard][DEBUG] first item: "
+                                    + "id=" + first.getId()
+                                    + ", itemName=" + first.getItemName()
+                                    + ", status=" + first.getStatus()
+                                    + ", startPrice=" + first.getStartPrice()
+                                    + ", currentPrice=" + first.getCurrentPrice()
+                                    + ", bidCount=" + first.getBidCount()
+                                    + ", endTime=" + first.getEndTime());
+                        }
+                    }
+                }
+ 
+                List<SellerDisplayDTO> items =
+                        (listResp != null && listResp.getData() != null)
+                                ? listResp.getData() : new ArrayList<>();
+ 
+                System.out.println("[SellerDashboard][DEBUG] calling renderList with "
+                        + items.size() + " items");
+                renderList(items);
+ 
             } catch (Exception e) {
-                System.err.println("[SellerDashboard] loadMyAuctions error: " + e.getMessage());
+                System.err.println("[SellerDashboard][DEBUG] EXCEPTION: " + e.getMessage());
+                e.printStackTrace();
+                renderList(new ArrayList<>());
             }
         }).start();
+    }
+    private void renderList(List<SellerDisplayDTO> items) {
+        System.out.println("[SellerDashboard][DEBUG] renderList called on thread: "
+                + Thread.currentThread().getName() + ", size=" + items.size());
+        Platform.runLater(() -> {
+            System.out.println("[SellerDashboard][DEBUG] Platform.runLater executing, masterList before: "
+                    + masterList.size());
+            masterList.setAll(items);
+            System.out.println("[SellerDashboard][DEBUG] masterList after setAll: "
+                    + masterList.size());
+            System.out.println("[SellerDashboard][DEBUG] filteredList size after: "
+                    + filteredList.size());
+            System.out.println("[SellerDashboard][DEBUG] tblAuctions items size: "
+                    + tblAuctions.getItems().size());
+            refreshMetrics(items);
+        });
     }
 
     
@@ -230,9 +322,7 @@ public class SellerDashboardController {
 
     @FXML
     private void changeBankAccount() {
-        // TODO: mở dialog nhập / đổi số tài khoản ngân hàng
-        // Khi server hỗ trợ UPDATE_BANK_ACCOUNT thì gửi request ở đây
-        // và gọi lblBankAccount.setText(newAccount) sau khi thành công
+
     }
 
     @FXML
@@ -242,11 +332,12 @@ public class SellerDashboardController {
             Parent root = loader.load();
 
             CreateAuctionController ctrl = loader.getController();
-            ctrl.setOnSuccessCallback(auction -> loadMyAuctions());
+            ctrl.setOnSuccessCallback((Consumer<AuctionDTO>) newAuction -> loadMyAuctions());
 
             Stage modal = new Stage();
             modal.setTitle("Tạo phiên đấu giá mới");
             modal.initModality(Modality.APPLICATION_MODAL);
+             modal.initOwner(tblAuctions.getScene().getWindow());
             modal.setScene(new Scene(root));
             modal.showAndWait();
 
@@ -256,63 +347,74 @@ public class SellerDashboardController {
     }
 
 
-    /**
-     * Fetch AuctionDTO đầy đủ theo auctionId, rồi mở BiddingRoom ở chế độ
-     * seller: bid controls disabled, nút Follow ẩn.
-     */
     private void openBiddingRoom(String auctionId) {
         new Thread(() -> {
             try {
-                ClientMessage req = ClientMessage.request("GET_AUCTION_DETAILS",
-                        java.util.Map.of("auctionId", auctionId));
-                String responseJson = socket.sendAndReceive(JsonUtils.toJson(req));
+                GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(auctionId);
+                String requestJson = JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req));
+                String responseJson = socket.sendAndReceive(requestJson);
+ 
                 if (responseJson == null) return;
-
+ 
                 ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                String rawData = JsonUtils.toJson(serverMsg.getData());
-                ApiResponse<?> resp = JsonUtils.fromJson(rawData, ApiResponse.class);
-                if (resp == null || !resp.isSuccess()) return;
-
-                String dtoJson = JsonUtils.toJson(resp.getData());
-                AuctionDTO auction = JsonUtils.fromJson(dtoJson, AuctionDTO.class);
-                if (auction == null) return;
-
-                Platform.runLater(() -> loadBiddingRoomAsViewer(auction));
-
+                if (serverMsg == null || !"GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) return;
+ 
+                String innerJson = JsonUtils.toJson(serverMsg.getData());
+                Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
+                ApiResponse<AuctionDTO> resp = JsonUtils.fromJsonGeneric(innerJson, type);
+ 
+                if (resp == null || !resp.isSuccess() || resp.getData() == null) return;
+ 
+                Platform.runLater(() -> loadBiddingRoomAsViewer(resp.getData()));
+ 
             } catch (Exception e) {
-                System.err.println("[SellerDashboard] openBiddingRoom error: " + e.getMessage());
+                System.err.println("[SellerDashboard] openBiddingRoom: " + e.getMessage());
             }
-        }).start();
+        }).start();  
     }
 
     private void loadBiddingRoomAsViewer(AuctionDTO auction) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/BiddingRoom.fxml"));
-            Parent root = loader.load();
+            Parent roomView = loader.load();
 
             BiddingRoomController ctrl = loader.getController();
 
             ctrl.setOnSuccessCallback(() -> {
                 ctrl.cleanup();
-                loadMyAuctions();
-                //SceneManager.getInstance().showSellerDashboard();
+                if (onBackCallback != null) onBackCallback.run();
             });
 
             ctrl.setAuction(auction);
+            Platform.runLater(ctrl::enableSellerViewMode);
 
-            Platform.runLater(() -> disableBidControls(ctrl));
-
-            Stage stage = (Stage) tblAuctions.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            StackPane contentArea =
+                    (StackPane) tblAuctions.getScene().lookup("#contentArea");
+ 
+            if (contentArea != null) {
+                contentArea.getChildren().setAll(roomView);
+            } else {
+                // Fallback nếu không tìm được contentArea
+                Stage stage = (Stage) tblAuctions.getScene().getWindow();
+                stage.getScene().setRoot(roomView);
+            }
 
         } catch (IOException e) {
             System.err.println("[SellerDashboard] loadBiddingRoomAsViewer error: " + e.getMessage());
         }
     }
+    public void setOnBackCallback(Runnable callback) {
+        this.onBackCallback = callback;
+    }
 
-    
-    private void disableBidControls(BiddingRoomController ctrl) {
-        ctrl.enableSellerViewMode(); 
+    private String badgeStyleClass(AuctionStatus s) {
+        if (s == null) return "badge-canceled";
+        return switch (s) {
+            case RUNNING          -> "badge-running";
+            case OPEN             -> "badge-open";
+            case FINISHED, PAID   -> "badge-finished";
+            case CANCELED         -> "badge-canceled";
+        };
     }
 
 
