@@ -66,6 +66,21 @@ public class ConcurrentBidManager {
         return instance;
     }
 
+     public static ConcurrentBidManager resetInstance(){
+        if (instance != null) {
+            synchronized (ConcurrentBidManager.class) {
+                if (instance != null) {
+                    instance.workerThreads.forEach((auctionId, thread) -> thread.interrupt());
+                    instance.workerThreads.clear();
+                    instance.bidTaskQueues.clear();
+                    instance = null;
+                }
+            }
+        }
+        return instance;
+    }
+
+
     public static ConcurrentBidManager initialize(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
             synchronized (ConcurrentBidManager.class) {

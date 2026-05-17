@@ -21,9 +21,11 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
+import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
+import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
 /**
@@ -53,10 +55,11 @@ public class ConcurrentBidManagerTest {
         AutoBidService autoBidService = mock(AutoBidService.class);
         AuctionDAO auctionDAO = mock(AuctionDAO.class);
         NotificationController notificationController = mock(NotificationController.class);
-
+        UserDAO userDAO = mock(UserDAO.class);
         doNothing().when(notificationController).notifyWatchers(anyString(), anyString());
         // Reset singleton để cô lập bài test (tránh ảnh hưởng chéo)
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO, notificationController);
+        ConcurrentBidManager.initialize(userDAO, bidTransactionDAO, autoBidService, auctionDAO, notificationController);
+
         bidManager = ConcurrentBidManager.getInstance();
 
         // Tạo phiên đấu giá với giá khởi điểm (startPrice) = 30000, bước giá tối thiểu (minIncrement) = 1000

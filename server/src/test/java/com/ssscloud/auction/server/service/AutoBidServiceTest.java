@@ -71,7 +71,7 @@ public class AutoBidServiceTest {
         doNothing().when(notifController).notifyWatchers(anyString(), anyString());
 
         // Reset singleton ConcurrentBidManager để test độc lập
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidServiceMock, auctionDAO, notifController);
+        ConcurrentBidManager.initialize(userDAO, bidTransactionDAO, autoBidServiceMock, auctionDAO, notifController);
 
         userDAO        = mock(UserDAO.class);
         autoBidService = new AutoBidService(auctionDAO, userDAO);
