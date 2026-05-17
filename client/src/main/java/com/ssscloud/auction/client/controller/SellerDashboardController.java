@@ -1,18 +1,16 @@
 package com.ssscloud.auction.client.controller;
 
-import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.google.gson.reflect.TypeToken;
+import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
-
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -26,7 +24,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -37,6 +34,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+/**
+ * Flow call back:
+ *  SETUP: handleNavDashboard (Mainlayout lấy loader (source fxml) để trả về
+ *      Parent view = loader.load(); và ctrl = loader.getController
+ *  TRIGGER:
+ *      colAction, chạy setOpenBidRoom.accecpt(dto) tham số là consumer<DTO> nuốt thông tin và đưa ra ngoài
+ *      dashboard khôg biết BiddingRoom tồn tại, chỉ đưa data ra ngoài.
+ * LOAD:
+ *      mainlayout gọi ctrl.setOnBidRoom(this::loadBiddingRoomAsSeller)
+ *      :: là ký hiệu "lấy hàm này ra nhưng chưa gọi". Kết quả là một Consumer<SellerDisplayDTO> được lưu vào SellerDashboardController
+ *      Sau này khi dashboard gọi onOpenBidRoom.accept(dto), Java tự động điền dto vào chỗ tham số và gọi mainLayoutInstance.loadBiddingRoomAsSeller(dto).
+ *  BACK:
+ *  onSuccessCallback.run(), cái này được MainLayout set thành () -> handleNavDashboard(null), nên quay về dashboard (method này trong loadBiddingRoomAs)
+ */
 
 public class SellerDashboardController {
 
@@ -65,7 +76,7 @@ public class SellerDashboardController {
     private final ObservableList<SellerDisplayDTO> masterList   = FXCollections.observableArrayList();
     private final FilteredList<SellerDisplayDTO>   filteredList = new FilteredList<>(masterList, p -> true);
 
-    private Runnable onBackCallback;
+    private Consumer<SellerDisplayDTO> onOpenBidRoom;
 
     @FXML
     public void initialize() {
@@ -120,16 +131,15 @@ public class SellerDashboardController {
         });
 
         colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button btnView = new Button("Xem phòng");
+            private final Button btnView = new Button("View room");
             private final HBox container = new HBox(btnView);
             {
                 btnView.getStyleClass().add("btn-view-row");
-                container.setAlignment(Pos.CENTER);
-                setGraphic(container);
                 btnView.setOnAction(e -> {
                     int idx = getIndex();
                     if (idx >= 0 && idx < getTableView().getItems().size()) {
-                        openBiddingRoom(getTableView().getItems().get(idx).getId());
+                        if (onOpenBidRoom != null)
+                            onOpenBidRoom.accept(getTableView().getItems().get(idx));
                     }
                 });
             }
@@ -144,7 +154,7 @@ public class SellerDashboardController {
                     setPadding(Insets.EMPTY);
                     setAlignment(Pos.CENTER);
                     setGraphic(container);
-                    setText(null); // Đảm bảo ô trống chữ, chỉ chứa graphic nút bấm
+                    setText(null); 
                 }
             }
         });
@@ -153,112 +163,47 @@ public class SellerDashboardController {
 
     public void loadMyAuctions() {
         if (session.getCurrentUser() == null) {
-            System.err.println("[SellerDashboard][DEBUG] getCurrentUser() == null, abort");
             return;
         }
  
         new Thread(() -> {
             try {
-                String requestJson = JsonUtils.toJson(
-                        ClientMessage.request("GET_MY_AUCTIONS", null));
-                System.out.println("[SellerDashboard][DEBUG] Sending: " + requestJson);
+                String requestJson = JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS", null));
  
                 String responseJson = socket.sendAndReceive(requestJson);
-                System.out.println("[SellerDashboard][DEBUG] Raw response: " + responseJson);
  
                 if (responseJson == null) {
-                    System.err.println("[SellerDashboard][DEBUG] responseJson == null");
                     renderList(new ArrayList<>()); return;
                 }
  
-                // ── Bước 1: unwrap ClientMessage ──────────────────────────
                 ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                System.out.println("[SellerDashboard][DEBUG] serverMsg action: "
-                        + (serverMsg != null ? serverMsg.getAction() : "NULL"));
-                System.out.println("[SellerDashboard][DEBUG] serverMsg.getData(): "
-                        + (serverMsg != null ? serverMsg.getData() : "NULL"));
- 
                 if (serverMsg == null || serverMsg.getData() == null) {
-                    System.err.println("[SellerDashboard][DEBUG] serverMsg or getData() is null");
                     renderList(new ArrayList<>()); return;
                 }
  
-                // ── Bước 2: unwrap ApiResponse ────────────────────────────
-                String innerJson = JsonUtils.toJson(serverMsg.getData());
-                System.out.println("[SellerDashboard][DEBUG] innerJson (ApiResponse): " + innerJson);
- 
+                String innerJson = JsonUtils.toJson(serverMsg.getData()); 
                 ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
-                System.out.println("[SellerDashboard][DEBUG] apiResp == null: " + (apiResp == null));
-                if (apiResp != null) {
-                    System.out.println("[SellerDashboard][DEBUG] apiResp.isSuccess(): " + apiResp.isSuccess());
-                    System.out.println("[SellerDashboard][DEBUG] apiResp.getData(): " + apiResp.getData());
-                }
  
                 if (apiResp == null || !apiResp.isSuccess()) {
-                    System.err.println("[SellerDashboard][DEBUG] apiResp failed, message: "
-                            + (apiResp != null ? apiResp.getMessage() : "null"));
                     renderList(new ArrayList<>()); return;
                 }
  
-                // ── Bước 3: unwrap ListResponse<SellerDisplayDTO> ─────────
-                String listJson = JsonUtils.toJson(apiResp.getData());
-                System.out.println("[SellerDashboard][DEBUG] listJson (ListResponse): " + listJson);
- 
+                String listJson = JsonUtils.toJson(apiResp.getData()); 
                 Type listType = new TypeToken<ListResponse<SellerDisplayDTO>>() {}.getType();
-                ListResponse<SellerDisplayDTO> listResp =
-                        JsonUtils.fromJsonGeneric(listJson, listType);
- 
-                System.out.println("[SellerDashboard][DEBUG] listResp == null: " + (listResp == null));
-                if (listResp != null) {
-                    System.out.println("[SellerDashboard][DEBUG] listResp.getData() == null: "
-                            + (listResp.getData() == null));
-                    if (listResp.getData() != null) {
-                        System.out.println("[SellerDashboard][DEBUG] item count: "
-                                + listResp.getData().size());
-                        // In ra item đầu tiên để kiểm tra field mapping
-                        if (!listResp.getData().isEmpty()) {
-                            SellerDisplayDTO first = listResp.getData().get(0);
-                            System.out.println("[SellerDashboard][DEBUG] first item: "
-                                    + "id=" + first.getId()
-                                    + ", itemName=" + first.getItemName()
-                                    + ", status=" + first.getStatus()
-                                    + ", startPrice=" + first.getStartPrice()
-                                    + ", currentPrice=" + first.getCurrentPrice()
-                                    + ", bidCount=" + first.getBidCount()
-                                    + ", endTime=" + first.getEndTime());
-                        }
-                    }
-                }
- 
-                List<SellerDisplayDTO> items =
-                        (listResp != null && listResp.getData() != null)
-                                ? listResp.getData() : new ArrayList<>();
- 
-                System.out.println("[SellerDashboard][DEBUG] calling renderList with "
-                        + items.size() + " items");
+                ListResponse<SellerDisplayDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listType);
+                List<SellerDisplayDTO> items = (listResp != null && listResp.getData() != null) ? listResp.getData() : new ArrayList<>();
                 renderList(items);
  
             } catch (Exception e) {
-                System.err.println("[SellerDashboard][DEBUG] EXCEPTION: " + e.getMessage());
                 e.printStackTrace();
                 renderList(new ArrayList<>());
             }
         }).start();
     }
     private void renderList(List<SellerDisplayDTO> items) {
-        System.out.println("[SellerDashboard][DEBUG] renderList called on thread: "
-                + Thread.currentThread().getName() + ", size=" + items.size());
         Platform.runLater(() -> {
-            System.out.println("[SellerDashboard][DEBUG] Platform.runLater executing, masterList before: "
-                    + masterList.size());
-            masterList.setAll(items);
-            System.out.println("[SellerDashboard][DEBUG] masterList after setAll: "
-                    + masterList.size());
-            System.out.println("[SellerDashboard][DEBUG] filteredList size after: "
-                    + filteredList.size());
-            System.out.println("[SellerDashboard][DEBUG] tblAuctions items size: "
-                    + tblAuctions.getItems().size());
             refreshMetrics(items);
+            masterList.setAll(items);
         });
     }
 
@@ -295,15 +240,13 @@ public class SellerDashboardController {
 
     @FXML
     private void filterRunning() {
-        filteredList.setPredicate(
-                dto -> dto.getStatus() == AuctionStatus.RUNNING);
+        filteredList.setPredicate(dto -> dto.getStatus() == AuctionStatus.RUNNING);
         setActiveTab(tabRunning);
     }
 
     @FXML
     private void filterOpen() {
-        filteredList.setPredicate(
-                dto -> dto.getStatus() == AuctionStatus.OPEN);
+        filteredList.setPredicate(dto -> dto.getStatus() == AuctionStatus.OPEN);
         setActiveTab(tabOpen);
     }
 
@@ -337,9 +280,9 @@ public class SellerDashboardController {
             ctrl.setOnSuccessCallback((Consumer<AuctionDTO>) newAuction -> loadMyAuctions());
 
             Stage modal = new Stage();
-            modal.setTitle("Tạo phiên đấu giá mới");
+            modal.setTitle("Creat a new auction");
             modal.initModality(Modality.APPLICATION_MODAL);
-             modal.initOwner(tblAuctions.getScene().getWindow());
+            modal.initOwner(tblAuctions.getScene().getWindow());
             modal.setScene(new Scene(root));
             modal.showAndWait();
 
@@ -349,64 +292,8 @@ public class SellerDashboardController {
     }
 
 
-    private void openBiddingRoom(String auctionId) {
-        new Thread(() -> {
-            try {
-                GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(auctionId);
-                String requestJson = JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req));
-                String responseJson = socket.sendAndReceive(requestJson);
- 
-                if (responseJson == null) return;
- 
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || !"GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) return;
- 
-                String innerJson = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
-                ApiResponse<AuctionDTO> resp = JsonUtils.fromJsonGeneric(innerJson, type);
- 
-                if (resp == null || !resp.isSuccess() || resp.getData() == null) return;
- 
-                Platform.runLater(() -> loadBiddingRoomAsViewer(resp.getData()));
- 
-            } catch (Exception e) {
-                System.err.println("[SellerDashboard] openBiddingRoom: " + e.getMessage());
-            }
-        }).start();  
-    }
-
-    private void loadBiddingRoomAsViewer(AuctionDTO auction) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/BiddingRoom.fxml"));
-            Parent roomView = loader.load();
-
-            BiddingRoomController ctrl = loader.getController();
-
-            ctrl.setOnSuccessCallback(() -> {
-                ctrl.cleanup();
-                if (onBackCallback != null) onBackCallback.run();
-            });
-
-            ctrl.setAuction(auction);
-            Platform.runLater(ctrl::enableSellerViewMode);
-
-            StackPane contentArea =
-                    (StackPane) tblAuctions.getScene().lookup("#contentArea");
- 
-            if (contentArea != null) {
-                contentArea.getChildren().setAll(roomView);
-            } else {
-                // Fallback nếu không tìm được contentArea
-                Stage stage = (Stage) tblAuctions.getScene().getWindow();
-                stage.getScene().setRoot(roomView);
-            }
-
-        } catch (IOException e) {
-            System.err.println("[SellerDashboard] loadBiddingRoomAsViewer error: " + e.getMessage());
-        }
-    }
-    public void setOnBackCallback(Runnable callback) {
-        this.onBackCallback = callback;
+    public void setOnOpenBidRoom(Consumer<SellerDisplayDTO> callback) {
+        this.onOpenBidRoom = callback;
     }
 
     private String badgeStyleClass(AuctionStatus s) {
@@ -423,11 +310,11 @@ public class SellerDashboardController {
     private String statusLabel(AuctionStatus status) {
         if (status == null) return "—";
         return switch (status) {
-            case OPEN     -> "Sắp mở";
-            case RUNNING  -> "Đang chạy";
-            case FINISHED -> "Kết thúc";
-            case PAID     -> "Đã thanh toán";
-            case CANCELED -> "Đã hủy";
+            case OPEN     -> "OPEN";
+            case RUNNING  -> "RUNNING";
+            case FINISHED -> "ENDED";
+            case PAID     -> "PAID";
+            case CANCELED -> "CANCELED";
         };
     }
 }
