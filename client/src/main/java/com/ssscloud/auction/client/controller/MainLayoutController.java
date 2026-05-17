@@ -1,5 +1,7 @@
 package com.ssscloud.auction.client.controller;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.Optional;
@@ -45,7 +47,7 @@ import javafx.util.Duration;
 import java.io.IOException;
 
 
-public class MainLayoutController {
+public class MainLayoutController implements MessageListener {
 
     @FXML private StackPane contentArea;
     
@@ -90,10 +92,12 @@ public class MainLayoutController {
 
     private Object currentController = null;
     private UserDTO user = SessionManager.getInstance().getCurrentUser();
-    private long currentBalance = user.getAccountBalance();
 
-    private AuctionClientSocket socket =  AuctionClientSocket.getInstance();
-    private MessageListener sessionKickedListener;
+    // --- Balance state (tracked in-memory, synced with SessionManager) ---
+    private long currentBalance;
+    private long currentUnsettledBalance;
+
+    private AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     private Runnable onSuccessCallback;
     
@@ -102,60 +106,134 @@ public class MainLayoutController {
     public void setOnSuccessCallback(Runnable callback) {
         this.onSuccessCallback = callback;
     }
+
     public void initialize() {
+        currentBalance          = user.getAccountBalance();
+        currentUnsettledBalance = user.getUnsettledBalance();
+
         lblUsername.setText(user.getUsername());
-        //
-        lblAccountBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
-        lblAvailableBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
-        lblLockBalance.setText("Balance: " + formatter.format(Long.valueOf(user.getAccountBalance())));
-        //
+
+        // Fix: render each label with the correct value from login response
+        renderBalanceLabels(currentBalance, currentUnsettledBalance);
+
         applyRole(user.getRole());
         initNotification();
         handleNavDashboard(null);
-        sessionKickedListener = message -> {
-            ClientMessage msg = JsonUtils.fromJson(message, ClientMessage.class);
-            if ("SESSION_KICKED".equals(msg.getAction())) {
-                Platform.runLater(this::handleSessionKicked);
-            }
-        };
-        socket.addListener(sessionKickedListener);
+        socket.addListener(this);
     }
+
+    // --- Balance update API (called externally by DepositCardController, etc.) ---
+
+    /**
+     * Called after a successful deposit to update the total account balance.
+     * Re-renders all three balance labels so available balance stays consistent.
+     */
+    public void updateBalance(long newBalance) {
+        currentBalance = newBalance;
+        SessionManager.getInstance().getCurrentUser().setAccountBalance(newBalance);
+        renderBalanceLabels(currentBalance, currentUnsettledBalance);
+    }
+
+    /**
+     * Called in response to an UNSETTLED_UPDATE push from the server.
+     * Updates the locked/pending and available balance labels in real-time.
+     */
+    public void updateUnsettledBalance(long newUnsettled) {
+        currentUnsettledBalance = newUnsettled;
+        SessionManager.getInstance().getCurrentUser().setUnsettledBalance(newUnsettled);
+        renderBalanceLabels(currentBalance, currentUnsettledBalance);
+    }
+
+    // --- Private helpers ---
+
+    /**
+     * Single source of truth for rendering all three balance labels.
+     *
+     * Bidder semantics:
+     *   accountBalance  = total wallet
+     *   unsettled       = locked (amount held for current winning bid)
+     *   available       = accountBalance - locked  (free to spend)
+     *
+     * Seller semantics:
+     *   accountBalance  = settled earnings already in wallet
+     *   unsettled       = pending (sum of current highest bids across active auctions)
+     *   available       = accountBalance  (pending isn't deducted, it's incoming)
+     */
+    private void renderBalanceLabels(long balance, long unsettled) {
+        lblAccountBalance.setText("Balance: " + formatter.format(balance));
+
+        UserRole role = SessionManager.getInstance().getCurrentUser().getRole();
+        if (role == UserRole.BIDDER) {
+            long available = balance - unsettled;
+            lblLockBalance.setText("Locked: "    + formatter.format(unsettled));
+            lblAvailableBalance.setText("Available: " + formatter.format(available));
+        } else if (role == UserRole.SELLER) {
+            // For sellers: pending is money coming in, not deducted from balance.
+            lblLockBalance.setText("Pending: "   + formatter.format(unsettled));
+            lblAvailableBalance.setText("Balance: " + formatter.format(balance));
+        } else {
+            // ADMIN or fallback: show raw values without derived arithmetic
+            lblLockBalance.setText("Locked: "    + formatter.format(unsettled));
+            lblAvailableBalance.setText("Available: " + formatter.format(balance));
+        }
+    }
+
+    // --- MessageListener implementation ---
+
+    @Override
+    public void onMessageReceived(String json) {
+        try {
+            JsonObject root   = JsonParser.parseString(json).getAsJsonObject();
+            String     action = root.has("action") ? root.get("action").getAsString() : "";
+            switch (action) {
+                case "SESSION_KICKED" ->
+                    Platform.runLater(this::handleSessionKicked);
+                case "UNSETTLED_UPDATE" -> {
+                    long newUnsettled = root.get("data").getAsLong();
+                    Platform.runLater(() -> updateUnsettledBalance(newUnsettled));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[MainLayout] onMessageReceived error: " + e.getMessage());
+        }
+    }
+
+    private void removeListener() {
+        socket.removeListener(this);
+    }
+
+    // --- Session lifecycle ---
+
     private void handleSessionKicked() {
-        // Dọn listener tránh leak
-        socket.removeListener(sessionKickedListener);
-
-        // Dọn notification controller
+        removeListener();
         if (notificationController != null) notificationController.destroy();
-
-        // Dọn session client
         SessionManager.getInstance().logout();
 
-        // Thông báo
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Phiên đăng nhập hết hạn");
         alert.setHeaderText(null);
         alert.setContentText("Tài khoản của bạn đã đăng nhập ở nơi khác. Bạn đã bị đăng xuất.");
         alert.showAndWait();
 
-        // Về màn hình login
         try {
             Parent loginRoot = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
-            Stage stage = (Stage) contentArea.getScene().getWindow(); // dùng contentArea có sẵn
+            Stage stage = (Stage) contentArea.getScene().getWindow();
             stage.getScene().setRoot(loginRoot);
             stage.setMaximized(false);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    // --- Notification ---
+
     private void initNotification() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-            getClass().getResource("/fxml/notification-popup.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/notification-popup.fxml"));
             notifPopupRoot = loader.load(); 
             notificationController = loader.getController();
             notificationController.init(this::navigateToAuction);
             
-            // Gắn badge listener: mỗi lần badge thay đổi → cập nhật lblBellBadge
             notificationController.setBadgeListener(count -> {
                 if (lblBellBadge != null) {
                     lblBellBadge.setText(count > 0 ? String.valueOf(count) : "");
@@ -167,46 +245,42 @@ public class MainLayoutController {
             System.err.println("Không load được notification-popup.fxml: " + e.getMessage());
         }
     }
-    // Khi user click vào 1 notification, sẽ gọi callback này với auctionId tương ứng
+
     private void navigateToAuction(String auctionId) {
-        if (notifPopup != null && notifPopup.isShowing()) {
-            notifPopup.hide();
-        }
+        if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
         BidderDisplayDTO dummy = new BidderDisplayDTO();
         dummy.setId(auctionId);
         loadBiddingRoom(dummy);
     }
 
-    private void applyRole(UserRole role) {
-        // Ẩn hết trước
-        navWonItems.setVisible(false);
-        navWonItems.setManaged(false);
-        navWatchlist.setVisible(false);
-        navWatchlist.setManaged(false);
-        navNewAuctionRoom.setVisible(false);
-        navNewAuctionRoom.setManaged(false);
-        navActiveBids.setVisible(false);
-        navActiveBids.setManaged(false);
+    // --- Role-based UI visibility ---
 
-        // Hiện lại đúng role
+    private void applyRole(UserRole role) {
+        navWonItems.setVisible(false);      navWonItems.setManaged(false);
+        navWatchlist.setVisible(false);     navWatchlist.setManaged(false);
+        navNewAuctionRoom.setVisible(false); navNewAuctionRoom.setManaged(false);
+        navActiveBids.setVisible(false);    navActiveBids.setManaged(false);
+        lblLockBalance.setVisible(false);   lblLockBalance.setManaged(false);
+        lblAvailableBalance.setVisible(false); lblAvailableBalance.setManaged(false);
+
         switch (role) {
             case BIDDER -> {
-                lblAccountBalance.setVisible(true);
-                lblAccountBalance.setManaged(true);
-                navWatchlist.setVisible(true);
-                navWatchlist.setManaged(true);
-                navWonItems.setVisible(true);
-                navWonItems.setManaged(true);
-                navActiveBids.setVisible(true);
-                navActiveBids.setManaged(true);
+                lblAccountBalance.setVisible(true);  lblAccountBalance.setManaged(true);
+                lblLockBalance.setVisible(true);     lblLockBalance.setManaged(true);
+                lblAvailableBalance.setVisible(true); lblAvailableBalance.setManaged(true);
+                navWatchlist.setVisible(true);       navWatchlist.setManaged(true);
+                navWonItems.setVisible(true);        navWonItems.setManaged(true);
+                navActiveBids.setVisible(true);      navActiveBids.setManaged(true);
             }
             case SELLER -> {
-                navNewAuctionRoom.setVisible(true);
-                navNewAuctionRoom.setManaged(true);
+                lblAccountBalance.setVisible(true);  lblAccountBalance.setManaged(true);
+                lblLockBalance.setVisible(true);     lblLockBalance.setManaged(true);
+                navNewAuctionRoom.setVisible(true);  navNewAuctionRoom.setManaged(true);
             }
         }
     }
-    //__CLEANUP___
+
+    // __CLEANUP__
 
     private void cleanupCurrentController() {
         if (currentController == null) return;
@@ -220,52 +294,39 @@ public class MainLayoutController {
         contentArea.getChildren().clear();
     }
 
-    //__NAVIGATION__
+    // __NAVIGATION__
+
     @FXML
     void handleBell(ActionEvent event) {
         if (notificationController == null || notifPopupRoot == null) return;
-        if (notifPopup != null && notifPopup.isShowing()) {
-            notifPopup.hide();
-            return;
-        }
-         if (notifPopup == null) {
+        if (notifPopup != null && notifPopup.isShowing()) { notifPopup.hide(); return; }
+        if (notifPopup == null) {
             notifPopup = new javafx.stage.Popup();
             notifPopup.setAutoHide(true);    
             notifPopup.setAutoFix(true);     
             notifPopup.getContent().add(notifPopupRoot);
         }
- 
-        // Tính tọa độ từ bell.localToScreen() — căn lề phải với nút chuông
         Node bell = (Node) event.getSource();
         Bounds b = bell.localToScreen(bell.getBoundsInLocal());
         double popupWidth = 340;
-        double x = b.getMaxX() - popupWidth;   // căn lề phải
-        double y = b.getMaxY() + 6;            // sát bên dưới nút
- 
-        notifPopup.show(bell.getScene().getWindow(), x, y);
+        notifPopup.show(bell.getScene().getWindow(), b.getMaxX() - popupWidth, b.getMaxY() + 6);
     }
+
     @FXML
     void handleLogout(ActionEvent event) {
-        socket.removeListener(sessionKickedListener);
-
-        // Dọn notification controller
-        if (notificationController != null) notificationController.destroy();
-
-        // Dọn session client
-        SessionManager.getInstance().logout();
-
-        // Thông báo
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Logout Confirmation");
-        alert.setHeaderText(null); // Giữ nguyên null cho gọn
+        alert.setHeaderText(null);
         alert.setContentText("Are you sure you want to log out?");
 
         Optional<ButtonType> result = alert.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.OK) {            
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            removeListener();
+            if (notificationController != null) notificationController.destroy();
+            SessionManager.getInstance().logout();
             try {
                 Parent loginRoot = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
-                Stage stage = (Stage) contentArea.getScene().getWindow(); // dùng contentArea có sẵn
+                Stage stage = (Stage) contentArea.getScene().getWindow();
                 stage.getScene().setRoot(loginRoot);
                 stage.setMaximized(false);
             } catch (IOException e) {
@@ -278,14 +339,11 @@ public class MainLayoutController {
     void handleNavActiveBids(MouseEvent event) {
         updateActiveStyle(navActiveBids); 
         clearContent();
-
-        FXMLLoader loader = new FXMLLoader();
         try {
-            loader = new FXMLLoader(getClass().getResource("/fxml/bidded-auction-list.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidded-auction-list.fxml"));
             Parent biddedAuctionListView = loader.load();
             BiddedAuctionsListController ctrl = loader.getController();
             ctrl.setOnOpenAuction(this::loadBiddingRoom);
-
             contentArea.getChildren().add(biddedAuctionListView);
         } catch (IOException e) {
             e.printStackTrace();
@@ -298,10 +356,8 @@ public class MainLayoutController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/DepositCard.fxml"));
             Parent root = loader.load();
-
             DepositCardController ctrl = loader.getController();
             ctrl.setMainLayoutController(this);
-
             Stage depositStage = new Stage();
             depositStage.setTitle("Nạp tiền vào tài khoản");
             depositStage.setScene(new Scene(root));
@@ -312,20 +368,14 @@ public class MainLayoutController {
         }
     }
 
-    public void updateBalance(long newBalance) {
-        currentBalance = newBalance;
-        lblAccountBalance.setText("Balance: " + formatter.format(currentBalance));
-        SessionManager.getInstance().getCurrentUser().setAccountBalance(newBalance);
-    }
-
     @FXML
     void handleNavDashboard(MouseEvent event) {
         updateActiveStyle(navDashboard);
         clearContent();
         try {
-            contentArea.getChildren().clear();
-            String fxmlPath = (user.getRole() == UserRole.BIDDER) ? "/fxml/BidderDashboard.fxml" : "/fxml/SellerDashboard.fxml";
-            
+            String fxmlPath = (user.getRole() == UserRole.BIDDER)
+                    ? "/fxml/BidderDashboard.fxml"
+                    : "/fxml/SellerDashboard.fxml";
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent dashboardView = loader.load();
 
@@ -339,9 +389,7 @@ public class MainLayoutController {
                 currentController = ctrl;
             }
 
-
             contentArea.getChildren().add(dashboardView);
-            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -351,10 +399,8 @@ public class MainLayoutController {
     void handleNavNewAuctionRoom(MouseEvent event) {
         updateActiveStyle(navNewAuctionRoom); 
         clearContent();
-
-        FXMLLoader loader = new FXMLLoader();
         try {
-            loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
             Parent createAuctionView = loader.load();
             CreateAuctionController controller = loader.getController();
             controller.setOnSuccessCallback(newAuction -> {
@@ -363,21 +409,17 @@ public class MainLayoutController {
                 try {
                     FXMLLoader roomLoader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
                     Parent view = roomLoader.load();
-
                     BiddingRoomController ctrl = roomLoader.getController();
                     ctrl.setAuction(newAuction); 
-                    ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); 
-                    
+                    ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
                     currentController = ctrl;
                     contentArea.getChildren().add(view);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
-
             contentArea.getChildren().clear();
             contentArea.getChildren().add(createAuctionView);
-            
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Lỗi load file create-auction.fxml");
@@ -385,10 +427,7 @@ public class MainLayoutController {
     }
 
     public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
-        if (basicInfo == null) { 
-            handleNavDashboard(null);
-            return;
-        }
+        if (basicInfo == null) { handleNavDashboard(null); return; }
         if (loading != null && loadingController != null) {
             loading.setVisible(true);
             loadingController.playAnimation();
@@ -398,20 +437,16 @@ public class MainLayoutController {
         }
         new Thread(() -> {
             GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
-            String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
-            
+            String jsonResponse = socket.sendAndReceive(
+                    JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
             AuctionDTO fullAuctionData = null;
-
             if (jsonResponse != null && !jsonResponse.isEmpty()) {
                 ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
                 if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
                     String responseRawData = JsonUtils.toJson(serverMsg.getData());
                     Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
                     ApiResponse<AuctionDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-
-                    if (response != null && response.isSuccess()) {
-                        fullAuctionData = response.getData();
-                    }
+                    if (response != null && response.isSuccess()) fullAuctionData = response.getData();
                 }
             }
             final AuctionDTO finalData = fullAuctionData;
@@ -422,11 +457,9 @@ public class MainLayoutController {
                     try {
                         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
                         Parent view = loader.load();
-
                         BiddingRoomController ctrl = loader.getController();
-                        ctrl.setAuction(finalData);                          // inject dữ liệu phòng
-                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null)); // Back → dashboard
-                        
+                        ctrl.setAuction(finalData);
+                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
                         currentController = ctrl;
                         contentArea.getChildren().add(view);
                     } catch (IOException e) {
@@ -439,6 +472,7 @@ public class MainLayoutController {
             });
         }).start();
     }
+
     public void loadBiddingRoomAsSeller(SellerDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
         if (loading != null && loadingController != null) {
@@ -447,7 +481,8 @@ public class MainLayoutController {
         } else { System.out.println("Loading overlay not ready"); return; }
         new Thread(() -> {
             GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
-            String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
+            String jsonResponse = socket.sendAndReceive(
+                    JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
             AuctionDTO fullAuctionData = null;
             if (jsonResponse != null && !jsonResponse.isEmpty()) {
                 ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
@@ -479,29 +514,15 @@ public class MainLayoutController {
         }).start();
     }
 
-    @FXML
-    void handleNavUserInfo(MouseEvent event) {
-        System.out.println("Đã click vào khu vực User Info!");
-    }
+    @FXML void handleNavUserInfo(MouseEvent event) { System.out.println("Đã click vào khu vực User Info!"); }
 
     private void updateActiveStyle(HBox activeItem) {
-
-        HBox[] allNavItems = {
-            navDashboard, navActiveBids, navWatchlist, 
-            navWonItems, navNewAuctionRoom
-        };
-
-        // 2. Đi dọn dẹp: Xóa cái class "active" ở TẤT CẢ các menu
+        HBox[] allNavItems = { navDashboard, navActiveBids, navWatchlist, navWonItems, navNewAuctionRoom };
         for (HBox item : allNavItems) {
-            if (item != null) {
-                item.getStyleClass().remove("active-nav");
-            }
+            if (item != null) item.getStyleClass().remove("active-nav");
         }
-
-        if (activeItem != null) {
-            if (!activeItem.getStyleClass().contains("active-nav")) {
-                activeItem.getStyleClass().add("active-nav");
-            }
+        if (activeItem != null && !activeItem.getStyleClass().contains("active-nav")) {
+            activeItem.getStyleClass().add("active-nav");
         }
     }
 
@@ -509,45 +530,31 @@ public class MainLayoutController {
     void handleNavWatchlist(MouseEvent event) {
         updateActiveStyle(navWatchlist);
         clearContent();
-
-        FXMLLoader loader = new FXMLLoader();
         try {
-            loader = new FXMLLoader(getClass().getResource("/fxml/watchlist.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/watchlist.fxml"));
             Parent watchlistView = loader.load();
             WatchlistController ctrl = loader.getController();
             ctrl.setOnOpenAuction(this::loadBiddingRoom);
-
             contentArea.getChildren().add(watchlistView);
-            
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Lỗi load file watchlist.fxml");
         }
-
     }
 
-    @FXML
-    void handleNavWonItems(MouseEvent event) {
-
-    }
-
-    @FXML
-    void handleSearching(MouseEvent event) {
-
-    }
+    @FXML void handleNavWonItems(MouseEvent event) {}
+    @FXML void handleSearching(MouseEvent event) {}
 
     @FXML
     void toggleSidebar(ActionEvent event) {
         Timeline timeline = new Timeline();
         Duration duration = Duration.millis(150);
-
         double targetWidth = isSidebarExpanded ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
 
-        KeyValue kvPref = new KeyValue(sidebar.prefWidthProperty(), targetWidth);
-        KeyValue kvMin = new KeyValue(sidebar.minWidthProperty(), targetWidth);
-        KeyValue kvMax = new KeyValue(sidebar.maxWidthProperty(), targetWidth);
-
-        KeyFrame kf = new KeyFrame(duration, kvPref, kvMin, kvMax);
+        KeyFrame kf = new KeyFrame(duration,
+                new KeyValue(sidebar.prefWidthProperty(), targetWidth),
+                new KeyValue(sidebar.minWidthProperty(),  targetWidth),
+                new KeyValue(sidebar.maxWidthProperty(),  targetWidth));
         timeline.getKeyFrames().add(kf);
 
         Label[] navLabels = {
@@ -557,20 +564,14 @@ public class MainLayoutController {
         };
 
         if (isSidebarExpanded) {
-            for (Label lbl : navLabels) {
-                lbl.setVisible(false);
-                lbl.setManaged(false);
-            }
+            for (Label lbl : navLabels) { lbl.setVisible(false); lbl.setManaged(false); }
             lblOverview.setText("");
             lblAuction.setText("");
             btnLogOut.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         } else {
             timeline.setOnFinished(e -> {
-                for (Label lbl : navLabels) {
-                    lbl.setVisible(true);
-                    lbl.setManaged(true);
-                }
-                lblOverview.setText("OVERVIEW"); 
+                for (Label lbl : navLabels) { lbl.setVisible(true); lbl.setManaged(true); }
+                lblOverview.setText("OVERVIEW");
                 lblAuction.setText("AUCTION");
                 btnLogOut.setContentDisplay(ContentDisplay.LEFT);
             });
