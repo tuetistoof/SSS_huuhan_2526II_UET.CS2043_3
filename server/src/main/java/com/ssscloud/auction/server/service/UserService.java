@@ -145,7 +145,7 @@ public class UserService {
         try {
             return switch (registerRequest.getRole()) {
                 case BIDDER -> new Bidder(registerRequest.getName(), registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getEmail(), registerRequest.getRole());
-                case SELLER -> new Seller(registerRequest.getName(), registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getEmail(), registerRequest.getRole());
+                case SELLER -> new Seller(registerRequest.getName(), registerRequest.getUsername(), registerRequest.getPassword(), registerRequest.getEmail(), registerRequest.getRole(), registerRequest.getBankAccount());
                 default -> throw new ServiceException(ErrorCode.INVALID_ROLE, "Logic failure: Encountered an unsupported user role: " + registerRequest.getRole());
             };
         } catch (ServiceException serviceException) {
@@ -188,7 +188,14 @@ public class UserService {
         } else if (user instanceof Seller sellerAccount) {
             accountBalance = sellerAccount.getAccountBalance();
         }
-        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole(), accountBalance);
+        long unsettledBalance = 0;
+        if (user instanceof Seller sellerAccount) {
+            unsettledBalance = sellerAccount.getPendingBalance();
+        }
+        if (user instanceof Bidder bidderAccount){
+            unsettledBalance = bidderAccount.getLockedBalance();
+        }
+        return new UserDTO(user.getId(), user.getUserName(), user.getEmail(), user.getRole(), accountBalance, unsettledBalance);
     }
 
     // --- VALIDATION METHODS ---

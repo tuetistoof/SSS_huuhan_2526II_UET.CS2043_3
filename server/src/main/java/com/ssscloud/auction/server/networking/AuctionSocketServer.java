@@ -13,26 +13,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;   
+import java.util.logging.SimpleFormatter;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.server.controller.AdminController;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
-import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
+import com.ssscloud.auction.server.controller.QueryController;
 import com.ssscloud.auction.server.controller.UserController;
-import com.ssscloud.auction.server.controller.WatchlistController;
+import com.ssscloud.auction.server.dao.AdminDAO;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
-import com.ssscloud.auction.server.dao.DisplayDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.NotificationDAO;
+import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
-import com.ssscloud.auction.server.dao.WatchlistDAO;
-import com.ssscloud.auction.server.dao.BiddedAuctionsListDAO;
+import com.ssscloud.auction.server.service.AdminService;
 import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
@@ -44,7 +43,7 @@ import com.ssscloud.auction.server.util.AuctionRegistry;
 
 /**
  * AuctionSocketServer is the primary entry point for the auction system backend.
- * It initializes infrastructure services, recovers auction states from persistence, 
+ * It initializes infrastructure services, recovers auction states from persistence,
  * and manages the main socket listener loop.
  */
 public class AuctionSocketServer {
@@ -61,14 +60,14 @@ public class AuctionSocketServer {
         try {
             // Create "server.log" in the root directory. Enable append mode to preserve historical data.
             FileHandler fileHandler = new FileHandler("server.log", true);
-            
+
             // Enforce plain text formatting for better technical readability.
             fileHandler.setFormatter(new SimpleFormatter());
-            
+
             // Attach the file handler to the root logger for comprehensive system monitoring.
             Logger rootLogger = Logger.getLogger("");
             rootLogger.addHandler(fileHandler);
-            
+
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Log Initialization Failure: Unable to instantiate the server log file.", exception);
             throw exception;
@@ -78,34 +77,41 @@ public class AuctionSocketServer {
     public static void main(String[] args) throws Exception {
         setupLogger();
 
-        UserDAO userDAO = new UserDAO();
-        ItemDAO itemDAO = new ItemDAO();
-        AuctionDAO auctionDAO = new AuctionDAO();
-        BidTransactionDAO bidDAO = new BidTransactionDAO();
-        WatchlistDAO watchlistDAO = new WatchlistDAO();
-        BiddedAuctionsListDAO biddedAuctionsListDAO = new BiddedAuctionsListDAO();
-        DisplayDAO displayDAO = new DisplayDAO();
-        NotificationDAO notificationDAO = new NotificationDAO();
+        // ── DAOs ──────────────────────────────────────────────────────────
+        UserDAO userDAO                     = new UserDAO();
+        ItemDAO itemDAO                     = new ItemDAO();
+        AuctionDAO auctionDAO               = new AuctionDAO();
+        BidTransactionDAO bidDAO            = new BidTransactionDAO();
+        NotificationDAO notificationDAO     = new NotificationDAO();
+        QueryDAO queryDAO                   = new QueryDAO();
+        AdminDAO adminDAO                   = new AdminDAO();         // [ADMIN]
 
-        AutoBidService autoBidService = new AutoBidService(auctionDAO, userDAO);
-        BidService bidService = new BidService(auctionDAO, userDAO);
-        
+        // ── Services ──────────────────────────────────────────────────────
+        AutoBidService autoBidService       = new AutoBidService(auctionDAO, userDAO);
+        BidService bidService               = new BidService(auctionDAO, userDAO);
+        UserService userService             = new UserService(userDAO);
+        ItemService itemService             = new ItemService(itemDAO);
+        NotificationService notificationService = new NotificationService(queryDAO, notificationDAO);
+        AuctionService auctionService       = new AuctionService(auctionDAO, userService, itemService, notificationService);
+        AdminService adminService           = new AdminService(adminDAO, auctionDAO, autoBidService); // [ADMIN]
 
-        UserService userService = new UserService(userDAO);
-        ItemService itemService = new ItemService(itemDAO);
-        NotificationService notificationService = new NotificationService(watchlistDAO, notificationDAO);
-        AuctionService auctionService = new AuctionService(auctionDAO, userService, itemService, notificationService);
-
-        BidController bidController = new BidController(bidService, autoBidService, bidDAO);
-        UserController userController = new UserController(userService); // Naming: Clear descriptive names
-        AuctionController auctionController = new AuctionController(auctionService);
-        WatchlistController watchlistController = new WatchlistController(watchlistDAO);
-        BiddedAuctionsListController biddedAuctionsListController = new BiddedAuctionsListController(biddedAuctionsListDAO);
-        DisplayController displayController = new DisplayController(displayDAO);
+        // ── Controllers ───────────────────────────────────────────────────
+        BidController bidController                 = new BidController(bidService, autoBidService, bidDAO);
+        UserController userController               = new UserController(userService);
+        AuctionController auctionController         = new AuctionController(auctionService);
         NotificationController notificationController = new NotificationController(notificationService, notificationDAO);
+        QueryController queryController             = new QueryController(queryDAO);
+        AdminController adminController             = new AdminController(adminService); // [ADMIN]
 
-        ConcurrentBidManager.initialize(bidDAO, autoBidService, auctionDAO, notificationController);
-        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, biddedAuctionsListController, displayController, notificationController);
+        ConcurrentBidManager.initialize(userDAO, bidDAO, autoBidService, auctionDAO, notificationController);
+
+        MessageHandler messageHandler = new MessageHandler(
+                userController,
+                auctionController,
+                bidController,
+                queryController,
+                notificationController,
+                adminController); // [ADMIN]
 
         // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService);
@@ -163,7 +169,7 @@ public class AuctionSocketServer {
     }
 
     /**
-     * Safety-net task: periodically scans for overdue auctions that might have been missed by 
+     * Safety-net task: periodically scans for overdue auctions that might have been missed by
      * standard scheduling mechanisms (e.g., edge cases during high load).
      */
     private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService, NotificationService notificationService) throws Exception {
@@ -172,7 +178,6 @@ public class AuctionSocketServer {
             t.setDaemon(true);
             return t;
         });
-
 
         scheduler.scheduleAtFixedRate(() -> {
             try {

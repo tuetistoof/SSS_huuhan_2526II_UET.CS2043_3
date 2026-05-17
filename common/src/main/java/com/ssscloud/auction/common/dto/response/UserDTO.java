@@ -12,16 +12,18 @@ public class UserDTO implements Serializable {
     private String email;
     private UserRole role;
     private long accountBalance;
-
+    private long unsettledBalance;
     public UserDTO() {
     }
 
-    public UserDTO(String id, String username, String email, UserRole role, long accountBalance) {
+    public UserDTO(String id, String username, String email, UserRole role, long accountBalance, long unsettledBalance) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.role = role;
         this.accountBalance = accountBalance;
+        this.unsettledBalance = unsettledBalance;
+    
     }
 
     public String getId() {
@@ -63,6 +65,13 @@ public class UserDTO implements Serializable {
     public void setAccountBalance(long accountBalance) {
         this.accountBalance = accountBalance;
     }
+    public long getUnsettledBalance() {
+        return unsettledBalance;
+    }
+    public void setUnsettledBalance(long unsettledBalance) {
+        this.unsettledBalance = unsettledBalance;
+    }
+
 
     @Override
     public String toString() {
@@ -71,6 +80,7 @@ public class UserDTO implements Serializable {
                 ", username='" + username + '\'' +
                 ", role=" + role +
                 ", accountBalance=" + accountBalance +
+                ", unsettledBalance=" + unsettledBalance +
                 '}';
     }
 }

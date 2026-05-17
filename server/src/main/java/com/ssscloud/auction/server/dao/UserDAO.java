@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Admin;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
@@ -78,7 +77,7 @@ public class UserDAO extends BaseDAO {
         logger.log(Level.INFO, "Initiating persistence for Seller: {0}", seller.getUserName());
         String sqlEntity = "INSERT INTO entity (id, name) VALUES (?, ?)";
         String sqlUser   = "INSERT INTO user (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)";
-        String sqlSeller = "INSERT INTO seller (id, bank_account, account_balance) VALUES (?, ?, ?)";
+        String sqlSeller = "INSERT INTO seller (id, bank_account, account_balance, pending_balance) VALUES (?, ?, ?, ?)";
 
         Connection connection = null;
         PreparedStatement psEntity = null;
@@ -105,6 +104,7 @@ public class UserDAO extends BaseDAO {
             psSeller.setString(1, seller.getId());
             psSeller.setString(2, seller.getBankAccount());
             psSeller.setLong(3, seller.getAccountBalance());
+            psSeller.setLong(4, seller.getPendingBalance());
             psSeller.executeUpdate();
 
             connection.commit();
@@ -130,7 +130,7 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, s.bank_account, s.account_balance AS seller_balance " +
+                "b.account_balance, b.locked_balance, s.bank_account, s.account_balance, s.pending_balance AS seller_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -168,7 +168,7 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, s.bank_account, s.account_balance AS seller_balance " +
+                "b.account_balance, b.locked_balance, s.bank_account, s.account_balance, s.pending_balance AS seller_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -206,7 +206,7 @@ public class UserDAO extends BaseDAO {
         String sql = "SELECT " +
                 "e.id, e.name, " +
                 "u.username, u.password, u.email, u.role, " +
-                "b.account_balance, s.bank_account, s.account_balance AS seller_balance " +
+                "b.account_balance, b.locked_balance, s.bank_account, s.account_balance, s.pending_balance AS seller_balance " +
                 "FROM entity e " +
                 "JOIN user u ON e.id = u.id " +
                 "LEFT JOIN bidder b ON u.id = b.id " +
@@ -318,7 +318,7 @@ public class UserDAO extends BaseDAO {
         }
     }
 
-    public boolean updateAccountBalance (String userId, Long newAccountBalance) throws DAOException, Exception {
+    public boolean updateAccountBalance (String userId, long newAccountBalance) throws DAOException, Exception {
         String sql = "UPDATE bidder SET account_balance = ? WHERE id = ?";
         Connection        connection = null;
         PreparedStatement preparedStatement = null;
@@ -399,6 +399,64 @@ public class UserDAO extends BaseDAO {
         }
     }
 
+    public boolean lockBidderBalance(String userId, long amount) throws DAOException, Exception {
+        String sql = "UPDATE bidder SET locked_balance = locked_balance + ? " +
+                    "WHERE id = ? AND (account_balance - locked_balance) >= ?";
+        Connection        connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, amount);
+            preparedStatement.setString(2, userId);
+            preparedStatement.setLong(3, amount);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                logger.log(Level.INFO, "Balance lock: {0} locked for userId: {1}", new Object[]{amount, userId});
+            }
+            return rowsAffected > 0;
+
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while locking bidder balance.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.lockBidderBalance", exception);
+            throw exception;
+        } finally {
+            closeResource(preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    public boolean unlockBidderBalance(String userId, long amount) throws DAOException, Exception {
+        String sql = "UPDATE bidder SET locked_balance = locked_balance - ? " +
+                    "WHERE id = ? AND locked_balance >= ?";
+        Connection        connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, amount);
+            preparedStatement.setString(2, userId);
+            preparedStatement.setLong(3, amount);
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                logger.log(Level.INFO, "Balance unlock: {0} unlocked for userId: {1}", new Object[]{amount, userId});
+            }
+            return rowsAffected > 0;
+
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while unlocking bidder balance.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.unlockBidderBalance", exception);
+            throw exception;
+        } finally {
+            closeResource(preparedStatement);
+            closeConnect(connection);
+        }
+}
+
     // --- PRIVATE METHODS ---
 
     private User mapResultSetToUser(ResultSet resultSet) throws SQLException {
@@ -412,12 +470,14 @@ public class UserDAO extends BaseDAO {
         return switch (role) {
             case BIDDER -> {
                 long balance = resultSet.getLong("account_balance");
-                yield new Bidder(userId, name, userName, password, email, role, balance);
+                long lockedBalance = resultSet.getLong("locked_balance");
+                yield new Bidder(userId, name, userName, password, email, role, balance, lockedBalance);
             }
             case SELLER -> {
                 String bankAccount    = resultSet.getString("bank_account");
                 long   sellerBalance  = resultSet.getLong("seller_balance");
-                yield new Seller(userId, name, userName, password, email, role, bankAccount, sellerBalance);
+                long   pendingBalance = resultSet.getLong("pending_balance");
+                yield new Seller(userId, name, userName, password, email, role, bankAccount, sellerBalance, pendingBalance);
             }
             case ADMIN -> new Admin(userId, name, userName, password, email, role);
             default -> throw new SQLException("Unrecognized user role: " + role);

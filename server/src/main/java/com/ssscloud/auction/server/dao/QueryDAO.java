@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,8 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 
-/**
- * DisplayDAO handles specialized queries for displaying auction information 
- * to sellers and bidders, involving complex joins and aggregations.
- */
-public class DisplayDAO extends BaseDAO{
-    // Logging Standards: Declared as the first attribute
-    private static final Logger logger = Logger.getLogger(DisplayDAO.class.getName());
+public class QueryDAO extends BaseDAO{
+    private static final Logger logger = Logger.getLogger(QueryDAO.class.getName());
 
     // --- PUBLIC METHODS ---
 
@@ -159,8 +155,7 @@ public class DisplayDAO extends BaseDAO{
                 dto.setMyLastBid(resultSet.getLong("my_last_bid"));
                 dto.setLeading(resultSet.getBoolean("is_leading"));
 
-                java.sql.Timestamp endTimeTimestamp = resultSet.getTimestamp("end_time");
-                if (endTimeTimestamp != null) dto.setEndTime(endTimeTimestamp.toLocalDateTime());
+                dto.setEndTime(resultSet.getObject("end_time", LocalDateTime.class));
 
                 String imageUrlsRaw = resultSet.getString("image_url");
                 if (imageUrlsRaw != null && !imageUrlsRaw.isEmpty()) {
@@ -225,6 +220,177 @@ public class DisplayDAO extends BaseDAO{
             throw new DAOException(ErrorCode.ACTIVE_AUCTION_FETCH_FAILED, "Database failure while retrieving all active auctions.");
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in DisplayDAO.findActiveAuctions", exception);
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    // ── Watch ─────────────────────────────────────────────────────────────────
+
+    public boolean add(String auctionId, String userId) throws DAOException, Exception {
+        String sql = "INSERT INTO watchlist (auction_id, user_id) VALUES (?, ?)";
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            preparedStatement.setString(2, userId);
+            preparedStatement.executeUpdate();
+            logger.log(Level.INFO, "Watchlist entry successfully created for userId: {0}, auctionId: {1}", new Object[]{userId, auctionId});
+            return true;
+        } catch (SQLIntegrityConstraintViolationException constraintException) {
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: User is already following this auction.");
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.WATCHLIST_ADD_FAILED, "Database interaction failure while adding auction to watchlist.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in WatchlistDAO.add", exception);
+            throw exception;
+        } finally {
+            closeResource(preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    // ── Unwatch ───────────────────────────────────────────────────────────────
+
+    public boolean remove(String auctionId, String userId) throws DAOException, Exception {
+        String sql = "DELETE FROM watchlist WHERE auction_id = ? AND user_id = ?";
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            preparedStatement.setString(2, userId);
+            int rowsAffected = preparedStatement.executeUpdate();
+            logger.log(Level.INFO, "Watchlist entry successfully removed for userId: {0}, auctionId: {1}", new Object[]{userId, auctionId});
+            return rowsAffected > 0;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.WATCHLIST_REMOVE_FAILED, "Database interaction failure while removing auction from watchlist.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.remove", exception);
+            throw exception;
+        } finally {
+            closeResource(preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    // ── Query ─────────────────────────────────────────────────────────────────
+
+    public List<BidderDisplayDTO> findWatchlistDetailsByUser(String userId) throws DAOException, Exception {
+    List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
+    
+    String sql = 
+        "SELECT a.id, " +
+        "       e.name AS auction_name, " +          
+        "       ac.end_time, " +                     
+        "       u_seller.username AS seller_username, " + 
+        "       ei.name AS item_name, " +            
+        "       i.type AS item_type, " +             
+        "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " + 
+        "       (SELECT img.image_url FROM item_image_url img " +
+        "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + 
+        "FROM watchlist w " +
+        "JOIN auction a ON w.auction_id = a.id " +
+        "JOIN auction_config ac ON a.id = ac.id " +
+        "JOIN entity e ON a.id = e.id " +            
+        "JOIN user u_seller ON a.seller_id = u_seller.id " + 
+        "JOIN item i ON a.item_id = i.id " +
+        "JOIN entity ei ON i.id = ei.id " +          
+        "LEFT JOIN ( " +
+        "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
+        "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
+        "                         WHERE b2.auction_id = b1.auction_id) " +
+        ") AS last_bid ON last_bid.auction_id = a.id " +
+        "WHERE w.user_id = ?";
+
+    Connection connection = null;
+    PreparedStatement preparedStatement = null;
+    ResultSet resultSet = null;
+
+    try {
+        connection = getConnection();
+        preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setString(1, userId);
+        resultSet = preparedStatement.executeQuery();
+
+        while (resultSet.next()) {
+            BidderDisplayDTO dto = new BidderDisplayDTO();
+            dto.setId(resultSet.getString("id"));
+            dto.setAuctionName(resultSet.getString("auction_name"));
+            dto.setItemName(resultSet.getString("item_name"));
+            dto.setItemType(resultSet.getString("item_type"));
+            dto.setCurrentPrice(resultSet.getLong("current_price"));
+            
+            dto.setEndTime(resultSet.getObject("end_time", LocalDateTime.class));
+            
+            dto.setSellerUsername(resultSet.getString("seller_username"));
+            
+            String imageUrlRaw = resultSet.getString("image_url");
+            List<String> imageUrlList = (imageUrlRaw != null) ? List.of(imageUrlRaw) : new ArrayList<>();
+            dto.setImageUrl(imageUrlList);
+            
+            auctionDetailsList.add(dto);
+        }
+        logger.log(Level.INFO, "Successfully retrieved {0} detailed watchlist items for userId: {1}", new Object[]{auctionDetailsList.size(), userId});
+    } catch (SQLException sqlException) {
+        throw new DAOException(ErrorCode.WATCHLIST_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user watchlist details.");
+    } catch (Exception exception) {
+        logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findWatchlistDetailsByUser", exception);
+        throw exception;
+    } finally {
+        closeResource(resultSet, preparedStatement);
+        closeConnect(connection);
+    }
+    return auctionDetailsList;
+}
+
+    public List<String> findUserIdsByAuction(String auctionId) throws DAOException, Exception {
+        String sql = "SELECT user_id FROM watchlist WHERE auction_id = ?";
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+        List<String>      userIdList        = new ArrayList<>();
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                userIdList.add(resultSet.getString("user_id"));
+            }
+            return userIdList;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.WATCHLIST_WATCHER_FETCH_FAILED, "Database failure while retrieving watcher IDs for auction.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findUserIdsByAuction", exception);
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
+    public boolean isFollowing(String auctionId, String userId) throws DAOException, Exception {
+        String sql = "SELECT 1 FROM watchlist WHERE auction_id = ? AND user_id = ?";
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, auctionId);
+            preparedStatement.setString(2, userId);
+            resultSet = preparedStatement.executeQuery();
+            return resultSet.next();
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.WATCHLIST_STATUS_CHECK_FAILED, "Database failure while checking watchlist following status.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in isFollowing", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
