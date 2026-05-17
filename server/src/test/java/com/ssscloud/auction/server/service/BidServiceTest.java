@@ -52,7 +52,7 @@ public class BidServiceTest {
         AutoBidService autoBidService = mock(AutoBidService.class);
         NotificationController notifController = mock(NotificationController.class);
         doNothing().when(notifController).notifyWatchers(anyString(), anyString());
-        ConcurrentBidManager.initialize(bidTransactionDAO, autoBidService, auctionDAO, notifController);
+        ConcurrentBidManager.initialize(userDAO, bidTransactionDAO, autoBidService, auctionDAO, notifController);
 
         AuctionConfig config = new AuctionConfig(
             AUCTION_ID,
