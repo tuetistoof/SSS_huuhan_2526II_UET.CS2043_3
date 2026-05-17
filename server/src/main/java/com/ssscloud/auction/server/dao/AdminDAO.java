@@ -10,9 +10,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.response.AdminAuctionView;
+import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.AdminMetrics;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 
@@ -31,7 +33,7 @@ public class AdminDAO extends BaseDAO {
      * Lấy tất cả auction, có thể filter theo status.
      * Nếu filter == null thì lấy toàn bộ.
      */
-    public List<AdminAuctionView> findAllAuctions(AuctionStatus filter) throws DAOException, Exception {
+    public List<AdminDisplayDTO> findAllAuctions(AuctionStatus filter) throws DAOException, Exception {
         // Query base — JOIN để lấy tên auction, seller, và giá hiện tại
         String baseSql =
             "SELECT a.id, " +
@@ -63,7 +65,7 @@ public class AdminDAO extends BaseDAO {
         Connection             connection        = null;
         PreparedStatement      preparedStatement = null;
         ResultSet              resultSet         = null;
-        List<AdminAuctionView> auctionList       = new ArrayList<>();
+        List<AdminDisplayDTO> auctionList       = new ArrayList<>();
 
         try {
             logger.log(Level.INFO, "Retrieving all auctions for admin, filter: {0}",
@@ -147,10 +149,61 @@ public class AdminDAO extends BaseDAO {
         }
     }
 
+    /**
+     * Lấy tất cả user (BIDDER + SELLER), có thể filter theo role.
+     * filter == null thì lấy tất cả.
+     */
+    public List<UserDTO> getAllUsers(String roleFilter) throws DAOException, Exception {
+        String baseSql =
+            "SELECT u.id, u.username, u.email, u.role, " +
+            "       COALESCE(b.account_balance, s.account_balance, 0) AS account_balance " +
+            "FROM user u " +
+            "LEFT JOIN bidder b  ON u.id = b.id " +
+            "LEFT JOIN seller s  ON u.id = s.id ";
+
+        String sql = (roleFilter != null && !roleFilter.isBlank())
+            ? baseSql + "WHERE u.role = ? ORDER BY u.username ASC"
+            : baseSql + "ORDER BY u.username ASC";
+
+        Connection        connection        = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet         resultSet         = null;
+        List<UserDTO>     userList          = new ArrayList<>();
+
+        try {
+            logger.log(Level.INFO, "Admin retrieving user list, roleFilter: {0}",
+                roleFilter != null ? roleFilter : "ALL");
+
+            connection        = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            if (roleFilter != null && !roleFilter.isBlank()) {
+                preparedStatement.setString(1, roleFilter.toUpperCase());
+            }
+
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                userList.add(mapRowToUserDTO(resultSet));
+            }
+
+            logger.log(Level.INFO, "Admin user list returned {0} user(s).", userList.size());
+            return userList;
+
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED,
+                "Database interaction failure while retrieving user list for admin.");
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminDAO.getAllUsers", exception);
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+    }
+
     // --- PRIVATE METHODS ---
 
     /** Map một row ResultSet sang AdminAuctionView */
-    private AdminAuctionView mapRowToAdminAuctionView(ResultSet rs) throws SQLException {
+    private AdminDisplayDTO mapRowToAdminAuctionView(ResultSet rs) throws SQLException {
         // Đọc end_time an toàn — có thể null nếu auction chưa set
         LocalDateTime endTime = null;
         java.sql.Timestamp endTimeTs = rs.getTimestamp("end_time");
@@ -158,13 +211,27 @@ public class AdminDAO extends BaseDAO {
             endTime = endTimeTs.toLocalDateTime();
         }
 
-        return new AdminAuctionView(
+        return new AdminDisplayDTO(
             rs.getString("id"),
             rs.getString("auction_name"),
             rs.getString("seller_username"),
             rs.getLong("current_price"),
             AuctionStatus.valueOf(rs.getString("status")),
             endTime
+        );
+    }
+
+    /** Map một row ResultSet sang UserDTO cho admin user list */
+    private UserDTO mapRowToUserDTO(ResultSet rs) throws SQLException {
+        String roleStr = rs.getString("role");
+        UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : null;
+        return new UserDTO(
+            rs.getString("id"),
+            rs.getString("username"),
+            rs.getString("email"),
+            role,
+            rs.getLong("account_balance"),
+            0L  // unsettledBalance không cần cho admin view
         );
     }
 }

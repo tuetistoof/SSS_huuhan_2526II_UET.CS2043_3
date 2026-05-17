@@ -219,6 +219,13 @@ public class MessageHandler {
                 // ADMIN ACTIONS
                 // ══════════════════════════════════════════════════════
 
+                case "ADMIN_GET_USERS": {
+                    // data: String role filter ("BIDDER" | "SELLER" | null)
+                    String controllerResponse = adminController.getUsers(clientMessage.getData());
+                    return JsonUtils.toJson(ClientMessage.request("ADMIN_GET_USERS_RESPONSE",
+                        JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
+
                 case "ADMIN_GET_AUCTIONS": {
                     // data: String status filter ("RUNNING" | "OPEN" | "FINISHED" | "CANCELED" | null)
                     String controllerResponse = adminController.getAuctions(clientMessage.getData());

@@ -236,10 +236,7 @@
     -fx-text-fill: #bbbbbb;
 }
 
-/* ══ STATUS BADGES ══
-   Các badge đồng nhất palette với seller-dashboard.css.
-   Thêm badge-paid và badge-admin không có trong file cũ.
-*/
+/* ══ STATUS BADGES ══*/
 .badge-running {
     -fx-background-color: #e3f5e8;
     -fx-background-radius: 5px;
@@ -332,10 +329,7 @@
     -fx-padding: 3 10 3 10;
 }
 
-/* ══ ACTION BUTTONS trong cell ══
-   Khớp hoàn toàn kiểu btn-view-row / btn-primary của seller.
-   Cancel/Ban dùng cùng accent đỏ, Unban dùng neutral.
-*/
+/* ══ ACTION BUTTONS trong cell ══*/
 .btn-cancel-row {
     -fx-background-color: transparent;
     -fx-border-color: #f09595;

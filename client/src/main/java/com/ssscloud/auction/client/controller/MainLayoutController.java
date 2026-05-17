@@ -351,11 +351,11 @@ public class MainLayoutController {
                     currentController = ctrl;
                 }
 
-                case ADMIN -> {
-                    AdminDashboardController ctrl = loader.getController();
-                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
-                    currentController = ctrl;
-                }
+                // case ADMIN -> {
+                //     AdminDashboardController ctrl = loader.getController();
+                //     ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                //     currentController = ctrl;
+                // }
             }
 
 
