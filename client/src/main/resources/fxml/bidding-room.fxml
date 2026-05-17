@@ -107,7 +107,7 @@
             </VBox>
 
         <!-- ── Cột phải: Tab Manual / Auto Bid ── -->
-        <VBox alignment="CENTER" maxWidth="450.0" minWidth="260" prefWidth="450.0" styleClass="br-white-card" HBox.hgrow="NEVER">
+        <VBox fx:id="bidForm" alignment="CENTER" maxWidth="450.0" minWidth="260" prefWidth="450.0" styleClass="br-white-card" HBox.hgrow="NEVER">
           <padding><Insets bottom="16" left="0" right="0" top="0" /></padding>
 
           <!-- Tab bar -->
@@ -209,12 +209,12 @@
               <Label styleClass="br-info-key" text="Anti-Sniping: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoAntiSnipe" styleClass="br-info-val" text="—" />
             </HBox>
-                  <VBox>
+                  <HBox>
                      <children>
-                        <Label text="Description: " />
-                        <Label fx:id="infoDescription" text="—" />
+                        <Label styleClass="br-info-key" text="Description: " />
+                        <Label fx:id="infoDescription" styleClass="br-info-val" text="—" />
                      </children>
-                  </VBox>
+                  </HBox>
           </VBox>
 
         </StackPane>

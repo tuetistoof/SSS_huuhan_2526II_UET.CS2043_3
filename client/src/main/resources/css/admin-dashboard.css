@@ -1,112 +1,76 @@
 /*
 ===========================================
   CloudBid Admin Dashboard – admin-dashboard.css
-  Palette chính: #f75667 (accent), trắng/xám nhạt (surface)
-  Nhất quán với seller-dashboard.css
+  Palette: #f75667 (accent), trắng/xám nhạt (surface)
+  Mốc: seller-dashboard.css — nhất quán toàn bộ app
 ===========================================
 */
 
-/* ── ROOT ── */
+/* ══ ROOT ══ */
 .adm-root {
     -fx-background-color: #f0f0f0;
     -fx-font-family: "Arial";
 }
 
-/* ── TOPBAR ── */
-.adm-topbar {
-    -fx-background-color: #ffffff;
-    -fx-pref-height: 46px;
-    -fx-min-height: 46px;
-    -fx-border-color: #e8e8e8;
-    -fx-border-width: 0 0 1 0;
-}
-
-.adm-brand-bold {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1a1a1a;
-}
-
-.adm-brand-light {
-    -fx-font-size: 14px;
-    -fx-font-weight: normal;
-    -fx-text-fill: #666666;
-}
-
-.adm-role-badge {
-    -fx-background-color: #fde8e8;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #993556;
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-padding: 2 8 2 8;
-}
-
-.adm-topbar-user {
-    -fx-font-size: 13px;
-    -fx-text-fill: #555555;
-}
-
-/* ── BODY ── */
+/* ══ BODY ══ */
 .adm-body {
     -fx-background-color: #f0f0f0;
 }
 
-/* ── METRIC CARDS ── */
+/* ══ METRIC CARDS ══
+   Dùng gradient hồng nhạt như seller dashboard-card để đồng nhất visual language.
+   Không dùng màu trắng đơn thuần — tạo cảm giác "alive" hơn.
+*/
 .adm-metric-card {
-    -fx-background-color: #ffffff;
+    -fx-background-color: #fde8e8;
     -fx-background-radius: 8px;
-    -fx-border-color: #eeeeee;
-    -fx-border-width: 1px;
-    -fx-border-radius: 8px;
+    -fx-border-color: transparent;
 }
 
 .adm-metric-val-blue {
-    -fx-font-size: 24px;
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
     -fx-text-fill: #185FA5;
 }
 
 .adm-metric-val-red {
-    -fx-font-size: 24px;
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
-    -fx-text-fill: #A32D2D;
+    -fx-text-fill: #dc493a;
 }
 
 .adm-metric-val-green {
-    -fx-font-size: 24px;
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
-    -fx-text-fill: #27500A;
+    -fx-text-fill: #2e9e44;
 }
 
 .adm-metric-lbl {
     -fx-font-size: 11px;
-    -fx-text-fill: #888888;
+    -fx-text-fill: #555555;
 }
 
-/* ── MAIN CARD ── */
+/* ══ MAIN CARD ══ */
 .adm-main-card {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 10px;
-    -fx-border-color: #eeeeee;
-    -fx-border-width: 1px;
-    -fx-border-radius: 10px;
+    -fx-background-radius: 12px;
+    -fx-border-color: transparent;
 }
 
-/* ── TAB BAR ── */
+/* ══ TAB BAR ══ */
 .adm-tab-bar {
     -fx-background-color: #ffffff;
-    -fx-border-color: #eeeeee;
+    -fx-border-color: #e8e8e8;
     -fx-border-width: 0 0 1 0;
-    -fx-background-radius: 10 10 0 0;
+    -fx-background-radius: 12 12 0 0;
 }
 
 .adm-tab-btn {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-text-fill: #777777;
+    -fx-text-fill: #888888;
     -fx-font-size: 13px;
-    -fx-padding: 11 18 11 18;
+    -fx-padding: 12 18 12 18;
     -fx-background-radius: 0;
     -fx-cursor: hand;
 }
@@ -124,14 +88,17 @@
     -fx-border-width: 0 0 2 0;
 }
 
-/* ── TOOLBAR ── */
+/* ══ TOOLBAR ══ */
 .adm-toolbar {
     -fx-background-color: #ffffff;
     -fx-border-color: #f0f0f0;
     -fx-border-width: 0 0 1 0;
 }
 
-/* ── FILTER BUTTONS ── */
+/* ══ FILTER BUTTONS ══
+   Khớp kiểu outline/ghost của adm-filter-btn cũ, cải thiện selected state
+   theo màu accent từng tab: blue cho auction, purple hint cho user
+*/
 .adm-filter-btn {
     -fx-background-color: transparent;
     -fx-border-color: #e0e0e0;
@@ -145,18 +112,19 @@
 }
 
 .adm-filter-btn:hover {
-    -fx-background-color: #f5f5f5;
+    -fx-background-color: #fff0f2;
+    -fx-border-color: #f0c0c5;
     -fx-text-fill: #333333;
 }
 
 .adm-filter-btn:selected {
-    -fx-background-color: #e6f1fb;
-    -fx-border-color: #185FA5;
-    -fx-text-fill: #185FA5;
+    -fx-background-color: #fde8e8;
+    -fx-border-color: #f75667;
+    -fx-text-fill: #f75667;
     -fx-font-weight: bold;
 }
 
-/* ── SEARCH FIELD ── */
+/* ══ SEARCH FIELD ══ */
 .adm-search {
     -fx-background-color: #f8f8f8;
     -fx-border-color: #e0e0e0;
@@ -175,22 +143,24 @@
     -fx-background-color: #ffffff;
 }
 
-/* ── TABLE ── */
+/* ══ TABLE ══ */
 .adm-table {
     -fx-background-color: #ffffff;
     -fx-border-color: transparent;
-    -fx-table-cell-border-color: #f0f0f0;
+    -fx-table-cell-border-color: transparent;
 }
 
+/* Header — nền hồng nhạt như seller */
 .adm-table .column-header-background {
-    -fx-background-color: #ffffff;
+    -fx-background-color: #fdf0f1;
+    -fx-background-insets: 0;
 }
 
 .adm-table .column-header {
-    -fx-background-color: #ffffff;
-    -fx-border-color: transparent transparent #eeeeee transparent;
-    -fx-border-width: 0 0 1 0;
-    -fx-size: 36px;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #e8d8da transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-size: 42px;
 }
 
 .adm-table .column-header .label {
@@ -198,211 +168,291 @@
     -fx-font-weight: bold;
     -fx-text-fill: #555555;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 0 0 0 6;
+    -fx-padding: 0 0 0 10;
+}
+
+/* Cột Thao tác — căn giữa */
+.adm-table .column-header:last-visible {
+    -fx-alignment: CENTER;
+}
+.adm-table .column-header:last-visible .label {
+    -fx-alignment: CENTER;
+    -fx-padding: 0;
 }
 
 .adm-table .filler {
-    -fx-background-color: #ffffff;
+    -fx-background-color: #fdf0f1;
+    -fx-border-color: transparent transparent #e8d8da transparent;
+    -fx-border-width: 0 0 1.5 0;
 }
 
+/* Rows */
 .adm-table .table-row-cell {
     -fx-background-color: #ffffff;
-    -fx-border-color: transparent transparent #f5f5f5 transparent;
+    -fx-border-color: transparent transparent #f5f0f0 transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-cell-size: 36px;
+    -fx-cell-size: 46px;
 }
 
 .adm-table .table-row-cell:odd {
-    -fx-background-color: #fafafa;
+    -fx-background-color: #ffffff;
 }
 
 .adm-table .table-row-cell:hover {
-    -fx-background-color: #fff3f4;
+    -fx-background-color: #fff0f2;
 }
 
 .adm-table .table-row-cell:selected {
-    -fx-background-color: #ffdde0;
+    -fx-background-color: #ffffff !important;
+}
+.adm-table .table-row-cell:selected:hover {
+    -fx-background-color: #fff0f2 !important;
 }
 
-.adm-table .table-row-cell:selected .text {
-    -fx-fill: #333333;
+/* Cell text */
+.adm-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 6px 0 10px;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2d2d2d;
+    -fx-border-color: transparent;
 }
 
+.adm-table .table-row-cell:selected .table-cell {
+    -fx-text-fill: #2d2d2d;
+}
+
+/* Ô Thao tác cuối */
+.adm-table .table-cell:last-visible {
+    -fx-alignment: CENTER;
+    -fx-graphic-alignment: CENTER;
+    -fx-padding: 0;
+    -fx-content-display: GRAPHIC_ONLY;
+}
+
+/* Placeholder */
 .adm-table-placeholder {
     -fx-font-size: 13px;
-    -fx-text-fill: #aaaaaa;
+    -fx-text-fill: #bbbbbb;
 }
 
-/* ── STATUS BADGES (dùng trong CellFactory qua Label.getStyleClass()) ── */
+/* ══ STATUS BADGES ══*/
 .badge-running {
-    -fx-background-color: #e6f1fb;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #185FA5;
+    -fx-background-color: #e3f5e8;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #1e7a35;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
 .badge-open {
-    -fx-background-color: #eaf3de;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #27500A;
+    -fx-background-color: #e8f0fe;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #1a56c4;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
 .badge-finished {
-    -fx-background-color: #fcebeb;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #A32D2D;
+    -fx-background-color: #fdecea;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #b71c1c;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
 .badge-canceled {
-    -fx-background-color: #f1efe8;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #5F5E5A;
+    -fx-background-color: #f1f1f1;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #888888;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
-.badge-active {
-    -fx-background-color: #eaf3de;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #27500A;
+.badge-paid {
+    -fx-background-color: #e3f5e8;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #1e7a35;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
+}
+
+/* User status badges */
+.badge-active {
+    -fx-background-color: #e3f5e8;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #1e7a35;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 10 3 10;
 }
 
 .badge-banned {
-    -fx-background-color: #fcebeb;
-    -fx-background-radius: 4px;
-    -fx-text-fill: #A32D2D;
+    -fx-background-color: #fdecea;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #b71c1c;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
+/* Role badges */
 .badge-seller {
     -fx-background-color: #eeedfe;
-    -fx-background-radius: 4px;
+    -fx-background-radius: 5px;
     -fx-text-fill: #3C3489;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
 .badge-bidder {
     -fx-background-color: #e1f5ee;
-    -fx-background-radius: 4px;
+    -fx-background-radius: 5px;
     -fx-text-fill: #085041;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-padding: 2 7 2 7;
+    -fx-padding: 3 10 3 10;
 }
 
-/* ── ACTION BUTTONS trong cell ── */
+.badge-admin {
+    -fx-background-color: #fde8e8;
+    -fx-background-radius: 5px;
+    -fx-text-fill: #f75667;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 10 3 10;
+}
+
+/* ══ ACTION BUTTONS trong cell ══*/
 .btn-cancel-row {
     -fx-background-color: transparent;
     -fx-border-color: #f09595;
     -fx-border-width: 1px;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
-    -fx-text-fill: #A32D2D;
+    -fx-text-fill: #dc493a;
     -fx-font-size: 11px;
-    -fx-padding: 3 10 3 10;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
     -fx-cursor: hand;
 }
-
 .btn-cancel-row:hover {
-    -fx-background-color: #fcebeb;
+    -fx-background-color: #fdecea;
+}
+.btn-cancel-row:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
 }
 
 .btn-ban-row {
-    -fx-background-color: transparent;
-    -fx-border-color: #f09595;
-    -fx-border-width: 1px;
+    -fx-background-color: #de3e54 !important;
+    -fx-border-color: transparent !important;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
-    -fx-text-fill: #A32D2D;
+    -fx-text-fill: #ffffff !important;
     -fx-font-size: 11px;
-    -fx-padding: 3 10 3 10;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(222, 62, 84, 0.15), 4, 0, 0, 1);
 }
-
 .btn-ban-row:hover {
-    -fx-background-color: #fcebeb;
+    -fx-background-color: #c63145 !important;
+    -fx-effect: dropshadow(three-pass-box, rgba(198, 49, 69, 0.3), 6, 0, 0, 2);
+}
+.btn-ban-row:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+    -fx-background-color: #b02638 !important;
 }
 
 .btn-unban-row {
     -fx-background-color: transparent;
-    -fx-border-color: #b4b2a9;
+    -fx-border-color: #c0c0c0;
     -fx-border-width: 1px;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
-    -fx-text-fill: #444441;
+    -fx-text-fill: #555555;
     -fx-font-size: 11px;
-    -fx-padding: 3 10 3 10;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
     -fx-cursor: hand;
 }
-
 .btn-unban-row:hover {
-    -fx-background-color: #f1efe8;
+    -fx-background-color: #f1f1f1;
+}
+.btn-unban-row:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
 }
 
-/* ── PRIMARY BUTTON (tạo mới, v.v.) ── */
+/* Chặn lỗi nút đổi màu khi click vào row */
+.adm-table .table-row-cell:selected .btn-ban-row {
+    -fx-background-color: #de3e54 !important;
+    -fx-text-fill: #ffffff !important;
+}
+.adm-table .table-row-cell:selected .btn-ban-row:hover {
+    -fx-background-color: #c63145 !important;
+}
+.adm-table .table-row-cell:selected .btn-cancel-row {
+    -fx-background-color: transparent !important;
+    -fx-text-fill: #dc493a !important;
+}
+
+/* ══ PRIMARY BUTTON ══ */
 .btn-primary {
-    -fx-background-color: #f75667;
-    -fx-background-radius: 6px;
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 12px;
+    -fx-background-color: #de3e54;
+    -fx-text-fill: white;
+    -fx-background-radius: 10px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-padding: 6 16 6 16;
+    -fx-padding: 8 20 8 20;
     -fx-cursor: hand;
     -fx-border-color: transparent;
+    -fx-effect: dropshadow(three-pass-box, rgba(222, 62, 84, 0.2), 6, 0, 0, 1.5);
 }
-
-.btn-primary:hover {
-    -fx-background-color: #e0455a;
-}
-
+.btn-primary:hover   { -fx-background-color: #c63145; }
 .btn-primary:pressed {
-    -fx-scale-x: 0.98;
-    -fx-scale-y: 0.98;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+    -fx-background-color: #b02638;
 }
 
-/* ── SCROLLBAR ── */
+/* ══ SCROLLBAR ══ */
 .scroll-bar:vertical {
-    -fx-pref-width: 6px;
+    -fx-pref-width: 5px;
     -fx-background-color: transparent;
 }
-
 .scroll-bar:vertical .thumb {
-    -fx-background-color: #dedede;
+    -fx-background-color: #e0d0d2;
     -fx-background-radius: 3px;
 }
-
 .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #c0c0c0;
+    -fx-background-color: #c8b8ba;
 }
-
 .scroll-bar .increment-button,
 .scroll-bar .decrement-button {
     -fx-pref-height: 0;
     -fx-pref-width: 0;
     -fx-opacity: 0;
 }
-
 .scroll-bar .track {
     -fx-background-color: transparent;
 }
 
-/* ── FOCUS ── */
+/* ══ FOCUS ══ */
 .button:focused,
 .toggle-button:focused,
 .text-field:focused {

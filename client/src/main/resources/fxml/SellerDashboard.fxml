@@ -116,13 +116,13 @@
                                 </HBox>
       
                                             <!-- Auction table -->
-                               <TableView fx:id="tblAuctions" styleClass="auction-table" VBox.vgrow="ALWAYS">
+                                <TableView fx:id="tblAuctions" styleClass="auction-table" VBox.vgrow="ALWAYS">
                                     <columnResizePolicy>
                                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                     </columnResizePolicy>
                                     
                                     <columns>
-                                        <TableColumn fx:id="colTitle" prefWidth="250.0" text="Sản phẩm" />
+                                        <TableColumn fx:id="colTitle" prefWidth="250.0" text="Item" />
                                         <TableColumn fx:id="colStartingPrice" prefWidth="150.0" text="Starting price" />
                                         <TableColumn fx:id="colCurrentPrice" prefWidth="150.0" text="Current price" />
                                         <TableColumn fx:id="colBidCount" prefWidth="80.0" text="Bid count" />
@@ -135,7 +135,7 @@
                                     </placeholder>
                                 </TableView>
       
-                                        </children>
+                            </children>
                         </VBox>
       
                     </children>

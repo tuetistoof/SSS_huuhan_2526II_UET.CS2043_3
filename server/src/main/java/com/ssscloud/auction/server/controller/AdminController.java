@@ -7,9 +7,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.reflect.TypeToken;
-import com.ssscloud.auction.common.dto.response.AdminAuctionView;
+import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.AdminMetrics;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
@@ -35,6 +36,33 @@ public class AdminController {
     // ─────────────────────────── PUBLIC METHODS ───────────────────────────
 
     /**
+    * Trả về danh sách tất cả user, có thể lọc theo role.
+    * Payload từ client: String role ("BIDDER", "SELLER") hoặc null / "" để lấy tất cả.
+    */
+    public String getUsers(Object rawFilter) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Admin requested user list. Raw filter: {0}", rawFilter);
+
+            String roleFilter = null;
+            if (rawFilter != null) {
+                String f = rawFilter.toString().replace("\"", "").trim();
+                if (!f.isEmpty()) roleFilter = f.toUpperCase();
+            }
+
+            List<UserDTO> users = adminService.getUsers(roleFilter);
+
+            return JsonUtils.toJson(ApiResponse.success(users,
+                    "Admin user list retrieved successfully. Count: " + users.size()));
+
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled error in AdminController.getUsers", exception);
+            throw exception;
+        }
+    }
+
+    /**
      * Trả về danh sách tất cả auction, có thể lọc theo status.
      *
      * Payload từ client: String tên status ("RUNNING", "OPEN", "FINISHED", "CANCELED")
@@ -46,7 +74,7 @@ public class AdminController {
 
             AuctionStatus filter = parseStatusFilter(rawFilter);
 
-            List<AdminAuctionView> auctions = adminService.getAuctions(filter);
+            List<AdminDisplayDTO> auctions = adminService.getAuctions(filter);
 
             String filterLabel = (filter != null) ? filter.name() : "ALL";
             logger.log(Level.INFO, "Admin auction list returned {0} item(s), filter={1}",

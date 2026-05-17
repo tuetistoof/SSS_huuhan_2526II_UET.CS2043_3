@@ -55,9 +55,6 @@ public class MainLayoutController implements MessageListener {
 
     @FXML private Label lblSidebarTitleAB;
     @FXML private Label lblSidebarTitleDB;
-    @FXML private Label lblSidebarTitleH;
-    @FXML private Label lblSidebarTitleMAR;
-    @FXML private Label lblSidebarTitleMI;
     @FXML private Label lblSidebarTitleNAR;
     @FXML private Label lblSidebarTitleW;
     @FXML private Label lblSidebarTitleWI;
@@ -291,6 +288,10 @@ public class MainLayoutController implements MessageListener {
                 lblLockBalance.setVisible(true);     lblLockBalance.setManaged(true);
                 navNewAuctionRoom.setVisible(true);  navNewAuctionRoom.setManaged(true);
             }
+
+            case ADMIN -> {
+                return;
+            }
         }
     }
 
@@ -387,20 +388,35 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navDashboard);
         clearContent();
         try {
-            String fxmlPath = (user.getRole() == UserRole.BIDDER)
-                    ? "/fxml/BidderDashboard.fxml"
-                    : "/fxml/SellerDashboard.fxml";
+            contentArea.getChildren().clear();
+            String fxmlPath = switch (user.getRole()) {
+                case BIDDER -> "/fxml/BidderDashboard.fxml";
+                case SELLER -> "/fxml/SellerDashboard.fxml";
+                case ADMIN -> "/fxml/AdminDashboard.fxml";
+                default -> throw new IllegalStateException("Unexpected role: " + user.getRole());
+            };
+            
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent dashboardView = loader.load();
 
-            if (user.getRole() == UserRole.BIDDER) {
-                BidderDashboardController ctrl = loader.getController();
-                ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
-                currentController = ctrl;
-            } else if (user.getRole() == UserRole.SELLER) {
-                SellerDashboardController ctrl = loader.getController();
-                ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsSeller);
-                currentController = ctrl;
+            switch (user.getRole()) {
+                case BIDDER -> {
+                    BidderDashboardController ctrl = loader.getController();
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                    currentController = ctrl;
+                }
+
+                case SELLER -> {
+                    SellerDashboardController ctrl = loader.getController();
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsSeller);
+                    currentController = ctrl;
+                }
+
+                // case ADMIN -> {
+                //     AdminDashboardController ctrl = loader.getController();
+                //     ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                //     currentController = ctrl;
+                // }
             }
 
             contentArea.getChildren().add(dashboardView);
@@ -572,9 +588,7 @@ public class MainLayoutController implements MessageListener {
         timeline.getKeyFrames().add(kf);
 
         Label[] navLabels = {
-            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleH,
-            lblSidebarTitleMAR, lblSidebarTitleMI, lblSidebarTitleNAR,
-            lblSidebarTitleW, lblSidebarTitleWI
+            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleNAR, lblSidebarTitleW, lblSidebarTitleWI
         };
 
         if (isSidebarExpanded) {
