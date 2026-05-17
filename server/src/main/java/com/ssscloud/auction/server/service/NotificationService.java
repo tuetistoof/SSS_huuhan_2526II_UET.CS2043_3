@@ -19,35 +19,35 @@ import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.server.dao.NotificationDAO;
-import com.ssscloud.auction.server.dao.WatchlistDAO;
+import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.util.SessionRegistry;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class NotificationService {
-    // Logging Standards: Declared first as a private static final attribute
+    // Logging Standards: Declared first as a privsate static final attribute
     private static final Logger logger = Logger.getLogger(NotificationService.class.getName()); 
 
-    private final WatchlistDAO watchlistDAO; // Dependency Injection: Short name
+    private final QueryDAO queryDAO; // Dependency Injection: Short name
     private final NotificationDAO notificationDAO;
 
-    public NotificationService(WatchlistDAO watchlistDAO, NotificationDAO notificationDAO) {
-        this.watchlistDAO    = watchlistDAO;
+    public NotificationService(QueryDAO queryDAO, NotificationDAO notificationDAO) {
+        this.queryDAO    = queryDAO;
         this.notificationDAO = notificationDAO; 
-        logger.log(Level.INFO, "NotificationService initialized with dependencies: WatchlistDAO={0}, NotificationDAO={1}",
-                new Object[]{watchlistDAO != null ? "READY" : "MISSING", notificationDAO != null ? "READY" : "MISSING"});
+        logger.log(Level.INFO, "NotificationService initialized with dependencies: QueryDAO={0}, NotificationDAO={1}",
+                new Object[]{queryDAO != null ? "READY" : "MISSING", notificationDAO != null ? "READY" : "MISSING"});
     }
 
     public void notifyWatchers(Auction auction, String highestBidderId) throws ServiceException, Exception {
         try {
-            if (watchlistDAO == null) {
-                throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: WatchlistDAO dependency is not initialized.");
+            if (queryDAO == null) {
+                throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: QueryDAO dependency is not initialized.");
             }
      
             String auctionId = auction.getAuctionConfig().getId(); 
             String auctionName = auction.getAuctionConfig().getName();
             long currentPrice = auction.getCurrentPrice();
      
-            List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId); 
+            List<String> watcherIdList = queryDAO.findUserIdsByAuction(auctionId); 
      
             for (String watcherId : watcherIdList) {
                 // Skip the current highest bidder
@@ -78,8 +78,8 @@ public class NotificationService {
 
     public void notifyAuctionEnded(Auction auction) throws ServiceException, Exception {
         try {
-            if (watchlistDAO == null) {
-                throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: WatchlistDAO dependency is not initialized.");
+            if (queryDAO == null) {
+                throw new ServiceException(ErrorCode.NOTIFICATION_SERVICE_NOT_INITIALIZED, "NotificationService failure: QueryDAO dependency is not initialized.");
             }
      
             String auctionId = auction.getAuctionConfig().getId(); // Internal Logic: [Entity]Id
@@ -88,7 +88,7 @@ public class NotificationService {
             String winnerName = auction.getHighestBidderName() != null
                                  ? auction.getHighestBidderName() : "No bids placed";
      
-            List<String> watcherIdList = watchlistDAO.findUserIdsByAuction(auctionId); // DTOs: List suffix
+            List<String> watcherIdList = queryDAO.findUserIdsByAuction(auctionId); // DTOs: List suffix
      
             for (String watcherId : watcherIdList) {
                 if (isInRoom(auctionId, watcherId)) continue; 

@@ -19,18 +19,18 @@ import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.server.controller.AdminController;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
-import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
-import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
+import com.ssscloud.auction.server.controller.QueryController;
 import com.ssscloud.auction.server.controller.UserController;
-import com.ssscloud.auction.server.controller.WatchlistController;
+import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
-    
+
 /**
- * MessageHandler processes incoming JSON payloads from clients and routes them 
+ * MessageHandler processes incoming JSON payloads from clients and routes them
  * to the appropriate controllers based on the requested action.
  */
 public class MessageHandler {
@@ -39,27 +39,23 @@ public class MessageHandler {
     private final BidController bidController;
     private final UserController userController;
     private final AuctionController auctionController;
-    private final WatchlistController watchlistController;
-    private final BiddedAuctionsListController biddedAuctionsListController;
-    private final DisplayController displayController;
+    private final QueryController queryController;
     private final NotificationController notificationController;
-
+    private final AdminController adminController;
 
     public MessageHandler(
             UserController userController,
             AuctionController auctionController,
             BidController bidController,
-            WatchlistController watchlistController,
-            BiddedAuctionsListController biddedAuctionsListController,
-            DisplayController displayController,
-            NotificationController notificationController) {
+            QueryController queryController,
+            NotificationController notificationController,
+            AdminController adminController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
-        this.watchlistController = watchlistController;
-        this.biddedAuctionsListController = biddedAuctionsListController;
-        this.displayController = displayController;
+        this.queryController = queryController;
         this.notificationController = notificationController;
+        this.adminController = adminController;
     }
 
     // --- PUBLIC METHODS ---
@@ -94,11 +90,11 @@ public class MessageHandler {
                                 oldWriter.println(JsonUtils.toJson(
                                     ClientMessage.push("SESSION_KICKED", "Tài khoản của bạn đã đăng nhập ở nơi khác.")
                                 ));
-                                oldWriter.flush(); // nhanh chong day thong tin len client (gui ngay thong tin trong buffer)
+                                oldWriter.flush();
                             }
                             SessionRegistry.getInstance().unregister(incomingUserId);
                         }
-                        
+
                         clientHandler.setSession(loginResult.getData().getId(), loginResult.getData().getUsername());
                     }
                     return JsonUtils.toJson(ClientMessage.request("LOGIN_RESPONSE", loginResult));
@@ -111,7 +107,8 @@ public class MessageHandler {
                     ApiResponse<UserDTO> registrationResult = JsonUtils.fromJsonGeneric(controllerResponse, apiUserType);
 
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", registrationResult));
-                } 
+                }
+
                 case "GET_PENDING_NOTIFICATIONS": {
                     String controllerResponse = notificationController.getPendingNotifications(clientHandler.getUserId());
                     return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE",
@@ -121,8 +118,8 @@ public class MessageHandler {
 
                 case "CREATE_AUCTION": {
                     JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
-                    String internalJsonPayload = rootObject.get("data").toString(); // Parse inner data as raw JSON payload
-                    
+                    String internalJsonPayload = rootObject.get("data").toString();
+
                     String controllerResponse = auctionController.createAuction(internalJsonPayload, clientHandler.getUserId());
 
                     Type auctionResponseType = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
@@ -146,12 +143,12 @@ public class MessageHandler {
                 }
 
                 case "GET_MY_AUCTIONS": {
-                    String controllerResponse = displayController.getMyAuctions(clientHandler.getUserId());
+                    String controllerResponse = queryController.getMyAuctions(clientHandler.getUserId());
                     return JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 
                 case "GET_ACTIVE_AUCTIONS": {
-                    String controllerResponse = displayController.getActiveAuctions();
+                    String controllerResponse = queryController.getActiveAuctions();
                     return JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
 
@@ -187,29 +184,29 @@ public class MessageHandler {
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("FOLLOW_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.follow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.follow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
                 }
- 
+
                 case "UNFOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("UNFOLLOW_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.unfollow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.unfollow(auctionId, clientHandler.getUserId()), ApiResponse.class)));
                 }
- 
+
                 case "GET_WATCHLIST": {
                     return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "GET_BIDDED_AUCTIONS": {
                     return JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS_RESPONSE",
-                        JsonUtils.fromJson(biddedAuctionsListController.getBiddedAuctionslist(clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.getBiddedAuctionsList(clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "CHECK_FOLLOWING": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     return JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING_RESPONSE",
-                        JsonUtils.fromJson(watchlistController.checkFollowing(auctionId, clientHandler.getUserId()), ApiResponse.class)));
+                        JsonUtils.fromJson(queryController.checkFollowing(auctionId, clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "DEPOSIT": {
@@ -218,11 +215,36 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("DEPOSIT_RESPONSE", depositResult));
                 }
 
+                // ══════════════════════════════════════════════════════
+                // ADMIN ACTIONS
+                // ══════════════════════════════════════════════════════
+
+                case "ADMIN_GET_AUCTIONS": {
+                    // data: String status filter ("RUNNING" | "OPEN" | "FINISHED" | "CANCELED" | null)
+                    String controllerResponse = adminController.getAuctions(clientMessage.getData());
+                    return JsonUtils.toJson(ClientMessage.request("ADMIN_GET_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
+
+                case "ADMIN_GET_METRICS": {
+                    // data: (không cần)
+                    String controllerResponse = adminController.getMetrics();
+                    return JsonUtils.toJson(ClientMessage.request("ADMIN_GET_METRICS_RESPONSE",
+                        JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
+
+                case "ADMIN_CANCEL_AUCTION": {
+                    // data: { "auctionId": "...", "reason": "..." }
+                    String controllerResponse = adminController.cancelAuction(clientMessage.getData());
+                    return JsonUtils.toJson(ClientMessage.request("ADMIN_CANCEL_AUCTION_RESPONSE",
+                        JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
+
                 default: {
                     return JsonUtils.toJson(ClientMessage.request("ERROR", ApiResponse.error("Unsupported network action: " + messageAction)));
                 }
             }
-            
+
         } catch (ControllerException controllerException) {
             logger.log(Level.WARNING, "Controller validation failure: " + controllerException.getMessage(), controllerException);
             return JsonUtils.toJson(ClientMessage.request("VALIDATE_ERROR", ApiResponse.error(controllerException.getMessage(), controllerException.getErrorCode())));
@@ -230,11 +252,11 @@ public class MessageHandler {
         } catch (ServiceException serviceException) {
             logger.log(Level.WARNING, "Service execution failure: " + serviceException.getMessage(), serviceException);
             return JsonUtils.toJson(ClientMessage.request("BUSINESS_ERROR", ApiResponse.error(serviceException.getMessage(), serviceException.getErrorCode())));
-            
+
         } catch (DAOException daoException) {
             logger.log(Level.SEVERE, "Persistence layer failure: " + daoException.getMessage(), daoException);
             return JsonUtils.toJson(ClientMessage.request("DAO_ERROR", ApiResponse.error("Database access error. Please contact the administrator.")));
-            
+
         } catch (Exception genericException) {
             logger.log(Level.SEVERE, "Unexpected system error: " + genericException.getMessage(), genericException);
             return JsonUtils.toJson(ClientMessage.request("UNDEFINED_ERROR", ApiResponse.error("Internal system error: " + genericException.getMessage())));

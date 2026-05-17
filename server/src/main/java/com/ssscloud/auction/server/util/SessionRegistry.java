@@ -33,4 +33,8 @@ public class SessionRegistry {
     public boolean isOnline(String userId) {
         return sessions.containsKey(userId);
     }
+
+    public Map<String, PrintWriter> getAllWriters() {
+        return sessions;
+    }
 }
