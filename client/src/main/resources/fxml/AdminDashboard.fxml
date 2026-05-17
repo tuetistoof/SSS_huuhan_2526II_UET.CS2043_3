@@ -22,7 +22,7 @@
                 <children>
 
                     <!-- ── Metric cards ── -->
-                    <HBox spacing="10" VBox.vgrow="NEVER">
+                    <HBox spacing="10" style="-fx-background-color: ưhite;" VBox.vgrow="NEVER">
                         <children>
                             <VBox alignment="TOP_LEFT" spacing="3" styleClass="adm-metric-card" HBox.hgrow="ALWAYS">
                                 <padding><Insets bottom="12" left="14" right="14" top="12" /></padding>

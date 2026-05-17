@@ -203,6 +203,10 @@ public class MainLayoutController {
                 navNewAuctionRoom.setVisible(true);
                 navNewAuctionRoom.setManaged(true);
             }
+
+            case ADMIN -> {
+                return;
+            }
         }
     }
     //__CLEANUP___
@@ -323,15 +327,34 @@ public class MainLayoutController {
         clearContent();
         try {
             contentArea.getChildren().clear();
-            String fxmlPath = (user.getRole() == UserRole.BIDDER) ? "/fxml/BidderDashboard.fxml" : "/fxml/SellerDashboard.fxml";
+            String fxmlPath = switch (user.getRole()) {
+                case BIDDER -> "/fxml/BidderDashboard.fxml";
+                case SELLER -> "/fxml/SellerDashboard.fxml";
+                case ADMIN -> "/fxml/AdminDashboard.fxml";
+                default -> throw new IllegalStateException("Unexpected role: " + user.getRole());
+            };
             
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent dashboardView = loader.load();
 
-            if (user.getRole() == UserRole.BIDDER) {
-                BidderDashboardController ctrl = loader.getController();
-                ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
-                currentController = ctrl;
+            switch (user.getRole()) {
+                case BIDDER -> {
+                    BidderDashboardController ctrl = loader.getController();
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                    currentController = ctrl;
+                }
+
+                case SELLER -> {
+                    SellerDashboardController ctrl = loader.getController();
+                    ctrl.setOnBackCallback(() -> handleNavDashboard(null));
+                    currentController = ctrl;
+                }
+
+                case ADMIN -> {
+                    AdminDashboardController ctrl = loader.getController();
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                    currentController = ctrl;
+                }
             }
             
             // Nhét Dashboard vào
