@@ -2,7 +2,6 @@ package com.ssscloud.auction.server.service;
 
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +15,6 @@ import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
-import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
@@ -66,7 +64,7 @@ public class ConcurrentBidManager {
         return instance;
     }
 
-     public static ConcurrentBidManager resetInstance(){
+    public static ConcurrentBidManager resetInstance(){
         if (instance != null) {
             synchronized (ConcurrentBidManager.class) {
                 if (instance != null) {
@@ -79,7 +77,6 @@ public class ConcurrentBidManager {
         }
         return instance;
     }
-
 
     public static ConcurrentBidManager initialize(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
@@ -189,25 +186,28 @@ public class ConcurrentBidManager {
             long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();
             if (task.bidAmount > currentAuctionPrice) {
                 String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
-                if (previousBidderId != null)
+                if (previousBidderId != null) {
                     userDAO.unlockBidderBalance(previousBidderId, currentAuctionPrice);
+                    SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -currentAuctionPrice);
+                    notifyUnsettledBalanceUpdate(previousBidderId, SessionRegistry.getInstance().getUnsettledBalance(previousBidderId));
+                }
+
+                // Lock bidder mới
                 userDAO.lockBidderBalance(task.bidderId, task.bidAmount);
-                notifyOutbid(previousBidderId, auctionEntity, task.bidAmount);
+                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, task.bidAmount);
+                notifyUnsettledBalanceUpdate(task.bidderId, SessionRegistry.getInstance().getUnsettledBalance(task.bidderId));
+
+                long delta = task.bidAmount - currentAuctionPrice;
+
+                // Seller
+                userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
+                SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
+                notifyUnsettledBalanceUpdate(auctionEntity.getSellerId(), SessionRegistry.getInstance().getUnsettledBalance(auctionEntity.getSellerId()));
 
                 BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, LocalDateTime.now(), task.bidType);
-                
-                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
-                    auctionEntity.setStatus(AuctionStatus.RUNNING);
-                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
-                }
 
                 auctionEntity.placeBid(bidTransaction);
-                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
-                if (updatedEndTime != null && auctionDAO != null) {
-                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
-                }
-
                 if (bidTransactionDAO != null) {
                     try {
                         bidTransactionDAO.saveBidTransaction(bidTransaction);
@@ -217,6 +217,16 @@ public class ConcurrentBidManager {
                 }
                 ChangeManager.getInstance().notify(auctionEntity);
                 notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(), auctionEntity.getHighestBidderId());
+                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
+                    auctionEntity.setStatus(AuctionStatus.RUNNING);
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+                }
+                
+                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+                if (updatedEndTime != null && auctionDAO != null) {
+                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
+                }
+
             } else {
                 logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
             }
@@ -233,22 +243,17 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
-    private void notifyOutbid(String previousBidderId, Auction auction, long newPrice) {
-        PrintWriter writer = SessionRegistry.getInstance().getWriter(previousBidderId);
-        if (writer == null) return; // offline thì thôi
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("auctionId", auction.getAuctionConfig().getId());
-        payload.put("auctionName", auction.getAuctionConfig().getName());
-        payload.put("newPrice", newPrice);
+    private void notifyUnsettledBalanceUpdate(String userId, long unsettledBalance) {
+        PrintWriter writer = SessionRegistry.getInstance().getWriter(userId);
+        if (writer == null) return;
 
         try {
             synchronized (writer) {
-                writer.println(JsonUtils.toJson(ClientMessage.push("OUTBID_IN_ROOM", payload)));
+                writer.println(JsonUtils.toJson(ClientMessage.push("UNSETTLED_UPDATE", unsettledBalance)));
                 writer.flush();
             }
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to notify outbid for bidderId: " + previousBidderId, e);
+            logger.log(Level.WARNING, "Failed to notify balance update for userId: " + userId, e);
         }
     }
 

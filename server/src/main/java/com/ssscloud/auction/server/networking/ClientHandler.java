@@ -75,10 +75,10 @@ public class ClientHandler implements Runnable {
         return writer; 
     }
 
-    public void setSession(String userId, String username) {
+    public void setSession(String userId, String username, long unsettledBalance) {
         this.userId = userId;
         this.username = username;
-        SessionRegistry.getInstance().register(userId, this.writer);
+        SessionRegistry.getInstance().register(userId, this.writer, unsettledBalance);
     }
     private void cleanupObservers() {
         try {

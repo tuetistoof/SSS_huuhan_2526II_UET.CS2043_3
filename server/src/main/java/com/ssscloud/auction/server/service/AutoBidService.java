@@ -58,9 +58,9 @@ public class AutoBidService {
      */
     public void register(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername) throws ServiceException, Exception {
         try {
+            validateAutoBidRequest(autoBidRequest, bidderId, bidderUsername);
             logger.log(Level.INFO, "Initiating auto-bid registration for auctionId: " + autoBidRequest.getAuctionId() + " for bidderId: " + bidderId);
             
-            validateAutoBidRequest(autoBidRequest, bidderId, bidderUsername);
             
             Auction auctionEntity = retrieveAndValidateAuction(autoBidRequest.getAuctionId());
             validateAutoBidTerms(auctionEntity, autoBidRequest, bidderId);
