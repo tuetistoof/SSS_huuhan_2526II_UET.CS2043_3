@@ -53,9 +53,6 @@ public class MainLayoutController {
 
     @FXML private Label lblSidebarTitleAB;
     @FXML private Label lblSidebarTitleDB;
-    @FXML private Label lblSidebarTitleH;
-    @FXML private Label lblSidebarTitleMAR;
-    @FXML private Label lblSidebarTitleMI;
     @FXML private Label lblSidebarTitleNAR;
     @FXML private Label lblSidebarTitleW;
     @FXML private Label lblSidebarTitleWI;
@@ -570,9 +567,7 @@ public class MainLayoutController {
         timeline.getKeyFrames().add(kf);
 
         Label[] navLabels = {
-            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleH,
-            lblSidebarTitleMAR, lblSidebarTitleMI, lblSidebarTitleNAR,
-            lblSidebarTitleW, lblSidebarTitleWI
+            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleNAR, lblSidebarTitleW, lblSidebarTitleWI
         };
 
         if (isSidebarExpanded) {

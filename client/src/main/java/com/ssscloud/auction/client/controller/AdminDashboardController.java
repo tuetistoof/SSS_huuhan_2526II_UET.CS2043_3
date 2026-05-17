@@ -39,9 +39,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -58,8 +56,8 @@ public class AdminDashboardController {
 
     // ── User table ──
     @FXML private TableColumn<UserDTO, Void>   uColAction;
-    @FXML private TableColumn<UserDTO, String> uColEmail;
     @FXML private TableColumn<UserDTO, String> uColAccountBalance;
+    @FXML private TableColumn<UserDTO, String> uColEmail;
     @FXML private TableColumn<UserDTO, String> uColRole;
     @FXML private TableColumn<UserDTO, String> uColUsername;
     @FXML private TableView<UserDTO>           tblUsers;
@@ -84,9 +82,7 @@ public class AdminDashboardController {
     @FXML private ToggleButton tabAuction;
     @FXML private ToggleButton tabUser;
 
-    // ── Search ──
-    @FXML private TextField txtAuctionSearch;
-    @FXML private TextField txtUserSearch;
+    // ─────────────────────────── CONSTANTS & STATE ───────────────────────────
 
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
 
@@ -96,10 +92,6 @@ public class AdminDashboardController {
     private final FilteredList<AdminDisplayDTO>   auctionFiltered = new FilteredList<>(auctionMaster, p -> true);
     private final ObservableList<UserDTO>         userMaster      = FXCollections.observableArrayList();
     private final FilteredList<UserDTO>           userFiltered    = new FilteredList<>(userMaster, p -> true);
-
-    // Auction filter state — kết hợp với search
-    private Predicate<AdminDisplayDTO> currentAuctionStatusPred = dto -> true;
-    private UserRole currentUserRoleFilter = null;
 
     private Consumer<AdminDisplayDTO> onOpenBidRoomHandler;
 
@@ -122,115 +114,46 @@ public class AdminDashboardController {
 
     // ─────────────────────────── TAB SWITCHING ───────────────────────────
 
-    @FXML
-    void switchToAuctions(ActionEvent event) {
-        panelAuctions.setVisible(true);
-        panelAuctions.setManaged(true);
-        panelUsers.setVisible(false);
-        panelUsers.setManaged(false);
-        tabAuction.setSelected(true);
-        tabUser.setSelected(false);
-    }
-
-    @FXML
-    void switchToUsers(ActionEvent event) {
-        panelAuctions.setVisible(false);
-        panelAuctions.setManaged(false);
-        panelUsers.setVisible(true);
-        panelUsers.setManaged(true);
-        tabAuction.setSelected(false);
-        tabUser.setSelected(true);
-    }
+    @FXML void switchToAuctions(ActionEvent e) { switchPanel(panelAuctions, panelUsers, tabAuction, tabUser); }
+    @FXML void switchToUsers(ActionEvent e)    { switchPanel(panelUsers, panelAuctions, tabUser, tabAuction); }
 
     // ─────────────────────────── AUCTION FILTERS ───────────────────────────
 
-    @FXML
-    void filterAuctionAll(ActionEvent event) {
-        currentAuctionStatusPred = dto -> true;
-        applyAuctionFilter();
-        setActiveAuctionTab(aFilterAll);
-    }
-
-    @FXML
-    void filterAuctionRunning(ActionEvent event) {
-        currentAuctionStatusPred = dto -> dto.getStatus() == AuctionStatus.RUNNING;
-        applyAuctionFilter();
-        setActiveAuctionTab(aFilterRunning);
-    }
-
-    @FXML
-    void filterAuctionOpen(ActionEvent event) {
-        currentAuctionStatusPred = dto -> dto.getStatus() == AuctionStatus.OPEN;
-        applyAuctionFilter();
-        setActiveAuctionTab(aFilterOpen);
-    }
-
-    @FXML
-    void filterAuctionDone(ActionEvent event) {
-        currentAuctionStatusPred = dto ->
-            dto.getStatus() == AuctionStatus.FINISHED
-            || dto.getStatus() == AuctionStatus.CANCELED
-            || dto.getStatus() == AuctionStatus.PAID;
-        applyAuctionFilter();
-        setActiveAuctionTab(aFilterDone);
+    @FXML void filterAuctionAll(ActionEvent e)     { applyAuctionFilter(dto -> true, aFilterAll); }
+    @FXML void filterAuctionRunning(ActionEvent e) { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.RUNNING, aFilterRunning); }
+    @FXML void filterAuctionOpen(ActionEvent e)    { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.OPEN, aFilterOpen); }
+    @FXML void filterAuctionDone(ActionEvent e) {
+        applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.FINISHED
+                                || dto.getStatus() == AuctionStatus.CANCELED
+                                || dto.getStatus() == AuctionStatus.PAID,
+                           aFilterDone);
     }
 
     // ─────────────────────────── USER FILTERS ───────────────────────────
 
-    @FXML
-    void filterUserAll(ActionEvent event) {
-        currentUserRoleFilter = null;
-        applyUserFilter();
-        setActiveUserTab(uFilterAll);
-    }
-
-    @FXML
-    void filterUserSeller(ActionEvent event) {
-        currentUserRoleFilter = UserRole.SELLER;
-        applyUserFilter();
-        setActiveUserTab(uFilterSeller);
-    }
-
-    @FXML
-    void filterUserBidder(ActionEvent event) {
-        currentUserRoleFilter = UserRole.BIDDER;
-        applyUserFilter();
-        setActiveUserTab(uFilterBidder);
-    }
-
-    @FXML
-    void searchAuctions(KeyEvent event) {
-        applyAuctionFilter();
-    }
-
-    @FXML
-    void searchUsers(KeyEvent event) {
-        applyUserFilter();
-    }
+    @FXML void filterUserAll(ActionEvent e)     { applyUserFilter(null, uFilterAll); }
+    @FXML void filterUserSeller(ActionEvent e)  { applyUserFilter(UserRole.SELLER, uFilterSeller); }
+    @FXML void filterUserBidder(ActionEvent e)  { applyUserFilter(UserRole.BIDDER, uFilterBidder); }
 
     // ─────────────────────────── TABLE SETUP ───────────────────────────
 
     private void setupAuctionTable() {
-        aColName.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getAuctionName()));
+        aColName.setCellValueFactory(c   -> new SimpleStringProperty(c.getValue().getAuctionName()));
+        aColSeller.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getSellerName()));
+        aColPrice.setCellValueFactory(c  -> new SimpleStringProperty(formatVnd(c.getValue().getCurrentPrice())));
+        aColEnd.setCellValueFactory(c    -> {
+            LocalDateTime end = c.getValue().getEndTime();
+            return new SimpleStringProperty(end != null ? end.format(DT_FMT) : "—");
+        });
 
-        aColSeller.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getSellerName()));
-
-        aColPrice.setCellValueFactory(c ->
-            new SimpleStringProperty(String.format("%,d ₫", c.getValue().getCurrentPrice())));
-
-        aColStatus.setCellValueFactory(c ->
-            new SimpleStringProperty(auctionStatusLabel(c.getValue().getStatus())));
-
+        // Status — badge có màu
+        aColStatus.setCellValueFactory(c -> new SimpleStringProperty(auctionStatusLabel(c.getValue().getStatus())));
         aColStatus.setCellFactory(col -> new TableCell<>() {
             private final Label badge = new Label();
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null); return;
-                }
+                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); return; }
                 AuctionStatus st = getTableRow().getItem().getStatus();
                 badge.setText(auctionStatusLabel(st));
                 badge.getStyleClass().setAll(auctionBadgeStyle(st));
@@ -239,11 +162,7 @@ public class AdminDashboardController {
             }
         });
 
-        aColEnd.setCellValueFactory(c -> {
-            LocalDateTime end = c.getValue().getEndTime();
-            return new SimpleStringProperty(end != null ? end.format(DT_FMT) : "—");
-        });
-
+        // Action — nút Cancel, chỉ enable khi OPEN hoặc RUNNING
         aColAction.setCellFactory(col -> new TableCell<>() {
             private final Button btnCancel = new Button("Cancel");
             private final HBox   box       = new HBox(btnCancel);
@@ -251,7 +170,7 @@ public class AdminDashboardController {
                 btnCancel.getStyleClass().add("btn-cancel-row");
                 btnCancel.setOnAction(e -> {
                     int idx = getIndex();
-                    if (idx >= 0 && idx < getTableView().getItems().size()) return;
+                    if (idx < 0 || idx >= getTableView().getItems().size()) return; // guard đúng chiều
                     handleCancelAuction(getTableView().getItems().get(idx));
                 });
                 box.setAlignment(Pos.CENTER);
@@ -259,12 +178,7 @@ public class AdminDashboardController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
+                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); setText(null); return; }
                 AuctionStatus status = getTableRow().getItem().getStatus();
                 btnCancel.setDisable(status != AuctionStatus.OPEN && status != AuctionStatus.RUNNING);
                 setPadding(Insets.EMPTY);
@@ -275,44 +189,38 @@ public class AdminDashboardController {
     }
 
     private void setupUserTable() {
-        uColUsername.setCellValueFactory(c ->
-            new SimpleStringProperty(c.getValue().getUsername()));
+        uColUsername.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getUsername()));
+        uColEmail.setCellValueFactory(c    -> new SimpleStringProperty(
+            c.getValue().getEmail() != null ? c.getValue().getEmail() : "—"));
+        uColAccountBalance.setCellValueFactory(c -> new SimpleStringProperty(formatVnd(c.getValue().getAccountBalance())));
 
-        uColEmail.setCellValueFactory(c -> {
-            String email = c.getValue().getEmail();
-            return new SimpleStringProperty(email != null ? email : "—");
-        });
-
+        // Role — badge có màu theo role
         uColRole.setCellValueFactory(c -> {
             UserRole role = c.getValue().getRole();
             return new SimpleStringProperty(role != null ? role.name() : "—");
         });
-
         uColRole.setCellFactory(col -> new TableCell<>() {
             private final Label badge = new Label();
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null); return;
-                }
+                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); return; }
                 UserRole role = getTableRow().getItem().getRole();
                 if (role == null) { setText("—"); setGraphic(null); return; }
                 badge.setText(role.name());
-                badge.getStyleClass().add((role == UserRole.SELLER) ? "badge-seller" : "badge-bidder");
+                badge.getStyleClass().setAll(role == UserRole.SELLER ? "badge-seller" : "badge-bidder");
                 setGraphic(badge);
                 setText(null);
             }
         });
 
-        uColAccountBalance.setCellValueFactory(c ->
-            new SimpleStringProperty(String.format("%,d ₫", c.getValue().getAccountBalance())));
-
+        // Action — placeholder (chưa có thêm thao tác)
         uColAction.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(null); setText(empty ? null : "—");
+                setGraphic(null);
+                setText(empty ? null : "—");
             }
         });
     }
@@ -320,112 +228,53 @@ public class AdminDashboardController {
     // ─────────────────────────── DATA LOADING ───────────────────────────
 
     private void loadMetrics() {
-        new Thread(() -> {
-            try {
-                String requestJson  = JsonUtils.toJson(ClientMessage.request("ADMIN_GET_METRICS", null));
-                String responseJson = socket.sendAndReceive(requestJson);
-                if (responseJson == null) return;
+        fetchAsync("ADMIN_GET_METRICS", null, response -> {
+            Type type = new TypeToken<ApiResponse<AdminMetrics>>() {}.getType();
+            ApiResponse<AdminMetrics> apiResp = JsonUtils.fromJsonGeneric(response, type);
+            if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return;
 
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || serverMsg.getData() == null) return;
+            AdminMetrics m = JsonUtils.fromJson(JsonUtils.toJson(apiResp.getData()), AdminMetrics.class);
+            if (m == null) return;
 
-                String innerJson = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<AdminMetrics>>() {}.getType();
-                ApiResponse<AdminMetrics> apiResp = JsonUtils.fromJsonGeneric(innerJson, type);
-                if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return;
-
-                AdminMetrics metrics = JsonUtils.fromJson(JsonUtils.toJson(apiResp.getData()), AdminMetrics.class);
-                if (metrics == null) return;
-
-                Platform.runLater(() -> {
-                    lblMetricRunning.setText(String.valueOf(metrics.getRunningCount()));
-                    lblMetricEnded.setText(String.valueOf(metrics.getEndedCount()));
-                    lblMetricUsers.setText(String.valueOf(metrics.getTotalUsers()));
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
+            Platform.runLater(() -> {
+                lblMetricRunning.setText(String.valueOf(m.getRunningCount()));
+                lblMetricEnded.setText(String.valueOf(m.getEndedCount()));
+                lblMetricUsers.setText(String.valueOf(m.getTotalUsers()));
+            });
+        });
     }
 
     private void loadAuctions() {
-        new Thread(() -> {
-            try {
-                String requestJson  = JsonUtils.toJson(ClientMessage.request("ADMIN_GET_AUCTIONS", null));
-                String responseJson = socket.sendAndReceive(requestJson);
-                if (responseJson == null) { Platform.runLater(() -> auctionMaster.clear()); return; }
-
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || serverMsg.getData() == null) { Platform.runLater(() -> auctionMaster.clear()); return; }
-
-                String innerJson = JsonUtils.toJson(serverMsg.getData());
-                Type apiType = new TypeToken<ApiResponse<List<AdminDisplayDTO>>>() {}.getType();
-                ApiResponse<List<AdminDisplayDTO>> apiResp = JsonUtils.fromJsonGeneric(innerJson, apiType);
-
-                if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) {
-                    Platform.runLater(() -> auctionMaster.clear()); return;
-                }
-
-                String listJson   = JsonUtils.toJson(apiResp.getData());
-                Type   listType   = new TypeToken<List<AdminDisplayDTO>>() {}.getType();
-                List<AdminDisplayDTO> list = JsonUtils.fromJsonGeneric(listJson, listType);
-                Platform.runLater(() -> auctionMaster.setAll(list != null ? list : new ArrayList<>()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> auctionMaster.clear());
-            }
-        }).start();
+        fetchList("ADMIN_GET_AUCTIONS", 
+            new TypeToken<ApiResponse<List<AdminDisplayDTO>>>() {}.getType(),
+            new TypeToken<List<AdminDisplayDTO>>() {},
+            items -> Platform.runLater(() -> auctionMaster.setAll(items)));
     }
 
     private void loadUsers() {
-        new Thread(() -> {
-            try {
-                String requestJson  = JsonUtils.toJson(ClientMessage.request("ADMIN_GET_USERS", null));
-                String responseJson = socket.sendAndReceive(requestJson);
-                if (responseJson == null) { Platform.runLater(() -> userMaster.clear()); return; }
-
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || serverMsg.getData() == null) { Platform.runLater(() -> userMaster.clear()); return; }
-
-                String innerJson = JsonUtils.toJson(serverMsg.getData());
-                Type apiType = new TypeToken<ApiResponse<List<UserDTO>>>() {}.getType();
-                ApiResponse<List<UserDTO>> apiResp = JsonUtils.fromJsonGeneric(innerJson, apiType);
-
-                if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) {
-                    Platform.runLater(() -> userMaster.clear()); return;
-                }
-
-                String listJson = JsonUtils.toJson(apiResp.getData());
-                Type listType   = new TypeToken<List<UserDTO>>() {}.getType();
-                List<UserDTO> list = JsonUtils.fromJsonGeneric(listJson, listType);
-                Platform.runLater(() -> userMaster.setAll(list != null ? list : new ArrayList<>()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> userMaster.clear());
-            }
-        }).start();
+        fetchList("ADMIN_GET_USERS",
+            new TypeToken<ApiResponse<List<UserDTO>>>() {}.getType(),
+            new TypeToken<List<UserDTO>>() {},
+            items -> Platform.runLater(() -> userMaster.setAll(items)));
     }
 
     // ─────────────────────────── CANCEL AUCTION ───────────────────────────
 
     private void handleCancelAuction(AdminDisplayDTO dto) {
         TextArea taReason = new TextArea();
-        taReason.setPromptText("Enter reason to cancle auction...");
+        taReason.setPromptText("Enter reason to cancel auction...");
         taReason.setWrapText(true);
         taReason.setPrefRowCount(3);
         taReason.setPrefWidth(360);
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Cancel Auction");
-        confirm.setHeaderText("You are going to cancel: \"" + dto.getAuctionName() + "\"");
-        confirm.setContentText(null);
-
-        Label lbl = new Label("Cancle reason (Eequired):");
+        Label lbl = new Label("Cancel reason (required):");
         lbl.setStyle("-fx-font-size: 13px; -fx-padding: 0 0 6 0;");
         VBox content = new VBox(6, lbl, taReason);
         content.setPadding(new Insets(10, 0, 0, 0));
+
+        Alert confirm = buildAlert(Alert.AlertType.CONFIRMATION,
+            "Cancel Auction",
+            "You are going to cancel: \"" + dto.getAuctionName() + "\"");
         confirm.getDialogPane().setContent(content);
         confirm.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -434,7 +283,7 @@ public class AdminDashboardController {
 
         String reason = taReason.getText().trim();
         if (reason.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Reason to cancel needed to be filled.");
+            showAlert(Alert.AlertType.ERROR, "Error", "Cancel reason cannot be empty.");
             return;
         }
 
@@ -442,82 +291,130 @@ public class AdminDashboardController {
         payload.put("auctionId", dto.getAuctionId());
         payload.put("reason", reason);
 
+        fetchAsync("ADMIN_CANCEL_AUCTION", payload, response -> {
+            ApiResponse<?> apiResp = JsonUtils.fromJson(response, ApiResponse.class);
+            Platform.runLater(() -> {
+                if (apiResp != null && apiResp.isSuccess()) {
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Auction cancelled successfully.");
+                    // Cập nhật local — không cần reload toàn bộ list
+                    auctionMaster.stream()
+                        .filter(a -> a.getAuctionId().equals(dto.getAuctionId()))
+                        .findFirst()
+                        .ifPresent(a -> a.setStatus(AuctionStatus.CANCELED));
+                    tblAuctions.refresh();
+                    loadMetrics();
+                } else {
+                    String errMsg = (apiResp != null) ? apiResp.getMessage() : "Unexpected error.";
+                    showAlert(Alert.AlertType.ERROR, "Failed", "Cancel failed: " + errMsg);
+                }
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRIVATE HELPERS — tất cả logic tái sử dụng nằm dưới đây
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Gửi request socket trên background thread, trả về innerJson của ApiResponse data
+     * vào callback. Callback chạy trên background thread — gọi Platform.runLater nếu cần UI.
+     */
+    private void fetchAsync(String action, Object payload, Consumer<String> onSuccess) {
         new Thread(() -> {
             try {
-                String req  = JsonUtils.toJson(ClientMessage.request("ADMIN_CANCEL_AUCTION", payload));
+                String req  = JsonUtils.toJson(ClientMessage.request(action, payload));
                 String resp = socket.sendAndReceive(req);
-
-                if (resp == null) {
-                    Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Error", "No response from server."));
-                    return;
-                }
+                if (resp == null) return;
 
                 ClientMessage msg = JsonUtils.fromJson(resp, ClientMessage.class);
-                String innerJson  = (msg != null && msg.getData() != null) ? JsonUtils.toJson(msg.getData()) : "{}";
-                ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
+                if (msg == null || msg.getData() == null) return;
 
-                Platform.runLater(() -> {
-                    if (apiResp != null && apiResp.isSuccess()) {
-                        showAlert(Alert.AlertType.INFORMATION, "Success", "Cancel auction successfully.");
-                        // Cập nhật status local — tránh reload toàn bộ list
-                        auctionMaster.stream()
-                            .filter(a -> a.getAuctionId().equals(dto.getAuctionId()))
-                            .findFirst()
-                            .ifPresent(a -> a.setStatus(AuctionStatus.CANCELED));
-                        tblAuctions.refresh();
-                        loadMetrics(); // Refresh metric cards
-                    } else {
-                        String errMsg = (apiResp != null) ? apiResp.getMessage() : "Unexpected Error.";
-                        showAlert(Alert.AlertType.ERROR, "Failed", "Failed to cancel: " + errMsg);
-                    }
-                });
+                onSuccess.accept(JsonUtils.toJson(msg.getData()));
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Connection Error", e.getMessage()));
             }
         }).start();
     }
 
-    // ─────────────────────────── FILTER HELPERS ───────────────────────────
-
-    private void applyAuctionFilter() {
-        String keyword = txtAuctionSearch.getText().toLowerCase().trim();
-        Predicate<AdminDisplayDTO> statusPred = currentAuctionStatusPred;
-        auctionFiltered.setPredicate(dto -> {
-            boolean statusMatch = statusPred.test(dto);
-            boolean searchMatch = keyword.isEmpty()
-                || dto.getAuctionName().toLowerCase().contains(keyword)
-                || dto.getSellerName().toLowerCase().contains(keyword);
-            return statusMatch && searchMatch;
+    /**
+     * Variant của fetchAsync dành riêng cho response dạng ApiResponse<List<T>>.
+     * Parse xong gọi onSuccess với List<T> đã giải tuần tự hoàn chỉnh.
+     */
+    private <T> void fetchList(String action, Type apiType, TypeToken<List<T>> listToken, Consumer<List<T>> onSuccess) {
+        fetchAsync(action, null, innerJson -> {
+            ApiResponse<List<T>> apiResp = JsonUtils.fromJsonGeneric(innerJson, apiType);
+            if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) {
+                onSuccess.accept(new ArrayList<>());
+                return;
+            }
+            List<T> list = JsonUtils.fromJsonGeneric(JsonUtils.toJson(apiResp.getData()), listToken.getType());
+            onSuccess.accept(list != null ? list : new ArrayList<>());
         });
     }
 
-    private void applyUserFilter() {
-        String keyword      = txtUserSearch.getText().toLowerCase().trim();
-        UserRole roleFilter = currentUserRoleFilter;
-        userFiltered.setPredicate(u -> {
-            boolean roleMatch   = (roleFilter == null) || (u.getRole() == roleFilter);
-            boolean searchMatch = keyword.isEmpty()
-                || u.getUsername().toLowerCase().contains(keyword)
-                || (u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword));
-            return roleMatch && searchMatch;
-        });
+    /**
+     * Hiển thị/ẩn hai panel khi chuyển tab.
+     * show: panel cần hiện; hide: panel cần ẩn.
+     */
+    private void switchPanel(VBox show, VBox hide, ToggleButton activeTab, ToggleButton inactiveTab) {
+        show.setVisible(true);
+        show.setManaged(true);
+        hide.setVisible(false);
+        hide.setManaged(false);
+        activeTab.setSelected(true);
+        inactiveTab.setSelected(false);
     }
 
-    // ─────────────────────────── UI HELPERS ───────────────────────────
-
-    private void setActiveAuctionTab(ToggleButton active) {
-        aFilterAll.setSelected(active == aFilterAll);
-        aFilterRunning.setSelected(active == aFilterRunning);
-        aFilterOpen.setSelected(active == aFilterOpen);
-        aFilterDone.setSelected(active == aFilterDone);
+    /**
+     * Đặt predicate filter cho auctionFiltered và highlight tab tương ứng.
+     */
+    private void applyAuctionFilter(Predicate<AdminDisplayDTO> pred, ToggleButton activeBtn) {
+        auctionFiltered.setPredicate(pred);
+        setActiveToggleGroup(activeBtn, aFilterAll, aFilterRunning, aFilterOpen, aFilterDone);
     }
 
-    private void setActiveUserTab(ToggleButton active) {
-        uFilterAll.setSelected(active == uFilterAll);
-        uFilterSeller.setSelected(active == uFilterSeller);
-        uFilterBidder.setSelected(active == uFilterBidder);
+    /**
+     * Đặt predicate filter cho userFiltered theo role (null = tất cả) và highlight tab.
+     */
+    private void applyUserFilter(UserRole role, ToggleButton activeBtn) {
+        userFiltered.setPredicate(u -> role == null || u.getRole() == role);
+        setActiveToggleGroup(activeBtn, uFilterAll, uFilterSeller, uFilterBidder);
     }
+
+    /**
+     * Đặt đúng một ToggleButton là selected, còn lại deselect.
+     * Tránh việc phải liệt kê từng button.setSelected() thủ công.
+     */
+    private void setActiveToggleGroup(ToggleButton active, ToggleButton... group) {
+        for (ToggleButton btn : group) btn.setSelected(btn == active);
+    }
+
+    /** Guard kiểm tra cell rỗng, dùng chung cho cả hai bảng. */
+    private boolean emptyCellOrNoItem(boolean empty, javafx.scene.control.TableRow<?> row) {
+        return empty || row == null || row.getItem() == null;
+    }
+
+    /** Format số tiền VNĐ dùng chung. */
+    private String formatVnd(long amount) {
+        return String.format("%,d ₫", amount);
+    }
+
+    /** Tạo Alert với title và header sẵn. */
+    private Alert buildAlert(Alert.AlertType type, String title, String header) {
+        Alert a = new Alert(type);
+        a.setTitle(title);
+        a.setHeaderText(header);
+        return a;
+    }
+
+    /** Tạo và hiển thị Alert đơn giản (không có header). */
+    private void showAlert(Alert.AlertType type, String title, String msg) {
+        Alert a = buildAlert(type, title, null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
+
+    // ─────────────────────────── LABEL/STYLE MAPPINGS ───────────────────────────
 
     private String auctionStatusLabel(AuctionStatus s) {
         if (s == null) return "—";
@@ -526,7 +423,7 @@ public class AdminDashboardController {
             case RUNNING  -> "Running";
             case FINISHED -> "Finished";
             case PAID     -> "Paid";
-            case CANCELED -> "Cancel";
+            case CANCELED -> "Canceled";
         };
     }
 
@@ -539,13 +436,5 @@ public class AdminDashboardController {
             case PAID     -> "badge-paid";
             case CANCELED -> "badge-canceled";
         };
-    }
-
-    private void showAlert(Alert.AlertType type, String title, String msg) {
-        Alert a = new Alert(type);
-        a.setTitle(title);
-        a.setHeaderText(null);
-        a.setContentText(msg);
-        a.showAndWait();
     }
 }
