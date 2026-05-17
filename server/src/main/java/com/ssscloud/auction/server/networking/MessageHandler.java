@@ -125,11 +125,7 @@ public class MessageHandler {
                 }
 
                 case "CREATE_AUCTION": {
-                    JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
-                    String internalJsonPayload = rootObject.get("data").toString();
-
-                    String controllerResponse = auctionController.createAuction(internalJsonPayload, clientHandler.getUserId());
-
+                    String controllerResponse = auctionController.createAuction(clientMessage.getData(), clientHandler.getUserId());
                     Type auctionResponseType = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
                     ApiResponse<AuctionDTO> auctionResult = JsonUtils.fromJsonGeneric(controllerResponse, auctionResponseType);
 
