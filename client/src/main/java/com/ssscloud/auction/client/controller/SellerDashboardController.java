@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client.controller;
 
+import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.SessionManager;
@@ -7,7 +8,8 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
-import com.ssscloud.auction.common.dto.response.SellerDisplayInfoDTO; // bạn tự tạo
+import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.util.JsonUtils;
 
@@ -26,28 +28,12 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * SellerDashboardController
- *
- * Hiển thị toàn bộ phiên đấu giá của seller dưới dạng bảng tổng hợp.
- * Mỗi row có nút "Xem phòng" → navigate sang BiddingRoomController
- * với bid controls bị disable (seller chỉ quan sát).
- *
- * DTO phụ thuộc: SellerDisplayInfoDTO (bạn tự tạo phía server + common)
- * Fields cần thiết:
- *   String  auctionId
- *   String  itemName
- *   long    startingPrice
- *   long    currentPrice
- *   int     bidCount
- *   AuctionStatus status
- *   LocalDateTime endTime
- */
 public class SellerDashboardController {
 
     // ── FXML: metric cards ─────────────────────────────────────────────────
@@ -63,21 +49,21 @@ public class SellerDashboardController {
     @FXML private ToggleButton tabDone;
 
     // ── FXML: table ────────────────────────────────────────────────────────
-    @FXML private TableView<SellerDisplayInfoDTO>         tblAuctions;
-    @FXML private TableColumn<SellerDisplayInfoDTO, String> colTitle;
-    @FXML private TableColumn<SellerDisplayInfoDTO, String> colStrartingPrice; // typo intentional: matches fxml id
-    @FXML private TableColumn<SellerDisplayInfoDTO, String> colCurrentPrice;
-    @FXML private TableColumn<SellerDisplayInfoDTO, String> colBidCount;
-    @FXML private TableColumn<SellerDisplayInfoDTO, String> colTimeLeft;
-    @FXML private TableColumn<SellerDisplayInfoDTO, String> colStatus;
-    @FXML private TableColumn<SellerDisplayInfoDTO, Void>   colActions;
+    @FXML private TableView<SellerDisplayDTO>         tblAuctions;
+    @FXML private TableColumn<SellerDisplayDTO, String> colTitle;
+    @FXML private TableColumn<SellerDisplayDTO, String> colStartingPrice;
+    @FXML private TableColumn<SellerDisplayDTO, String> colCurrentPrice;
+    @FXML private TableColumn<SellerDisplayDTO, String> colBidCount;
+    @FXML private TableColumn<SellerDisplayDTO, String> colTimeLeft;
+    @FXML private TableColumn<SellerDisplayDTO, String> colStatus;
+    @FXML private TableColumn<SellerDisplayDTO, Void>   colActions;
 
     // ── Internal state ─────────────────────────────────────────────────────
     private final AuctionClientSocket socket  = AuctionClientSocket.getInstance();
     private final SessionManager      session = SessionManager.getInstance();
 
-    private final ObservableList<SellerDisplayInfoDTO> masterList   = FXCollections.observableArrayList();
-    private final FilteredList<SellerDisplayInfoDTO>   filteredList = new FilteredList<>(masterList, p -> true);
+    private final ObservableList<SellerDisplayDTO> masterList   = FXCollections.observableArrayList();
+    private final FilteredList<SellerDisplayDTO>   filteredList = new FilteredList<>(masterList, p -> true);
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -101,9 +87,9 @@ public class SellerDashboardController {
         colTitle.setCellValueFactory(
                 c -> new SimpleStringProperty(c.getValue().getItemName()));
 
-        colStrartingPrice.setCellValueFactory(
+        colStartingPrice.setCellValueFactory(
                 c -> new SimpleStringProperty(
-                        String.format("%,d ₫", c.getValue().getStartingPrice())));
+                        String.format("%,d ₫", c.getValue().getStartPrice())));
 
         colCurrentPrice.setCellValueFactory(
                 c -> new SimpleStringProperty(
@@ -132,8 +118,8 @@ public class SellerDashboardController {
             {
                 btnView.getStyleClass().add("btn-primary");
                 btnView.setOnAction(e -> {
-                    SellerDisplayInfoDTO row = getTableView().getItems().get(getIndex());
-                    openBiddingRoom(row.getAuctionId());
+                    SellerDisplayDTO row = getTableView().getItems().get(getIndex());
+                    openBiddingRoom(row.getId());
                 });
             }
 
@@ -161,14 +147,15 @@ public class SellerDashboardController {
                 if (!"GET_MY_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) return;
 
                 String rawData = JsonUtils.toJson(serverMsg.getData());
-                ApiResponse<?> resp = JsonUtils.fromJson(rawData, ApiResponse.class);
+                Type respType = new TypeToken<ApiResponse<ListResponse<SellerDisplayDTO>>>() {}.getType();
+                ApiResponse<ListResponse<SellerDisplayDTO>> resp = JsonUtils.fromJsonGeneric(rawData, respType);
                 if (resp == null || !resp.isSuccess()) return;
 
                 String listJson = JsonUtils.toJson(resp.getData());
-                ListResponse<SellerDisplayInfoDTO> listResp = JsonUtils.fromJson(listJson, ListResponse.class, SellerDisplayInfoDTO.class);
+                ListResponse<SellerDisplayDTO> listResp = JsonUtils.fromJson(listJson, ListResponse.class, SellerDisplayDTO.class);
                 if (listResp == null) return;
 
-                List<SellerDisplayInfoDTO> items = listResp.getData();
+                List<SellerDisplayDTO> items = listResp.getData();
 
                 Platform.runLater(() -> {
                     masterList.setAll(items);
@@ -183,18 +170,17 @@ public class SellerDashboardController {
 
     
     private void populateAccountInfo() {
-        if (session.getCurrentUser() == null) return;
-        // TODO: lấy từ UserDTO khi server trả về balance + bankAccount
-        // Hiện để placeholder — thay bằng getter thực khi DTO có sẵn
-        lblAccountBalance.setText("—");
+        UserDTO user = session.getCurrentUser();
+        if (user == null) return;
+        lblAccountBalance.setText(String.format("%,d ₫", user.getAccountBalance()));
         lblBankAccount.setText("—");
     }
 
-    private void refreshMetrics(List<SellerDisplayInfoDTO> items) {
+    private void refreshMetrics(List<SellerDisplayDTO> items) {
         int running  = 0;
         int finished = 0;
 
-        for (SellerDisplayInfoDTO dto : items) {
+        for (SellerDisplayDTO dto : items) {
             if (dto.getStatus() == AuctionStatus.RUNNING || dto.getStatus() == AuctionStatus.OPEN) {
                 running++;
             }
@@ -252,12 +238,10 @@ public class SellerDashboardController {
     @FXML
     private void openCreateDialog() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/CreateAuction.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
             Parent root = loader.load();
 
             CreateAuctionController ctrl = loader.getController();
-            // Khi tạo xong → reload danh sách
             ctrl.setOnSuccessCallback(auction -> loadMyAuctions());
 
             Stage modal = new Stage();
@@ -271,7 +255,6 @@ public class SellerDashboardController {
         }
     }
 
-=
 
     /**
      * Fetch AuctionDTO đầy đủ theo auctionId, rồi mở BiddingRoom ở chế độ
@@ -280,7 +263,6 @@ public class SellerDashboardController {
     private void openBiddingRoom(String auctionId) {
         new Thread(() -> {
             try {
-                // Reuse action GET_AUCTION_DETAILS đã có
                 ClientMessage req = ClientMessage.request("GET_AUCTION_DETAILS",
                         java.util.Map.of("auctionId", auctionId));
                 String responseJson = socket.sendAndReceive(JsonUtils.toJson(req));
@@ -305,8 +287,7 @@ public class SellerDashboardController {
 
     private void loadBiddingRoomAsViewer(AuctionDTO auction) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/BiddingRoom.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/BiddingRoom.fxml"));
             Parent root = loader.load();
 
             BiddingRoomController ctrl = loader.getController();
@@ -314,17 +295,13 @@ public class SellerDashboardController {
             ctrl.setOnSuccessCallback(() -> {
                 ctrl.cleanup();
                 loadMyAuctions();
-                SceneManager.getInstance().showSellerDashboard();
+                //SceneManager.getInstance().showSellerDashboard();
             });
 
             ctrl.setAuction(auction);
 
-            // ── Disable toàn bộ bid controls sau khi inject ──────────────
-            //   setAuction() đã gọi Platform.runLater(populateUI),
-            //   nên ta cũng wrap trong runLater để chạy sau populateUI.
             Platform.runLater(() -> disableBidControls(ctrl));
 
-            // Chuyển scene
             Stage stage = (Stage) tblAuctions.getScene().getWindow();
             stage.setScene(new Scene(root));
 
@@ -333,45 +310,11 @@ public class SellerDashboardController {
         }
     }
 
-    /**
-     * Tắt toàn bộ phần đặt giá trong BiddingRoomController.
-     * Dùng reflection-free: truy cập trực tiếp qua các setter/method công khai
-     * mà BiddingRoomController expose, hoặc thêm method disableBidMode() vào đó.
-     *
-     * ── Cách khuyên dùng ──────────────────────────────────────────────────
-     * Thêm method sau vào BiddingRoomController:
-     *
-     *   public void enableSellerViewMode() {
-     *       // Bid controls
-     *       btnPlaceBid.setDisable(true);
-     *       btnPlaceBid.setVisible(false);   // hoặc chỉ disable tuỳ UI
-     *       btnAutoToggle.setDisable(true);
-     *       btnAutoToggle.setVisible(false);
-     *       txtManualBid.setDisable(true);
-     *       txtMaxBid.setDisable(true);
-     *       txtAutoIncrement.setDisable(true);
-     *       btnTabManual.setVisible(false);
-     *       btnTabAuto.setVisible(false);
-     *       formManual.setVisible(false);
-     *       formManual.setManaged(false);
-     *       formAuto.setVisible(false);
-     *       formAuto.setManaged(false);
-     *       // Follow không có nghĩa với seller
-     *       if (btnFollow != null) {
-     *           btnFollow.setVisible(false);
-     *           btnFollow.setManaged(false);
-     *       }
-     *   }
-     *
-     * Sau đó gọi: ctrl.enableSellerViewMode();
-     */
+    
     private void disableBidControls(BiddingRoomController ctrl) {
-        ctrl.enableSellerViewMode(); // method bạn cần thêm vào BiddingRoomController
+        ctrl.enableSellerViewMode(); 
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // HELPERS
-    // ══════════════════════════════════════════════════════════════════════
 
     private String statusLabel(AuctionStatus status) {
         if (status == null) return "—";
