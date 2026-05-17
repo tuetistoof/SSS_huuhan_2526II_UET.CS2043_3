@@ -11,7 +11,6 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
-
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -35,6 +34,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+/**
+ * Flow call back:
+ *  SETUP: handleNavDashboard (Mainlayout lấy loader (source fxml) để trả về
+ *      Parent view = loader.load(); và ctrl = loader.getController
+ *  TRIGGER:
+ *      colAction, chạy setOpenBidRoom.accecpt(dto) tham số là consumer<DTO> nuốt thông tin và đưa ra ngoài
+ *      dashboard khôg biết BiddingRoom tồn tại, chỉ đưa data ra ngoài.
+ * LOAD:
+ *      mainlayout gọi ctrl.setOnBidRoom(this::loadBiddingRoomAsSeller)
+ *      :: là ký hiệu "lấy hàm này ra nhưng chưa gọi". Kết quả là một Consumer<SellerDisplayDTO> được lưu vào SellerDashboardController
+ *      Sau này khi dashboard gọi onOpenBidRoom.accept(dto), Java tự động điền dto vào chỗ tham số và gọi mainLayoutInstance.loadBiddingRoomAsSeller(dto).
+ *  BACK:
+ *  onSuccessCallback.run(), cái này được MainLayout set thành () -> handleNavDashboard(null), nên quay về dashboard (method này trong loadBiddingRoomAs)
+ */
 
 public class SellerDashboardController {
 
@@ -118,7 +131,7 @@ public class SellerDashboardController {
         });
 
         colActions.setCellFactory(col -> new TableCell<>() {
-            private final Button btnView = new Button("Xem phòng");
+            private final Button btnView = new Button("View room");
             private final HBox container = new HBox(btnView);
             {
                 btnView.getStyleClass().add("btn-view-row");
@@ -178,15 +191,6 @@ public class SellerDashboardController {
                 String listJson = JsonUtils.toJson(apiResp.getData()); 
                 Type listType = new TypeToken<ListResponse<SellerDisplayDTO>>() {}.getType();
                 ListResponse<SellerDisplayDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listType);
- 
-                if (listResp != null) {
-                    if (listResp.getData() != null) {
-                        if (!listResp.getData().isEmpty()) {
-                            SellerDisplayDTO first = listResp.getData().get(0);
-                        }
-                    }
-                }
- 
                 List<SellerDisplayDTO> items = (listResp != null && listResp.getData() != null) ? listResp.getData() : new ArrayList<>();
                 renderList(items);
  
@@ -199,6 +203,7 @@ public class SellerDashboardController {
     private void renderList(List<SellerDisplayDTO> items) {
         Platform.runLater(() -> {
             refreshMetrics(items);
+            masterList.setAll(items);
         });
     }
 
@@ -235,15 +240,13 @@ public class SellerDashboardController {
 
     @FXML
     private void filterRunning() {
-        filteredList.setPredicate(
-                dto -> dto.getStatus() == AuctionStatus.RUNNING);
+        filteredList.setPredicate(dto -> dto.getStatus() == AuctionStatus.RUNNING);
         setActiveTab(tabRunning);
     }
 
     @FXML
     private void filterOpen() {
-        filteredList.setPredicate(
-                dto -> dto.getStatus() == AuctionStatus.OPEN);
+        filteredList.setPredicate(dto -> dto.getStatus() == AuctionStatus.OPEN);
         setActiveTab(tabOpen);
     }
 
@@ -277,7 +280,7 @@ public class SellerDashboardController {
             ctrl.setOnSuccessCallback((Consumer<AuctionDTO>) newAuction -> loadMyAuctions());
 
             Stage modal = new Stage();
-            modal.setTitle("Tạo phiên đấu giá mới");
+            modal.setTitle("Creat a new auction");
             modal.initModality(Modality.APPLICATION_MODAL);
             modal.initOwner(tblAuctions.getScene().getWindow());
             modal.setScene(new Scene(root));
@@ -307,11 +310,11 @@ public class SellerDashboardController {
     private String statusLabel(AuctionStatus status) {
         if (status == null) return "—";
         return switch (status) {
-            case OPEN     -> "Sắp mở";
-            case RUNNING  -> "Đang chạy";
-            case FINISHED -> "Kết thúc";
-            case PAID     -> "Đã thanh toán";
-            case CANCELED -> "Đã hủy";
+            case OPEN     -> "OPEN";
+            case RUNNING  -> "RUNNING";
+            case FINISHED -> "ENDED";
+            case PAID     -> "PAID";
+            case CANCELED -> "CANCELED";
         };
     }
 }

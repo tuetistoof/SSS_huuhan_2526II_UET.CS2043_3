@@ -329,7 +329,7 @@ public class MainLayoutController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Parent dashboardView = loader.load();
 
-                        if (user.getRole() == UserRole.BIDDER) {
+            if (user.getRole() == UserRole.BIDDER) {
                 BidderDashboardController ctrl = loader.getController();
                 ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
                 currentController = ctrl;
@@ -339,8 +339,7 @@ public class MainLayoutController {
                 currentController = ctrl;
             }
 
-            
-            // Nhét Dashboard vào
+
             contentArea.getChildren().add(dashboardView);
             
         } catch (IOException e) {
