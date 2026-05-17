@@ -47,6 +47,8 @@
                </ImageView>
                <Region HBox.hgrow="ALWAYS" />
                <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
+               <Label fx:id="lblLockBalance" styleClass="header-balance-label" text="Label" />
+               <Label fx:id="lblAvailableBalance" styleClass="header-balance-label" text="Label" />
                <Button mnemonicParsing="false" onAction="#handleDeposit" prefHeight="30.0" styleClass="btn-primary" text="Deposit" />
                <StackPane>
                   <children>
@@ -59,7 +61,7 @@
                            </ImageView>
                         </graphic>
                      </Button>
-                     <Label fx:id="lblBellBadge" styleClass="notification-badge"  mouseTransparent="true" />
+                     <Label fx:id="lblBellBadge" mouseTransparent="true" styleClass="notification-badge" />
                   </children>
                </StackPane>
                    <Label fx:id="lblUsername" styleClass="header-username" text="Name" />
@@ -111,26 +113,6 @@
                      <Label fx:id="lblSidebarTitleWI" text="Won Items" />
                   </children>
                </HBox>
-               <HBox fx:id="navHistory" onMouseClicked="#handleNavHistory" styleClass="sidebar-item">
-                  <children>
-                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../images/paperclip-vertical.png" />
-                        </image>
-                     </ImageView>
-                     <Label fx:id="lblSidebarTitleH" text="History" />
-                  </children>
-               </HBox>
-               <HBox fx:id="navMyItems" onMouseClicked="#handleNavMyItems" styleClass="sidebar-item">
-                  <children>
-                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../images/tags.png" />
-                        </image>
-                     </ImageView>
-                     <Label fx:id="lblSidebarTitleMI" text="My Items" />
-                  </children>
-               </HBox>
                <HBox fx:id="navNewAuctionRoom" onMouseClicked="#handleNavNewAuctionRoom" styleClass="sidebar-item">
                   <children>
                      <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
@@ -139,16 +121,6 @@
                         </image>
                      </ImageView>
                      <Label fx:id="lblSidebarTitleNAR" text="New Auction Room" />
-                  </children>
-               </HBox>
-               <HBox fx:id="navMyAuctionRooms" onMouseClicked="#handleNavMyAuctionRooms" styleClass="sidebar-item">
-                  <children>
-                     <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../images/shop.png" />
-                        </image>
-                     </ImageView>
-                     <Label fx:id="lblSidebarTitleMAR" text="My Auction Rooms" />
                   </children>
                </HBox>
       

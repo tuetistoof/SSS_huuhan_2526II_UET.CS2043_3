@@ -70,6 +70,9 @@ public class NotificationController {
             List<NotificationDTO> pendingNotificationsList = notificationDAO.findUnreadByUserId(userId);
             logger.log(Level.INFO, "Successfully loaded {0} pending notification(s) for userId: {1}",
                     new Object[]{pendingNotificationsList.size(), userId});
+                    if (!pendingNotificationsList.isEmpty()) {
+            notificationDAO.markAllRead(userId);
+        }
             
             return JsonUtils.toJson(ApiResponse.success(pendingNotificationsList, "Pending notifications retrieved successfully."));
         } catch (ControllerException controllerException) {

@@ -20,6 +20,7 @@ import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
@@ -31,6 +32,7 @@ import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.dao.WatchlistDAO;
+import com.ssscloud.auction.server.dao.BiddedAuctionsListDAO;
 import com.ssscloud.auction.server.service.AuctionService;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
@@ -81,6 +83,7 @@ public class AuctionSocketServer {
         AuctionDAO auctionDAO = new AuctionDAO();
         BidTransactionDAO bidDAO = new BidTransactionDAO();
         WatchlistDAO watchlistDAO = new WatchlistDAO();
+        BiddedAuctionsListDAO biddedAuctionsListDAO = new BiddedAuctionsListDAO();
         DisplayDAO displayDAO = new DisplayDAO();
         NotificationDAO notificationDAO = new NotificationDAO();
 
@@ -97,15 +100,16 @@ public class AuctionSocketServer {
         UserController userController = new UserController(userService); // Naming: Clear descriptive names
         AuctionController auctionController = new AuctionController(auctionService);
         WatchlistController watchlistController = new WatchlistController(watchlistDAO);
+        BiddedAuctionsListController biddedAuctionsListController = new BiddedAuctionsListController(biddedAuctionsListDAO);
         DisplayController displayController = new DisplayController(displayDAO);
         NotificationController notificationController = new NotificationController(notificationService, notificationDAO);
 
         ConcurrentBidManager.initialize(bidDAO, autoBidService, auctionDAO, notificationController);
-        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, displayController, notificationController );
+        MessageHandler messageHandler = new MessageHandler(userController, auctionController, bidController, watchlistController, biddedAuctionsListController, displayController, notificationController);
 
         // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService);
-        startAuctionCloser(auctionDAO, auctionService);
+        startAuctionCloser(auctionDAO, auctionService, notificationService);
 
         logger.log(Level.INFO, "[Server] Initializing main networking listener on port 5000...");
 
@@ -162,16 +166,13 @@ public class AuctionSocketServer {
      * Safety-net task: periodically scans for overdue auctions that might have been missed by 
      * standard scheduling mechanisms (e.g., edge cases during high load).
      */
-    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService) throws Exception {
+    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService, NotificationService notificationService) throws Exception {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "auction-closer");
             t.setDaemon(true);
             return t;
         });
 
-        NotificationDAO notificationDAO = new NotificationDAO();
-        WatchlistDAO watchlistDAO = new WatchlistDAO();
-        NotificationService notificationService = new NotificationService(watchlistDAO, notificationDAO);
 
         scheduler.scheduleAtFixedRate(() -> {
             try {

@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.networking;
 
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.PrintWriter;
@@ -20,6 +21,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
+import com.ssscloud.auction.server.controller.BiddedAuctionsListController;
 import com.ssscloud.auction.server.controller.DisplayController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.UserController;
@@ -38,6 +40,7 @@ public class MessageHandler {
     private final UserController userController;
     private final AuctionController auctionController;
     private final WatchlistController watchlistController;
+    private final BiddedAuctionsListController biddedAuctionsListController;
     private final DisplayController displayController;
     private final NotificationController notificationController;
 
@@ -47,12 +50,14 @@ public class MessageHandler {
             AuctionController auctionController,
             BidController bidController,
             WatchlistController watchlistController,
+            BiddedAuctionsListController biddedAuctionsListController,
             DisplayController displayController,
             NotificationController notificationController) {
         this.userController = userController;
         this.auctionController = auctionController;
         this.bidController = bidController;
         this.watchlistController = watchlistController;
+        this.biddedAuctionsListController = biddedAuctionsListController;
         this.displayController = displayController;
         this.notificationController = notificationController;
     }
@@ -107,9 +112,15 @@ public class MessageHandler {
 
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", registrationResult));
                 } 
+                case "GET_PENDING_NOTIFICATIONS": {
+                    String controllerResponse = notificationController.getPendingNotifications(clientHandler.getUserId());
+                    return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE",
+                        JsonUtils.fromJson(controllerResponse, ApiResponse.class)
+                    ));
+                }
 
                 case "CREATE_AUCTION": {
-                    com.google.gson.JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
+                    JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
                     String internalJsonPayload = rootObject.get("data").toString(); // Parse inner data as raw JSON payload
                     
                     String controllerResponse = auctionController.createAuction(internalJsonPayload, clientHandler.getUserId());
@@ -188,6 +199,11 @@ public class MessageHandler {
                 case "GET_WATCHLIST": {
                     return JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST_RESPONSE",
                         JsonUtils.fromJson(watchlistController.getWatchlist(clientHandler.getUserId()), ApiResponse.class)));
+                }
+
+                case "GET_BIDDED_AUCTIONS": {
+                    return JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS_RESPONSE",
+                        JsonUtils.fromJson(biddedAuctionsListController.getBiddedAuctionslist(clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "CHECK_FOLLOWING": {
