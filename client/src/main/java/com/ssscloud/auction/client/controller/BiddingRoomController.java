@@ -810,13 +810,7 @@ public class BiddingRoomController implements MessageListener{
             String rawData = JsonUtils.toJson(serverMsg.getData());
             Type apiType = new TypeToken<ApiResponse<List<BidDTO>>>(){}.getType(); 
             ApiResponse<List<BidDTO>> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
-            // if (apiResponse == null || !apiResponse.isSuccess() || apiResponse.getData() == null) return;
-
-            //     //Double-parsed
-            // String listJson = JsonUtils.toJson(apiResponse.getData());
-            // Type listType = new TypeToken<List<BidDTO>>(){}.getType();
-            // List<BidDTO> historyList = JsonUtils.fromJsonGeneric(listJson, listType);
-            // if (historyList == null) return;
+        
             if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
                 List<BidDTO> historyList = apiResponse.getData();
                 Collections.reverse(historyList);
@@ -855,6 +849,25 @@ public class BiddingRoomController implements MessageListener{
                 System.err.println("Error: " + e.getMessage());
             }
         }).start();
+    }
+
+    //Hỗ trợ navigate của seller
+    public void enableSellerViewMode() {
+        btnPlaceBid.setDisable(true);
+        btnPlaceBid.setVisible(false);
+        btnAutoToggle.setDisable(true);
+        btnAutoToggle.setVisible(false);
+        btnTabManual.setVisible(false);
+        btnTabManual.setManaged(false);
+        btnTabAuto.setVisible(false);
+        btnTabAuto.setManaged(false);
+        formManual.setVisible(false);
+        formManual.setManaged(false);
+        formAuto.setVisible(false);
+        formAuto.setManaged(false);
+        txtManualBid.setDisable(true);
+        txtMaxBid.setDisable(true);
+        txtAutoIncrement.setDisable(true);
     }
  
     // Cleanup khi rời phòng

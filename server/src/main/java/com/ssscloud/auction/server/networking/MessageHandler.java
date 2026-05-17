@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.networking;
 
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.PrintWriter;
@@ -111,9 +112,15 @@ public class MessageHandler {
 
                     return JsonUtils.toJson(ClientMessage.request("REGISTER_RESPONSE", registrationResult));
                 } 
+                case "GET_PENDING_NOTIFICATIONS": {
+                    String controllerResponse = notificationController.getPendingNotifications(clientHandler.getUserId());
+                    return JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS_RESPONSE",
+                        JsonUtils.fromJson(controllerResponse, ApiResponse.class)
+                    ));
+                }
 
                 case "CREATE_AUCTION": {
-                    com.google.gson.JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
+                    JsonObject rootObject = com.google.gson.JsonParser.parseString(jsonPayload).getAsJsonObject();
                     String internalJsonPayload = rootObject.get("data").toString(); // Parse inner data as raw JSON payload
                     
                     String controllerResponse = auctionController.createAuction(internalJsonPayload, clientHandler.getUserId());

@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane minHeight="-Infinity" minWidth="-Infinity" styleClass="seller-root" stylesheets="@../css/seller-dashboard1.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.SellerDashboardController">
+<AnchorPane minHeight="-Infinity" minWidth="-Infinity" styleClass="seller-root" stylesheets="@../css/seller-dashboard.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.SellerDashboardController">
     <children>
 
         <!-- ══════════════════════════════════════════
@@ -116,15 +116,15 @@
                                 </HBox>
       
                                             <!-- Auction table -->
-                                <TableView fx:id="tblAuctions" styleClass="auction-table" VBox.vgrow="ALWAYS">
+                                <TableView fx:id="tblAuctions" styleClass="auction-table" VBox.vgrow="ALWAYS" >
                                     <columns>
-                                        <TableColumn fx:id="colTitle" minWidth="160.0" prefWidth="240.0" text="Sản phẩm" />
-                                        <TableColumn fx:id="colStartingPrice" minWidth="120.0" prefWidth="150.0" text="Giá khởi điểm" />
-                                        <TableColumn fx:id="colCurrentPrice" minWidth="100.0" prefWidth="130.0" text="Giá hiện tại" />
-                                        <TableColumn fx:id="colBidCount" minWidth="60.0" prefWidth="80.0" text="Lượt bid" />
-                                        <TableColumn fx:id="colTimeLeft" minWidth="80.0" prefWidth="100.0" text="Còn lại" />
-                                        <TableColumn fx:id="colStatus" minWidth="90.0" prefWidth="110.0" text="Trạng thái" />
-                                        <TableColumn fx:id="colActions" minWidth="100.0" prefWidth="120.0" text="Thao tác" />
+                                        <TableColumn fx:id="colTitle" minWidth="180.0" prefWidth="280.0" text="Sản phẩm" />
+                                        <TableColumn fx:id="colStartingPrice" minWidth="130.0" prefWidth="180.0" text="Giá khởi điểm" />
+                                        <TableColumn fx:id="colCurrentPrice" minWidth="130.0" prefWidth="180.0" text="Giá hiện tại" />
+                                        <TableColumn fx:id="colBidCount" minWidth="60.0" prefWidth="90.0" text="Lượt bid" />
+                                        <TableColumn fx:id="colTimeLeft" minWidth="90.0" prefWidth="120.0" text="Còn lại" />
+                                        <TableColumn fx:id="colStatus" minWidth="100.0" prefWidth="130.0" text="Trạng thái" />
+                                        <TableColumn fx:id="colActions" minWidth="100.0" prefWidth="140.0" text="Thao tác" />
                                     </columns>
                                     <placeholder>
                                         <Label styleClass="table-placeholder" text="Chưa có phiên đấu giá nào." />
