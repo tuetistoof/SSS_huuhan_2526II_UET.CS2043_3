@@ -64,6 +64,7 @@ public class BiddingRoomController implements MessageListener{
     @FXML private NumberAxis chartYAxis;
     @FXML private VBox formAuto;
     @FXML private VBox formManual;
+    @FXML private VBox bidForm;
     @FXML private StackPane containerImage;
     @FXML private ImageView imgBiddingRoom;
 
@@ -853,21 +854,8 @@ public class BiddingRoomController implements MessageListener{
 
     //Hỗ trợ navigate của seller
     public void enableSellerViewMode() {
-        btnPlaceBid.setDisable(true);
-        btnPlaceBid.setVisible(false);
-        btnAutoToggle.setDisable(true);
-        btnAutoToggle.setVisible(false);
-        btnTabManual.setVisible(false);
-        btnTabManual.setManaged(false);
-        btnTabAuto.setVisible(false);
-        btnTabAuto.setManaged(false);
-        formManual.setVisible(false);
-        formManual.setManaged(false);
-        formAuto.setVisible(false);
-        formAuto.setManaged(false);
-        txtManualBid.setDisable(true);
-        txtMaxBid.setDisable(true);
-        txtAutoIncrement.setDisable(true);
+        bidForm.setVisible(false);
+        bidForm.setManaged(false);
     }
  
     // Cleanup khi rời phòng
