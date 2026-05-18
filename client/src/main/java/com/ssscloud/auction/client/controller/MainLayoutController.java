@@ -13,6 +13,7 @@ import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
+import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
@@ -290,6 +291,7 @@ public class MainLayoutController implements MessageListener {
             }
 
             case ADMIN -> {
+                lblAccountBalance.setVisible(false); lblAccountBalance.setManaged(false);
                 return;
             }
         }
@@ -412,11 +414,11 @@ public class MainLayoutController implements MessageListener {
                     currentController = ctrl;
                 }
 
-                // case ADMIN -> {
-                //     AdminDashboardController ctrl = loader.getController();
-                //     ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
-                //     currentController = ctrl;
-                // }
+                case ADMIN -> {
+                    AdminDashboardController ctrl = loader.getController();
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsAdmin);
+                    currentController = ctrl;
+                }
             }
 
             contentArea.getChildren().add(dashboardView);
@@ -458,90 +460,17 @@ public class MainLayoutController implements MessageListener {
 
     public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
-        if (loading != null && loadingController != null) {
-            loading.setVisible(true);
-            loadingController.playAnimation();
-        } else {
-            System.out.println("Chưa sửa chèn thêm fxml vào 1");
-            return;
-        }
-        new Thread(() -> {
-            GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
-            String jsonResponse = socket.sendAndReceive(
-                    JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
-            AuctionDTO fullAuctionData = null;
-            if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
-                    String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                    Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
-                    ApiResponse<AuctionDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-                    if (response != null && response.isSuccess()) fullAuctionData = response.getData();
-                }
-            }
-            final AuctionDTO finalData = fullAuctionData;
-            Platform.runLater(() -> {
-                if (finalData != null) {
-                    updateActiveStyle(null);
-                    clearContent();
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-                        Parent view = loader.load();
-                        BiddingRoomController ctrl = loader.getController();
-                        ctrl.setAuction(finalData);
-                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
-                        currentController = ctrl;
-                        contentArea.getChildren().add(view);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    System.out.println("Không lấy được Data phòng");
-                }
-                if (loading != null) loading.setVisible(false);
-            });
-        }).start();
+        loadBiddingRoomGeneral(basicInfo.getId(), false);
     }
 
     public void loadBiddingRoomAsSeller(SellerDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
-        if (loading != null && loadingController != null) {
-            loading.setVisible(true);
-            loadingController.playAnimation();
-        } else { System.out.println("Loading overlay not ready"); return; }
-        new Thread(() -> {
-            GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(basicInfo.getId());
-            String jsonResponse = socket.sendAndReceive(
-                    JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
-            AuctionDTO fullAuctionData = null;
-            if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
-                    String raw = JsonUtils.toJson(serverMsg.getData());
-                    Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
-                    ApiResponse<AuctionDTO> resp = JsonUtils.fromJsonGeneric(raw, type);
-                    if (resp != null && resp.isSuccess()) fullAuctionData = resp.getData();
-                }
-            }
-            final AuctionDTO finalData = fullAuctionData;
-            Platform.runLater(() -> {
-                if (finalData != null) {
-                    updateActiveStyle(null);
-                    clearContent();
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-                        Parent view = loader.load();
-                        BiddingRoomController ctrl = loader.getController();
-                        ctrl.setAuction(finalData);
-                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
-                        ctrl.enableSellerViewMode();
-                        currentController = ctrl;
-                        contentArea.getChildren().add(view);
-                    } catch (IOException e) { e.printStackTrace(); }
-                } else { System.out.println("Seller view: cannot load auction data"); }
-                if (loading != null) loading.setVisible(false);
-            });
-        }).start();
+        loadBiddingRoomGeneral(basicInfo.getId(), true);
+    }
+
+    public void loadBiddingRoomAsAdmin(AdminDisplayDTO basicInfo) {
+        if (basicInfo == null) { handleNavDashboard(null); return; }
+        loadBiddingRoomGeneral(basicInfo.getAuctionId(), true);
     }
 
     @FXML void handleNavUserInfo(MouseEvent event) { System.out.println("Đã click vào khu vực User Info!"); }
@@ -607,5 +536,47 @@ public class MainLayoutController implements MessageListener {
 
         timeline.play();
         isSidebarExpanded = !isSidebarExpanded;
+    }
+
+    public void loadBiddingRoomGeneral(String auctionId, boolean isViewOnly) {
+        if (loading != null && loadingController != null) {
+                loading.setVisible(true);
+                loadingController.playAnimation();
+        } else { System.out.println("Loading overlay not ready"); return; }
+        new Thread(() -> {
+            GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(auctionId);
+            String jsonResponse = socket.sendAndReceive(
+                    JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
+
+            AuctionDTO fullAuctionData = null;
+            if (jsonResponse != null && !jsonResponse.isEmpty()) {
+                ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
+                if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
+                    String raw = JsonUtils.toJson(serverMsg.getData());
+                    Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
+                    ApiResponse<AuctionDTO> resp = JsonUtils.fromJsonGeneric(raw, type);
+                    if (resp != null && resp.isSuccess()) fullAuctionData = resp.getData();
+                }
+            }
+
+            final AuctionDTO finalData = fullAuctionData;
+            Platform.runLater(() -> {
+                if (finalData != null) {
+                    updateActiveStyle(null);
+                    clearContent();
+                    try {
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
+                        Parent view = loader.load();
+                        BiddingRoomController ctrl = loader.getController();
+                        ctrl.setAuction(finalData);
+                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
+                        if (isViewOnly) ctrl.enableSellerViewMode();
+                        currentController = ctrl;
+                        contentArea.getChildren().add(view);
+                    } catch (IOException e) { e.printStackTrace(); }
+                } else { System.out.println("Cannot load auction data for auction id: " + auctionId); }
+                if (loading != null) loading.setVisible(false);
+            });
+        }).start();
     }
 }

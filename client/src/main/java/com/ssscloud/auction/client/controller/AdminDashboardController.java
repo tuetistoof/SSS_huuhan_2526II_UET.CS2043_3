@@ -37,6 +37,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.ToggleButton;
@@ -55,7 +56,6 @@ public class AdminDashboardController {
     @FXML private TableView<AdminDisplayDTO>           tblAuctions;
 
     // ── User table ──
-    @FXML private TableColumn<UserDTO, Void>   uColAction;
     @FXML private TableColumn<UserDTO, String> uColAccountBalance;
     @FXML private TableColumn<UserDTO, String> uColEmail;
     @FXML private TableColumn<UserDTO, String> uColRole;
@@ -82,8 +82,6 @@ public class AdminDashboardController {
     @FXML private ToggleButton tabAuction;
     @FXML private ToggleButton tabUser;
 
-    // ─────────────────────────── CONSTANTS & STATE ───────────────────────────
-
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
@@ -93,13 +91,11 @@ public class AdminDashboardController {
     private final ObservableList<UserDTO>         userMaster      = FXCollections.observableArrayList();
     private final FilteredList<UserDTO>           userFiltered    = new FilteredList<>(userMaster, p -> true);
 
-    private Consumer<AdminDisplayDTO> onOpenBidRoomHandler;
+    private Consumer<AdminDisplayDTO> onOpenBidRoom;
 
-    public void setOnOpenBidRoom(Consumer<AdminDisplayDTO> handler) {
-        this.onOpenBidRoomHandler = handler;
+    public void setOnOpenBidRoom(Consumer<AdminDisplayDTO> callback) {
+        this.onOpenBidRoom = callback;
     }
-
-    // ─────────────────────────── INIT ───────────────────────────
 
     @FXML
     public void initialize() {
@@ -112,16 +108,13 @@ public class AdminDashboardController {
         loadUsers();
     }
 
-    // ─────────────────────────── TAB SWITCHING ───────────────────────────
+    @FXML void switchToAuctions(ActionEvent event) { switchPanel(panelAuctions, panelUsers, tabAuction, tabUser); }
+    @FXML void switchToUsers(ActionEvent event)    { switchPanel(panelUsers, panelAuctions, tabUser, tabAuction); }
 
-    @FXML void switchToAuctions(ActionEvent e) { switchPanel(panelAuctions, panelUsers, tabAuction, tabUser); }
-    @FXML void switchToUsers(ActionEvent e)    { switchPanel(panelUsers, panelAuctions, tabUser, tabAuction); }
 
-    // ─────────────────────────── AUCTION FILTERS ───────────────────────────
-
-    @FXML void filterAuctionAll(ActionEvent e)     { applyAuctionFilter(dto -> true, aFilterAll); }
-    @FXML void filterAuctionRunning(ActionEvent e) { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.RUNNING, aFilterRunning); }
-    @FXML void filterAuctionOpen(ActionEvent e)    { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.OPEN, aFilterOpen); }
+    @FXML void filterAuctionAll(ActionEvent event)     { applyAuctionFilter(dto -> true, aFilterAll); }
+    @FXML void filterAuctionRunning(ActionEvent event) { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.RUNNING, aFilterRunning); }
+    @FXML void filterAuctionOpen(ActionEvent event)    { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.OPEN, aFilterOpen); }
     @FXML void filterAuctionDone(ActionEvent e) {
         applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.FINISHED
                                 || dto.getStatus() == AuctionStatus.CANCELED
@@ -129,13 +122,10 @@ public class AdminDashboardController {
                            aFilterDone);
     }
 
-    // ─────────────────────────── USER FILTERS ───────────────────────────
 
-    @FXML void filterUserAll(ActionEvent e)     { applyUserFilter(null, uFilterAll); }
-    @FXML void filterUserSeller(ActionEvent e)  { applyUserFilter(UserRole.SELLER, uFilterSeller); }
-    @FXML void filterUserBidder(ActionEvent e)  { applyUserFilter(UserRole.BIDDER, uFilterBidder); }
-
-    // ─────────────────────────── TABLE SETUP ───────────────────────────
+    @FXML void filterUserAll(ActionEvent event)     { applyUserFilter(null, uFilterAll); }
+    @FXML void filterUserSeller(ActionEvent event)  { applyUserFilter(UserRole.SELLER, uFilterSeller); }
+    @FXML void filterUserBidder(ActionEvent event)  { applyUserFilter(UserRole.BIDDER, uFilterBidder); }
 
     private void setupAuctionTable() {
         aColName.setCellValueFactory(c   -> new SimpleStringProperty(c.getValue().getAuctionName()));
@@ -170,7 +160,7 @@ public class AdminDashboardController {
                 btnCancel.getStyleClass().add("btn-cancel-row");
                 btnCancel.setOnAction(e -> {
                     int idx = getIndex();
-                    if (idx < 0 || idx >= getTableView().getItems().size()) return; // guard đúng chiều
+                    if (idx < 0 || idx >= getTableView().getItems().size()) return;
                     handleCancelAuction(getTableView().getItems().get(idx));
                 });
                 box.setAlignment(Pos.CENTER);
@@ -186,6 +176,19 @@ public class AdminDashboardController {
                 setText(null);
             }
         });
+
+        tblAuctions.setRowFactory(tv -> {
+            TableRow<AdminDisplayDTO> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty()) {
+                    if (onOpenBidRoom != null) {
+                        onOpenBidRoom.accept(row.getItem());
+                    }
+                }
+            });
+            return row;
+        });
+            
     }
 
     private void setupUserTable() {
@@ -213,19 +216,7 @@ public class AdminDashboardController {
                 setText(null);
             }
         });
-
-        // Action — placeholder (chưa có thêm thao tác)
-        uColAction.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(null);
-                setText(empty ? null : "—");
-            }
-        });
     }
-
-    // ─────────────────────────── DATA LOADING ───────────────────────────
 
     private void loadMetrics() {
         fetchAsync("ADMIN_GET_METRICS", null, response -> {
@@ -257,8 +248,6 @@ public class AdminDashboardController {
             new TypeToken<List<UserDTO>>() {},
             items -> Platform.runLater(() -> userMaster.setAll(items)));
     }
-
-    // ─────────────────────────── CANCEL AUCTION ───────────────────────────
 
     private void handleCancelAuction(AdminDisplayDTO dto) {
         TextArea taReason = new TextArea();
@@ -311,14 +300,6 @@ public class AdminDashboardController {
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // PRIVATE HELPERS — tất cả logic tái sử dụng nằm dưới đây
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /**
-     * Gửi request socket trên background thread, trả về innerJson của ApiResponse data
-     * vào callback. Callback chạy trên background thread — gọi Platform.runLater nếu cần UI.
-     */
     private void fetchAsync(String action, Object payload, Consumer<String> onSuccess) {
         new Thread(() -> {
             try {
@@ -336,10 +317,6 @@ public class AdminDashboardController {
         }).start();
     }
 
-    /**
-     * Variant của fetchAsync dành riêng cho response dạng ApiResponse<List<T>>.
-     * Parse xong gọi onSuccess với List<T> đã giải tuần tự hoàn chỉnh.
-     */
     private <T> void fetchList(String action, Type apiType, TypeToken<List<T>> listToken, Consumer<List<T>> onSuccess) {
         fetchAsync(action, null, innerJson -> {
             ApiResponse<List<T>> apiResp = JsonUtils.fromJsonGeneric(innerJson, apiType);
@@ -352,10 +329,6 @@ public class AdminDashboardController {
         });
     }
 
-    /**
-     * Hiển thị/ẩn hai panel khi chuyển tab.
-     * show: panel cần hiện; hide: panel cần ẩn.
-     */
     private void switchPanel(VBox show, VBox hide, ToggleButton activeTab, ToggleButton inactiveTab) {
         show.setVisible(true);
         show.setManaged(true);
@@ -365,41 +338,28 @@ public class AdminDashboardController {
         inactiveTab.setSelected(false);
     }
 
-    /**
-     * Đặt predicate filter cho auctionFiltered và highlight tab tương ứng.
-     */
     private void applyAuctionFilter(Predicate<AdminDisplayDTO> pred, ToggleButton activeBtn) {
         auctionFiltered.setPredicate(pred);
         setActiveToggleGroup(activeBtn, aFilterAll, aFilterRunning, aFilterOpen, aFilterDone);
     }
 
-    /**
-     * Đặt predicate filter cho userFiltered theo role (null = tất cả) và highlight tab.
-     */
     private void applyUserFilter(UserRole role, ToggleButton activeBtn) {
         userFiltered.setPredicate(u -> role == null || u.getRole() == role);
         setActiveToggleGroup(activeBtn, uFilterAll, uFilterSeller, uFilterBidder);
     }
 
-    /**
-     * Đặt đúng một ToggleButton là selected, còn lại deselect.
-     * Tránh việc phải liệt kê từng button.setSelected() thủ công.
-     */
     private void setActiveToggleGroup(ToggleButton active, ToggleButton... group) {
         for (ToggleButton btn : group) btn.setSelected(btn == active);
     }
 
-    /** Guard kiểm tra cell rỗng, dùng chung cho cả hai bảng. */
     private boolean emptyCellOrNoItem(boolean empty, javafx.scene.control.TableRow<?> row) {
         return empty || row == null || row.getItem() == null;
     }
 
-    /** Format số tiền VNĐ dùng chung. */
     private String formatVnd(long amount) {
-        return String.format("%,d ₫", amount);
+        return String.format("%,d VND", amount);
     }
 
-    /** Tạo Alert với title và header sẵn. */
     private Alert buildAlert(Alert.AlertType type, String title, String header) {
         Alert a = new Alert(type);
         a.setTitle(title);
@@ -407,14 +367,11 @@ public class AdminDashboardController {
         return a;
     }
 
-    /** Tạo và hiển thị Alert đơn giản (không có header). */
     private void showAlert(Alert.AlertType type, String title, String msg) {
         Alert a = buildAlert(type, title, null);
         a.setContentText(msg);
         a.showAndWait();
     }
-
-    // ─────────────────────────── LABEL/STYLE MAPPINGS ───────────────────────────
 
     private String auctionStatusLabel(AuctionStatus s) {
         if (s == null) return "—";

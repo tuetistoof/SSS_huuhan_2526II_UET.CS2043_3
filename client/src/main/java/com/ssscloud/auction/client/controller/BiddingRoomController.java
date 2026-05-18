@@ -526,6 +526,7 @@ public class BiddingRoomController implements MessageListener{
                 case "BID_ERROR":        handleBidError(root);        break;
                 case "AUCTION_ENDED":    handleAuctionEnded(root);    break;
                 case "AUTO_BID_STOPPED":   handleAutoBidStopped(root); break;
+                case "AUCTION_CANCELED": handleAuctionCanceled(root); break;
                 default:
                     // Action khác không liên quan đến màn hình này — bỏ qua
                     break;
@@ -683,6 +684,28 @@ public class BiddingRoomController implements MessageListener{
     
     }
 
+    private void handleAuctionCanceled(JsonObject root) {
+        JsonObject data   = root.has("data") ? root.get("data").getAsJsonObject() : new JsonObject();
+        String reason     = data.has("reason") ? data.get("reason").getAsString() : "Không có lý do";
+        String auctionName = data.has("auctionName") ? data.get("auctionName").getAsString() : "";
+
+        // Dừng countdown — không để timer tiếp tục chạy sau khi phòng đã chết
+        if (countdownTimer != null) { countdownTimer.stop(); countdownTimer = null; }
+
+        Platform.runLater(() -> {
+            // Alert blocking — user phải bấm OK mới thoát
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Auction Canceled");
+            alert.setHeaderText("\"" + auctionName + "\" was canceled by administrator.");
+            alert.setContentText("Reason: " + reason);
+            alert.showAndWait(); // Blocking — user thấy rõ lý do trước khi bị đá ra
+
+            if (onSuccessCallback != null) {
+                onSuccessCallback.run();
+            }
+        });
+    }
+
 
     // Setters — màn hình trước inject context 
     public void setAuction(AuctionDTO auction) {
@@ -690,18 +713,19 @@ public class BiddingRoomController implements MessageListener{
         itemUrls = auction.getItemDTO().getImageUrls();
 
         boolean isFinished = auction.getStatus() == AuctionStatus.FINISHED;
+        boolean isCancelled = auction.getStatus() == AuctionStatus.CANCELED;
 
         Platform.runLater(() -> {
             populateUI();
             setUpItemImage(itemUrls);
-            if (isFinished) {
+            if (isFinished || isCancelled) {
                 btnPlaceBid.setDisable(true);
-                btnPlaceBid.setText("Đã kết thúc");
+                btnPlaceBid.setText(isCancelled ? "Đã hủy" : "Đã kết thúc");
                 btnAutoToggle.setDisable(true);
                 txtManualBid.setDisable(true);
                 if (txtMaxBid != null) txtMaxBid.setDisable(true);
                 if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
-                if (lblTimer != null) lblTimer.setText("Đã kết thúc");
+                if (lblTimer != null) lblTimer.setText(isCancelled ? "Canceled" : "Finished");
             }
         });
 
@@ -709,11 +733,11 @@ public class BiddingRoomController implements MessageListener{
             subcribeToAuction();
             loadBidHistory();
             // Chỉ enable nút nếu auction còn đang chạy
-            if (!isFinished) Platform.runLater(() -> btnPlaceBid.setDisable(false));
+            if (!isFinished && !isCancelled) Platform.runLater(() -> btnPlaceBid.setDisable(false));
         }).start();
 
         checkFollowStatus();
-        if (!isFinished) startTimer();  // không chạy timer nếu đã kết thúc
+        if (!isFinished && !isCancelled) startTimer();  // không chạy timer nếu đã kết thúc
     }
 
     private void populateUI() {
@@ -728,7 +752,7 @@ public class BiddingRoomController implements MessageListener{
 
         if (lblLeaderName != null) {
             String leader = currentAuction.getHighestBidderName();
-            lblLeaderName.setText("Dẫn đầu: " + (leader != null ? leader : "—"));
+            lblLeaderName.setText("Leading: " + (leader != null ? leader : "—"));
         }
         btnPlaceBid.setDisable(true); // Tạm khóa nút đặt giá cho đến khi tải xong lịch sử và cập nhật giá hiện tại
         if (lblMinIncrement != null) {
@@ -742,12 +766,13 @@ public class BiddingRoomController implements MessageListener{
         }
         if (lblMinHint != null && currentAuction.getMinIncrement() > 0) {
             long minRequired = currentAuction.getCurrentPrice() + currentAuction.getMinIncrement();
-            lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
+            lblMinHint.setText("Minimum bid: " + String.format("%,d ₫", minRequired));
         }
         if (lblStatusBadge != null && currentAuction.getStatus() != null) {
             switch (currentAuction.getStatus()) {
-                case RUNNING   -> { lblStatusBadge.setText("Đang chạy");  lblStatusBadge.getStyleClass().setAll("br-badge-running"); }
-                case FINISHED -> { lblStatusBadge.setText("Đã kết thúc"); lblStatusBadge.getStyleClass().setAll("br-badge-ended"); }
+                case RUNNING   -> { lblStatusBadge.setText("Running");  lblStatusBadge.getStyleClass().setAll("br-badge-running"); }
+                case FINISHED -> { lblStatusBadge.setText("Finished"); lblStatusBadge.getStyleClass().setAll("br-badge-ended"); }
+                case CANCELED -> { lblStatusBadge.setText("Canceled"); lblStatusBadge.getStyleClass().setAll("br-badge-ended"); }
                 default       -> lblStatusBadge.setText(currentAuction.getStatus().toString());
             }
         }
@@ -856,6 +881,11 @@ public class BiddingRoomController implements MessageListener{
     public void enableSellerViewMode() {
         bidForm.setVisible(false);
         bidForm.setManaged(false);
+        if (btnFollow != null) { 
+            btnFollow.setVisible(false); 
+            btnFollow.setManaged(false); 
+        }
+        btnPlaceBid.setDisable(true);
     }
  
     // Cleanup khi rời phòng
