@@ -12,6 +12,7 @@ public class ClientMessage implements Serializable {
 
     private String action;
     private String type;   // "PUSH" | "RESPONSE"
+    private String requestId;
     private Object data;
 
     public ClientMessage() {}
@@ -39,11 +40,14 @@ public class ClientMessage implements Serializable {
     public String getType()            { return type; }
     public void   setType(String t)    { this.type = t; }
 
+    public String getRequestId()        { return requestId; }
+    public void   setRequestId(String requestId) { this.requestId = requestId; }
+
     public Object getData()            { return data; }
     public void   setData(Object d)    { this.data = d; }
 
     @Override
     public String toString() {
-        return "ClientMessage{action='" + action + "', type='" + type + "', data=" + data + '}';
+        return "ClientMessage{action='" + action + "', type='" + type + "', requestId='" + requestId + "', data=" + data + '}';
     }
 }

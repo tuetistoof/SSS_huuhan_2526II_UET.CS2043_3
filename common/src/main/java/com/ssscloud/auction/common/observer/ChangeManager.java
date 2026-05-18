@@ -37,11 +37,17 @@ public class ChangeManager {
     }
 
 
-    public void detachByClientId(Subject subject, String clientId) {
+    // ChangeManager
+    public List<Observer> detachByClientId(Subject subject, String clientId) {
         List<Observer> observers = registry.get(subject);
-        if (observers == null || clientId == null) return;
-        observers.removeIf(o -> clientId.equals(o.getObserverId()));
+        if (observers == null || clientId == null) return List.of();
+        
+        List<Observer> removed = observers.stream()
+                .filter(o -> clientId.equals(o.getObserverId()))
+                .toList();
+        observers.removeAll(removed);
         if (observers.isEmpty()) registry.remove(subject);
+        return removed; // ← trả về để caller gọi shutdown
     }
 
     public void notify(Subject subject){

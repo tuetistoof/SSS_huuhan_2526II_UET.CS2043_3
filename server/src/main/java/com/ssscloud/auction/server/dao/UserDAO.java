@@ -233,7 +233,6 @@ public class UserDAO extends BaseDAO {
             return null;
 
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "SQLException trong UserDAO.findById cho userId: " + userId, sqlException);
             throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by ID.");
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.findById", exception);
