@@ -117,6 +117,7 @@ public class ClientObserver implements Observer {
         Map<String, Object> auctionEndedPayload = new HashMap<>(); // Descriptive internal logic name
         auctionEndedPayload.put("auctionId",  auction.getAuctionConfig().getId());
         auctionEndedPayload.put("finalPrice", auction.getCurrentPrice());
+        auctionEndedPayload.put("winnerId", auction.getHighestBidderId() != null ? auction.getHighestBidderId() : "");
         auctionEndedPayload.put("winner",     auction.getHighestBidderName() != null
                                   ? auction.getHighestBidderName() : "No bids placed"); // Language Policy: Technical English
         return auctionEndedPayload;

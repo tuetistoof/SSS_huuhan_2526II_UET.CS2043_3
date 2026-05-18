@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.service;
 
+import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
@@ -9,14 +10,21 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.Bidder;
+import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.factory.ItemDTOFactory;
 import com.ssscloud.auction.server.factory.ItemFactory;
 import com.ssscloud.auction.server.util.AuctionRegistry;
+import com.ssscloud.auction.server.util.SessionRegistry;
 
+import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,16 +47,18 @@ import java.util.logging.Logger;
  */
 public class AuctionService {
     private static final Logger logger = Logger.getLogger(AuctionService.class.getName()); // Logging Standards: Declared first
-
+    
     private final AuctionDAO auctionDAO;
+    private final UserDAO userDAO; 
     private final UserService userService;
     private final ItemService itemService;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private final NotificationService notificationService;
 
 
-    public AuctionService(AuctionDAO auctionDAO, UserService userService, ItemService itemService, NotificationService notificationService) {
+    public AuctionService(AuctionDAO auctionDAO, UserDAO userDAO, UserService userService, ItemService itemService, NotificationService notificationService) {
         this.auctionDAO = auctionDAO;
+        this.userDAO = userDAO;
         this.userService = userService;
         this.itemService = itemService;
         this.notificationService = notificationService;
@@ -152,6 +162,9 @@ public class AuctionService {
                     auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
                     AuctionRegistry.getInstance().remove(auctionId);
                     ConcurrentBidManager.getInstance().shutdown(auctionId); 
+
+                    settleAuctionBalances(auction);
+                    
                     ChangeManager.getInstance().notify(auction);
                     notificationService.notifyAuctionEnded(auction);
                     logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
@@ -165,6 +178,128 @@ public class AuctionService {
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
 
+    private void settleAuctionBalances(Auction auction) {
+        String winnerId   = auction.getHighestBidderId();
+        String sellerId   = auction.getSellerId();
+        long   finalPrice = auction.getCurrentPrice();
+        String auctionId  = auction.getAuctionConfig().getId();
+ 
+        if (winnerId == null || finalPrice <= 0) {
+            logger.log(Level.INFO,
+                    "No bids placed for auctionId: {0} — skipping balance settlement.", auctionId);
+            return;
+        }
+ 
+        try {
+            // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
+            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice);
+            if (!winnerSettled) {
+                logger.log(Level.WARNING,
+                        "settleWinnerBalance: no rows affected — locked insufficient? "
+                                + "winnerId={0}, finalPrice={1}",
+                        new Object[]{winnerId, finalPrice});
+            }
+ 
+            // Query lại DB sau settle để lấy giá trị chính xác
+            User winnerUser = userDAO.findById(winnerId);
+            if (winnerUser instanceof Bidder bidder) {
+                long newBalance  = bidder.getAccountBalance();
+                long newLocked   = bidder.getLockedBalance(); // = 0 sau settle thành công
+ 
+                // Sync session — dùng set (không phải add) để đảm bảo khớp DB
+                SessionRegistry.getInstance().setUnsettledBalance(winnerId, newLocked);
+ 
+                // Push về client nếu đang online
+                pushBalanceUpdate(winnerId, newBalance);
+                pushUnsettledUpdate(winnerId, newLocked);
+ 
+                logger.log(Level.INFO,
+                        "Winner settled: winnerId={0}, deducted={1}, newBalance={2}, newLocked={3}",
+                        new Object[]{winnerId, finalPrice, newBalance, newLocked});
+            } else {
+                logger.log(Level.WARNING,
+                        "settleAuctionBalances: winnerId={0} not found or not a Bidder after settle.",
+                        winnerId);
+            }
+ 
+        } catch (Exception e) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Failed to settle winner balance. "
+                            + "auctionId=" + auctionId + ", winnerId=" + winnerId
+                            + ", finalPrice=" + finalPrice, e);
+        }
+ 
+        try {
+            // Atomic: account_balance += finalPrice, pending_balance -= finalPrice
+            boolean sellerSettled = userDAO.settleSellerBalance(sellerId, finalPrice);
+            if (!sellerSettled) {
+                logger.log(Level.WARNING,
+                        "settleSellerBalance: no rows affected — pending insufficient? "
+                                + "sellerId={0}, finalPrice={1}",
+                        new Object[]{sellerId, finalPrice});
+            }
+ 
+            // Query lại DB sau settle để lấy giá trị chính xác
+            User sellerUser = userDAO.findById(sellerId);
+            if (sellerUser instanceof Seller seller) {
+                long newBalance  = seller.getAccountBalance();
+                long newPending  = seller.getPendingBalance(); // = 0 sau settle thành công
+ 
+                // Sync session
+                SessionRegistry.getInstance().setUnsettledBalance(sellerId, newPending);
+ 
+                pushBalanceUpdate(sellerId, newBalance);
+                pushUnsettledUpdate(sellerId, newPending);
+ 
+                logger.log(Level.INFO,
+                        "Seller settled: sellerId={0}, received={1}, newBalance={2}, newPending={3}",
+                        new Object[]{sellerId, finalPrice, newBalance, newPending});
+            } else {
+                logger.log(Level.WARNING,
+                        "settleAuctionBalances: sellerId={0} not found or not a Seller after settle.",
+                        sellerId);
+            }
+ 
+        } catch (Exception e) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Failed to settle seller balance. "
+                            + "auctionId=" + auctionId + ", sellerId=" + sellerId
+                            + ", finalPrice=" + finalPrice, e);
+        }
+    }
+    /**
+     * Push số dư tài khoản mới về client (nếu đang online).
+     * Client dùng để cập nhật label "Balance" trên MainLayoutController.
+     */
+
+    private void pushBalanceUpdate(String userId, long newBalance) {
+        PrintWriter writer = SessionRegistry.getInstance().getWriter(userId);
+        if (writer == null) return; // offline — bỏ qua, client sẽ query lại khi login lần tiếp
+        try {
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(
+                        ClientMessage.push("BALANCE_UPDATE", newBalance)));
+                writer.flush();
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING,
+                    "Failed to push BALANCE_UPDATE to userId: " + userId, e);
+        }
+    }
+    private void pushUnsettledUpdate(String userId, long unsettled) {
+        PrintWriter writer = SessionRegistry.getInstance().getWriter(userId);
+        if (writer == null) return;
+        try {
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(
+                        ClientMessage.push("UNSETTLED_UPDATE", unsettled)));
+                writer.flush();
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING,
+                    "Failed to push UNSETTLED_UPDATE to userId: " + userId, e);
+        }
+    }
     // --- PRIVATE HELPERS ---
 
     private AuctionDTO toAuctionDto(Auction auction, UserDTO sellerDto, ItemDTO itemDto) {

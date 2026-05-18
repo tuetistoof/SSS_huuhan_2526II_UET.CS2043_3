@@ -7,8 +7,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.response.AdminAuctionView;
+import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.AdminMetrics;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
@@ -46,7 +47,7 @@ public class AdminService {
      * Lấy danh sách tất cả auction, có thể filter theo status.
      * filter == null thì lấy tất cả.
      */
-    public List<AdminAuctionView> getAuctions(AuctionStatus filter) throws ServiceException, Exception {
+    public List<AdminDisplayDTO> getAuctions(AuctionStatus filter) throws ServiceException, Exception {
         try {
             logger.log(Level.INFO, "Admin retrieving auction list, filter: {0}",
                 filter != null ? filter.name() : "ALL");
@@ -73,6 +74,23 @@ public class AdminService {
             throw serviceException;
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminService.getMetrics", exception);
+            throw exception;
+        }
+    }
+
+    /**
+     * Lấy danh sách tất cả user, có thể filter theo role (BIDDER / SELLER).
+     * roleFilter == null thì lấy tất cả.
+     */
+    public List<UserDTO> getUsers(String roleFilter) throws ServiceException, Exception {
+        try {
+            logger.log(Level.INFO, "Admin retrieving user list, roleFilter: {0}",
+                roleFilter != null ? roleFilter : "ALL");
+            return adminDAO.getAllUsers(roleFilter);
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminService.getUsers", exception);
             throw exception;
         }
     }

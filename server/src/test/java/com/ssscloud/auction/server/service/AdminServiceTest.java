@@ -12,7 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.ssscloud.auction.common.dto.response.AdminAuctionView;
+import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.AdminMetrics;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
@@ -79,13 +79,13 @@ public class AdminServiceTest {
     @Test
     void testGetAuctions_noFilter_returnsAll() throws Exception {
         // WHY: filter == null phải trả toàn bộ auction, không bị giới hạn status
-        List<AdminAuctionView> mockList = List.of(
-            new AdminAuctionView(AUCTION_ID, "Test", "seller", 30_000L, AuctionStatus.RUNNING,
+        List<AdminDisplayDTO> mockList = List.of(
+            new AdminDisplayDTO(AUCTION_ID, "Test", "seller", 30_000L, AuctionStatus.RUNNING,
                 LocalDateTime.now().plusHours(2))
         );
         when(adminDAO.findAllAuctions(null)).thenReturn(mockList);
 
-        List<AdminAuctionView> result = adminService.getAuctions(null);
+        List<AdminDisplayDTO> result = adminService.getAuctions(null);
 
         assertEquals(1, result.size());
         verify(adminDAO).findAllAuctions(null);

@@ -1,13 +1,11 @@
 package com.ssscloud.auction.common.dto.response;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
-import com.ssscloud.auction.common.model.Auction;
 
-public class AdminAuctionView implements Serializable{
+public class AdminDisplayDTO implements Serializable{
     private String auctionId;
     private String auctionName;
     private String sellerName;
@@ -15,7 +13,7 @@ public class AdminAuctionView implements Serializable{
     private AuctionStatus status;
     private LocalDateTime endTime;
 
-    public AdminAuctionView(String auctionId, String auctionName, String sellerName, 
+    public AdminDisplayDTO(String auctionId, String auctionName, String sellerName, 
         long currentPrice, AuctionStatus status, LocalDateTime endTime) {
         this.auctionId = auctionId;
         this.auctionName = auctionName;
