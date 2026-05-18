@@ -100,13 +100,11 @@ public class ClientObserver implements Observer {
         bidDto.setHighestBidderId(auction.getHighestBidderId());
         bidDto.setNewEndTime(auction.getAuctionConfig().getEndTime());
 
-        List<BidTransaction> bidHistoryList = auction.getBidTransaction(); // List suffix
-        if (!bidHistoryList.isEmpty()) {
-            BidTransaction latestBidTransaction = bidHistoryList.get(bidHistoryList.size() - 1);
-            bidDto.setBidAmount(latestBidTransaction.getBidAmount());
-            bidDto.setBidTime(latestBidTransaction.getBidTime());
-            bidDto.setBidType(latestBidTransaction.getType().name());
-        }
+        BidTransaction latestBidTransaction = auction.getLastBidTransaction();
+        if (latestBidTransaction == null) return bidDto;
+        bidDto.setBidAmount(latestBidTransaction.getBidAmount());
+        bidDto.setBidTime(latestBidTransaction.getBidTime());
+        bidDto.setBidType(latestBidTransaction.getType().name());
         return bidDto;
     }
 
@@ -131,6 +129,7 @@ public class ClientObserver implements Observer {
         try {
             synchronized (writer) {   // ← cần giữ vì ConcurrentBidManager cũng ghi vào writer này
                 writer.println(JsonUtils.toJson(ClientMessage.push(eventType, payload)));
+                writer.flush();
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Push failure for clientId: " + clientId + ", event: " + eventType, e);

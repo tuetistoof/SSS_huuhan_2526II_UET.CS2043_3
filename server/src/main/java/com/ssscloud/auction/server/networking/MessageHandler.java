@@ -88,10 +88,12 @@ public class MessageHandler {
                         if (SessionRegistry.getInstance().isOnline(incomingUserId)) {
                             PrintWriter oldWriter = SessionRegistry.getInstance().getWriter(incomingUserId);
                             if (oldWriter != null) {
-                                oldWriter.println(JsonUtils.toJson(
-                                    ClientMessage.push("SESSION_KICKED", "Tài khoản của bạn đã đăng nhập ở nơi khác.")
-                                ));
-                                oldWriter.flush();
+                                synchronized (oldWriter) {
+                                    oldWriter.println(JsonUtils.toJson(
+                                        ClientMessage.push("SESSION_KICKED", "Tài khoản của bạn đã đăng nhập ở nơi khác.")
+                                    ));
+                                    oldWriter.flush();
+                                }
                             }
                             SessionRegistry.getInstance().unregister(incomingUserId);
                         }
@@ -136,7 +138,7 @@ public class MessageHandler {
                     String controllerResponse = bidController.placeBid(clientMessage.getData(), clientHandler.getUserId(), clientHandler.getUsername());
                     ApiResponse<?> bidResult = JsonUtils.fromJson(controllerResponse, ApiResponse.class);
                     if (!bidResult.isSuccess()) {
-                        clientHandler.getWriter().println(JsonUtils.toJson(ClientMessage.push("BID_ERROR", bidResult)));
+                        clientHandler.write(JsonUtils.toJson(ClientMessage.push("BID_ERROR", bidResult)));
                     }
                     return null;
                 }
@@ -169,14 +171,12 @@ public class MessageHandler {
                 case "SUBSCRIBE_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
                     if (auctionId == null || auctionId.isBlank()) {
-                        clientHandler.getWriter().println(JsonUtils.toJson(ClientMessage.push("SUBSCRIBE_ERROR", ApiResponse.error("The auctionId identifier is missing."))));
-                        return null;
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The auctionId identifier is missing.")));
                     }
 
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
                     if (liveAuctionEntity == null) {
-                        clientHandler.getWriter().println(JsonUtils.toJson(ClientMessage.push("SUBSCRIBE_ERROR", ApiResponse.error("The specified auction does not exist: " + auctionId))));
-                        return null;
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The specified auction does not exist: " + auctionId)));
                     }
 
                     String userId = clientHandler.getUserId();
@@ -188,6 +188,21 @@ public class MessageHandler {
                     logger.log(Level.INFO, "[Server] ClientHandler for userId: " + clientHandler.getUserId() + " subscribed to auctionId: " + auctionId);
                     return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_OK", null));
                 }
+                case "UNSUBSCRIBE_AUCTION": {
+                    String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
+                    Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+                    if (liveAuctionEntity != null) {
+                        ChangeManager.getInstance()
+                                .detachByClientId(liveAuctionEntity, clientHandler.getUserId())
+                                .forEach(o -> {
+                                    if (o instanceof ClientObserver co) co.shutdown();
+                                });
+                        logger.log(Level.INFO, "ClientHandler for userId: " + clientHandler.getUserId()
+                                + " unsubscribed from auctionId: " + auctionId);
+                    }
+                    return null;
+                }
+
 
                 case "FOLLOW_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
