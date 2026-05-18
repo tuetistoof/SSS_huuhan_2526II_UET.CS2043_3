@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import com.google.gson.reflect.TypeToken;
-import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.AdminMetrics;
@@ -84,7 +84,7 @@ public class AdminDashboardController {
 
     private static final DateTimeFormatter DT_FMT = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
 
-    private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
+    private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
 
     private final ObservableList<AdminDisplayDTO> auctionMaster   = FXCollections.observableArrayList();
     private final FilteredList<AdminDisplayDTO>   auctionFiltered = new FilteredList<>(auctionMaster, p -> true);
@@ -301,20 +301,17 @@ public class AdminDashboardController {
     }
 
     private void fetchAsync(String action, Object payload, Consumer<String> onSuccess) {
-        new Thread(() -> {
+        String req = JsonUtils.toJson(ClientMessage.request(action, payload));
+        dispatcher.request(req, raw -> {
             try {
-                String req  = JsonUtils.toJson(ClientMessage.request(action, payload));
-                String resp = socket.sendAndReceive(req);
-                if (resp == null) return;
-
-                ClientMessage msg = JsonUtils.fromJson(resp, ClientMessage.class);
-                if (msg == null || msg.getData() == null) return;
-
-                onSuccess.accept(JsonUtils.toJson(msg.getData()));
+                ClientMessage msg = JsonUtils.fromJson(raw, com.ssscloud.auction.common.dto.ClientMessage.class);
+                if (msg != null && msg.getData() != null) {
+                    onSuccess.accept(JsonUtils.toJson(msg.getData()));
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).start();
+        });
     }
 
     private <T> void fetchList(String action, Type apiType, TypeToken<List<T>> listToken, Consumer<List<T>> onSuccess) {

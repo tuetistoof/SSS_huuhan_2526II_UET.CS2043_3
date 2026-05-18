@@ -8,11 +8,11 @@ import java.util.function.Consumer;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
-import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
+import com.ssscloud.auction.client.util.ServerResponse;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -22,7 +22,6 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.application.Platform;
 
 public class BidderDashboardController {
 
@@ -35,7 +34,7 @@ public class BidderDashboardController {
     @FXML private Parent loading; // Giao diện của khung loading
     @FXML private LoadingController loadingController;
 
-    private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
+    private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
     private List<BidderDisplayDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
     private Consumer<BidderDisplayDTO> onOpenBidRoomHandler;
 
@@ -43,46 +42,29 @@ public class BidderDashboardController {
         this.onOpenBidRoomHandler = handler;
     }
 
+
     @FXML
     public void initialize() {
-        new Thread(() -> {
-            fetchActiveAuctions();
-        }).start();
+        fetchActiveAuctions();
     }
+    public void fetchActiveAuctions() {
+        String json = JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", new GetAuctionsRequest()));
+        Type type = new TypeToken<ListResponse<BidderDisplayDTO>>() {}.getType();
 
-    public void updateDashboard(List<BidderDisplayDTO> auctions) {
-        Platform.runLater(() -> {
-            initData(auctions); // có auction nào thỏa mãn thì ném tất vô
+        dispatcher.request(json, raw -> {
+            ListResponse<BidderDisplayDTO> listResp =
+                    ServerResponse.unwrapGeneric(raw, "GET_ACTIVE_AUCTIONS_RESPONSE", type);
+            if (listResp != null && listResp.getData() != null) {
+                initData(listResp.getData());
+            } else {
+                lblPageTitle.setText("Khong co phong dau gia nao ca");
+            }
         });
     }
 
     public void initData(List<BidderDisplayDTO> dataFromServer) {
         this.allAuctionsDisplayInfo = dataFromServer;
         handleTabSelection("ALL"); // Mặc định mở lên là hiện tất cả
-    }
-
-    public void fetchActiveAuctions() {
-        GetAuctionsRequest req = new GetAuctionsRequest();
-        String jsonResponse = socket.sendAndReceive(JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", req)));
-        System.out.println(jsonResponse);
-        
-        if (jsonResponse != null && !jsonResponse.isEmpty()) {
-            ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-            
-            if ("GET_ACTIVE_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
-                String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<ListResponse <BidderDisplayDTO>>>() {}.getType();
-                ApiResponse<ListResponse <BidderDisplayDTO>> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-                if (response != null && response.isSuccess()) {
-                    ListResponse <BidderDisplayDTO> listResponse = response.getData();
-                    updateDashboard(listResponse.getData());
-                }
-            } else {
-                Platform.runLater(() -> {
-                    lblPageTitle.setText("Không có phòng đấu giá nào cả");
-                });
-            }
-        }
     }
 
     @FXML void filterAll(ActionEvent event) { handleTabSelection("ALL"); }
@@ -113,7 +95,6 @@ public class BidderDashboardController {
                 break;
         }
 
-        // Xử lý xong phần sáng/tối của nút thì gọi thằng đệ đi lọc Data
         applyFilters(); 
     }
 

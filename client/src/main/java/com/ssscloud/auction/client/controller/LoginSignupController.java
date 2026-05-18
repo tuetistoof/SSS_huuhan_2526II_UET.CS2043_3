@@ -1,15 +1,13 @@
 package com.ssscloud.auction.client.controller;
 
 import java.io.IOException;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
 
-import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SceneManager;
+import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.LoginRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
@@ -25,48 +23,28 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-import javafx.application.Platform;
 
 
 public class LoginSignupController {
 
-    @FXML
-    private Button btnLogin;
+    @FXML private Button btnLogin;
+    @FXML private CheckBox chkPassword;
+    @FXML private Label lblError;
+    @FXML private Hyperlink linkForgetPassword;
+    @FXML private Hyperlink linkSignUp;
+    @FXML private TextField txtUsername;
+    @FXML private TextField txtPassword;
+    @FXML private PasswordField txtPasswordHidden;
+    @FXML private Parent loading; 
+    @FXML private LoadingController loadingController;
 
-    @FXML
-    private CheckBox chkPassword;
-
-    @FXML
-    private Label lblError;
-
-    @FXML
-    private Hyperlink linkForgetPassword;
-
-    @FXML
-    private Hyperlink linkSignUp;
-
-    @FXML
-    private TextField txtUsername;
-
-    @FXML
-    private TextField txtPassword;
-
-    @FXML
-    private PasswordField txtPasswordHidden;
-
-    @FXML
-    private Parent loading; // Giao diện của khung loading
-
-    @FXML
-    private LoadingController loadingController;
+    private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
 
     @FXML
     public void initialize() {
         txtPassword.textProperty().bindBidirectional(txtPasswordHidden.textProperty());
-
         txtPassword.visibleProperty().bind(chkPassword.selectedProperty());
         txtPasswordHidden.visibleProperty().bind(chkPassword.selectedProperty().not());
-        
         lblError.setText("");
         lblError.setVisible(false);
         lblError.setManaged(false);
@@ -86,12 +64,8 @@ public class LoginSignupController {
     @FXML
     private void handleLogin(ActionEvent event) {
         clearErrorStyles();
-        
-        //lấy dữ liệu từ UI
         String username = txtUsername.getText().trim();
         String pass = txtPassword.getText().trim();
-        
-        //validate thông tin (không gửi server nếu thông tin rỗng)
         boolean hasError = false;
 
         if (username.isEmpty()) {
@@ -116,100 +90,40 @@ public class LoginSignupController {
             loading.setVisible(true);
             loadingController.playAnimation();
         } else {
-            System.out.println("Chưa sửa chèn thêm fxml vào");
             btnLogin.setDisable(false);
             return;
         }
 
-        new Thread(() -> {
-            try {
-                boolean isSuccess = false;
-                String errorMessage = "Unexpected Error";
-                UserDTO userDTO = null;
+        String json = JsonUtils.toJson(ClientMessage.request("LOGIN", new LoginRequest(username, pass)));
+        dispatcher.request(json, raw -> {
+            loadingController.stopAnimation();
+            loading.setVisible(false);
+            btnLogin.setDisable(false);
 
-                LoginRequest loginData = new LoginRequest(username, pass);
-                ClientMessage msg = ClientMessage.request("LOGIN", loginData);
-
-                String jsonRequest = JsonUtils.toJson(msg);
-                String jsonResponse = AuctionClientSocket.getInstance().sendAndReceive(jsonRequest);
-                
-                if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                    ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-
-                    if ("LOGIN_RESPONSE".equals(serverMsg.getAction())) {
-                        String responseRawData = JsonUtils.toJson(serverMsg.getData());
-                        Type type = new TypeToken<ApiResponse<UserDTO>>(){}.getType();
-                        ApiResponse<UserDTO> response = JsonUtils.fromJsonGeneric(responseRawData, type);
-                        isSuccess = response.isSuccess();
-                        
-                        if (isSuccess) {
-                            SessionManager.getInstance().setCurrentUser(response.getData());
-                            userDTO = response.getData();
-                            System.out.println("CHECK SESSION ID: " + userDTO.getId());
-                        }
-                        else {
-                            errorMessage = response.getMessage(); // Lấy câu chửi từ server+
-
-                        }
-                    }
-                    else {
-                        ApiResponse<?> errResp = JsonUtils.fromJson(
-                            JsonUtils.toJson(serverMsg.getData()), ApiResponse.class);
-                        if (errResp != null && errResp.getMessage() != null) {
-                            errorMessage = errResp.getMessage(); // hiển thị đúng "Sai mật khẩu", "Tài khoản không tồn tại"...
-                        } else {
-                            errorMessage = "Invalid response from server";
-                        }        
-                    }
+            UserDTO userDTO = ServerResponse.unwrap(raw, "LOGIN_RESPONSE", UserDTO.class);
+            if (userDTO != null) {
+                SessionManager.getInstance().setCurrentUser(userDTO);
+                try {
+                    Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
+                    Stage stage = (Stage) btnLogin.getScene().getWindow();
+                    stage.setMaximized(true);
+                    stage.getScene().setRoot(homeRoot);
+                    stage.centerOnScreen();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    showErrorMsg("Khong the tai man hinh chinh.");
                 }
-                else {
-                    errorMessage = "No response from server";
-                }
-
-                // quay lại UI thread để chuyển cảnh
-                final boolean finalSuccess = isSuccess;
-                final String finalErrorMessage = errorMessage;
-                final UserDTO finalUser = userDTO;
-
-                javafx.application.Platform.runLater(() -> {
-                    // Tắt hoạt cảnh
-                    loadingController.stopAnimation();
-                    loading.setVisible(false);
-                    btnLogin.setDisable(false);
-
-                    //login vào home
-                    if (finalSuccess) {
-                        SessionManager.getInstance().setCurrentUser(finalUser);
-                        try {
-                            Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
-                            Stage stage = (Stage) btnLogin.getScene().getWindow();
-                             stage.setMaximized(true);
-
-                            stage.getScene().setRoot(homeRoot);
-                            stage.centerOnScreen();
-                        }
-                        catch (IOException e) {
-                            e.printStackTrace();
-                            showErrorMsg("Không thể tải màn hình chính.");
-                        }
-                    }
-                    else {
-                        showErrorMsg(finalErrorMessage);
-                    }
-                });
+            } else {
+                showErrorMsg(ServerResponse.errorMessage(raw));
             }
-            catch (Exception e) {
-                e.printStackTrace();
-                Platform.runLater(() -> {
-                    loadingController.stopAnimation();
-                    loading.setVisible(false);
-                    btnLogin.setDisable(false);
-                    lblError.setText("Không thể kết nối tới Server!");
-                    lblError.setVisible(true);
-                    lblError.setManaged(true);
-                });
-            }
-        }).start();
+        }, () -> {
+            loadingController.stopAnimation();
+            loading.setVisible(false);
+            btnLogin.setDisable(false);
+            lblError.setText("Khong the ket noi toi Server!");
+            lblError.setVisible(true);
+            lblError.setManaged(true);
+        });
 }
 
     @FXML
@@ -218,7 +132,6 @@ public class LoginSignupController {
         txtPassword.clear();
         txtPasswordHidden.clear();
         chkPassword.setSelected(false);
-
         clearErrorStyles();
     }
 
