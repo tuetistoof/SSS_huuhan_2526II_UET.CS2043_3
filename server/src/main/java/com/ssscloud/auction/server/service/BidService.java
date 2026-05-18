@@ -15,6 +15,7 @@ import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
+import com.ssscloud.auction.server.util.SessionRegistry;
 
 /**
  * BidService is responsible for handling the business logic of manual bid placements.
@@ -46,8 +47,9 @@ public class BidService {
 
             User bidder = userDAO.findById(bidderId);
             validatePlaceBidderAccount(bidder, placeBidRequest.getBidAmount());
-
-            ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername, placeBidRequest.getBidAmount(), BidType.MANUAL);
+            userDAO.lockBidderBalance(bidderId, placeBidRequest.getBidAmount());
+            SessionRegistry.getInstance().addUnsettledBalance(bidderId, placeBidRequest.getBidAmount());
+            ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername, placeBidRequest.getBidAmount(),placeBidRequest.getBidAmount(), BidType.MANUAL);
         } catch (ServiceException serviceException) {
             logger.log(Level.WARNING, "Service exception during manual bid placement for auctionId: " + (placeBidRequest != null ? placeBidRequest.getAuctionId() : "null"), serviceException);
             throw serviceException;

@@ -39,7 +39,7 @@ public class ConcurrentBidManager {
     private NotificationController notificationController;
     private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
-
+    private final Map<String, BidTask> previousWinnerBidtask = new ConcurrentHashMap<>();
     private ConcurrentBidManager() {}
 
     private ConcurrentBidManager(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController ) {
@@ -95,12 +95,12 @@ public class ConcurrentBidManager {
     }
 
     public void submitBid(Auction auctionEntity, String bidderId, String bidderUsername,
-                          long bidAmount, BidType bidType) throws Exception {
+                          long bidAmount, long lockAmount, BidType bidType) throws Exception {
         try {
             String auctionId = auctionEntity.getAuctionConfig().getId();
             ensureWorkerRunning(auctionId);
             bidTaskQueues.get(auctionId).offer(new BidTask(
-                    auctionEntity, bidderId, bidderUsername, bidAmount, bidType));
+                    auctionEntity, bidderId, bidderUsername, bidAmount, lockAmount, bidType));
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error while submitting bid for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
             throw exception;
@@ -124,6 +124,7 @@ public class ConcurrentBidManager {
     public void shutdown(String auctionId) throws Exception {
         try {
             bidTaskQueues.remove(auctionId);
+            previousWinnerBidtask.remove(auctionId);
             Thread workerThread = workerThreads.remove(auctionId);
             if (workerThread != null) {
                 workerThread.interrupt();
@@ -187,22 +188,17 @@ public class ConcurrentBidManager {
             if (task.bidAmount >= currentAuctionPrice) {
                 String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
                 if (previousBidderId != null) {
-                    userDAO.unlockBidderBalance(previousBidderId, currentAuctionPrice);
-                    SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -currentAuctionPrice);
-                    notifyUnsettledBalanceUpdate(previousBidderId, SessionRegistry.getInstance().getUnsettledBalance(previousBidderId));
+                    BidTask previousWinner = previousWinnerBidtask.get(auctionId);
+                    long unlockAmount =  previousWinner.lockAmount;
+                    userDAO.unlockBidderBalance(previousBidderId, unlockAmount);
+                    SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -unlockAmount);
                 }
-
-                // Lock bidder mới
-                userDAO.lockBidderBalance(task.bidderId, task.bidAmount);
-                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, task.bidAmount);
-                notifyUnsettledBalanceUpdate(task.bidderId, SessionRegistry.getInstance().getUnsettledBalance(task.bidderId));
 
                 long delta = task.bidAmount - currentAuctionPrice;
 
                 // Seller
                 userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
                 SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
-                notifyUnsettledBalanceUpdate(auctionEntity.getSellerId(), SessionRegistry.getInstance().getUnsettledBalance(auctionEntity.getSellerId()));
 
                 BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, LocalDateTime.now(), task.bidType);
@@ -229,6 +225,8 @@ public class ConcurrentBidManager {
 
             } else {
                 logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
+                userDAO.unlockBidderBalance(task.bidderId, task.lockAmount);
+                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockAmount);
             }
 
             if (autoBidService != null) {
@@ -243,32 +241,21 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
-    private void notifyUnsettledBalanceUpdate(String userId, long unsettledBalance) {
-        PrintWriter writer = SessionRegistry.getInstance().getWriter(userId);
-        if (writer == null) return;
-
-        try {
-            synchronized (writer) {
-                writer.println(JsonUtils.toJson(ClientMessage.push("UNSETTLED_UPDATE", unsettledBalance)));
-                writer.flush();
-            }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to notify balance update for userId: " + userId, e);
-        }
-    }
 
     private static class BidTask {
         final Auction auction;
         final String bidderId;
         final String bidderUsername;
         final long bidAmount;
+        final long lockAmount;
         final BidType bidType;
 
-        BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, BidType bidType) {
+        BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, long lockAmount, BidType bidType) {
             this.auction = auction;
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
             this.bidAmount = bidAmount;
+            this.lockAmount = lockAmount;
             this.bidType = bidType;
         }
     }
