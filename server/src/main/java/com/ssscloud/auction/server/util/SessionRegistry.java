@@ -6,6 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.util.JsonUtils;
+
 /**
  * SessionRegistry — quản lý session của tất cả client đang kết nối.
  * Mỗi session lưu PrintWriter (socket) và unsettledBalance (lock/pending).
@@ -76,8 +79,23 @@ public class SessionRegistry {
         UserSession session = sessions.get(userId);
         if (session != null) {
             session.unsettledBalance += delta;
+            notifyUnsettledBalanceUpdate(userId, session.unsettledBalance);
         } else {
             logger.log(Level.WARNING, "addUnsettledBalance: no session found for userId: {0}", userId);
+        }
+    }
+
+    private void notifyUnsettledBalanceUpdate(String userId, long unsettledBalance) {
+        PrintWriter writer = instance.getWriter(userId);
+        if (writer == null) return;
+
+        try {
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(ClientMessage.push("UNSETTLED_UPDATE", unsettledBalance)));
+                writer.flush();
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to notify balance update for userId: " + userId, e);
         }
     }
 
