@@ -91,6 +91,27 @@ public class BidController {
         }
     }
 
+    public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+            
+            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(jsonPayload);
+            boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
+
+            return JsonUtils.toJson(ApiResponse.success(
+                java.util.Map.of("active", isActive),
+                "Auto-bid status retrieved successfully."
+            ));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
+            throw exception;
+        }
+
+    }
+
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) {
         if (placeBidRequest == null) {
             throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The manual bid request payload cannot be null.");

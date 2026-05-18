@@ -118,10 +118,10 @@
                                             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                                         </columnResizePolicy>
                                         <columns>
-                                            <TableColumn fx:id="uColUsername" minWidth="120" prefWidth="160" text="Username" />
-                                            <TableColumn fx:id="uColEmail" minWidth="160" prefWidth="220" text="Email" />
-                                            <TableColumn fx:id="uColRole" minWidth="80" prefWidth="100" text="Role" />
-                                            <TableColumn fx:id="uColAccountBalance" minWidth="100" prefWidth="130" text="Account Balance" />
+                                            <TableColumn fx:id="uColUsername" minWidth="100" prefWidth="150" text="Username" />
+                                            <TableColumn fx:id="uColEmail" minWidth="140" prefWidth="200" text="Email" />
+                                            <TableColumn fx:id="uColRole" minWidth="80" prefWidth="110" text="Role" />
+                                            <TableColumn fx:id="uColAccountBalance" minWidth="120" prefWidth="160" text="Account Balance" />
                                         </columns>
                                         <placeholder>
                                             <Label styleClass="adm-table-placeholder" text="No user yet." />
