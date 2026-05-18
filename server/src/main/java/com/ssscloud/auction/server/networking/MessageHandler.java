@@ -183,10 +183,14 @@ public class MessageHandler {
                         return null;
                     }
 
-                    ClientObserver clientObserver = new ClientObserver(clientHandler.getWriter(), clientHandler.getUserId());
-                    ChangeManager.getInstance().attach(liveAuctionEntity, clientObserver);
+                    String userId = clientHandler.getUserId();
+                    if (!ChangeManager.getInstance().hasObserver(liveAuctionEntity, userId)) {
+                        ClientObserver clientObserver = new ClientObserver(clientHandler.getWriter(), userId);
+                        ChangeManager.getInstance().attach(liveAuctionEntity, clientObserver);
+                        logger.log(Level.INFO, "ClientHandler for userId: " + userId + " subscribed to auctionId: " + auctionId);
+                    }
                     logger.log(Level.INFO, "[Server] ClientHandler for userId: " + clientHandler.getUserId() + " subscribed to auctionId: " + auctionId);
-                    return null;
+                    return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_OK", null));
                 }
 
                 case "FOLLOW_AUCTION": {

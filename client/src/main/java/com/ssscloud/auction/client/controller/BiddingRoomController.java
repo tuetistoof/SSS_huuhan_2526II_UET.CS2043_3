@@ -841,14 +841,12 @@ public class BiddingRoomController implements MessageListener{
 
     private void subcribeToAuction(){
         if (currentAuction == null) return;
-        new Thread(() -> {
-            try {
-                String json = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", currentAuction.getId()));
-                socket.send(json);
-            } catch (Exception e) {
-                System.err.println("Error: " + e.getMessage());
-            }
-        }).start();
+        try {
+            String json = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", currentAuction.getId()));
+            socket.sendAndReceive(json); // bỏ thread mới, dùng sendAndReceive để block
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
     }
 
     //Hỗ trợ navigate của seller

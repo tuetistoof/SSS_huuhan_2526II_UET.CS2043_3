@@ -156,17 +156,6 @@ public class AutoBidService {
         }
     }
 
-    /**
-     * Handle successful bid execution and notify observers.
-     */
-    public void onBidSuccess(Auction auctionEntity, BidTransaction bidTransaction) throws Exception {
-        try {
-            ChangeManager.getInstance().notify(auctionEntity);
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.onBidSuccess: " + exception.getMessage(), exception);
-            throw exception;
-        }
-    }
 
     /**
      * Retrieve all auto-bid registrations for a specific auction.

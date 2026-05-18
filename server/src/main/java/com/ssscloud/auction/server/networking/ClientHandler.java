@@ -6,11 +6,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.observer.Observer;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
@@ -44,8 +46,10 @@ public class ClientHandler implements Runnable {
             while((jsonPayload = bufferedReader.readLine()) != null) {
                 String jsonResponse = messageHandler.handleMessage(jsonPayload, this); 
                 if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                    writer.println(jsonResponse);
-                    writer.flush();
+                    synchronized (writer) {  // ← thêm vào đây
+                        writer.println(jsonResponse);
+                        writer.flush();
+                    }
                 }
             }
         } catch (IOException ioException) { 
@@ -83,7 +87,10 @@ public class ClientHandler implements Runnable {
     private void cleanupObservers() {
         try {
             for (Auction auction : AuctionRegistry.getInstance().getAllLive()) {
-                ChangeManager.getInstance().detachByClientId(auction, userId);
+                ChangeManager.getInstance().detachByClientId(auction, userId)
+                    .forEach(o -> {
+                        if (o instanceof ClientObserver co) co.shutdown();
+                    });
             }
             logger.log(Level.INFO, "Cleaned up observers for disconnected userId: " + userId);
         } catch (Exception e) {
