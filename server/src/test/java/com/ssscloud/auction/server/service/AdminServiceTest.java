@@ -339,7 +339,7 @@ public class AdminServiceTest {
         // refundWinner() gọi updatePendingBalance(sellerId, -winningBid).
         auction.placeBid(new BidTransaction(
             AUCTION_ID, BIDDER_ID, "bidder-user",
-            50_000L, LocalDateTime.now().minusMinutes(10), BidType.MANUAL
+            50_000L, 50_000L, LocalDateTime.now().minusMinutes(10), BidType.MANUAL
         ));
 
         adminService.cancelAuction(AUCTION_ID, REASON);
@@ -362,14 +362,8 @@ public class AdminServiceTest {
         // WHY: refundWinner chỉ hoàn tiền cho winner hiện tại (highest bidder).
         // Các bidder đã bị outbid trước đó đã được unlock trong processTask rồi —
         // cancel không được unlock lại họ (double-unlock).
-        auction.placeBid(new BidTransaction(
-            AUCTION_ID, BIDDER_ID, "bidder-1",
-            40_000L, LocalDateTime.now().minusMinutes(10), BidType.MANUAL
-        ));
-        auction.placeBid(new BidTransaction(
-            AUCTION_ID, BIDDER2_ID, "bidder-2",
-            55_000L, LocalDateTime.now().minusMinutes(5), BidType.MANUAL
-        ));
+        auction.placeBid(new BidTransaction(AUCTION_ID, BIDDER_ID, "bidder1", 50_000L, 50_000L, LocalDateTime.now(), BidType.MANUAL));
+        auction.placeBid(new BidTransaction(AUCTION_ID, BIDDER2_ID, "bidder2", 55_000L, 55_000L, LocalDateTime.now(), BidType.MANUAL));
 
         adminService.cancelAuction(AUCTION_ID, REASON);
 
@@ -468,7 +462,7 @@ public class AdminServiceTest {
         // vì tiền bidder chưa được hoàn
         auction.placeBid(new BidTransaction(
             AUCTION_ID, BIDDER_ID, "bidder-user",
-            50_000L, LocalDateTime.now().minusMinutes(5), BidType.MANUAL
+            50_000L, 50_000L, LocalDateTime.now().minusMinutes(5), BidType.MANUAL
         ));
 
         doThrow(new RuntimeException("DB error"))

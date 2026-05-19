@@ -137,7 +137,7 @@ public class AutoBidServiceTest {
         // WHY: bidder-A là entry duy nhất VÀ đang là highest bidder →
         // otherCompetitors rỗng → không có ai để cạnh tranh → return
         BidTransaction existingBid = new BidTransaction(
-            AUCTION_ID, "bidder-A", "Alice", 35_000L, LocalDateTime.now(), BidType.MANUAL
+            AUCTION_ID, "bidder-A", "Alice", 35_000L, 35_000L,LocalDateTime.now(), BidType.MANUAL
         );
         auction.placeBid(existingBid);
 
@@ -269,7 +269,7 @@ public class AutoBidServiceTest {
         // Setup: bidder-B max=100k, nhưng currentPrice đã là 100k từ bid thủ công
         // → calculated = min(0+10k, 100k) = 10k ≤ 100k → skip
         BidTransaction existingBid = new BidTransaction(
-            AUCTION_ID, "bidder-A", "Alice", 100_000L, LocalDateTime.now(), BidType.MANUAL
+            AUCTION_ID, "bidder-A", "Alice", 100_000L, 100_000L,LocalDateTime.now(), BidType.MANUAL
         );
         auction.placeBid(existingBid);
 
