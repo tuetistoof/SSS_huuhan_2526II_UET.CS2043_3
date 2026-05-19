@@ -181,8 +181,13 @@ public class AutoBidService {
             userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
             SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
 
-            ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId,
-                    winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
+            try {
+                ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
+            } catch (Exception submitException) {
+                userDAO.unlockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
+                SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, -winningEntry.maxBid);
+                throw submitException;
+            }
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.trigger for auctionId: "
@@ -366,8 +371,7 @@ public class AutoBidService {
             throw new ServiceException(ErrorCode.NOT_BIDDER,
                     "Only users with the 'Bidder' role are authorized to place bids.");
         }
-        long availableBalance = bidderAccount.getAccountBalance() - bidderAccount.getLockedBalance();
-        if (availableBalance < maxBidAmount) {
+        if (bidderAccount.getAvailableBalance() < maxBidAmount) {
             throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
                     "The account balance is insufficient to place this bid.");
         }

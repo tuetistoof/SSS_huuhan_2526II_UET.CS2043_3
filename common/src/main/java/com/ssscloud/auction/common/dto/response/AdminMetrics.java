@@ -3,25 +3,27 @@ package com.ssscloud.auction.common.dto.response;
 import java.io.Serializable;
 
 public class AdminMetrics implements Serializable {
-    private long RunningCount, EndedCount, totalUsers;
+    // FIX #5: Đổi RunningCount, EndedCount → camelCase để đúng Java convention
+    private long runningCount, endedCount, totalUsers;
+
     public AdminMetrics(long runningCount, long endedCount, long totalUsers) {
-        this.RunningCount = runningCount;
-        this.EndedCount = endedCount;
-        this.totalUsers = totalUsers;
+        this.runningCount = runningCount;
+        this.endedCount   = endedCount;
+        this.totalUsers   = totalUsers;
     }
 
     public long getRunningCount() {
-        return RunningCount;
+        return runningCount;
     }
     public void setRunningCount(long runningCount) {
-        this.RunningCount = runningCount;
+        this.runningCount = runningCount;
     }
 
     public long getEndedCount() {
-        return EndedCount;
+        return endedCount;
     }
     public void setEndedCount(long endedCount) {
-        this.EndedCount = endedCount;
+        this.endedCount = endedCount;
     }
 
     public long getTotalUsers() {
@@ -34,9 +36,9 @@ public class AdminMetrics implements Serializable {
     @Override
     public String toString() {
         return "AdminMetrics{" +
-               "RunningCount=" + RunningCount +
-               ", EndedCount=" + EndedCount +
+               "runningCount=" + runningCount +
+               ", endedCount=" + endedCount +
                ", totalUsers=" + totalUsers +
                '}';
-    }   
+    }
 }

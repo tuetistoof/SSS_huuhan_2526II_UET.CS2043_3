@@ -192,7 +192,7 @@ public class AuctionService {
  
         try {
             // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
-            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice);
+            boolean winnerSettled = userDAO.settleSellerBalance(sellerId, finalPrice);
             if (!winnerSettled) {
                 logger.log(Level.WARNING,
                         "settleWinnerBalance: no rows affected — locked insufficient? "

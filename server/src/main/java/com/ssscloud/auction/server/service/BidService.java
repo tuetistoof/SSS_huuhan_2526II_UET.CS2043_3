@@ -57,6 +57,14 @@ public class BidService {
             SessionRegistry.getInstance().addUnsettledBalance(bidderId, placeBidRequest.getBidAmount());
             ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername,
                     placeBidRequest.getBidAmount(), placeBidRequest.getBidAmount(), BidType.MANUAL);
+            try {
+                ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername,
+                    placeBidRequest.getBidAmount(), placeBidRequest.getBidAmount(), BidType.MANUAL);
+            } catch (Exception submitException) {
+                userDAO.unlockBidderBalance(bidderId, placeBidRequest.getBidAmount());
+                SessionRegistry.getInstance().addUnsettledBalance(bidderId, -placeBidRequest.getBidAmount());
+                throw submitException;
+            }
         } catch (ServiceException serviceException) {
             logger.log(Level.WARNING, "Service exception during manual bid placement for auctionId: "
                     + (placeBidRequest != null ? placeBidRequest.getAuctionId() : "null"), serviceException);
@@ -111,15 +119,19 @@ public class BidService {
     }
 
     private void validatePlaceBidderAccount(User bidder, long bidAmountValue) throws ServiceException, Exception {
-        if (!(bidder instanceof Bidder bidderAccount)) {
-            throw new ServiceException(ErrorCode.NOT_BIDDER,
-                    "Only users with the 'Bidder' role are authorized to place bids.");
+        try {
+            if (!(bidder instanceof Bidder bidderAccount)) {
+                throw new ServiceException(ErrorCode.NOT_BIDDER, "Only users with the 'Bidder' role are authorized to place bids.");
+            }
+            if (bidderAccount.getAvailableBalance() < bidAmountValue) {
+                throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE, "The account balance is insufficient to place this bid.");
+            }
+        } catch (ServiceException serviceException) {
+            throw serviceException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected error during bidder account validation", exception);
+            throw exception;
         }
-        if (bidderAccount.getAccountBalance() < bidAmountValue) {
-            throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
-                    "The account balance is insufficient to place this bid.");
-        }
-
     }
 
     /**

@@ -515,37 +515,38 @@ public class UserDAO extends BaseDAO {
             closeConnect(connection);
         }
     }
-    public boolean settleWinnerBalance(String winnerId, long finalPrice) throws DAOException, Exception {
-        String sql = "UPDATE bidder SET " +
-                     "account_balance = account_balance - ?, " +
-                     "locked_balance  = locked_balance  - ? " +
-                     "WHERE id = ? AND locked_balance >= ?";
-        Connection        connection = null;
-        PreparedStatement ps         = null;
-        try {
-            connection = getConnection();
-            ps = connection.prepareStatement(sql);
-            ps.setLong(1, finalPrice);
-            ps.setLong(2, finalPrice);
-            ps.setString(3, winnerId);
-            ps.setLong(4, finalPrice);
-            int rows = ps.executeUpdate();
-            if (rows > 0) {
-                logger.log(Level.INFO, "Settle winner: deducted {0} from account and lock for userId: {1}",
-                        new Object[]{finalPrice, winnerId});
-            } else {
-                logger.log(Level.WARNING, "settleWinnerBalance: no rows affected for winnerId: {0} — insufficient lock?", winnerId);
+
+    public boolean settleWinnerBalance(String winnerId, long finalPrice, long lockAmount) throws DAOException, Exception {
+            String sql = "UPDATE bidder SET " +
+                        "account_balance = account_balance - ?, " +
+                        "locked_balance  = locked_balance  - ? " +
+                        "WHERE id = ? AND locked_balance >= ?";
+            Connection        connection = null;
+            PreparedStatement ps         = null;
+            try {
+                connection = getConnection();
+                ps = connection.prepareStatement(sql);
+                ps.setLong(1, finalPrice);   // account_balance -= finalPrice (tiền thực trả)
+                ps.setLong(2, lockAmount);   // locked_balance  -= lockAmount (tiền đã lock thực tế)
+                ps.setString(3, winnerId);
+                ps.setLong(4, lockAmount);   // guard: locked_balance >= lockAmount
+                int rows = ps.executeUpdate();
+                if (rows > 0) {
+                    logger.log(Level.INFO, "Settle winner: deducted {0} from account, released {1} from lock for userId: {2}",
+                            new Object[]{finalPrice, lockAmount, winnerId});
+                } else {
+                    logger.log(Level.WARNING, "settleWinnerBalance: no rows affected for winnerId: {0} — insufficient lock?", winnerId);
+                }
+                return rows > 0;
+            } catch (SQLException sqlException) {
+                throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling winner balance.", sqlException);
+            } catch (Exception exception) {
+                throw exception;
+            } finally {
+                closeResource(ps);
+                closeConnect(connection);
             }
-            return rows > 0;
-        } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling winner balance.", sqlException);
-        } catch (Exception exception) {
-            throw exception;
-        } finally {
-            closeResource(ps);
-            closeConnect(connection);
         }
-    }
  
     /**
      * Settle the seller's account after auction ends.
