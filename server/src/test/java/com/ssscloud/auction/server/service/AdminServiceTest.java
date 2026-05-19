@@ -318,7 +318,7 @@ public class AdminServiceTest {
         // phải được unlock balance — userDAO.unlockBidderBalance() phải được gọi đúng số tiền.
         BidTransaction bid = new BidTransaction(
             AUCTION_ID, BIDDER_ID, "bidder-user",
-            50_000L, LocalDateTime.now().minusMinutes(10),
+            50_000L, 40_000L, LocalDateTime.now().minusMinutes(10),
             BidType.MANUAL
         );
         auction.placeBid(bid);  // auction.getHighestBidderId() = BIDDER_ID, getCurrentPrice() = 50_000
@@ -334,7 +334,7 @@ public class AdminServiceTest {
         // vì khi bid thắng seller được cộng pending, cancel thì phải hoàn lại.
         BidTransaction bid = new BidTransaction(
             AUCTION_ID, BIDDER_ID, "bidder-user",
-            50_000L, LocalDateTime.now().minusMinutes(10),
+            50_000L, 45_000L, LocalDateTime.now().minusMinutes(10),
             BidType.MANUAL
         );
         auction.placeBid(bid);
@@ -378,7 +378,7 @@ public class AdminServiceTest {
     
         assertThrows(Exception.class,
             () -> ConcurrentBidManager.getInstance()
-                    .submitBid(sameIdAuction, BIDDER_ID, "bidder-user", 40_000L, BidType.MANUAL),
+                    .submitBid(sameIdAuction, BIDDER_ID, "bidder-user", 40_000L, 30_000L, BidType.MANUAL),
             "submitBid after cancel/shutdown must throw — closedAuctions guard must be active");
     }
     
