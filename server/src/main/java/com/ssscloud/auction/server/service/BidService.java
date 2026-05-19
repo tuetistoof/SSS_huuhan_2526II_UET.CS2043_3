@@ -8,6 +8,7 @@ import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.common.util.BidValidator;
@@ -81,20 +82,23 @@ public class BidService {
     }
 
     private void validatePlaceBidTerms(Auction auction, PlaceBidRequest placeBidRequest, String bidderId) throws ServiceException, Exception {
-        try {
-            long minIncrement = auction.getAuctionConfig().getMinIncrement();
-            if (placeBidRequest.getBidAmount() - auction.getCurrentPrice() < minIncrement) {
-                throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW, "The bid increment is lower than the required minimum of " + minIncrement);
-            }
-            if (bidderId.equals(auction.getSellerId())) {
-                throw new ServiceException(ErrorCode.SELLER_CANNOT_BID, "Sellers are prohibited from placing bids on their own auction items.");
-            }
 
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error during bid terms validation for auctionId: " + auction.getAuctionConfig().getId(), exception);
-            throw exception;
+        long bidAmount   = placeBidRequest.getBidAmount();
+        long minIncrement = auction.getAuctionConfig().getMinIncrement();
+        BidTransaction lastBid = auction.getLastBidTransaction();
+
+        if (lastBid == null) {
+        // Chưa có bid — chỉ cần >= startPrice
+            if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
+                throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
+                    "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
+            }
+        } else {
+        // Đã có bid — phải vượt currentPrice + minIncrement
+            if (bidAmount - auction.getCurrentPrice() < minIncrement) {
+                throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
+                    "The bid increment is lower than the required minimum of " + minIncrement);
+            }
         }
     }
 
