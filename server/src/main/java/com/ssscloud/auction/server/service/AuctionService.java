@@ -183,54 +183,53 @@ public class AuctionService {
         String sellerId   = auction.getSellerId();
         long   finalPrice = auction.getCurrentPrice();
         String auctionId  = auction.getAuctionConfig().getId();
- 
+
         if (winnerId == null || finalPrice <= 0) {
             logger.log(Level.INFO,
                     "No bids placed for auctionId: {0} — skipping balance settlement.", auctionId);
             return;
         }
- 
+
         try {
-            // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
-            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice);
+            long lockAmount = ConcurrentBidManager.getInstance().getWinnerLockAmount(auctionId);
+            if (lockAmount <= 0) lockAmount = finalPrice;
+
+            // Atomic: account_balance -= finalPrice, locked_balance -= lockAmount
+            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, lockAmount); // ← truyền lockAmount
             if (!winnerSettled) {
                 logger.log(Level.WARNING,
                         "settleWinnerBalance: no rows affected — locked insufficient? "
-                                + "winnerId={0}, finalPrice={1}",
-                        new Object[]{winnerId, finalPrice});
+                                + "winnerId={0}, finalPrice={1}, lockAmount={2}",
+                        new Object[]{winnerId, finalPrice, lockAmount}); // ← thêm lockAmount vào log
             }
- 
-            // Query lại DB sau settle để lấy giá trị chính xác
+
             User winnerUser = userDAO.findById(winnerId);
             if (winnerUser instanceof Bidder bidder) {
                 long newBalance  = bidder.getAccountBalance();
-                long newLocked   = bidder.getLockedBalance(); // = 0 sau settle thành công
- 
-                // Sync session — dùng set (không phải add) để đảm bảo khớp DB
+                long newLocked   = bidder.getLockedBalance();
+
                 SessionRegistry.getInstance().setUnsettledBalance(winnerId, newLocked);
- 
-                // Push về client nếu đang online
                 pushBalanceUpdate(winnerId, newBalance);
                 pushUnsettledUpdate(winnerId, newLocked);
- 
+
                 logger.log(Level.INFO,
-                        "Winner settled: winnerId={0}, deducted={1}, newBalance={2}, newLocked={3}",
-                        new Object[]{winnerId, finalPrice, newBalance, newLocked});
+                        "Winner settled: winnerId={0}, deducted={1}, lockReleased={2}, newBalance={3}, newLocked={4}",
+                        new Object[]{winnerId, finalPrice, lockAmount, newBalance, newLocked}); // ← tách deducted vs lockReleased
             } else {
                 logger.log(Level.WARNING,
                         "settleAuctionBalances: winnerId={0} not found or not a Bidder after settle.",
                         winnerId);
             }
- 
+
         } catch (Exception e) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Failed to settle winner balance. "
                             + "auctionId=" + auctionId + ", winnerId=" + winnerId
                             + ", finalPrice=" + finalPrice, e);
         }
- 
+
+        // Phần seller không đổi gì
         try {
-            // Atomic: account_balance += finalPrice, pending_balance -= finalPrice
             boolean sellerSettled = userDAO.settleSellerBalance(sellerId, finalPrice);
             if (!sellerSettled) {
                 logger.log(Level.WARNING,
@@ -238,19 +237,16 @@ public class AuctionService {
                                 + "sellerId={0}, finalPrice={1}",
                         new Object[]{sellerId, finalPrice});
             }
- 
-            // Query lại DB sau settle để lấy giá trị chính xác
+
             User sellerUser = userDAO.findById(sellerId);
             if (sellerUser instanceof Seller seller) {
                 long newBalance  = seller.getAccountBalance();
-                long newPending  = seller.getPendingBalance(); // = 0 sau settle thành công
- 
-                // Sync session
+                long newPending  = seller.getPendingBalance();
+
                 SessionRegistry.getInstance().setUnsettledBalance(sellerId, newPending);
- 
                 pushBalanceUpdate(sellerId, newBalance);
                 pushUnsettledUpdate(sellerId, newPending);
- 
+
                 logger.log(Level.INFO,
                         "Seller settled: sellerId={0}, received={1}, newBalance={2}, newPending={3}",
                         new Object[]{sellerId, finalPrice, newBalance, newPending});
@@ -259,7 +255,7 @@ public class AuctionService {
                         "settleAuctionBalances: sellerId={0} not found or not a Seller after settle.",
                         sellerId);
             }
- 
+
         } catch (Exception e) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Failed to settle seller balance. "

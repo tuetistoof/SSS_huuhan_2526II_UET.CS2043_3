@@ -104,56 +104,51 @@ public class AdminService {
      * Luồng: validate → update DB → xóa khỏi registry → clear auto-bid → broadcast lý do.
      */
     public void cancelAuction(String auctionId, String reason) throws ServiceException, Exception {
-        try {
-            logger.log(Level.INFO, "Admin canceling auctionId: {0}, reason: {1}",
-                new Object[]{auctionId, reason});
+        logger.log(Level.INFO, "Admin canceling auctionId: {0}, reason: {1}", new Object[]{auctionId, reason});
 
-            // Validate input
-            if (auctionId == null || auctionId.isBlank()) {
-                throw new ServiceException(ErrorCode.INVALID_AUCTION_ID,
-                    "The auction identifier is required to perform cancellation.");
-            }
+        // 1. Validate (Giữ nguyên)
+        if (auctionId == null || auctionId.isBlank()) {
+            throw new ServiceException(ErrorCode.INVALID_AUCTION_ID, "...");
+        }
 
-            // Lấy auction từ registry — chỉ cancel được auction đang active
-            Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
-            if (auction == null) {
-                throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
-                    "Auction not found or already ended: " + auctionId);
-            }
+        Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+        if (auction == null) {
+            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "...");
+        }
 
-            // Chỉ cancel được OPEN hoặc RUNNING
+        // 2. Atomic Status Change
+        synchronized (auction) {
             if (!auction.getStatus().isActive()) {
-                throw new ServiceException(ErrorCode.AUCTION_CLOSED,
-                    "Cannot cancel auction that is not active: " + auctionId);
+                throw new ServiceException("AUCTION_CLOSED", "Auction is already ended.");
             }
+            auction.setStatus(AuctionStatus.CANCELED);
+        }
 
-
-            // 1. Cập nhật status trong DB
-            auctionDAO.updateStatus(auctionId, AuctionStatus.CANCELED);
-            auction.cancel();
+        try {
+            // 3. Lấy thông tin trước khi shutdown worker
+            long lockAmount = ConcurrentBidManager.getInstance().getWinnerLockAmount(auctionId);
             
+            // 4. Shutdown worker ĐỂ NGỪNG nhận bid mới ngay lập tức
             ConcurrentBidManager.getInstance().shutdown(auctionId);
 
-            refundWinner(auction);
-            // 3. Xóa khỏi AuctionRegistry  
+            // 5. Cập nhật DB (Dùng Transaction nếu có thể)
+            auctionDAO.updateStatus(auctionId, AuctionStatus.CANCELED);
+            
+            // 6. Hoàn tiền
+            refundWinner(auction, lockAmount);
+
+            // 7. Dọn dẹp tài nguyên (Các tác vụ này ít rủi ro fail hơn)
             AuctionRegistry.getInstance().remove(auctionId);
-
-            // 4. Dọn auto-bid entries
             autoBidService.clearRegistrations(auctionId);
-
-            // 5. Broadcast lý do cancel tới tất cả client đang trong phòng
             broadcastAuctionCanceled(auction, reason);
-
-            // 6. Xóa tất cả observer của auction này khỏi ChangeManager
             ChangeManager.getInstance().detachByAdmin(auction);
 
-            logger.log(Level.INFO, "Auction successfully canceled by admin: {0}", auctionId);
+            logger.log(Level.INFO, "Auction successfully canceled: {0}", auctionId);
 
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminService.cancelAuction", exception);
-            throw exception;
+        } catch (Exception e) {
+            // Xử lý rollback hoặc logging lỗi nghiêm trọng nếu bước 5-7 thất bại
+            logger.log(Level.SEVERE, "CRITICAL: Auction canceled but cleanup failed for: " + auctionId, e);
+            throw e;
         }
     }
 
@@ -192,10 +187,12 @@ public class AdminService {
         });
     }
 
-    private void refundWinner(Auction auction) throws Exception {
+    private void refundWinner(Auction auction, long lockAmount) throws Exception {
         String winnerId = auction.getHighestBidderId();
-        long winningBid = auction.getCurrentPrice();
+        long winningBid = lockAmount > 0 ? lockAmount : auction.getCurrentPrice();
         String sellerId = auction.getSellerId();
+
+        if (winningBid == 0) winningBid = auction.getCurrentPrice();
 
         if (winnerId != null && winningBid > 0) {
             try {
