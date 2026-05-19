@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.common.dto.ClientMessage;

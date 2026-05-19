@@ -1,11 +1,9 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
-import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,7 +13,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,12 +37,10 @@ public class WatchlistController {
 
     public void loadWatchlist() {
     String json = JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST", null));
-        Type type = new TypeToken<ListResponse<BidderDisplayDTO>>() {}.getType();
 
         dispatcher.request(json, raw -> {
-            ListResponse<BidderDisplayDTO> listResp = ServerResponse.unwrapGeneric(raw, null, type);
-            List<BidderDisplayDTO> auctions = (listResp != null && listResp.getData() != null)
-                    ? listResp.getData() : new ArrayList<>();
+            List<BidderDisplayDTO> auctions = ServerResponse.unwrapList(raw, null, BidderDisplayDTO.class);
+            if (auctions == null) auctions = new ArrayList<>();
             renderUI(auctions);
         });
     }

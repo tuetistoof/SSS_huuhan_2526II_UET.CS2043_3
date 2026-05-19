@@ -1,15 +1,13 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.seller;
 
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
-import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.common.util.JsonUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -27,7 +25,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -168,13 +165,10 @@ public class SellerDashboardController {
         }
  
         String json = JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS", null));
-        Type type = new TypeToken<ListResponse<SellerDisplayDTO>>() {}.getType();
 
         dispatcher.request(json, raw -> {
-            ListResponse<SellerDisplayDTO> listResp =
-                    ServerResponse.unwrapGeneric(raw, null, type);
-            List<SellerDisplayDTO> items = (listResp != null && listResp.getData() != null)
-                    ? listResp.getData() : new ArrayList<>();
+            List<SellerDisplayDTO> items = ServerResponse.unwrapList(raw, null, SellerDisplayDTO.class);
+            if (items == null) items = new ArrayList<>();
             refreshMetrics(items);
             masterList.setAll(items);
         });

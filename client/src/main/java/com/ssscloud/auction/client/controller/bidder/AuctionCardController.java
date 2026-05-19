@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

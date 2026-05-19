@@ -1,5 +1,6 @@
 package com.ssscloud.auction.client.controller;
 
+import com.ssscloud.auction.client.controller.shared.LoadingController;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.ServerResponse;
@@ -152,7 +153,7 @@ public class SignUpController {
             loadingController.stopAnimation();
             loading.setVisible(false);
 
-            if (ServerResponse.isSuccess(raw, "REGISTER_RESPONSE")) {
+            if (ServerResponse.isSuccess(raw)) {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Success");
                 alert.setHeaderText(null);

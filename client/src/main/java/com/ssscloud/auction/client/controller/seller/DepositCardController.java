@@ -1,7 +1,8 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.seller;
 
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.controller.shared.MainLayoutController;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
 

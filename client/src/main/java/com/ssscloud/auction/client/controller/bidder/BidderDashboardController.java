@@ -1,7 +1,6 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -9,8 +8,8 @@ import java.util.function.Consumer;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionsRequest;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.controller.shared.LoadingController;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
 
@@ -49,15 +48,13 @@ public class BidderDashboardController {
     }
     public void fetchActiveAuctions() {
         String json = JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", new GetAuctionsRequest()));
-        Type type = new TypeToken<ListResponse<BidderDisplayDTO>>() {}.getType();
 
         dispatcher.request(json, raw -> {
-            ListResponse<BidderDisplayDTO> listResp =
-                    ServerResponse.unwrapGeneric(raw, "GET_ACTIVE_AUCTIONS_RESPONSE", type);
-            if (listResp != null && listResp.getData() != null) {
-                initData(listResp.getData());
+            List<BidderDisplayDTO> list = ServerResponse.unwrapList(raw, "GET_ACTIVE_AUCTIONS_RESPONSE", BidderDisplayDTO.class);
+            if (list != null) {
+                initData(list);
             } else {
-                lblPageTitle.setText("Khong co phong dau gia nao ca");
+                lblPageTitle.setText("Khong co phong dau gia nao ca");  
             }
         });
     }

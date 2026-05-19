@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.shared;
 
 import java.lang.reflect.Type;
 import com.google.gson.reflect.TypeToken;
@@ -57,10 +57,9 @@ public class NotificationController implements MessageListener {
     }
     public void fetchPending() {
         String json = JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS", null));
-        Type type = new TypeToken<List<NotificationDTO>>() {}.getType();
 
         dispatcher.request(json, raw -> {
-            List<NotificationDTO> list = ServerResponse.unwrapGeneric(raw, "GET_PENDING_NOTIFICATIONS_RESPONSE", type);
+            List<NotificationDTO> list = ServerResponse.unwrapDirectList(raw, "GET_PENDING_NOTIFICATIONS_RESPONSE", NotificationDTO.class);
             if (list != null) handlePendingList(list);
         });
     }

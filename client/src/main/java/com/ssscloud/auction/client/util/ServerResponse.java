@@ -1,83 +1,80 @@
 package com.ssscloud.auction.client.util;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
+import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
+import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 /**
- * helper unwrap chuỗi parse lặp đi lặp lại trong mọi controller.
- * Server luôn trả về: ClientMessage { action, data: ApiResponse { success, data: T } }
+ * Helper unwrap chuỗi JSON nhiều lớp từ server về đúng kiểu T.
  *
- * Usage:
- *   socket.sendAsync(json)
- *         .thenAccept(raw -> {
- *             MyDTO result = ServerResponse.unwrap(raw, "MY_ACTION_RESPONSE", MyDTO.class);
- *             Platform.runLater(() -> render(result)); // null nếu lỗi
- *         });
+ * Server luôn bọc: ClientMessage { data: ApiResponse { data: T } } Nhưng T có 3 dạng tùy action:
+ *
+ *   Dạng 1 — Object đơn: vd ApiResponse { data: AuctionDTO }
+ *     Dùng: unwrap(raw, action, AuctionDTO.class)
+ *
+ *   Dạng 2 — ListResponse wrapper: vd  ApiResponse { data: ListResponse { data: List<AuctionDTO> } }
+ *     Dùng: unwrapList(raw, action, AuctionDTO.class)
+ *
+ *   Dạng 3 — List trực tiếp (không qua ListResponse): ApiResponse { data: List<BidDTO> }
+ *     Dùng: unwrapDirectList(raw, action, BidDTO.class)
  */
 public final class ServerResponse {
 
     private ServerResponse() {}
 
-    /**
-     * Unwrap response cho kiểu đơn giản (không generic).
-     * return data đã parse, hoặc null nếu bất kỳ bước nào thất bại.
-     */
+    // Dạng 1: ApiResponse<T> — T là object đơn (DTO, Boolean, Long...)
     public static <T> T unwrap(String raw, String expectedAction, Class<T> dataClass) {
-        if (raw == null) return null;
-        try {
-            ClientMessage msg = JsonUtils.fromJson(raw, ClientMessage.class);
-            if (msg == null || msg.getData() == null) return null;
-            if (expectedAction != null && !expectedAction.equals(msg.getAction())) return null;
-
-            String innerJson = JsonUtils.toJson(msg.getData());
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
-            if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return null;
-
-            String dataJson = JsonUtils.toJson(apiResp.getData());
-            return JsonUtils.fromJson(dataJson, dataClass);
-        } catch (Exception e) {
-            return null;
-        }
+        String innerJson = extractApiResponseData(raw, expectedAction);
+        if (innerJson == null) return null;
+        return JsonUtils.fromJson(innerJson, dataClass);
+    }
+    public static <T> T unwrapType(String raw, String expectedAction, Type dataType) {
+        String innerJson = extractApiResponseData(raw, expectedAction);
+        if (innerJson == null) return null;
+        return JsonUtils.fromJsonGeneric(innerJson, dataType);
     }
 
-    /**
-     * Unwrap response cho kiểu generic (List, ListResponse...).
-     * Dùng TypeToken để truyền type.
-     * return data đã parse, hoặc null nếu bất kỳ bước nào thất bại.
-     */
-    public static <T> T unwrapGeneric(String raw, String expectedAction, Type type) {
-        if (raw == null) return null;
-        try {
-            ClientMessage msg = JsonUtils.fromJson(raw, ClientMessage.class);
-            if (msg == null || msg.getData() == null) return null;
-            if (expectedAction != null && !expectedAction.equals(msg.getAction())) return null;
+    // Dạng 2: ApiResponse<ListResponse<T>> — server bọc qua ListResponse
+    public static <T> java.util.List<T> unwrapList(String raw, String expectedAction, Class<T> itemClass) {
+        String innerJson = extractApiResponseData(raw, expectedAction);
+        if (innerJson == null) return null;
 
-            String innerJson = JsonUtils.toJson(msg.getData());
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
-            if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return null;
-
-            String dataJson = JsonUtils.toJson(apiResp.getData());
-            return JsonUtils.fromJsonGeneric(dataJson, type);
-        } catch (Exception e) {
-            return null;
-        }
+        // innerJson lúc này là JSON của ListResponse<T>
+        Type listRespType = TypeToken.getParameterized(ListResponse.class, itemClass).getType();
+        ListResponse<T> listResp = JsonUtils.fromJsonGeneric(innerJson, listRespType);
+        if (listResp == null) return null;
+        return listResp.getData();
     }
 
+    // Dạng 3: ApiResponse<List<T>> — server để List trực tiếp, không bọc ListResponse
+    public static <T> List<T> unwrapDirectList(String raw, String expectedAction, Class<T> itemClass) {
+        String innerJson = extractApiResponseData(raw, expectedAction);
+        if (innerJson == null) return null;
+
+        Type listType = TypeToken.getParameterized(java.util.List.class, itemClass).getType();
+        return JsonUtils.fromJsonGeneric(innerJson, listType);
+    }
+
+    // Tiện ích: isSuccess / errorMessage
+
     /**
-     * Kiểm tra response có success không (không cần lấy data).
+     * Kiểm tra response có success không mà không cần lấy data.
+     * Dùng cho các action không trả data: PLACE_BID, TOGGLE_FOLLOW, v.v.
      */
-    public static boolean isSuccess(String raw, String expectedAction) {
+    public static boolean isSuccess(String raw) {
         if (raw == null) return false;
         try {
             ClientMessage msg = JsonUtils.fromJson(raw, ClientMessage.class);
             if (msg == null || msg.getData() == null) return false;
-            if (expectedAction != null && !expectedAction.equals(msg.getAction())) return false;
-
             String innerJson = JsonUtils.toJson(msg.getData());
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
+            // Parse ApiResponse<?> chỉ để đọc field success — data không quan trọng
+            Type type = new TypeToken<ApiResponse<Object>>() {}.getType();
+            ApiResponse<Object> apiResp = JsonUtils.fromJsonGeneric(innerJson, type);
             return apiResp != null && apiResp.isSuccess();
         } catch (Exception e) {
             return false;
@@ -92,11 +89,32 @@ public final class ServerResponse {
         try {
             ClientMessage msg = JsonUtils.fromJson(raw, ClientMessage.class);
             if (msg == null || msg.getData() == null) return "Invalid response";
-
             String innerJson = JsonUtils.toJson(msg.getData());
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
+            Type type = new TypeToken<ApiResponse<Object>>() {}.getType();
+            ApiResponse<Object> apiResp = JsonUtils.fromJsonGeneric(innerJson, type);
             if (apiResp != null && apiResp.getMessage() != null) return apiResp.getMessage();
         } catch (Exception ignored) {}
         return "Unexpected error";
+    }
+
+    // Private — bóc 2 lớp ngoài: ClientMessage → ApiResponse, trả JSON của data
+
+    private static String extractApiResponseData(String raw, String expectedAction) {
+        if (raw == null) return null;
+        try {
+            ClientMessage msg = JsonUtils.fromJson(raw, ClientMessage.class);
+            if (msg == null || msg.getData() == null) return null;
+            if (expectedAction != null && !expectedAction.equals(msg.getAction())) return null;
+
+            String apiJson = JsonUtils.toJson(msg.getData());
+            Type apiType = new TypeToken<ApiResponse<Object>>() {}.getType();
+            ApiResponse<Object> apiResp = JsonUtils.fromJsonGeneric(apiJson, apiType);
+
+            if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return null;
+
+            return JsonUtils.toJson(apiResp.getData());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

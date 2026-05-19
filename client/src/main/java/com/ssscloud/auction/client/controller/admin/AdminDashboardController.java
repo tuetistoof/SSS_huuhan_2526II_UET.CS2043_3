@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.admin;
 
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
