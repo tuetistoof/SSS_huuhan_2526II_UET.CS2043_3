@@ -20,4 +20,15 @@ public class ServiceException extends BaseException {
     public ServiceException(String errorCode, String message) {
         super(errorCode, message);
     }
+
+    /**
+     * Constructs a ServiceExceptions with the specified error code, message, and cause.
+     * 
+     * @param errorCode standardized error code from ErrorCode class
+     * @param message detailed error message explaining the service failure
+     * @param cause the underlying exception that caused this service failure (for debugging)
+     */
+    public ServiceException(String errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+    }
 }

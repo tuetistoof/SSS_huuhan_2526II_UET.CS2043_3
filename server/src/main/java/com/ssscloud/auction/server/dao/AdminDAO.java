@@ -92,9 +92,8 @@ public class AdminDAO extends BaseDAO {
 
         } catch (SQLException sqlException) {
             throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED,
-                "Database interaction failure while retrieving auctions for admin.");
+                "Database interaction failure while retrieving auctions for admin.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminDAO.findAllAuctions", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -139,9 +138,8 @@ public class AdminDAO extends BaseDAO {
 
         } catch (SQLException sqlException) {
             throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED,
-                "Database interaction failure while retrieving admin metrics.");
+                "Database interaction failure while retrieving admin metrics.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminDAO.getMetrics", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -190,9 +188,8 @@ public class AdminDAO extends BaseDAO {
 
         } catch (SQLException sqlException) {
             throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED,
-                "Database interaction failure while retrieving user list for admin.");
+                "Database interaction failure while retrieving user list for admin.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AdminDAO.getAllUsers", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);

@@ -137,11 +137,13 @@ public class BiddingRoomController implements MessageListener{
         socket.addListener(this);
         setupBidHistoryList();
     }
+
     private void setupBidHistoryList() {
         listViewBidHistory.setItems(bidHistory);    //listView.setItems() sẽ tự động cập nhật khi bidHistory thay đổi
         listViewBidHistory.setPlaceholder(new Label("Chưa có lịch sử đặt giá nào.")); //listView placeholder khi không có dữ liệu
         listViewBidHistory.setCellFactory(lv -> new BidHistoryCell()); // thêm cell 
     }
+
     private static class BidHistoryCell extends ListCell<BidDTO> { //custom cell để hiển thị 
         private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -468,6 +470,40 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleToggleAutoBid(ActionEvent event) {
+        if (isAutoBidding) {
+            btnAutoToggle.setDisable(true);
+            new Thread(() -> {
+                try {
+                    String json = JsonUtils.toJson(ClientMessage.request("CANCEL_AUTO_BID", currentAuction.getId()));
+                    String responseJson = socket.sendAndReceive(json);
+                    Platform.runLater(() -> {
+                        if (responseJson != null) {
+                            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                            String dataJson = JsonUtils.toJson(serverMsg.getData());
+                            ApiResponse<?> response = JsonUtils.fromJson(dataJson, ApiResponse.class);
+                            if (response != null && response.isSuccess()) {
+                                isAutoBidding = false;
+                                autoBidMaxBid = 0;
+                                resetAutoBidButton();
+                            } else {
+                                showError(response != null ? response.getMessage() : "Hủy Auto Bid thất bại.");
+                                btnAutoToggle.setDisable(false);
+                            }
+                        } else {
+                            showError("Không nhận được phản hồi từ server.");
+                            btnAutoToggle.setDisable(false);
+                        }
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        showError("Lỗi kết nối Server.");
+                        btnAutoToggle.setDisable(false);
+                    });
+                }
+            }).start();
+            return; // thoát sớm, không chạy phần start bên dưới    
+        }
+
         if (txtMaxBid.getText().isEmpty() || txtAutoIncrement.getText().isEmpty()) {
             showError("Vui lòng nhập đầy đủ thông tin Auto Bidding.");
             return;
@@ -508,7 +544,10 @@ public class BiddingRoomController implements MessageListener{
                     if (response != null && response.isSuccess()) {
                         isAutoBidding = true;
                         autoBidMaxBid = maxBid;
-                        btnAutoToggle.setText("Auto Bidding...");
+                        isAutoBidding = true;
+                        autoBidMaxBid = maxBid;
+                        btnAutoToggle.setText("Cancel Auto Bid");
+                        btnAutoToggle.setDisable(false);
                         // Nút giữ disable — AUTO_BID_STOPPED push sẽ reset lại
                     } else {
                         showError(response != null ? response.getMessage() : "Đăng ký Auto Bid thất bại.");
@@ -748,7 +787,7 @@ public class BiddingRoomController implements MessageListener{
             }
             if (isFinished || isCancelled) {
                 btnPlaceBid.setDisable(true);
-                btnPlaceBid.setText(isCancelled ? "Đã hủy" : "Đã kết thúc");
+                btnPlaceBid.setText(isCancelled ? "Canceled" : "Finished");
                 btnAutoToggle.setDisable(true);
                 txtManualBid.setDisable(true);
                 if (txtMaxBid != null) txtMaxBid.setDisable(true);
@@ -760,6 +799,7 @@ public class BiddingRoomController implements MessageListener{
         new Thread(() -> {
             subcribeToAuction();
             loadBidHistory();
+            setupBidStatus();
             // Chỉ enable nút nếu auction còn đang chạy
             if (!isFinished && !isCancelled) Platform.runLater(() -> btnPlaceBid.setDisable(false));
         }).start();
@@ -883,10 +923,10 @@ public class BiddingRoomController implements MessageListener{
                         currentAuction.setHighestBidderName(latestBid.getBidderUsername());
 
                         lblCurrentPrice.setText(String.format("%,d ₫", latestBid.getBidAmount()));
-                        lblLeaderName.setText("Dẫn đầu: " + latestBid.getBidderUsername());
+                        lblLeaderName.setText("Leading: " + latestBid.getBidderUsername());
                         if (lblMinHint != null) {
                             long minRequired = latestBid.getBidAmount() + currentAuction.getMinIncrement();
-                            lblMinHint.setText("Tối thiểu: " + String.format("%,d ₫", minRequired));
+                            lblMinHint.setText("Minimum Bid: " + String.format("%,d ₫", minRequired));
                         }
                     }
                     lblBidCount.setText(String.valueOf(bidHistory.size()));
@@ -1075,5 +1115,47 @@ public class BiddingRoomController implements MessageListener{
             imgBiddingRoom.setImage(image);
         }
     }
+
+    private void setupBidStatus() {
+        if (currentAuction == null) return;
+        
+        try {
+            String json = JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS", currentAuction.getId()));
+            String responseJson = socket.sendAndReceive(json);
+            if (responseJson == null) return;
+                // Unwrap ClientMessage wrapper
+            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+            if (!"GET_AUTOBID_STATUS_RESPONSE".equals(serverMsg.getAction())) return;
+
+            String rawData = JsonUtils.toJson(serverMsg.getData());
+            Type apiType = new TypeToken<ApiResponse<Boolean>>(){}.getType(); 
+            ApiResponse<Boolean> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
+        
+            if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
+                boolean isAutoBidding = apiResponse.getData();
+
+                Platform.runLater(() -> {
+                    if (isAutoBidding) {
+                        formAuto.setVisible(true);
+                        formAuto.setManaged(true);
+                        formManual.setVisible(false);
+                        formManual.setManaged(false);
+                        btnAutoToggle.setText("Dừng Auto Bid");
+                        btnAutoToggle.setDisable(false);
+                        this.isAutoBidding = true; // đồng bộ local state
+                        btnAutoToggle.getStyleClass().remove("br-btn-secondary");
+                        btnAutoToggle.getStyleClass().add("br-btn-auto-active");
+                    } else {
+                        resetAutoBidButton();
+                        btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
+                        btnAutoToggle.getStyleClass().add("br-btn-secondary");
+                    }
+                });
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching auto-bid status: " + e.getMessage());
+        }
+    }
+
 }
     

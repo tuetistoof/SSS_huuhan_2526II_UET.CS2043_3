@@ -59,12 +59,11 @@ public class UserDAO extends BaseDAO {
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: User already exists.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: User already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.USER_PERSISTENCE_FAILED, "Database interaction failure while saving Bidder entity.");
+            throw new DAOException(ErrorCode.USER_PERSISTENCE_FAILED, "Database interaction failure while saving Bidder entity.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.saveBidder", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -112,12 +111,11 @@ public class UserDAO extends BaseDAO {
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Seller already exists.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Seller already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.USER_PERSISTENCE_FAILED, "Database interaction failure while saving Seller entity.");
+            throw new DAOException(ErrorCode.USER_PERSISTENCE_FAILED, "Database interaction failure while saving Seller entity.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.saveSeller", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -155,9 +153,8 @@ public class UserDAO extends BaseDAO {
                 return null;
             }
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by username.");
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by username.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.findByUsername", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -194,9 +191,8 @@ public class UserDAO extends BaseDAO {
                 return null;
             }
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by email.");
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by email.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.findByEmail", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -233,9 +229,8 @@ public class UserDAO extends BaseDAO {
             return null;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by ID.");
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while fetching user by ID.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.findById", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -257,9 +252,8 @@ public class UserDAO extends BaseDAO {
             return resultSet.next();
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while verifying username existence.");
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Database failure while verifying username existence.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.existByUsername", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -284,9 +278,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating user password.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating user password.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.updatePassword", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -311,9 +304,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating user email.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating user email.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.updateEmail", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -338,9 +330,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating bidder balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating bidder balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.updateAccountBalance", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -365,9 +356,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating bank account details.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating bank account details.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.updateBankAccount", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -392,9 +382,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating seller balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while updating seller balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.updateSellerBalance", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -422,9 +411,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while locking bidder balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while locking bidder balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.lockBidderBalance", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -451,9 +439,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while unlocking bidder balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while unlocking bidder balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.unlockBidderBalance", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -479,9 +466,8 @@ public class UserDAO extends BaseDAO {
             return rowsAffected > 0;
 
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while locking bidder balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while locking bidder balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.lockBidderBalance", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -523,8 +509,7 @@ public class UserDAO extends BaseDAO {
             }
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "getUnsettledBalance: database error for userId: " + userId, e);
-            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Failed to get unsettled balance for userId: " + userId);
+            throw new DAOException(ErrorCode.USER_RETRIEVAL_FAILED, "Failed to get unsettled balance for userId: " + userId, e);
         } finally {
             closeResource(rs, ps);
             closeConnect(connection);
@@ -553,9 +538,8 @@ public class UserDAO extends BaseDAO {
             }
             return rows > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling winner balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling winner balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.settleWinnerBalance", exception);
             throw exception;
         } finally {
             closeResource(ps);
@@ -590,9 +574,8 @@ public class UserDAO extends BaseDAO {
             }
             return rows > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling seller balance.");
+            throw new DAOException(ErrorCode.USER_MODIFICATION_FAILED, "Database failure while settling seller balance.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in UserDAO.settleSellerBalance", exception);
             throw exception;
         } finally {
             closeResource(ps);

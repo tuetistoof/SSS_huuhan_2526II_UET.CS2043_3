@@ -39,9 +39,8 @@ public class NotificationDAO extends BaseDAO {
 
             return ps.executeUpdate() > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.NOTIFICATION_SAVE_FAILED, "Database interaction failure while saving notification.");
+            throw new DAOException(ErrorCode.NOTIFICATION_SAVE_FAILED, "Database interaction failure while saving notification.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationDAO.save", exception);
             throw exception;
         }
     }
@@ -70,9 +69,8 @@ public class NotificationDAO extends BaseDAO {
                 unreadNotificationsList.add(notificationDto);
             }
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.NOTIFICATION_FETCH_FAILED, "Database interaction failure while retrieving notifications.");
+            throw new DAOException(ErrorCode.NOTIFICATION_FETCH_FAILED, "Database interaction failure while retrieving notifications.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationDAO.findUnreadByUserId", exception);
             throw exception;
         }
         return unreadNotificationsList;
@@ -86,9 +84,8 @@ public class NotificationDAO extends BaseDAO {
             ps.setString(1, notificationId);
             ps.executeUpdate();
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.NOTIFICATION_UPDATE_FAILED, "Database interaction failure while updating notification read status.");
+            throw new DAOException(ErrorCode.NOTIFICATION_UPDATE_FAILED, "Database interaction failure while updating notification read status.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationDAO.markRead", exception);
             throw exception;
         }
     }
@@ -101,9 +98,8 @@ public class NotificationDAO extends BaseDAO {
             ps.setString(1, userId);
             ps.executeUpdate();
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.NOTIFICATION_UPDATE_FAILED, "Database interaction failure while marking all notifications as read.");
+            throw new DAOException(ErrorCode.NOTIFICATION_UPDATE_FAILED, "Database interaction failure while marking all notifications as read.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in NotificationDAO.markAllRead", exception);
             throw exception;
         }
     }

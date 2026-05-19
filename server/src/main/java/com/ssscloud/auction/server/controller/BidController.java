@@ -12,6 +12,7 @@ import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
@@ -22,11 +23,13 @@ public class BidController {
     private final BidTransactionDAO bidTransactionDAO;
     private final BidService bidService;
     private final AutoBidService autoBidService;
-
-    public BidController(BidService bidService, AutoBidService autoBidService, BidTransactionDAO bidTransactionDAO) {
+    private final AuctionDAO auctionDAO;
+    
+    public BidController(BidService bidService, AutoBidService autoBidService, BidTransactionDAO bidTransactionDAO, AuctionDAO auctionDAO) {
         this.bidService = bidService;
         this.autoBidService = autoBidService;
         this.bidTransactionDAO = bidTransactionDAO;
+        this.auctionDAO = auctionDAO;
     }
 
     public String placeBid(Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
@@ -91,30 +94,65 @@ public class BidController {
         }
     }
 
-    private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) {
-        if (placeBidRequest == null) {
-            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The manual bid request payload cannot be null.");
+    public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+            
+            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(jsonPayload);
+            boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
+
+            return JsonUtils.toJson(ApiResponse.success(
+                java.util.Map.of("active", isActive),
+                "Auto-bid status retrieved successfully."
+            ));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
+            throw exception;
         }
-        if (placeBidRequest.getAuctionId() == null || placeBidRequest.getAuctionId().isBlank()) {
-            throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required.");
-        }
-        if (placeBidRequest.getBidAmount() <= 0) {
-            throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The bid amount must be a positive value greater than zero.");
+
+    }
+
+    private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) throws ControllerException {
+        try {
+            if (placeBidRequest == null) {
+                    throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The manual bid request payload cannot be null.");
+            }
+            if (placeBidRequest.getAuctionId() == null || placeBidRequest.getAuctionId().isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required.");
+            }
+            if (placeBidRequest.getBidAmount() <= 0) {
+                throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The bid amount must be a positive value greater than zero.");
+            }
+            if (!auctionDAO.findByAuctionId(placeBidRequest.getAuctionId()).getStatus().isActive()) {
+                throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active. Bids can only be placed on active auctions.");
+            }
+        } catch (Exception e) {
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "Manual bid request validation failed: " + e.getMessage(), e);
         }
     }
 
-    private void validateAutoBidRequest(AutoBidRequest autoBidRequest) {
-        if (autoBidRequest == null) {
-            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The auto-bid request payload cannot be null.");
-        }
-        if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
-            throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required for auto-bid registration.");
-        }
-        if (autoBidRequest.getMaxBid() <= 0) {
-            throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");
-        }
-        if (autoBidRequest.getIncrement() <= 0) {
-            throw new ControllerException(ErrorCode.INVALID_INCREMENT, "The bid increment value must be greater than zero.");
+    private void validateAutoBidRequest(AutoBidRequest autoBidRequest) throws ControllerException {
+        try {
+            if (autoBidRequest == null) {
+                throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The auto-bid request payload cannot be null.");
+            }
+            if (!auctionDAO.findByAuctionId(autoBidRequest.getAuctionId()).getStatus().isActive()) {
+                throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active.");
+            }
+            if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required for auto-bid registration.");
+            }
+            if (autoBidRequest.getMaxBid() <= 0) {
+                throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");
+            }
+            if (autoBidRequest.getIncrement() <= 0) {
+                throw new ControllerException(ErrorCode.INVALID_INCREMENT, "The bid increment value must be greater than zero.");
+            }
+        } catch (Exception e) {
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "Auto-bid request validation failed: " + e.getMessage(), e);
         }
     }
 
