@@ -191,66 +191,125 @@ public class ConcurrentBidManager {
     private void processTask(BidTask task) throws Exception {
         try {
             Auction auctionEntity = task.auction;
+
+            // Checkpoint 1: kiểm tra status trước khi bắt đầu
             if (!auctionEntity.getStatus().isActive()) {
-                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is not active for auctionId: " + auctionEntity.getAuctionConfig().getId());
+                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST,
+                    "Cannot place bid: auction is not active for auctionId: "
+                    + auctionEntity.getAuctionConfig().getId());
             }
+
             String auctionId = auctionEntity.getAuctionConfig().getId();
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
-            long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();
-            if (task.bidAmount >= currentAuctionPrice) {
-                String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
+            long currentAuctionPrice = lastBidTransaction != null
+                ? lastBidTransaction.getBidAmount()
+                : auctionEntity.getAuctionConfig().getStartPrice();
+
+            if (task.bidAmount > currentAuctionPrice) {
+                String previousBidderId = lastBidTransaction != null
+                    ? lastBidTransaction.getBidderId() : null;
+
                 if (previousBidderId != null) {
                     userDAO.unlockBidderBalance(previousBidderId, currentAuctionPrice);
                     SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -currentAuctionPrice);
-                    notifyUnsettledBalanceUpdate(previousBidderId, SessionRegistry.getInstance().getUnsettledBalance(previousBidderId));
+                    notifyUnsettledBalanceUpdate(previousBidderId,
+                        SessionRegistry.getInstance().getUnsettledBalance(previousBidderId));
                 }
 
                 // Lock bidder mới
-                userDAO.lockBidderBalance(task.bidderId, task.bidAmount);
-                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, task.bidAmount);
-                notifyUnsettledBalanceUpdate(task.bidderId, SessionRegistry.getInstance().getUnsettledBalance(task.bidderId));
+                boolean newBidderLocked = false;
+                boolean bidPlaced       = false;
 
-                long delta = task.bidAmount - currentAuctionPrice;
+                try {
+                    userDAO.lockBidderBalance(task.bidderId, task.bidAmount);
+                    newBidderLocked = true;
 
-                // Seller
-                userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
-                SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
-                notifyUnsettledBalanceUpdate(auctionEntity.getSellerId(), SessionRegistry.getInstance().getUnsettledBalance(auctionEntity.getSellerId()));
+                    // Checkpoint 2: kiểm tra lại status SAU KHI lock — cancel có thể đã chạy xen vào
+                    if (!auctionEntity.getStatus().isActive()) {
+                        logger.log(Level.WARNING,
+                            "Auction was canceled while locking balance for bidderId: {0}, auctionId: {1}. Rolling back lock.",
+                            new Object[]{task.bidderId, auctionId});
+                        // Rollback ngay — return sạch, không throw vì đây là expected case
+                        userDAO.unlockBidderBalance(task.bidderId, task.bidAmount);
+                        SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, 0);
+                        return;
+                    }
 
-                BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
+                    SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, task.bidAmount);
+                    notifyUnsettledBalanceUpdate(task.bidderId,
+                        SessionRegistry.getInstance().getUnsettledBalance(task.bidderId));
+
+                    long delta = task.bidAmount - currentAuctionPrice;
+                    userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
+                    SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
+                    notifyUnsettledBalanceUpdate(auctionEntity.getSellerId(),
+                        SessionRegistry.getInstance().getUnsettledBalance(auctionEntity.getSellerId()));
+
+                    BidTransaction bidTransaction = new BidTransaction(
+                        auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, LocalDateTime.now(), task.bidType);
 
-                auctionEntity.placeBid(bidTransaction);
-                if (bidTransactionDAO != null) {
-                    try {
-                        bidTransactionDAO.saveBidTransaction(bidTransaction);
-                    } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
+                    auctionEntity.placeBid(bidTransaction);
+                    bidPlaced = true;
+
+                    if (bidTransactionDAO != null) {
+                        try {
+                            bidTransactionDAO.saveBidTransaction(bidTransaction);
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE,
+                                "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
+                        }
                     }
-                }
-                ChangeManager.getInstance().notify(auctionEntity);
-                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(), auctionEntity.getHighestBidderId());
-                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
-                    auctionEntity.setStatus(AuctionStatus.RUNNING);
-                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
-                }
-                
-                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
-                if (updatedEndTime != null && auctionDAO != null) {
-                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
+
+                    ChangeManager.getInstance().notify(auctionEntity);
+                    notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(),
+                        auctionEntity.getHighestBidderId());
+
+                    if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
+                        auctionEntity.setStatus(AuctionStatus.RUNNING);
+                        auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+                    }
+
+                    LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(
+                        auctionEntity.getAuctionConfig());
+                    if (updatedEndTime != null && auctionDAO != null) {
+                        auctionDAO.updateEndTime(auctionId, updatedEndTime);
+                    }
+
+                } catch (Exception e) {
+                    // Rollback lock nếu bidder mới đã bị lock nhưng bid chưa được commit vào auction
+                    if (newBidderLocked && !bidPlaced) {
+                        try {
+                            userDAO.unlockBidderBalance(task.bidderId, task.bidAmount);
+                            logger.log(Level.WARNING,
+                                "Rolled back locked balance for bidderId: {0}, amount: {1} due to exception during bid processing.",
+                                new Object[]{task.bidderId, task.bidAmount});
+                        } catch (Exception rollbackEx) {
+                            // Không rethrow rollback exception — chỉ log để ops team reconcile thủ công
+                            logger.log(Level.SEVERE,
+                                "CRITICAL: Failed to rollback locked balance for bidderId: "
+                                + task.bidderId + ", amount: " + task.bidAmount
+                                + ". Manual reconciliation required.", rollbackEx);
+                        }
+                    }
+                    throw e; // rethrow exception gốc, không che
                 }
 
             } else {
-                logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
+                logger.log(Level.INFO,
+                    "Bid task skipped: amount " + task.bidAmount
+                    + " is not higher than current price " + currentAuctionPrice);
             }
 
             if (autoBidService != null) {
                 try {
                     autoBidService.trigger(auctionEntity);
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Auto-bid trigger failed for auctionId: " + auctionId, e);
+                    logger.log(Level.WARNING,
+                        "Auto-bid trigger failed for auctionId: " + auctionId, e);
                 }
             }
+
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error during bid task processing", exception);
             throw exception;
