@@ -102,8 +102,9 @@ public class BidController {
             List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(jsonPayload);
             boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
 
+            // Client parse ApiResponse<Boolean> — trả thẳng Boolean, không wrap vào Map
             return JsonUtils.toJson(ApiResponse.success(
-                java.util.Map.of("active", isActive),
+                isActive,
                 "Auto-bid status retrieved successfully."
             ));
         } catch (ControllerException controllerException) {

@@ -1132,21 +1132,31 @@ public class BiddingRoomController implements MessageListener{
             ApiResponse<Boolean> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
         
             if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
-                boolean isAutoBidding = apiResponse.getData();
+                boolean serverAutoBidding = apiResponse.getData();
 
                 Platform.runLater(() -> {
-                    if (isAutoBidding) {
+                    if (serverAutoBidding) {
+                        // Đồng bộ đầy đủ local state
+                        this.isAutoBidding = true;
+
+                        // Switch sang form Auto và lock các field (đang chạy thì không cho sửa)
                         formAuto.setVisible(true);
                         formAuto.setManaged(true);
                         formManual.setVisible(false);
                         formManual.setManaged(false);
-                        btnAutoToggle.setText("Dừng Auto Bid");
+                        txtMaxBid.setDisable(true);
+                        txtAutoIncrement.setDisable(true);
+
+                        // Cập nhật nút
+                        btnAutoToggle.setText("Cancel Auto Bid");
                         btnAutoToggle.setDisable(false);
-                        this.isAutoBidding = true; // đồng bộ local state
                         btnAutoToggle.getStyleClass().remove("br-btn-secondary");
                         btnAutoToggle.getStyleClass().add("br-btn-auto-active");
                     } else {
+                        this.isAutoBidding = false;
                         resetAutoBidButton();
+                        txtMaxBid.setDisable(false);
+                        txtAutoIncrement.setDisable(false);
                         btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
                         btnAutoToggle.getStyleClass().add("br-btn-secondary");
                     }
@@ -1158,4 +1168,3 @@ public class BiddingRoomController implements MessageListener{
     }
 
 }
-    
