@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,6 +40,9 @@ public class AutoBidService {
 
     private final Map<String, List<AutoBidEntry>> registrationsMap = new ConcurrentHashMap<>();
     private final Map<String, Map<String, AtomicInteger>> bidCountsMap = new ConcurrentHashMap<>();
+    // Race-condition guard: auctionId được đánh dấu ngay khi clearRegistrations() chạy,
+    // để register() gọi sau đó không thể tạo entry mới cho auction đã bị cancel.
+    private final Set<String> cancelledAuctionIds = ConcurrentHashMap.newKeySet();
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
     private final SessionRegistry sessionRegistry = SessionRegistry.getInstance();
@@ -63,10 +67,22 @@ public class AutoBidService {
             
             
             Auction auctionEntity = retrieveAndValidateAuction(autoBidRequest.getAuctionId());
+            if (auctionEntity.getStatus().isEnded() || auctionEntity.isExpired() || !auctionEntity.getStatus().isActive()) {
+                throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Cannot register auto-bid: The auction has already concluded.");
+            }
+
             validateAutoBidTerms(auctionEntity, autoBidRequest, bidderId);
             
             User bidder = userDAO.findById(bidderId);
             validateBidderAccount(bidder, autoBidRequest.getMaxBid());
+
+            // Race-condition guard: kiểm tra lại sau khi validate xong, trước khi ghi vào map.
+            // Nếu clearRegistrations() đã chạy (cancel) trong khoảng thời gian validate,
+            // cancelledAuctionIds sẽ chứa auctionId này → từ chối insert.
+            if (cancelledAuctionIds.contains(autoBidRequest.getAuctionId())) {
+                throw new ServiceException(ErrorCode.AUCTION_CLOSED,
+                    "Cannot register auto-bid: The auction has been cancelled.");
+            }
 
             List<AutoBidEntry> autoBidEntriesList = registrationsMap.computeIfAbsent(
                     autoBidRequest.getAuctionId(), key -> new CopyOnWriteArrayList<>());
@@ -85,7 +101,7 @@ public class AutoBidService {
 
     public void trigger(Auction auctionEntity) throws Exception {
         try {
-            if (auctionEntity == null || auctionEntity.getStatus().isEnded() || auctionEntity.isExpired()) {
+            if (auctionEntity == null || auctionEntity.getStatus().isEnded() || auctionEntity.isExpired() || !auctionEntity.getStatus().isActive()) {
                 return;
             }
     
@@ -200,9 +216,14 @@ public class AutoBidService {
 
     /**
      * Clear all auto-bid registrations for a specific auction.
+     * Đánh dấu auctionId vào cancelledAuctionIds TRƯỚC khi remove khỏi map,
+     * để register() đang chạy đồng thời sẽ thấy flag và từ chối insert entry mới.
      */
     public void clearRegistrations(String auctionId) throws Exception {
         try {
+            // 1. Đánh dấu trước — register() check flag này sau validate
+            cancelledAuctionIds.add(auctionId);
+            // 2. Xóa entries và bidCounts
             registrationsMap.remove(auctionId);
             bidCountsMap.remove(auctionId);
             logger.log(Level.INFO, "Auto-bid registrations successfully cleared for auctionId: " + auctionId);
@@ -320,7 +341,7 @@ public class AutoBidService {
         if (!(bidder instanceof Bidder bidderAccount)) {
             throw new ServiceException(ErrorCode.NOT_BIDDER, "Authentication failure: User is not authorized as a Bidder.");
         }
-        if (bidderAccount.getAccountBalance() < maxBidAmount) {
+        if (bidderAccount.getAvailableBalance() < maxBidAmount) {
             throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE, "Account balance is insufficient to cover maximum auto-bid amount.");
         }
     }
@@ -329,14 +350,14 @@ public class AutoBidService {
         try {
             // Step 1: Check Registry first (cache strategy)
             Auction auction = AuctionRegistry.getInstance().get(auctionId);
-            if (auction == null) {
+            if (auction == null || auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
                 // Step 2: If not in Registry, query from DAO
                 auction = auctionDAO.findByAuctionId(auctionId);
-                if (auction == null) {
+                if (auction == null ) {
                     throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Data integrity error: Auction not found for identifier: " + auctionId);
                 }
                 // Step 3: Validate auction state
-                if (auction.getStatus().isEnded() || auction.isExpired()) {
+                if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
                     throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Operation rejected: This auction has already concluded.");
                 }
                 // Step 4: Register into Registry to ensure we use the shared instance

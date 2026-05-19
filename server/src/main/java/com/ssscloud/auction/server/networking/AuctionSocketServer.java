@@ -93,10 +93,10 @@ public class AuctionSocketServer {
         ItemService itemService             = new ItemService(itemDAO);
         NotificationService notificationService = new NotificationService(queryDAO, notificationDAO);
         AuctionService auctionService       = new AuctionService(auctionDAO, userDAO, userService, itemService, notificationService);
-        AdminService adminService           = new AdminService(adminDAO, auctionDAO, autoBidService); // [ADMIN]
+        AdminService adminService           = new AdminService(adminDAO, auctionDAO, autoBidService, userDAO); // [ADMIN]
 
         // ── Controllers ───────────────────────────────────────────────────
-        BidController bidController                 = new BidController(bidService, autoBidService, bidDAO);
+        BidController bidController                 = new BidController(bidService, autoBidService, bidDAO, auctionDAO);
         UserController userController               = new UserController(userService);
         AuctionController auctionController         = new AuctionController(auctionService);
         NotificationController notificationController = new NotificationController(notificationService, notificationDAO);

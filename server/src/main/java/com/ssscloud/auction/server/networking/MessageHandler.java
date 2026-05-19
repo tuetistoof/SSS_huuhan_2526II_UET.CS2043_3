@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,6 +17,7 @@ import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.DAOException;
+import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -266,11 +268,15 @@ public class MessageHandler {
 
         } catch (DAOException daoException) {
             logger.log(Level.SEVERE, "Persistence layer failure: " + daoException.getMessage(), daoException);
-            return JsonUtils.toJson(ClientMessage.request("DAO_ERROR", ApiResponse.error("Database access error. Please contact the administrator.")));
+            return JsonUtils.toJson(ClientMessage.request("DAO_ERROR", ApiResponse.error("Database access error. Please contact the administrator.", daoException.getErrorCode())));
+
+        } catch (SQLException sqlException) {
+            logger.log(Level.SEVERE, "Database connection/SQL execution failure: " + sqlException.getMessage(), sqlException);
+            return JsonUtils.toJson(ClientMessage.request("SQL_ERROR", ApiResponse.error("Database error occurred. Please try again later.", ErrorCode.DATABASE_ERROR)));
 
         } catch (Exception genericException) {
             logger.log(Level.SEVERE, "Unexpected system error: " + genericException.getMessage(), genericException);
-            return JsonUtils.toJson(ClientMessage.request("UNDEFINED_ERROR", ApiResponse.error("Internal system error: " + genericException.getMessage())));
+            return JsonUtils.toJson(ClientMessage.request("UNDEFINED_ERROR", ApiResponse.error("Internal system error: " + genericException.getMessage(), ErrorCode.GENERAL_ERROR)));
         }
     }
 }

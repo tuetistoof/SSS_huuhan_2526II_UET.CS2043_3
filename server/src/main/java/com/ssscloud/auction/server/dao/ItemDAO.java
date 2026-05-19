@@ -72,12 +72,11 @@ public class ItemDAO extends BaseDAO {
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Electronic item or entity already exists.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Electronic item or entity already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving electronic item.");
+            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving electronic item.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.saveElectronic", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -135,12 +134,11 @@ public class ItemDAO extends BaseDAO {
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Vehicle item or entity already exists.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Vehicle item or entity already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving vehicle item.");
+            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving vehicle item.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.saveVehicle", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -197,12 +195,11 @@ public class ItemDAO extends BaseDAO {
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Art item or entity already exists.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Art item or entity already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving art item.");
+            throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving art item.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.saveArt", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -242,9 +239,8 @@ public class ItemDAO extends BaseDAO {
             logger.log(Level.INFO, "Successfully retrieved Item list: {0} result(s).", itemList.size());
             return itemList;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving global item list.");
+            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving global item list.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.getItemList", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -285,9 +281,8 @@ public class ItemDAO extends BaseDAO {
             logger.log(Level.INFO, "Successfully retrieved {0} item(s) for sellerId: {1}", new Object[]{itemList.size(), sellerId});
             return itemList;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving items by sellerId.");
+            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving items by sellerId.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.findBySellerId", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -328,9 +323,8 @@ public class ItemDAO extends BaseDAO {
             logger.log(Level.INFO, "No item found for identifier: {0}", itemId);
             return null;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving item by ID.");
+            throw new DAOException(ErrorCode.ITEM_FETCH_FAILED, "Database interaction failure while retrieving item by ID.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.findById", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -354,9 +348,8 @@ public class ItemDAO extends BaseDAO {
             logger.log(Level.INFO, "Item deletion completed for ID: {0}", itemId);
             return rows > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.ITEM_DELETE_FAILED, "Database interaction failure during item deletion.");
+            throw new DAOException(ErrorCode.ITEM_DELETE_FAILED, "Database interaction failure during item deletion.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.deleteById", exception);
             throw exception;
         } finally {
             closeConnect(connection);
@@ -395,9 +388,8 @@ public class ItemDAO extends BaseDAO {
             return true;
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.ITEM_UPDATE_FAILED, "Database interaction failure while updating item images.");
+            throw new DAOException(ErrorCode.ITEM_UPDATE_FAILED, "Database interaction failure while updating item images.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in ItemDAO.updateItemImages", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);

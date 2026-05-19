@@ -64,9 +64,8 @@ public class QueryDAO extends BaseDAO{
             logger.log(Level.INFO, "Successfully retrieved {0} auction(s) for sellerId: {1}", new Object[]{sellerAuctionsList.size(), sellerId});
             return sellerAuctionsList;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.SELLER_AUCTION_FETCH_FAILED, "Database interaction failure while retrieving seller-specific auctions.");
+            throw new DAOException(ErrorCode.SELLER_AUCTION_FETCH_FAILED, "Database interaction failure while retrieving seller-specific auctions.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in DisplayDAO.findSellerAuction", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -166,9 +165,8 @@ public class QueryDAO extends BaseDAO{
             }
             logger.log(Level.INFO, "Successfully loaded {0} bidded auction items for userId: {1}", new Object[]{biddedAuctionsList.size(), userId});
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.BIDDED_AUCTIONS_FETCH_FAILED, "Database failure while fetching user bidded auction history.");
+            throw new DAOException(ErrorCode.BIDDED_AUCTIONS_FETCH_FAILED, "Database failure while fetching user bidded auction history.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in BiddedAuctionsListDAO.findBiddedAuctionsDetailsByUser", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -217,9 +215,8 @@ public class QueryDAO extends BaseDAO{
             logger.log(Level.INFO, "Successfully loaded {0} active auctions for public display.", activeAuctionsList.size());
             return activeAuctionsList;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.ACTIVE_AUCTION_FETCH_FAILED, "Database failure while retrieving all active auctions.");
+            throw new DAOException(ErrorCode.ACTIVE_AUCTION_FETCH_FAILED, "Database failure while retrieving all active auctions.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in DisplayDAO.findActiveAuctions", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -242,11 +239,10 @@ public class QueryDAO extends BaseDAO{
             logger.log(Level.INFO, "Watchlist entry successfully created for userId: {0}, auctionId: {1}", new Object[]{userId, auctionId});
             return true;
         } catch (SQLIntegrityConstraintViolationException constraintException) {
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: User is already following this auction.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: User is already following this auction.", constraintException);
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.WATCHLIST_ADD_FAILED, "Database interaction failure while adding auction to watchlist.");
+            throw new DAOException(ErrorCode.WATCHLIST_ADD_FAILED, "Database interaction failure while adding auction to watchlist.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in WatchlistDAO.add", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -269,9 +265,8 @@ public class QueryDAO extends BaseDAO{
             logger.log(Level.INFO, "Watchlist entry successfully removed for userId: {0}, auctionId: {1}", new Object[]{userId, auctionId});
             return rowsAffected > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.WATCHLIST_REMOVE_FAILED, "Database interaction failure while removing auction from watchlist.");
+            throw new DAOException(ErrorCode.WATCHLIST_REMOVE_FAILED, "Database interaction failure while removing auction from watchlist.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in WatchlistDAO.remove", exception);
             throw exception;
         } finally {
             closeResource(preparedStatement);
@@ -338,9 +333,8 @@ public class QueryDAO extends BaseDAO{
         }
         logger.log(Level.INFO, "Successfully retrieved {0} detailed watchlist items for userId: {1}", new Object[]{auctionDetailsList.size(), userId});
     } catch (SQLException sqlException) {
-        throw new DAOException(ErrorCode.WATCHLIST_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user watchlist details.");
+        throw new DAOException(ErrorCode.WATCHLIST_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user watchlist details.", sqlException);
     } catch (Exception exception) {
-        logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findWatchlistDetailsByUser", exception);
         throw exception;
     } finally {
         closeResource(resultSet, preparedStatement);
@@ -365,9 +359,8 @@ public class QueryDAO extends BaseDAO{
             }
             return userIdList;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.WATCHLIST_WATCHER_FETCH_FAILED, "Database failure while retrieving watcher IDs for auction.");
+            throw new DAOException(ErrorCode.WATCHLIST_WATCHER_FETCH_FAILED, "Database failure while retrieving watcher IDs for auction.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findUserIdsByAuction", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);
@@ -388,9 +381,8 @@ public class QueryDAO extends BaseDAO{
             resultSet = preparedStatement.executeQuery();
             return resultSet.next();
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.WATCHLIST_STATUS_CHECK_FAILED, "Database failure while checking watchlist following status.");
+            throw new DAOException(ErrorCode.WATCHLIST_STATUS_CHECK_FAILED, "Database failure while checking watchlist following status.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in isFollowing", exception);
             throw exception;
         } finally {
             closeResource(resultSet, preparedStatement);

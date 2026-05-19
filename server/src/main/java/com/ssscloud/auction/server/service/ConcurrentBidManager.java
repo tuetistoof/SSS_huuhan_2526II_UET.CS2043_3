@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.service;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -12,6 +13,8 @@ import java.util.logging.Logger;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
+import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
@@ -39,6 +42,7 @@ public class ConcurrentBidManager {
     private NotificationController notificationController;
     private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
+    private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions to prevent new bids
 
     private ConcurrentBidManager() {}
 
@@ -71,6 +75,7 @@ public class ConcurrentBidManager {
                     instance.workerThreads.forEach((auctionId, thread) -> thread.interrupt());
                     instance.workerThreads.clear();
                     instance.bidTaskQueues.clear();
+                    instance.closedAuctions.clear();
                     instance = null;
                 }
             }
@@ -123,10 +128,12 @@ public class ConcurrentBidManager {
 
     public void shutdown(String auctionId) throws Exception {
         try {
+            closedAuctions.add(auctionId);
             bidTaskQueues.remove(auctionId);
             Thread workerThread = workerThreads.remove(auctionId);
             if (workerThread != null) {
                 workerThread.interrupt();
+                workerThread.join(5000); // Wait up to 5 seconds for the thread to terminate gracefully
                 logger.log(Level.INFO, "Bid worker thread terminated for auctionId: " + auctionId);
             }
         } catch (Exception exception) {
@@ -139,6 +146,9 @@ public class ConcurrentBidManager {
 
     private void ensureWorkerRunning(String auctionId) throws Exception {
         try {
+            if (closedAuctions.contains(auctionId)) {
+                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is closed for auctionId: " + auctionId);
+            }
             bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
             workerThreads.computeIfAbsent(auctionId, k -> {
                 Thread workerThread = new Thread(() -> runWorker(auctionId));
@@ -181,6 +191,9 @@ public class ConcurrentBidManager {
     private void processTask(BidTask task) throws Exception {
         try {
             Auction auctionEntity = task.auction;
+            if (!auctionEntity.getStatus().isActive()) {
+                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is not active for auctionId: " + auctionEntity.getAuctionConfig().getId());
+            }
             String auctionId = auctionEntity.getAuctionConfig().getId();
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
             long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();

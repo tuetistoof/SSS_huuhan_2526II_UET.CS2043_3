@@ -38,7 +38,7 @@ public class BidService {
             validatePlaceBidRequest(placeBidRequest, bidderId);
 
             Auction auction = AuctionRegistry.getInstance().get(placeBidRequest.getAuctionId());
-            if (auction == null) {
+            if (auction == null || auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
                 auction = retrieveAndValidateAuction(placeBidRequest.getAuctionId());
             }
             validatePlaceBidTerms(auction, placeBidRequest, bidderId);
@@ -89,6 +89,7 @@ public class BidService {
             if (bidderId.equals(auction.getSellerId())) {
                 throw new ServiceException(ErrorCode.SELLER_CANNOT_BID, "Sellers are prohibited from placing bids on their own auction items.");
             }
+
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
@@ -131,7 +132,7 @@ public class BidService {
                     throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Auction not found with identifier: " + auctionId);
                 }
                 // Step 3: Validate auction state
-                if (auction.getStatus().isEnded() || auction.isExpired()) {
+                if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
                     throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction has already concluded.");
                 }
                 // Step 4: Register into Registry
