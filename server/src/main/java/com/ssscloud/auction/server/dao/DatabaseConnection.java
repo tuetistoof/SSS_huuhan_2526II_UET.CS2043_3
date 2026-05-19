@@ -65,11 +65,9 @@ public class DatabaseConnection {
             logger.log(Level.INFO, "HikariCP connection pool initialized successfully for URL: " + databaseUrl);
         } 
         catch (IOException ioException) {
-            logger.log(Level.SEVERE, "Input/Output failure: Unable to access the application.properties configuration file.", ioException);
-            throw new DAOException(ErrorCode.DB_CONFIG_READ_ERROR, "Configuration read failure: " + ioException.getMessage());
+            throw new DAOException(ErrorCode.DB_CONFIG_READ_ERROR, "Configuration read failure: " + ioException.getMessage(), ioException);
         }
         catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error during DatabaseConnection initialization: " + exception.getMessage(), exception);
             throw exception;
         }
     }
@@ -89,7 +87,6 @@ public class DatabaseConnection {
         } catch (DAOException daoException) {
             throw daoException;
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in DatabaseConnection.getInstance: " + exception.getMessage(), exception);
             throw exception;
         }
     }
@@ -98,10 +95,8 @@ public class DatabaseConnection {
         try {
             return dataSource.getConnection();
         } catch (SQLException sqlException) {
-            logger.log(Level.SEVERE, "Database connectivity failure: Unable to acquire a valid connection from the Hikari pool.", sqlException);
-            throw new DAOException(ErrorCode.CONNECTION_FAILURE, "Connection acquisition failure: " + sqlException.getMessage());
+            throw new DAOException(ErrorCode.CONNECTION_FAILURE, "Connection acquisition failure: " + sqlException.getMessage(), sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in DatabaseConnection.getConnection: " + exception.getMessage(), exception);
             throw exception;
         }
     }

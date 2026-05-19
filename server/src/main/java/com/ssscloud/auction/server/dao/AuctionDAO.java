@@ -80,12 +80,11 @@ public class AuctionDAO extends BaseDAO {
 
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Auction or entity already exists.");
+            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Auction or entity already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.AUCTION_SAVE_FAILED, "Database interaction failure during auction persistence.");
+            throw new DAOException(ErrorCode.AUCTION_SAVE_FAILED, "Database interaction failure during auction persistence.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in saveAuction", exception);
             throw exception;
         } finally {
             resetAutocommit(connection);
@@ -130,9 +129,8 @@ public class AuctionDAO extends BaseDAO {
             }
             return new ArrayList<>(auctionMap.values());
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED, "Database interaction failure while retrieving auctions by sellerId.");
+            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED, "Database interaction failure while retrieving auctions by sellerId.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findBySellerId", exception);
             throw exception;
         } finally {
             closeResource(rs, ps);
@@ -173,9 +171,8 @@ public class AuctionDAO extends BaseDAO {
             }
             return auction;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED, "Database interaction failure while retrieving auction by ID.");
+            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED, "Database interaction failure while retrieving auction by ID.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findByAuctionId", exception);
             throw exception;
         } finally {
             closeResource(rs, ps);
@@ -219,9 +216,8 @@ public class AuctionDAO extends BaseDAO {
             }
             return new ArrayList<>(auctionMap.values());
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED, "Database interaction failure while retrieving auctions by status.");
+            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED, "Database interaction failure while retrieving auctions by status.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in findByStatus", exception);
             throw exception;
         } finally {
             closeResource(rs, ps);
@@ -245,9 +241,8 @@ public class AuctionDAO extends BaseDAO {
             }
             return isUpdated;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.AUCTION_UPDATE_FAILED, "Database interaction failure while updating auction end time.");
+            throw new DAOException(ErrorCode.AUCTION_UPDATE_FAILED, "Database interaction failure while updating auction end time.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in updateEndTime", exception);
             throw exception;
         } finally {
             closeResource(ps);
@@ -268,9 +263,8 @@ public class AuctionDAO extends BaseDAO {
             logger.log(Level.INFO, "Successfully updated status for auctionId: {0}", auctionId);
             return rows > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.AUCTION_UPDATE_FAILED, "Database interaction failure while updating auction status.");
+            throw new DAOException(ErrorCode.AUCTION_UPDATE_FAILED, "Database interaction failure while updating auction status.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in updateStatus", exception);
             throw exception;
         } finally {
             closeResource(ps);
@@ -292,9 +286,8 @@ public class AuctionDAO extends BaseDAO {
             }
             return rows > 0;
         } catch (SQLException sqlException) {
-            throw new DAOException(ErrorCode.AUCTION_DELETE_FAILED, "Database interaction failure while deleting auction.");
+            throw new DAOException(ErrorCode.AUCTION_DELETE_FAILED, "Database interaction failure while deleting auction.", sqlException);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in deleteById", exception);
             throw exception;
         } finally {
             closeResource(ps);

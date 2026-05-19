@@ -11,6 +11,7 @@ import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
 import com.ssscloud.auction.common.dto.response.AdminMetrics;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
@@ -19,6 +20,7 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AdminDAO;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
@@ -34,11 +36,13 @@ public class AdminService {
     private final AdminDAO      adminDAO;
     private final AuctionDAO    auctionDAO;
     private final AutoBidService autoBidService;
+    private final UserDAO       userDAO;
 
-    public AdminService(AdminDAO adminDAO, AuctionDAO auctionDAO, AutoBidService autoBidService) {
+    public AdminService(AdminDAO adminDAO, AuctionDAO auctionDAO, AutoBidService autoBidService, UserDAO userDAO) {
         this.adminDAO       = adminDAO;
         this.auctionDAO     = auctionDAO;
         this.autoBidService = autoBidService;
+        this.userDAO        = userDAO;
     }
 
     // --- PUBLIC METHODS ---
@@ -123,13 +127,15 @@ public class AdminService {
                     "Cannot cancel auction that is not active: " + auctionId);
             }
 
+
             // 1. Cập nhật status trong DB
             auctionDAO.updateStatus(auctionId, AuctionStatus.CANCELED);
-
-            // 2. Cập nhật status trên object in-memory
             auction.cancel();
+            
+            ConcurrentBidManager.getInstance().shutdown(auctionId);
 
-            // 3. Xóa khỏi AuctionRegistry
+            refundWinner(auction);
+            // 3. Xóa khỏi AuctionRegistry  
             AuctionRegistry.getInstance().remove(auctionId);
 
             // 4. Dọn auto-bid entries
@@ -184,5 +190,47 @@ public class AdminService {
                 }
             }
         });
+    }
+
+    private void refundWinner(Auction auction) throws Exception {
+        String winnerId = auction.getHighestBidderId();
+        long winningBid = auction.getCurrentPrice();
+        String sellerId = auction.getSellerId();
+
+        if (winnerId != null && winningBid > 0) {
+            try {
+                // Unlock bidder's balance
+                userDAO.unlockBidderBalance(winnerId, winningBid);
+                SessionRegistry.getInstance().addUnsettledBalance(winnerId, -winningBid);
+                notifyUnsettledBalanceUpdate(winnerId, SessionRegistry.getInstance().getUnsettledBalance(winnerId));
+
+                // Deduct seller's pending balance
+                if (sellerId != null) {
+                    userDAO.updatePendingBalance(sellerId, -winningBid);
+                    SessionRegistry.getInstance().addUnsettledBalance(sellerId, -winningBid);
+                    notifyUnsettledBalanceUpdate(sellerId, SessionRegistry.getInstance().getUnsettledBalance(sellerId));
+                }
+
+                logger.log(Level.INFO, "Refunded winning bid of {0} to bidderId: {1} and updated pending balance for sellerId: {2} after auction cancellation.",
+                        new Object[]{winningBid, winnerId, sellerId});
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to refund winning bid to bidderId: " + winnerId + " or update sellerId: " + sellerId, e);
+                throw new DAOException(ErrorCode.ACCOUNT_BALANCE_UPDATE_FAILED, "Failed to refund winning bid", e);
+            }
+        }
+    }
+
+    private void notifyUnsettledBalanceUpdate(String userId, long unsettledBalance) {
+        PrintWriter writer = SessionRegistry.getInstance().getWriter(userId);
+        if (writer == null) return;
+
+        try {
+            synchronized (writer) {
+                writer.println(JsonUtils.toJson(ClientMessage.push("UNSETTLED_UPDATE", unsettledBalance)));
+                writer.flush();
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to notify balance update for userId: " + userId, e);
+        }
     }
 }

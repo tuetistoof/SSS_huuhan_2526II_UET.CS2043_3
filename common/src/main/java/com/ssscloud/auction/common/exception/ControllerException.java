@@ -20,4 +20,15 @@ public class ControllerException extends BaseException {
     public ControllerException(String errorCode, String message) {
         super(errorCode, message);
     }
+
+    /**
+     * Constructs a ControllerExceptions with the specified error code, message, and cause.
+     * 
+     * @param errorCode standardized error code from ErrorCode class
+     * @param message detailed error message explaining the controller failure
+     * @param cause the underlying exception that caused this controller failure (for debugging)
+     */
+    public ControllerException(String errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
+    }
 }
