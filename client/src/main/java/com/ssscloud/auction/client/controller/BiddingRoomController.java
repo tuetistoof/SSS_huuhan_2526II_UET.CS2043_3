@@ -460,6 +460,40 @@ public class BiddingRoomController implements MessageListener{
 
     @FXML
     void handleToggleAutoBid(ActionEvent event) {
+        if (isAutoBidding) {
+            btnAutoToggle.setDisable(true);
+            new Thread(() -> {
+                try {
+                    String json = JsonUtils.toJson(ClientMessage.request("CANCEL_AUTO_BID", currentAuction.getId()));
+                    String responseJson = socket.sendAndReceive(json);
+                    Platform.runLater(() -> {
+                        if (responseJson != null) {
+                            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
+                            String dataJson = JsonUtils.toJson(serverMsg.getData());
+                            ApiResponse<?> response = JsonUtils.fromJson(dataJson, ApiResponse.class);
+                            if (response != null && response.isSuccess()) {
+                                isAutoBidding = false;
+                                autoBidMaxBid = 0;
+                                resetAutoBidButton();
+                            } else {
+                                showError(response != null ? response.getMessage() : "Hủy Auto Bid thất bại.");
+                                btnAutoToggle.setDisable(false);
+                            }
+                        } else {
+                            showError("Không nhận được phản hồi từ server.");
+                            btnAutoToggle.setDisable(false);
+                        }
+                    });
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        showError("Lỗi kết nối Server.");
+                        btnAutoToggle.setDisable(false);
+                    });
+                }
+            }).start();
+            return; // thoát sớm, không chạy phần start bên dưới    
+        }
+
         if (txtMaxBid.getText().isEmpty() || txtAutoIncrement.getText().isEmpty()) {
             showError("Vui lòng nhập đầy đủ thông tin Auto Bidding.");
             return;
@@ -500,7 +534,10 @@ public class BiddingRoomController implements MessageListener{
                     if (response != null && response.isSuccess()) {
                         isAutoBidding = true;
                         autoBidMaxBid = maxBid;
-                        btnAutoToggle.setText("Auto Bidding...");
+                        isAutoBidding = true;
+                        autoBidMaxBid = maxBid;
+                        btnAutoToggle.setText("Cancel Auto Bid");
+                        btnAutoToggle.setDisable(false);
                         // Nút giữ disable — AUTO_BID_STOPPED push sẽ reset lại
                     } else {
                         showError(response != null ? response.getMessage() : "Đăng ký Auto Bid thất bại.");
@@ -740,7 +777,7 @@ public class BiddingRoomController implements MessageListener{
             }
             if (isFinished || isCancelled) {
                 btnPlaceBid.setDisable(true);
-                btnPlaceBid.setText(isCancelled ? "Đã hủy" : "Đã kết thúc");
+                btnPlaceBid.setText(isCancelled ? "Canceled" : "Finished");
                 btnAutoToggle.setDisable(true);
                 txtManualBid.setDisable(true);
                 if (txtMaxBid != null) txtMaxBid.setDisable(true);
@@ -1088,8 +1125,9 @@ public class BiddingRoomController implements MessageListener{
                         formAuto.setManaged(true);
                         formManual.setVisible(false);
                         formManual.setManaged(false);
-                        btnAutoToggle.setText("Auto Bidding...");
-                        btnAutoToggle.setDisable(true); // giữ disable nếu đang auto bid
+                        btnAutoToggle.setText("Dừng Auto Bid");
+                        btnAutoToggle.setDisable(false);
+                        this.isAutoBidding = true; // đồng bộ local state
                         btnAutoToggle.getStyleClass().remove("br-btn-secondary");
                         btnAutoToggle.getStyleClass().add("br-btn-auto-active");
                     } else {
