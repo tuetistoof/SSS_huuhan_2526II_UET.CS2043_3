@@ -184,7 +184,7 @@ public class ConcurrentBidManager {
             String auctionId = auctionEntity.getAuctionConfig().getId();
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
             long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();
-            if (task.bidAmount > currentAuctionPrice) {
+            if (task.bidAmount >= currentAuctionPrice) {
                 String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
                 if (previousBidderId != null) {
                     userDAO.unlockBidderBalance(previousBidderId, currentAuctionPrice);

@@ -263,15 +263,25 @@ public class BiddingRoomController implements MessageListener{
             showError("Số tiền đặt phải lớn hơn 0");
             return;
         }
+        if (currentAuction.getBidCount() == 0) {
+    // Chưa có bid — chỉ cần >= startPrice
+    if (amount < currentAuction.getStartPrice()) {
+        showError("Giá đặt phải ít nhất bằng giá khởi điểm: "
+                + String.format("%,d ₫", currentAuction.getStartPrice()));
+        return;
+    }
+    } else {
+    // Đã có bid — phải vượt currentPrice + minIncrement
         if (amount <= currentAuction.getCurrentPrice()) {
             showError("Giá phải cao hơn giá hiện tại");
             return;
         }
-
         if (amount < currentAuction.getCurrentPrice() + currentAuction.getMinIncrement()) {
-            showError("Giá phải cao hơn ít nhất bước giá tối thiểu");
+            showError("Giá phải cao hơn ít nhất bước giá tối thiểu ("
+                + String.format("%,d ₫", currentAuction.getMinIncrement()) + ")");
             return;
         }
+    }
 
         txtManualBid.clear();
         btnPlaceBid.setDisable(true);
@@ -578,25 +588,25 @@ public class BiddingRoomController implements MessageListener{
         }
     }
     private void handleAutoBidStopped(JsonObject root) {
-        Platform.runLater(() -> {
-            isAutoBidding = false;
+        isAutoBidding = false;
+        btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
+        btnAutoToggle.getStyleClass().add("br-btn-secondary");
+        btnAutoToggle.setText("Start Auto Bid");
+        btnAutoToggle.setDisable(false);
+        txtMaxBid.setDisable(false);
+        txtAutoIncrement.setDisable(false);
 
-            btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
-            btnAutoToggle.getStyleClass().add("br-btn-secondary");
-            btnAutoToggle.setText("Start Auto Bid");
-            btnAutoToggle.setDisable(false); 
-
-            txtMaxBid.setDisable(false);
-            txtAutoIncrement.setDisable(false);
-            
-        });
-        String msg = "Auto Bid đã dừng — giá hiện tại vượt ngưỡng tối đa của bạn.";
-        if (root.has("data") && root.get("data").isJsonObject()) {
-            JsonObject data = root.get("data").getAsJsonObject();
-            if (data.has("message")) msg = data.get("message").getAsString();
+        // Non-blocking: hiện banner trên lblOutbid, tự ẩn sau 5 giây
+        // Không dùng Alert.showAndWait() vì sẽ block FX thread và làm treo BID_UPDATE
+        if (lblOutbid != null) {
+            lblOutbid.setText("⚠ Auto Bid đã dừng — giá hiện tại vượt ngưỡng tối đa của bạn.");
+            lblOutbid.setVisible(true);
+            lblOutbid.setManaged(true);
+            new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(5),
+                    e -> { lblOutbid.setVisible(false); lblOutbid.setManaged(false); })
+            ).play();
         }
-        showInfo(msg);
-        
     }
 
     private void handleBidUpdate(JsonObject root) {
@@ -822,10 +832,15 @@ public class BiddingRoomController implements MessageListener{
         if (lblStartPrice != null) {
             lblStartPrice.setText(String.format("%,d ₫", currentAuction.getStartPrice()));
         }
-        if (lblMinHint != null && currentAuction.getMinIncrement() > 0) {
-            long minRequired = currentAuction.getCurrentPrice() + currentAuction.getMinIncrement();
-            lblMinHint.setText("Minimum bid: " + String.format("%,d ₫", minRequired));
-        }
+        if (lblMinHint != null) {
+            if (currentAuction.getBidCount() == 0) {
+            lblMinHint.setText("At least: " + String.format("%,d ₫", currentAuction.getStartPrice())
+                + " (start price)");
+            } else {
+                long minRequired = currentAuction.getCurrentPrice() + currentAuction.getMinIncrement();
+                lblMinHint.setText("At least: " + String.format("%,d ₫", minRequired));
+    }
+}
         if (lblStatusBadge != null && currentAuction.getStatus() != null) {
             switch (currentAuction.getStatus()) {
                 case RUNNING   -> { lblStatusBadge.setText("Running");  lblStatusBadge.getStyleClass().setAll("br-badge-running"); }
