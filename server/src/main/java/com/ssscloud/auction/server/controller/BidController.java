@@ -97,12 +97,25 @@ public class BidController {
     public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
         try {
             logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
-            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-            
-            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(jsonPayload);
+            String auctionId = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+
+            // Check in-memory map trước (fast path)
+            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionId);
             boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
 
-            // Client parse ApiResponse<Boolean> — trả thẳng Boolean, không wrap vào Map
+            // Fallback: nếu map trống (server restart mất state), check DB
+            // Auto-bid của họ vẫn đang "thắng", chưa bị vượt qua hay cancel
+            if (!isActive) {
+                List<com.ssscloud.auction.common.model.BidTransaction> history = bidTransactionDAO.findByAuctionId(auctionId);
+                if (!history.isEmpty()) {
+                    // Bid cuối cùng (highest) — list được sort ASC theo bid_time
+                    com.ssscloud.auction.common.model.BidTransaction lastBid = history.get(history.size() - 1);
+                    isActive = lastBid.getBidderId() != null
+                            && lastBid.getBidderId().equals(bidderId)
+                            && lastBid.getType() == com.ssscloud.auction.common.enums.BidType.AUTO;
+                }
+            }
+
             return JsonUtils.toJson(ApiResponse.success(
                 isActive,
                 "Auto-bid status retrieved successfully."

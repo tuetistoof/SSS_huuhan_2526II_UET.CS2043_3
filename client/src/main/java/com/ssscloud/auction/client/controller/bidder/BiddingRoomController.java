@@ -1,4 +1,5 @@
 package com.ssscloud.auction.client.controller.bidder;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -656,6 +657,7 @@ public class BiddingRoomController implements MessageListener{
         String subJson = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", auction.getId()));
         dispatcher.request(subJson, subRaw -> {
             loadBidHistoryAsync();
+            setupBidStatus();
             if (!isFinished && !isCancelled) btnPlaceBid.setDisable(false);
         });
 
@@ -882,8 +884,7 @@ public class BiddingRoomController implements MessageListener{
             imgBiddingRoom.setImage(image);
         }
     }
-
-<<<<<<< HEAD:client/src/main/java/com/ssscloud/auction/client/controller/BiddingRoomController.java
+    
     private void setupBidStatus() {
         if (currentAuction == null) return;
         
@@ -898,6 +899,7 @@ public class BiddingRoomController implements MessageListener{
             String rawData = JsonUtils.toJson(serverMsg.getData());
             Type apiType = new TypeToken<ApiResponse<Boolean>>(){}.getType(); 
             ApiResponse<Boolean> apiResponse = JsonUtils.fromJsonGeneric(rawData, apiType);
+            System.out.println("Auto-bid status response: " + apiResponse);
         
             if (apiResponse != null && apiResponse.isSuccess() && apiResponse.getData() != null) {
                 boolean serverAutoBidding = apiResponse.getData();
@@ -936,7 +938,3 @@ public class BiddingRoomController implements MessageListener{
     }
 
 }
-=======
-}
-    
->>>>>>> 488b1141011831eb6f2775f8359b2d063f6cd538:client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddingRoomController.java
