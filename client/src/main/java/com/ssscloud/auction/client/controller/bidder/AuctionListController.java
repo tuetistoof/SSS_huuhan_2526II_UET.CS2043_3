@@ -1,12 +1,13 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
+import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -43,6 +44,7 @@ public class AuctionListController implements MessageListener {
     @FXML private TextField                          txtSearch;
 
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
+    private final SocketDispatcher    dispatcher = SocketDispatcher.getInstance();
     private final ObservableList<AuctionDTO> masterList  = FXCollections.observableArrayList(); // Lưu toàn bộ dữ liệu gốc để filter/search
     private final ObservableList<AuctionDTO> displayList = FXCollections.observableArrayList(); // Dùng làm items cho TableView, sẽ được filter từ masterList
 
@@ -69,7 +71,7 @@ public class AuctionListController implements MessageListener {
         tblAuctions.setPlaceholder(new Label("Chưa có phiên đấu giá nào đang mở."));
         // Double-click vào row để mở BiddingRoom
         tblAuctions.setRowFactory(tv -> {
-            javafx.scene.control.TableRow<AuctionDTO> row = new javafx.scene.control.TableRow<>();
+            TableRow<AuctionDTO> row = new TableRow<>();
             row.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2 && !row.isEmpty() && onOpenAuction != null) {
                     onOpenAuction.accept(row.getItem());
@@ -88,37 +90,16 @@ public class AuctionListController implements MessageListener {
     private void loadAuctions() {
         if (lblStatus != null) lblStatus.setText("Đang tải...");
 
-        ClientMessage msg = new ClientMessage("GET_AUCTIONS", null);
-        String jsonRequest = JsonUtils.toJson(msg);
-
-        new Thread(() -> {
-            List<AuctionDTO> auctions = null;
-            String error = null;
-            try {
-                String jsonResponse = socket.sendAndReceive(jsonRequest);
-                if (jsonResponse != null) {
-                    ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                    if ("GET_AUCTIONS_RESPONSE".equals(serverMsg.getAction())) {
-                        String rawData = JsonUtils.toJson(serverMsg.getData());
-                        ApiResponse<?> resp = JsonUtils.fromJson(rawData, ApiResponse.class);
-                        if (resp.isSuccess()) {
-                            String listJson = JsonUtils.toJson(resp.getData());
-                            ListResponse <AuctionDTO> listResp = JsonUtils.fromJson(listJson, ListResponse.class, AuctionDTO.class);
-                            auctions = listResp.getData();
-                        } else {
-                            error = resp.getMessage();
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                error = "Lỗi kết nối: " + e.getMessage();
-                e.printStackTrace();
+        String json = JsonUtils.toJson(ClientMessage.request("GET_AUCTIONS", null));
+ 
+        dispatcher.request(json, raw -> {
+            List<AuctionDTO> auctions = ServerResponse.unwrapList(raw, null, AuctionDTO.class);
+            if (auctions != null) {
+                updateUI(auctions, null);
+            } else {
+                updateUI(null, ServerResponse.errorMessage(raw));
             }
-
-            final List<AuctionDTO> finalAuctions = auctions;
-            final String finalError = error;
-            Platform.runLater(() -> updateUI(finalAuctions, finalError));
-        }).start();
+        }, () -> updateUI(null, "Không thể kết nối server."));
     }
 
     private void updateUI(List<AuctionDTO> auctions, String error) {
@@ -174,14 +155,21 @@ public class AuctionListController implements MessageListener {
                 case "AUCTION_ENDED" -> {
                     // Đổi status thành FINISHED trong list
                     String dataJson = JsonUtils.toJson(msg.getData());
-                    com.google.gson.JsonObject obj =
-                            com.google.gson.JsonParser.parseString(dataJson).getAsJsonObject();
-                    String auctionId = obj.has("auctionId") ? obj.get("auctionId").getAsString() : null;
-                    if (auctionId == null) return;
+                    ClientMessage ended = JsonUtils.fromJson(dataJson, ClientMessage.class);                    
+                    String auctionId = ended != null && ended.getData() != null ? ended.getData().toString() : null;
 
+                    if (auctionId == null) {
+                        try {
+                            JsonObject obj = JsonParser.parseString(dataJson).getAsJsonObject();
+                            if (obj.has("auctionId")) auctionId = obj.get("auctionId").getAsString();
+                        } catch (Exception ignored) {}
+                    }
+ 
+                    if (auctionId == null) return;
+                    final String finalId = auctionId;
                     Platform.runLater(() -> {
                         for (AuctionDTO a : masterList) {
-                            if (auctionId.equals(a.getId())) {
+                            if (finalId.equals(a.getId())) {
                                 a.setStatus(AuctionStatus.FINISHED);
                                 break;
                             }
@@ -190,6 +178,7 @@ public class AuctionListController implements MessageListener {
                     });
                 }
             }
+            
         } catch (Exception e) {
             // Bỏ qua lỗi parse để không crash UI
         }

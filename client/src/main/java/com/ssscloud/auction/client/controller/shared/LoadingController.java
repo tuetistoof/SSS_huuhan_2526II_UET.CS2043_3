@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.shared;
 
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
