@@ -165,7 +165,10 @@ public class AutoBidService {
             incrementBidCount(auctionId, winningEntry.bidderId);
             entriesToRemoveList.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
             
-            ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, BidType.AUTO);
+            userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
+            SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
+
+            ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.trigger for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
             throw exception;

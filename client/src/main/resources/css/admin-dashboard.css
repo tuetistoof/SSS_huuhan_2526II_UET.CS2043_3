@@ -9,7 +9,7 @@
 /* ══ ROOT ══ */
 .adm-root {
     -fx-background-color: #f0f0f0;
-    -fx-font-family: "Arial";
+    -fx-font-family: "Segoe UI";
 }
 
 /* ══ BODY ══ */
@@ -160,15 +160,15 @@
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent #e8d8da transparent;
     -fx-border-width: 0 0 1.5 0;
-    -fx-size: 42px;
+    -fx-size: 46px;
 }
 
 .adm-table .column-header .label {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: #555555;
+    -fx-text-fill: #444444;
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 0 0 0 10;
+    -fx-padding: 0 0 0 12;
 }
 
 /* Cột Thao tác — căn giữa */
@@ -191,7 +191,7 @@
     -fx-background-color: #ffffff;
     -fx-border-color: transparent transparent #f5f0f0 transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-cell-size: 46px;
+    -fx-cell-size: 52px;
 }
 
 .adm-table .table-row-cell:odd {
@@ -212,9 +212,9 @@
 /* Cell text */
 .adm-table .table-cell {
     -fx-alignment: CENTER_LEFT;
-    -fx-padding: 0 6px 0 10px;
-    -fx-font-size: 13px;
-    -fx-text-fill: #2d2d2d;
+    -fx-padding: 0 8px 0 12px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1a1a1a;
     -fx-border-color: transparent;
 }
 
@@ -224,10 +224,8 @@
 
 /* Ô Thao tác cuối */
 .adm-table .table-cell:last-visible {
-    -fx-alignment: CENTER;
-    -fx-graphic-alignment: CENTER;
+    -fx-alignment: CENTER_LEFT;
     -fx-padding: 0;
-    -fx-content-display: GRAPHIC_ONLY;
 }
 
 /* Placeholder */
@@ -241,7 +239,7 @@
     -fx-background-color: #e3f5e8;
     -fx-background-radius: 5px;
     -fx-text-fill: #1e7a35;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -250,7 +248,7 @@
     -fx-background-color: #e8f0fe;
     -fx-background-radius: 5px;
     -fx-text-fill: #1a56c4;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -259,7 +257,7 @@
     -fx-background-color: #fdecea;
     -fx-background-radius: 5px;
     -fx-text-fill: #b71c1c;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -268,7 +266,7 @@
     -fx-background-color: #f1f1f1;
     -fx-background-radius: 5px;
     -fx-text-fill: #888888;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -277,7 +275,7 @@
     -fx-background-color: #e3f5e8;
     -fx-background-radius: 5px;
     -fx-text-fill: #1e7a35;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -287,7 +285,7 @@
     -fx-background-color: #e3f5e8;
     -fx-background-radius: 5px;
     -fx-text-fill: #1e7a35;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -296,7 +294,7 @@
     -fx-background-color: #fdecea;
     -fx-background-radius: 5px;
     -fx-text-fill: #b71c1c;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -306,7 +304,7 @@
     -fx-background-color: #eeedfe;
     -fx-background-radius: 5px;
     -fx-text-fill: #3C3489;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -315,7 +313,7 @@
     -fx-background-color: #e1f5ee;
     -fx-background-radius: 5px;
     -fx-text-fill: #085041;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }
@@ -324,7 +322,7 @@
     -fx-background-color: #fde8e8;
     -fx-background-radius: 5px;
     -fx-text-fill: #f75667;
-    -fx-font-size: 11px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 3 10 3 10;
 }

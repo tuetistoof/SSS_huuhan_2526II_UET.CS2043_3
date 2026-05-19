@@ -44,6 +44,7 @@ public class ConcurrentBidManager {
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions to prevent new bids
 
+    private final Map<String, BidTask> previousWinnerBidtask = new ConcurrentHashMap<>();
     private ConcurrentBidManager() {}
 
     private ConcurrentBidManager(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController ) {
@@ -100,12 +101,12 @@ public class ConcurrentBidManager {
     }
 
     public void submitBid(Auction auctionEntity, String bidderId, String bidderUsername,
-                          long bidAmount, BidType bidType) throws Exception {
+                          long bidAmount, long lockAmount, BidType bidType) throws Exception {
         try {
             String auctionId = auctionEntity.getAuctionConfig().getId();
             ensureWorkerRunning(auctionId);
             bidTaskQueues.get(auctionId).offer(new BidTask(
-                    auctionEntity, bidderId, bidderUsername, bidAmount, bidType));
+                    auctionEntity, bidderId, bidderUsername, bidAmount, lockAmount, bidType));
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error while submitting bid for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
             throw exception;
@@ -130,6 +131,7 @@ public class ConcurrentBidManager {
         try {
             closedAuctions.add(auctionId);
             bidTaskQueues.remove(auctionId);
+            previousWinnerBidtask.remove(auctionId);
             Thread workerThread = workerThreads.remove(auctionId);
             if (workerThread != null) {
                 workerThread.interrupt();
@@ -191,141 +193,66 @@ public class ConcurrentBidManager {
     private void processTask(BidTask task) throws Exception {
         try {
             Auction auctionEntity = task.auction;
-
-            // Checkpoint 1: kiểm tra status trước khi bắt đầu
             if (!auctionEntity.getStatus().isActive()) {
-                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST,
-                    "Cannot place bid: auction is not active for auctionId: "
-                    + auctionEntity.getAuctionConfig().getId());
+                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is not active for auctionId: " + auctionEntity.getAuctionConfig().getId());
             }
-
             String auctionId = auctionEntity.getAuctionConfig().getId();
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
-            long currentAuctionPrice = lastBidTransaction != null
-                ? lastBidTransaction.getBidAmount()
-                : auctionEntity.getAuctionConfig().getStartPrice();
-
+            long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();
             if (task.bidAmount > currentAuctionPrice) {
-                String previousBidderId = lastBidTransaction != null
-                    ? lastBidTransaction.getBidderId() : null;
-
+                String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
                 if (previousBidderId != null) {
-                    userDAO.unlockBidderBalance(previousBidderId, currentAuctionPrice);
-                    SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -currentAuctionPrice);
-                    notifyUnsettledBalanceUpdate(previousBidderId,
-                        SessionRegistry.getInstance().getUnsettledBalance(previousBidderId));
+                    BidTask previousWinner = previousWinnerBidtask.get(auctionId);
+                    long unlockAmount =  previousWinner.lockAmount;
+                    userDAO.unlockBidderBalance(previousBidderId, unlockAmount);
+                    SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -unlockAmount);
                 }
+                previousWinnerBidtask.put(auctionId, task);
 
-                // Lock bidder mới
-                boolean newBidderLocked = false;
-                boolean bidPlaced       = false;
+                long delta = task.bidAmount - currentAuctionPrice;
+                // Seller
+                userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
+                SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
 
-                try {
-                    userDAO.lockBidderBalance(task.bidderId, task.bidAmount);
-                    newBidderLocked = true;
-
-                    // Checkpoint 2: kiểm tra lại status SAU KHI lock — cancel có thể đã chạy xen vào
-                    if (!auctionEntity.getStatus().isActive()) {
-                        logger.log(Level.WARNING,
-                            "Auction was canceled while locking balance for bidderId: {0}, auctionId: {1}. Rolling back lock.",
-                            new Object[]{task.bidderId, auctionId});
-                        // Rollback ngay — return sạch, không throw vì đây là expected case
-                        userDAO.unlockBidderBalance(task.bidderId, task.bidAmount);
-                        SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, 0);
-                        return;
-                    }
-
-                    SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, task.bidAmount);
-                    notifyUnsettledBalanceUpdate(task.bidderId,
-                        SessionRegistry.getInstance().getUnsettledBalance(task.bidderId));
-
-                    long delta = task.bidAmount - currentAuctionPrice;
-                    userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
-                    SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
-                    notifyUnsettledBalanceUpdate(auctionEntity.getSellerId(),
-                        SessionRegistry.getInstance().getUnsettledBalance(auctionEntity.getSellerId()));
-
-                    BidTransaction bidTransaction = new BidTransaction(
-                        auctionId, task.bidderId, task.bidderUsername,
+                BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, LocalDateTime.now(), task.bidType);
 
-                    auctionEntity.placeBid(bidTransaction);
-                    bidPlaced = true;
-
-                    if (bidTransactionDAO != null) {
-                        try {
-                            bidTransactionDAO.saveBidTransaction(bidTransaction);
-                        } catch (Exception e) {
-                            logger.log(Level.SEVERE,
-                                "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
-                        }
+                auctionEntity.placeBid(bidTransaction);
+                if (bidTransactionDAO != null) {
+                    try {
+                        bidTransactionDAO.saveBidTransaction(bidTransaction);
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
                     }
-
-                    ChangeManager.getInstance().notify(auctionEntity);
-                    notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(),
-                        auctionEntity.getHighestBidderId());
-
-                    if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
-                        auctionEntity.setStatus(AuctionStatus.RUNNING);
-                        auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
-                    }
-
-                    LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(
-                        auctionEntity.getAuctionConfig());
-                    if (updatedEndTime != null && auctionDAO != null) {
-                        auctionDAO.updateEndTime(auctionId, updatedEndTime);
-                    }
-
-                } catch (Exception e) {
-                    // Rollback lock nếu bidder mới đã bị lock nhưng bid chưa được commit vào auction
-                    if (newBidderLocked && !bidPlaced) {
-                        try {
-                            userDAO.unlockBidderBalance(task.bidderId, task.bidAmount);
-                            logger.log(Level.WARNING,
-                                "Rolled back locked balance for bidderId: {0}, amount: {1} due to exception during bid processing.",
-                                new Object[]{task.bidderId, task.bidAmount});
-                        } catch (Exception rollbackEx) {
-                            // Không rethrow rollback exception — chỉ log để ops team reconcile thủ công
-                            logger.log(Level.SEVERE,
-                                "CRITICAL: Failed to rollback locked balance for bidderId: "
-                                + task.bidderId + ", amount: " + task.bidAmount
-                                + ". Manual reconciliation required.", rollbackEx);
-                        }
-                    }
-                    throw e; // rethrow exception gốc, không che
+                }
+                ChangeManager.getInstance().notify(auctionEntity);
+                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(), auctionEntity.getHighestBidderId());
+                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
+                    auctionEntity.setStatus(AuctionStatus.RUNNING);
+                    auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
+                }
+                
+                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
+                if (updatedEndTime != null && auctionDAO != null) {
+                    auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
 
             } else {
-                logger.log(Level.INFO,
-                    "Bid task skipped: amount " + task.bidAmount
-                    + " is not higher than current price " + currentAuctionPrice);
+                logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
+                userDAO.unlockBidderBalance(task.bidderId, task.lockAmount);
+                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockAmount);
             }
 
             if (autoBidService != null) {
                 try {
                     autoBidService.trigger(auctionEntity);
                 } catch (Exception e) {
-                    logger.log(Level.WARNING,
-                        "Auto-bid trigger failed for auctionId: " + auctionId, e);
+                    logger.log(Level.WARNING, "Auto-bid trigger failed for auctionId: " + auctionId, e);
                 }
             }
-
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error during bid task processing", exception);
             throw exception;
-        }
-    }
-    private void notifyUnsettledBalanceUpdate(String userId, long unsettledBalance) {
-        PrintWriter writer = SessionRegistry.getInstance().getWriter(userId);
-        if (writer == null) return;
-
-        try {
-            synchronized (writer) {
-                writer.println(JsonUtils.toJson(ClientMessage.push("UNSETTLED_UPDATE", unsettledBalance)));
-                writer.flush();
-            }
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Failed to notify balance update for userId: " + userId, e);
         }
     }
 
@@ -334,13 +261,15 @@ public class ConcurrentBidManager {
         final String bidderId;
         final String bidderUsername;
         final long bidAmount;
+        final long lockAmount;
         final BidType bidType;
 
-        BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, BidType bidType) {
+        BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, long lockAmount, BidType bidType) {
             this.auction = auction;
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
             this.bidAmount = bidAmount;
+            this.lockAmount = lockAmount;
             this.bidType = bidType;
         }
     }

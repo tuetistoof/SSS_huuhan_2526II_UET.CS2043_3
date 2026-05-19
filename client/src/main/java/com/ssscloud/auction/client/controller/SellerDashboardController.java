@@ -135,6 +135,8 @@ public class SellerDashboardController {
             private final HBox container = new HBox(btnView);
             {
                 btnView.getStyleClass().add("btn-view-row");
+                container.setAlignment(Pos.CENTER);
+                setGraphic(container);
                 btnView.setOnAction(e -> {
                     int idx = getIndex();
                     if (idx >= 0 && idx < getTableView().getItems().size()) {

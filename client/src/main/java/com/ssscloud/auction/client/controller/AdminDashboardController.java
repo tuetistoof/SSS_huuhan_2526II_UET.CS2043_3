@@ -195,7 +195,10 @@ public class AdminDashboardController {
         uColUsername.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getUsername()));
         uColEmail.setCellValueFactory(c    -> new SimpleStringProperty(
             c.getValue().getEmail() != null ? c.getValue().getEmail() : "—"));
-        uColAccountBalance.setCellValueFactory(c -> new SimpleStringProperty(formatVnd(c.getValue().getAccountBalance())));
+        uColAccountBalance.setCellValueFactory(c -> {
+            uColAccountBalance.setStyle("-fx-alignment: CENTER_LEFT;");
+            return new SimpleStringProperty(formatVnd(c.getValue().getAccountBalance()));
+        });
 
         // Role — badge có màu theo role
         uColRole.setCellValueFactory(c -> {
@@ -209,9 +212,14 @@ public class AdminDashboardController {
                 super.updateItem(item, empty);
                 if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); return; }
                 UserRole role = getTableRow().getItem().getRole();
-                if (role == null) { setText("—"); setGraphic(null); return; }
+                if (role == null) { setText("-"); setGraphic(null); return; }
                 badge.setText(role.name());
-                badge.getStyleClass().setAll(role == UserRole.SELLER ? "badge-seller" : "badge-bidder");
+                String badgeStyle = switch (role) {
+                    case SELLER -> "badge-seller";
+                    case BIDDER -> "badge-bidder";
+                    case ADMIN  -> "badge-admin";
+                };
+                badge.getStyleClass().setAll(badgeStyle);
                 setGraphic(badge);
                 setText(null);
             }
