@@ -109,7 +109,7 @@ public class BidService {
             if (!(bidder instanceof Bidder bidderAccount)) {
                 throw new ServiceException(ErrorCode.NOT_BIDDER, "Only users with the 'Bidder' role are authorized to place bids.");
             }
-            if (bidderAccount.getAccountBalance() < bidAmountValue) {
+            if (bidderAccount.getAvailableBalance() < bidAmountValue) {
                 throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE, "The account balance is insufficient to place this bid.");
             }
         } catch (ServiceException serviceException) {

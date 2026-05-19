@@ -168,7 +168,13 @@ public class AutoBidService {
             userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
             SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
 
-            ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
+            try {
+                ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
+            } catch (Exception submitException) {
+                userDAO.unlockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
+                SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, -winningEntry.maxBid);
+                throw submitException;
+            }
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.trigger for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
             throw exception;
