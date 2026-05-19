@@ -1,8 +1,5 @@
 package com.ssscloud.auction.client.controller;
 
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.client.util.ServerResponse;
@@ -10,11 +7,9 @@ import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.request.ItemData;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
  
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
