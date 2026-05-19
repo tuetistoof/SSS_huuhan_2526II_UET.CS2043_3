@@ -25,7 +25,7 @@ public class BidTransactionDAO extends BaseDAO {
 
     public boolean saveBidTransaction(BidTransaction bidTransaction) throws DAOException, Exception {
         logger.log(Level.INFO, "Initiating bid transaction persistence for auctionId: {0}", bidTransaction.getAuctionId());
-        String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, locked_balance, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
         Connection        connection = null;
         PreparedStatement ps         = null;
         try {
@@ -37,8 +37,9 @@ public class BidTransactionDAO extends BaseDAO {
             ps.setString(2, bidTransaction.getBidderId());
             ps.setString(3, bidTransaction.getBidderUsername());
             ps.setLong(4, bidTransaction.getBidAmount());
-            ps.setObject(5, bidTransaction.getBidTime());
-            ps.setString(6, bidTransaction.getType().name());
+            ps.setLong(5, bidTransaction.getLockedBalance());
+            ps.setObject(6, bidTransaction.getBidTime());
+            ps.setString(7, bidTransaction.getType().name());
             ps.executeUpdate();
 
             connection.commit();
@@ -60,7 +61,7 @@ public class BidTransactionDAO extends BaseDAO {
     }
 
     public boolean saveBidTransaction(Connection connection, BidTransaction bidTransaction) throws DAOException, Exception {
-        String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlBidTransaction = "INSERT INTO bid_transaction (auction_id, bidder_id, bidder_username, bid_amount, locked_balance, bid_time, bid_type) VALUES (?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement ps         = null;
         try {
             // Transaction management is handled by the caller (shared connection)
@@ -69,8 +70,9 @@ public class BidTransactionDAO extends BaseDAO {
             ps.setString(2, bidTransaction.getBidderId());
             ps.setString(3, bidTransaction.getBidderUsername());
             ps.setLong(4, bidTransaction.getBidAmount());
-            ps.setObject(5, bidTransaction.getBidTime());
-            ps.setString(6, bidTransaction.getType().name());
+            ps.setLong(5,bidTransaction.getLockedBalance());
+            ps.setObject(6, bidTransaction.getBidTime());
+            ps.setString(7, bidTransaction.getType().name());
             ps.executeUpdate();
 
             logger.log(Level.INFO, "Bid transaction successfully persisted using shared connection.");
@@ -85,7 +87,7 @@ public class BidTransactionDAO extends BaseDAO {
     }
 
     public BidTransaction findHighest(String auctionId) throws DAOException, Exception {
-        String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+        String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.locked_balance, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
                 "ORDER BY b.bid_amount DESC, b.bid_time ASC " +
@@ -116,7 +118,7 @@ public class BidTransactionDAO extends BaseDAO {
     }
 
     public List<BidTransaction> findByBidderId(String bidderId) throws DAOException, Exception {
-        String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+        String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.locked_balance, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.bidder_id = ? " +
                 "ORDER BY b.bid_time ASC";
@@ -147,7 +149,7 @@ public class BidTransactionDAO extends BaseDAO {
     }
 
     public List<BidTransaction> findByAuctionId(String auctionId) throws DAOException, Exception {
-        String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+        String sql = "SELECT b.auction_id, b.bidder_id, bidder_username, b.bid_amount, b.locked_balance, b.bid_time, b.bid_type " +
                 "FROM bid_transaction b " +
                 "WHERE b.auction_id = ? " +
                 "ORDER BY b.bid_time ASC";
@@ -184,9 +186,10 @@ public class BidTransactionDAO extends BaseDAO {
         String bidderId = rs.getString("bidder_id");
         String bidderUsername = rs.getString("bidder_username");
         long bidAmount = rs.getLong("bid_amount");
+        long lockBalance = rs.getLong("locked_balance");
         LocalDateTime bidTime = toLocalDateTime(rs.getTimestamp("bid_time"));
         BidType bidType = BidType.valueOf(rs.getString("bid_type"));
-        return new BidTransaction(auctionId, bidderId, bidderUsername, bidAmount, bidTime, bidType);
+        return new BidTransaction(auctionId, bidderId, bidderUsername, bidAmount, lockBalance, bidTime, bidType);
     }
 
     private LocalDateTime toLocalDateTime(Timestamp timestamp) {
