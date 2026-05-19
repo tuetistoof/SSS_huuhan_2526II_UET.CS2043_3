@@ -151,6 +151,11 @@ public class AutoBidService {
             
             if (calculatedBidAmount <= currentAuctionPrice) {
                 logger.log(Level.INFO, "Calculated auto-bid " + calculatedBidAmount + " is insufficient against current price " + currentAuctionPrice);
+                //
+                autoBidEntriesList.removeAll(entriesSnapshotList);
+
+                entriesSnapshotList.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
+                //
                 return;
             }
     
