@@ -8,15 +8,17 @@ public class BidTransaction{
     private String bidderId;
     private String bidderUsername;
     private long bidAmount;
+    private long lockedBalance;
     private LocalDateTime bidTime;
     private BidType type; // MANUAL hoặc AUTO
 
     // Constructor đầy đủ — dùng khi tạo bid mới
-    public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, LocalDateTime bidTime, BidType type) {
+    public BidTransaction(String auctionId, String bidderId, String bidderUsername, long bidAmount, long lockedBalance, LocalDateTime bidTime, BidType type) {
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.bidderUsername = bidderUsername;
         this.bidAmount = bidAmount;
+        this.lockedBalance = lockedBalance;
         this.bidTime = bidTime;
         this.type = type;
     }
@@ -43,6 +45,9 @@ public class BidTransaction{
         return bidAmount;
     }
 
+    public long getLockedBalance() {
+        return lockedBalance;
+    }
     public LocalDateTime getBidTime() {
         return bidTime;
     }
@@ -68,6 +73,9 @@ public class BidTransaction{
         this.bidAmount = bidAmount;
     }
 
+    public void setLockedBalance(long lockedBalance) {
+        this.lockedBalance = lockedBalance;
+    }
     public void setBidTime(LocalDateTime bidTime) {
         this.bidTime = bidTime;
     }

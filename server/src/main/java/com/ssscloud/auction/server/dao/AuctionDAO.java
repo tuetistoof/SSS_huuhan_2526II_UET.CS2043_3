@@ -97,7 +97,7 @@ public class AuctionDAO extends BaseDAO {
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.locked_balance, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e ON a.id = e.id " +
@@ -142,7 +142,7 @@ public class AuctionDAO extends BaseDAO {
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.locked_balance, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e ON a.id = e.id " +
@@ -184,7 +184,7 @@ public class AuctionDAO extends BaseDAO {
         String sql =
             "SELECT a.id AS auction_id, a.status, a.seller_id, a.item_id, " +
             "       e.name, ac.start_price, ac.min_increment, ac.start_time, ac.end_time, ac.extend_second, " +
-            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.bid_time, b.bid_type " +
+            "       b.auction_id AS b_auction_id, b.bidder_id, b.bidder_username, b.bid_amount, b.locked_balance, b.bid_time, b.bid_type " +
             "FROM auction a " +
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e ON a.id = e.id " +
@@ -332,6 +332,7 @@ public class AuctionDAO extends BaseDAO {
             rs.getString("bidder_id"),
             rs.getString("bidder_username"),
             rs.getLong("bid_amount"),
+            rs.getLong("locked_balance"),
             toLocalDateTime(rs.getTimestamp("bid_time")),
             BidType.valueOf(rs.getString("bid_type"))
         );
