@@ -1,6 +1,7 @@
 package com.ssscloud.auction.common.dto.response;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.enums.BidType;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class AuctionDTO implements Serializable {
     private String sellerName;
     private long currentPrice;
     private String highestBidderName;
+    private BidType highestBidType;
     private int bidCount;
 
     public AuctionDTO() {
@@ -98,6 +100,12 @@ public class AuctionDTO implements Serializable {
     }
     public String getHighestBidderName() {
         return highestBidderName;
+    }
+    public BidType getHighestBidType() {
+        return highestBidType;
+    }
+    public void setHighestBidType(BidType highestBidType) {
+        this.highestBidType = highestBidType;
     }
 
     

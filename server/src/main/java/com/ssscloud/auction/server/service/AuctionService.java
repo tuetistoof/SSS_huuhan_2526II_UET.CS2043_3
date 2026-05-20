@@ -10,6 +10,7 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.BidTransaction;
 import com.ssscloud.auction.common.model.Bidder;
 import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
@@ -340,9 +341,11 @@ public class AuctionService {
 
         auctionDto.setUserDTO(sellerDto);
         auctionDto.setItemDTO(itemDto);
+        BidTransaction lastBidTransaction = auction.getLastBidTransaction();
 
-        auctionDto.setCurrentPrice(auction.getCurrentPrice());
-        auctionDto.setHighestBidderName(auction.getHighestBidderName());
+        auctionDto.setCurrentPrice(lastBidTransaction.getBidAmount());
+        auctionDto.setHighestBidderName(lastBidTransaction.getBidderUsername());
+        auctionDto.setHighestBidType(lastBidTransaction.getType());
         auctionDto.setBidCount(auction.getBidCount());
 
         return auctionDto;

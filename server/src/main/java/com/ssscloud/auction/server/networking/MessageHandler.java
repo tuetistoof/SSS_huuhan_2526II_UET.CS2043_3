@@ -1,11 +1,10 @@
 package com.ssscloud.auction.server.networking;
 
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
-import java.util.List;
+
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,7 +27,6 @@ import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.QueryController;
 import com.ssscloud.auction.server.controller.UserController;
-import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
