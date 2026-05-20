@@ -11,6 +11,7 @@ import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.AutoBidStatusDTO;
 import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -115,6 +116,9 @@ public class BiddingRoomController implements MessageListener {
     private boolean isAutoBidding = false;
     private long    autoBidMaxBid = 0;
 
+    private long maxBid = 0;
+    private long increment = 0;
+
     private AuctionDTO   currentAuction;
     private List<String> itemUrls;
     private int          currentImageIndex = 0;
@@ -176,7 +180,7 @@ public class BiddingRoomController implements MessageListener {
                 badgeLabel.setText("Manual");
                 badgeLabel.getStyleClass().setAll("br-bid-type-manual");
             }
-            nameLabel.setText(bid.getBidderUsername() != null ? bid.getBidderUsername() : "—");
+            nameLabel.setText(bid.getBidderUsername() != null ? bid.getBidderUsername() : "-");
             timeLabel.setText(bid.getBidTime() != null ? bid.getBidTime().format(TIME_FMT) : "");
             amountLabel.setText(String.format("%,d ₫", bid.getBidAmount()));
             setGraphic(root);
@@ -223,17 +227,17 @@ public class BiddingRoomController implements MessageListener {
     private void populateUI() {
         if (currentAuction == null) return;
         if (lblAuctionName != null)
-            lblAuctionName.setText(currentAuction.getName() != null ? currentAuction.getName() : "—");
+            lblAuctionName.setText(currentAuction.getName() != null ? currentAuction.getName() : "-");
         if (lblCurrentPrice != null)
             lblCurrentPrice.setText(String.format("%,d ₫", currentAuction.getCurrentPrice()));
         if (lblLeaderName != null) {
             String leader = currentAuction.getHighestBidderName();
-            lblLeaderName.setText("Leading: " + (leader != null ? leader : "—"));
+            lblLeaderName.setText("Leading: " + (leader != null ? leader : "-"));
         }
         btnPlaceBid.setDisable(true);
         if (lblMinIncrement != null)
             lblMinIncrement.setText(currentAuction.getMinIncrement() > 0
-                    ? String.format("%,d ₫", currentAuction.getMinIncrement()) : "—");
+                    ? String.format("%,d ₫", currentAuction.getMinIncrement()) : "-");
         if (lblStartPrice != null)
             lblStartPrice.setText(String.format("%,d ₫", currentAuction.getStartPrice()));
         if (lblMinHint != null) {
@@ -290,7 +294,7 @@ public class BiddingRoomController implements MessageListener {
     }
 
     /**
-     * Lấy trạng thái auto-bid từ server — non-blocking, callback trên FX thread.
+     * Lấy trạng thái auto-bid từ server - non-blocking, callback trên FX thread.
      * Server: GET_AUTOBID_STATUS → ApiResponse<Boolean>
      * Dùng ServerResponse.unwrap() để bóc 2 lớp ClientMessage + ApiResponse.
      */
@@ -299,13 +303,20 @@ public class BiddingRoomController implements MessageListener {
         String json = JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS", currentAuction.getId()));
         dispatcher.request(json, raw -> {
             // ServerResponse.unwrap bóc ClientMessage → ApiResponse → Boolean
-            Boolean active = ServerResponse.unwrap(raw, "GET_AUTOBID_STATUS_RESPONSE", Boolean.class);
-            boolean isActive = Boolean.TRUE.equals(active);
-            applyAutoBidState(isActive);
-            System.out.println("[setupBidStatus] isAutoBidding=" + isActive);
+            AutoBidStatusDTO status = ServerResponse.unwrap(raw, "GET_AUTOBID_STATUS_RESPONSE", AutoBidStatusDTO.class);
+            if (status != null && status.isActive()) {
+                maxBid = status.getMaxBid();
+                increment = status.getIncrement();
+
+                boolean isActive = status.isActive();
+                System.out.println("[setupBidStatus] isAutoBidding=" + isActive);
+                applyAutoBidState(isActive);
+            } else {
+                applyAutoBidState(false);
+            }
         }, () -> {
-            // Timeout/lỗi — default false, không treo UI
-            System.err.println("[setupBidStatus] timeout/error — defaulting false");
+            // Timeout/lỗi - default false, không treo UI
+            System.err.println("[setupBidStatus] timeout/error - defaulting false");
             applyAutoBidState(false);
         });
     }
@@ -320,6 +331,8 @@ public class BiddingRoomController implements MessageListener {
         if (active) {
             formAuto.setVisible(true);    formAuto.setManaged(true);
             formManual.setVisible(false); formManual.setManaged(false);
+            if (maxBid > 0)    txtMaxBid.setText(String.valueOf(maxBid));
+            if (increment > 0) txtAutoIncrement.setText(String.valueOf(increment));
             btnTabAuto.getStyleClass().setAll("br-tab-active");
             btnTabManual.getStyleClass().setAll("br-tab");
             txtMaxBid.setDisable(true);
@@ -442,26 +455,26 @@ public class BiddingRoomController implements MessageListener {
         tabBtnHistory.getStyleClass().setAll("br-tab");
         tabBtnChart.getStyleClass().setAll("br-tab");
         if (currentAuction == null) return;
-        infoName.setText(currentAuction.getName() != null ? currentAuction.getName() : "—");
+        infoName.setText(currentAuction.getName() != null ? currentAuction.getName() : "-");
         infoSeller.setText(currentAuction.getUserDTO().getUsername() != null
-                ? currentAuction.getUserDTO().getUsername() : "—");
+                ? currentAuction.getUserDTO().getUsername() : "-");
         infoStartPrice.setText(String.format("%,d ₫", currentAuction.getStartPrice()));
         infoMinIncrement.setText(String.format("%,d ₫", currentAuction.getMinIncrement()));
         DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         infoStartTime.setText(currentAuction.getStartTime() != null
-                ? currentAuction.getStartTime().format(dtFmt) : "—");
+                ? currentAuction.getStartTime().format(dtFmt) : "-");
         infoEndTime.setText(currentAuction.getEndTime() != null
-                ? currentAuction.getEndTime().format(dtFmt) : "—");
+                ? currentAuction.getEndTime().format(dtFmt) : "-");
         infoDescription.setText(currentAuction.getItemDTO().getDescription() != null
-                ? currentAuction.getItemDTO().getDescription() : "—");
+                ? currentAuction.getItemDTO().getDescription() : "-");
     }
 
     /**
      * Toggle Auto Bid:
-     *  - Nếu đang bật → Cancel (gọi CANCEL_AUTO_BID — cần server implement)
+     *  - Nếu đang bật → Cancel (gọi CANCEL_AUTO_BID - cần server implement)
      *  - Nếu đang tắt → Start (gọi AUTO_BID)
      *
-     * ⚠ CANCEL_AUTO_BID chưa có ở server — nút Cancel sẽ hiện dialog thông báo tạm thời.
+     * ⚠ CANCEL_AUTO_BID chưa có ở server - nút Cancel sẽ hiện dialog thông báo tạm thời.
      */
     @FXML void handleToggleAutoBid(ActionEvent event) {
         if (isAutoBidding) {
@@ -490,6 +503,7 @@ public class BiddingRoomController implements MessageListener {
         if (txtMaxBid.getText().isEmpty() || txtAutoIncrement.getText().isEmpty()) {
             showError("Please fill in all Auto Bidding fields."); return;
         }
+        
         long maxBid, increment;
         try {
             maxBid    = Long.parseLong(txtMaxBid.getText().trim());
@@ -547,7 +561,7 @@ public class BiddingRoomController implements MessageListener {
     private void handleAutoBidStopped(JsonObject root) {
         autoBidMaxBid = 0;
         applyAutoBidState(false);
-        showBanner("⚠ Auto Bid stopped — current price exceeded your maximum.", 5);
+        showBanner("⚠ Auto Bid stopped - current price exceeded your maximum.", 5);
     }
 
     private void handleBidUpdate(JsonObject root) {
@@ -579,11 +593,9 @@ public class BiddingRoomController implements MessageListener {
         } catch (Exception ignored) {}
 
         lblCurrentPrice.setText(String.format("%,d ₫", bid.getBidAmount()));
-        lblLeaderName.setText("Leading: "
-                + (bid.getBidderUsername() != null ? bid.getBidderUsername() : "—"));
+        lblLeaderName.setText("Leading: " + (bid.getBidderUsername() != null ? bid.getBidderUsername() : "-"));
         if (lblMinHint != null)
-            lblMinHint.setText("Min: " + String.format("%,d ₫",
-                    bid.getBidAmount() + currentAuction.getMinIncrement()));
+            lblMinHint.setText("Min: " + String.format("%,d ₫", bid.getBidAmount() + currentAuction.getMinIncrement()));
 
         if (bid.getNewEndTime() != null && bid.getNewEndTime().isAfter(currentAuction.getEndTime())) {
             currentAuction.setEndTime(bid.getNewEndTime());

@@ -8,6 +8,7 @@ import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.dto.response.AutoBidStatusDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.BidTransaction;
@@ -94,26 +95,35 @@ public class BidController {
         }
     }
 
-public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
-    try {
-        logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
-        String auctionId = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+    public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
+            String auctionId = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
 
-        // CHỈ check in-memory map. Có mặt thì là true, không có mặt tức là false/đã bị đá.
-        List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionId);
-        boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
+            // Check in-memory map — trả về maxBid + increment để client restore UI đầy đủ
+            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionId);
+            AutoBidService.AutoBidEntry entry = entries.stream()
+                    .filter(e -> e.bidderId.equals(bidderId))
+                    .findFirst()
+                    .orElse(null);
 
-        return JsonUtils.toJson(ApiResponse.success(
-            isActive,
-            "Auto-bid status retrieved successfully."
-        ));
-    } catch (ControllerException controllerException) {
-        throw controllerException;
-    } catch (Exception exception) {
-        logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
-        throw exception;
+            AutoBidStatusDTO statusDTO =
+                    entry != null
+                    ? new AutoBidStatusDTO(true, entry.maxBid, entry.increment)
+                    : new AutoBidStatusDTO(false, 0, 0);
+
+            return JsonUtils.toJson(ApiResponse.success(
+                statusDTO,
+                "Auto-bid status retrieved successfully."
+            ));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
+            throw exception;
+        }
+
     }
-}
 
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) throws ControllerException {
         try {
