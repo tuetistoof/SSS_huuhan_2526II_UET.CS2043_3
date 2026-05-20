@@ -1,0 +1,48 @@
+/* ==========================================================
+   component-auction-card.css — CloudBid Universal Product Card
+   Covers: Main card outer shell, interactive hover/pressed micro-states,
+           image fitting box, title typography, and description text.
+   ========================================================== */
+
+
+.main-card {
+    -fx-background-color: -cloud-surface;
+    -fx-font-family: -cloud-font;
+    
+    -fx-background-radius: -cloud-radius-xl;
+    -fx-border-radius: -cloud-radius-xl;
+    
+    -fx-effect: -cloud-shadow-lg;
+}
+
+.main-card:hover {
+    -fx-cursor: hand;
+    
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    
+    -fx-effect: dropshadow(three-pass-box, rgba(247, 86, 103, 0.35), 12, 0, 0, 4);
+}
+
+.main-card:pressed {
+    -fx-scale-x: 0.99;
+    -fx-scale-y: 0.99;
+    -fx-effect: -cloud-shadow-sm; 
+}
+
+
+.auction-image {
+    -fx-fit-width: 200;
+    -fx-fit-height: 150;
+}
+.auction-title {
+    -fx-font-size: -cloud-text-2xl; 
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading; 
+    -fx-padding: 10 15 5 15;
+}
+
+.auction-description {
+    -fx-font-size: -cloud-text-xl; 
+    -fx-text-fill: -cloud-text-secondary; 
+}

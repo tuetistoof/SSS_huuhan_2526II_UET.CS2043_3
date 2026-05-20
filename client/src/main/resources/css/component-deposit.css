@@ -1,0 +1,61 @@
+/* ==========================================================
+   component-deposit-card.css — CloudBid Deposit Popover
+   Covers: Main dialog container, inner typography headers,
+           custom text field states, and contextual confirm buttons.
+   ========================================================== */
+
+.deposit-card {
+    -fx-background-color: -cloud-surface;
+    -fx-font-family: -cloud-font;
+    
+    -fx-background-radius: -cloud-radius-xl;
+    -fx-border-radius: -cloud-radius-xl;
+    -fx-padding: 25;
+    
+    -fx-effect: -cloud-shadow-rose;
+}
+
+.deposit-title {
+    -fx-font-size: -cloud-text-xl;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-rose;   
+}
+
+.deposit-field {
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-radius: -cloud-radius-md;
+    
+    -fx-border-color: -cloud-rose-border;
+    -fx-background-color: -cloud-rose-light;
+    
+    -fx-border-width: 1;
+    -fx-padding: 10;
+    -fx-font-size: -cloud-text-lg; 
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.deposit-field:focused {
+    -fx-border-color: -cloud-rose;      
+    -fx-background-color: -cloud-surface; 
+}
+
+.btn-deposit-confirm {
+    -fx-background-color: -cloud-rose; 
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-padding: 10 25 10 25;
+    -fx-cursor: hand;
+    
+    -fx-effect: dropshadow(three-pass-box, rgba(206, 90, 130, 0.25), 6, 0, 0, 1.5);
+}
+
+.btn-deposit-confirm:hover {
+    -fx-background-color: -cloud-rose-dark; 
+}
+
+.btn-deposit-confirm:pressed {
+    -fx-background-color: -cloud-rose-deeper;
+    -fx-scale-x: 0.97; 
+    -fx-scale-y: 0.97;
+}

@@ -1,0 +1,155 @@
+/* ==========================================================
+   screen-login.css — Login & Sign-up Screen
+   Covers: background, card, form inputs, buttons, combos,
+           checkbox, create-auction step wizard shared styles.
+   ========================================================== */
+
+/* =========================================
+   BACKGROUND
+   ========================================= */
+.bg-login-signup {
+    -fx-background-image: url("../images/BPbg2.png");
+    -fx-background-size: cover;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center center;
+}
+
+.cloud-side {
+    -fx-background-image: url("../images/frame2.png");
+    -fx-background-size: cover;
+    -fx-background-position: left center;
+}
+
+/* =========================================
+   CARD
+   ========================================= */
+.main-card {
+    -fx-effect: -cloud-shadow-login;
+    -fx-background-radius: -cloud-radius-xl;
+}
+
+.form-white-side {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 0 15 15 0;
+    -fx-padding: 50 60 50 60;
+}
+
+/* =========================================
+   TYPOGRAPHY
+   ========================================= */
+.signup-form-txt-font {
+    -fx-font-family: -cloud-font-alt;
+    -fx-font-size: -cloud-text-xl;
+    -fx-text-fill: #333333;
+    -fx-padding: 15 0 10 0;
+}
+
+/* =========================================
+   INPUT FIELDS
+   ========================================= */
+.input-field {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border-mid;
+    -fx-border-width: 1.5px;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-padding: 12 15 12 15;
+    -fx-font-family: -cloud-font-alt;
+    -fx-font-size: -cloud-text-lg;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+.input-field:focused {
+    -fx-border-color: -cloud-primary;
+    -fx-background-color: #fffafa;
+    -fx-border-width: 2px;
+}
+.input-error {
+    -fx-border-color: #dc493a !important;
+    -fx-border-width: 2px !important;
+    -fx-background-color: #fff0f0;
+}
+
+/* =========================================
+   CHECKBOX
+   ========================================= */
+.check-box .box {
+    -fx-background-color: transparent;
+    -fx-border-color: #333333;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 3px;
+}
+.check-box:selected .mark {
+    -fx-background-color: #003366;
+}
+
+/* =========================================
+   COMBO BOX
+   ========================================= */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: -cloud-border-mid;
+    -fx-border-radius: -cloud-radius-sm;
+    -fx-background-radius: -cloud-radius-sm;
+    -fx-padding: 2px 5px;
+}
+.combo-box:hover {
+    -fx-border-color: -cloud-primary;
+}
+
+/* =========================================
+   PRIMARY BUTTON (Login / Sign Up)
+   ========================================= */
+.btn {
+    -fx-pref-height: 50px;
+    -fx-pref-width: 350px;
+    -fx-padding: 15 50 15 50;
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: WHITE;
+    -fx-font-family: -cloud-font-alt;
+    -fx-font-size: -cloud-text-xl;
+    -fx-font-weight: bold;
+    -fx-background-radius: -cloud-radius-sm;
+    -fx-cursor: hand;
+}
+.btn:pressed {
+    -fx-background-color: -cloud-primary-dark;
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* =========================================
+   CLEAN LINK
+   ========================================= */
+.link-clean {
+    -fx-focus-color: transparent;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-underline: false;
+}
+.link-clean:hover {
+    -fx-text-fill: -cloud-primary;
+}
+
+/* =========================================
+   CREATE AUCTION STEP WIZARD
+   (shared on login screens / onboarding)
+   ========================================= */
+.create-auction-form {
+    -fx-background-color: white;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 0);
+}
+.side-auction-form {
+    -fx-border-color: -cloud-primary;
+    -fx-border-width: 2.5px;
+    -fx-border-radius: -cloud-radius-lg;
+}
+
+.active-step .circle {
+    -fx-fill: -cloud-primary;
+    -fx-background-color: -cloud-primary;
+}
+.active-step .label {
+    -fx-text-fill: -cloud-primary;
+    -fx-font-weight: bold;
+}

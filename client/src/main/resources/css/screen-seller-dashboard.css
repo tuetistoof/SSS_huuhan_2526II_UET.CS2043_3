@@ -1,0 +1,206 @@
+/* ==========================================================
+   screen-seller-dashboard.css — Seller & Bidder Dashboard
+   Covers: Root layout, main content, metric cards, 
+           action boxes, charts, and data tables.
+   ========================================================== */
+
+/* =========================================================
+   ROOT & MAIN LAYOUT
+   ========================================================= */
+.seller-root {
+    -fx-background-color: -cloud-bg;
+    -fx-font-family: -cloud-font;
+}
+
+.main-content {
+    -fx-background-color: -cloud-bg;
+}
+
+.page-title {
+    -fx-font-size: -cloud-text-xl;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+/* =========================================================
+   DASHBOARD BANNER / DECORATIVE CARDS
+   ========================================================= */
+/* Thay thế tone hồng cứng #f2a8b0 cũ bằng biến Rose sang trọng */
+.dashboard-card {
+    -fx-background-color: -cloud-rose-border;
+    -fx-background-radius: -cloud-radius-lg;
+}
+
+/* =========================================================
+   METRIC CARDS (Thẻ chỉ số)
+   ========================================================= */
+.metric-card {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-effect: -cloud-shadow-card;
+}
+
+.metric-value-green { 
+    -fx-font-size: -cloud-text-3xl; 
+    -fx-font-weight: bold; 
+    -fx-text-fill: -cloud-success-text; 
+}
+
+.metric-value-red { 
+    -fx-font-size: -cloud-text-3xl; 
+    -fx-font-weight: bold; 
+    -fx-text-fill: -cloud-danger-text; 
+}
+
+.metric-label {
+    -fx-font-size: -cloud-text-sm;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+/* =========================================================
+   QUICK ACTION BOX / SUMMARY CONTAINERS
+   ========================================================= */
+.action-box {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-effect: -cloud-shadow-sm;
+    -fx-padding: 14;
+}
+
+.action-box-title {
+    -fx-font-size: -cloud-text-md;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* =========================================================
+   CHARTS MANAGEMENT (Đồng bộ với screen-bidding-room)
+   ========================================================= */
+.dashboard-chart {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-effect: -cloud-shadow-card;
+    -fx-padding: 16;
+}
+
+.dashboard-chart .chart-plot-background {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+.dashboard-chart .chart-vertical-grid-lines,
+.dashboard-chart .chart-horizontal-grid-lines {
+    -fx-stroke: -cloud-border;
+}
+
+.dashboard-chart .axis {
+    -fx-tick-label-font-size: -cloud-text-xs;
+    -fx-tick-label-fill: -cloud-text-secondary;
+}
+
+.dashboard-chart .axis-label {
+    -fx-text-fill: -cloud-text-muted;
+    -fx-font-size: -cloud-text-sm;
+}
+
+/* =========================================================
+   DATA TABLE — AUCTION LISTS
+   ========================================================= */
+.auction-table {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+}
+
+.auction-table .column-header-background {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-insets: 0;
+}
+
+.auction-table .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -cloud-border-mid transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-size: 40px;
+}
+
+.auction-table .column-header .label {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 8;
+}
+
+.auction-table .filler {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: transparent transparent -cloud-border-mid transparent;
+    -fx-border-width: 0 0 1.5 0;
+}
+
+.auction-table .table-row-cell {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 44px;
+}
+
+.auction-table .table-row-cell:hover { 
+    -fx-background-color: -cloud-primary-light; 
+}
+
+.auction-table .table-row-cell:selected { 
+    -fx-background-color: -cloud-surface; 
+}
+
+.auction-table .table-row-cell:selected:hover { 
+    -fx-background-color: -cloud-primary-light; 
+}
+
+.auction-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 6 0 8;
+    -fx-font-size: -cloud-text-base;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: transparent;
+}
+
+/* =========================================================
+   ROW ACTION BUTTONS (Nút xem chi tiết trong Table)
+   ========================================================= */
+.btn-view-row {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-border-color: transparent;
+    -fx-background-radius: -cloud-radius-sm;
+    -fx-font-size: -cloud-text-sm;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-cursor: hand;
+    -fx-effect: -cloud-shadow-sm;
+}
+
+.btn-view-row:hover {
+    -fx-background-color: -cloud-primary-dark;
+    -fx-effect: -cloud-shadow-primary;
+}
+
+.btn-view-row:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+    -fx-background-color: -cloud-primary-deeper;
+}
+
+/* CHẶN ĐỨT lỗi nút bị đổi sang màu trắng/xám ăn theo khi click vào Row */
+.auction-table .table-row-cell:selected .btn-view-row {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+}
+
+.auction-table .table-row-cell:selected .btn-view-row:hover {
+    -fx-background-color: -cloud-primary-dark;
+}

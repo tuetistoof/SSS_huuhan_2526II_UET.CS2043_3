@@ -1,0 +1,84 @@
+/* ==========================================================
+   Covers: Toast root alignment, main layout card container,
+           header layouts, icon circle vectors, typography text,
+           and the interactive close button.
+   ========================================================== */
+
+
+.toast-root {
+    -fx-alignment: TOP_RIGHT;
+    -fx-padding: 16 16 0 0;
+}
+
+.toast-card {
+    -fx-background-color: -cloud-surface;
+    
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-border-radius: -cloud-radius-lg;
+    
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    
+    -fx-effect: -cloud-shadow-lg;
+    
+    -fx-min-width: 280;
+    -fx-max-width: 320;
+}
+
+.toast-header {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.toast-icon-wrap {
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 28;
+    -fx-max-height: 28;
+}
+
+.toast-icon-circle {
+    -fx-fill: -cloud-primary-light;
+    -fx-stroke: -cloud-primary;
+    -fx-stroke-width: 1.5;
+}
+
+.toast-body {
+    -fx-padding: 0 16 16 16;
+}
+
+.toast-title {
+    -fx-font-family: -cloud-font;
+    -fx-font-size: -cloud-text-base; 
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary; 
+}
+
+.toast-subtitle {
+    -fx-font-family: -cloud-font;
+    -fx-font-size: -cloud-text-sm; 
+    -fx-text-fill: -cloud-text-placeholder; 
+}
+
+.toast-close-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -cloud-text-light;
+    -fx-font-size: -cloud-text-base;  
+    -fx-padding: 4 6 4 6;
+    -fx-background-radius: -cloud-radius-full; 
+    -fx-cursor: hand;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+}
+
+.toast-close-btn:hover {
+    -fx-background-color: -cloud-surface-alt; 
+    -fx-text-fill: -cloud-primary;    
+}
+
+.toast-close-btn:pressed {
+    -fx-scale-x: 0.95; 
+    -fx-scale-y: 0.95;
+}

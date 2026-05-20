@@ -1,0 +1,226 @@
+/* ==========================================================
+   screen-create-auction.css — CloudBid Create Auction Wizard
+   Covers: Wizard Shell, Left Navigation Sidebar, Steps Indicator,
+           Form Layouts, Section Divisions, Images Upload Box,
+           and Wizard Context Action Buttons.
+   ========================================================== */
+
+/* =========================================================
+   WIZARD OUTER SHELL (Khung ngoài bao bọc biểu mẫu)
+   ========================================================= */
+.wizard-shell {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: -cloud-radius-lg;
+    -fx-effect: -cloud-shadow-card;
+}
+
+.auction-card-title {
+    -fx-font-size: -cloud-text-lg;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+/* =========================================================
+   LEFT NAVIGATION SIDEBAR (Cột danh sách các bước bên trái)
+   ========================================================= */
+.wizard-nav {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-padding: 45 20 28 20;
+    -fx-pref-width: 250;
+    -fx-min-width: 250;
+    -fx-max-width: 250;
+    -fx-border-color: transparent -cloud-border transparent transparent;
+    -fx-border-width: 0 0.5 0 0;
+    -fx-spacing: 20;
+}
+
+/* ── Từng dòng bước (Step Container) ── */
+.wizard-step-row {
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-padding: 6 10 6 10;
+}
+
+/* ── Vòng tròn số (Step Badge/Circle) ── */
+.wizard-step-circle {
+    -fx-min-width: 26;
+    -fx-max-width: 26;
+    -fx-min-height: 26;
+    -fx-max-height: 26;
+    -fx-background-radius: -cloud-radius-full;
+    -fx-alignment: center;
+    
+    /* Mặc định: Trạng thái chưa tới (Inflow / Pending) */
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+}
+
+.wizard-step-num {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.wizard-step-label {
+    -fx-font-size: -cloud-text-md;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* ── TRẠNG THÁI BƯỚC ĐANG HOẠT ĐỘNG (:active) ── */
+.wizard-step-row:active .wizard-step-circle {
+    -fx-background-color: -cloud-primary;
+    -fx-border-color: -cloud-primary;
+}
+
+.wizard-step-row:active .wizard-step-num {
+    -fx-text-fill: -cloud-surface;
+}
+
+.wizard-step-row:active .wizard-step-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* =========================================================
+   FORM MAIN CONTENT AREA (Khu vực biểu mẫu bên phải)
+   ========================================================= */
+.wizard-content {
+    -fx-background-color: -cloud-surface;
+    -fx-padding: 30 40 30 40;
+}
+
+/* ── Phân đoạn nhỏ trong Form (Subsection Wrapper) ── */
+.wizard-subsection {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-padding: 14 16 14 16;
+    -fx-spacing: 10;
+}
+
+.wizard-subsection-title {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.form-label-bold {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* =========================================================
+   IMAGE UPLOAD COMPONENT (Khu vực tải lên ảnh tài sản)
+   ========================================================= */
+.image-upload-box {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+    -fx-border-style: dashed;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-padding: 24;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+/* Hiệu ứng kéo thả hoặc di chuột vào vùng tải ảnh */
+.image-upload-box:hover {
+    -fx-background-color: -cloud-primary-light;
+    -fx-border-color: -cloud-primary;
+}
+
+.upload-icon-label {
+    -fx-font-size: -cloud-text-3xl;
+    -fx-text-fill: -cloud-text-light;
+}
+.image-upload-box:hover .upload-icon-label {
+    -fx-text-fill: -cloud-primary;
+}
+
+.upload-text-main {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.upload-text-sub {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-text-light;
+}
+
+/* ── Thẻ hiển thị Preview ảnh đã chọn ── */
+.image-preview-thumbnail {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-sm;
+    -fx-background-radius: -cloud-radius-sm;
+    -fx-padding: 4;
+}
+
+/* =========================================================
+   CONTEXT CONTEXT WIZARD NAVIGATION BUTTONS
+   ========================================================= */
+
+/* ── Nút "Quay lại" / "Trở về" (Secondary Style) ── */
+.btn-wizard-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8 24 8 24;
+}
+
+.btn-wizard-secondary:hover {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-text-primary;
+}
+
+.btn-wizard-secondary:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* ── Nút "Tiếp tục" / "Xác nhận tạo" (Primary Style) ── */
+.btn-wizard-primary {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 8 24 8 24;
+    -fx-effect: -cloud-shadow-primary;
+}
+
+.btn-wizard-primary:hover {
+    -fx-background-color: -cloud-primary-dark;
+}
+
+.btn-wizard-primary:pressed {
+    -fx-background-color: -cloud-primary-deeper;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.btn-wizard-primary:disabled {
+    -fx-background-color: -cloud-border-strong;
+    -fx-opacity: 0.55;
+    -fx-cursor: default;
+    -fx-effect: none;
+}

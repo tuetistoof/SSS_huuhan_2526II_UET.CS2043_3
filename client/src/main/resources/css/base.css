@@ -1,0 +1,319 @@
+/* ── Focus ring ẩn toàn cục ── */
+.button:focused,
+.toggle-button:focused,
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+ 
+.btn-primary {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-family: -cloud-font;
+    -fx-font-weight: bold;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: -cloud-shadow-primary;
+}
+.btn-primary:hover   { 
+    -fx-background-color: -cloud-primary-dark; }
+.btn-primary:pressed { 
+    -fx-background-color: -cloud-primary-deeper;
+    -fx-scale-x: 0.97; -fx-scale-y: 0.97; }
+.btn-primary:disabled {
+    -fx-opacity: 0.55; 
+    -fx-cursor: default; 
+}
+ 
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-primary;
+    -fx-border-width: 1.5;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-text-fill: -cloud-primary;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.btn-secondary:hover { -fx-background-color: -cloud-primary-light; }
+ 
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-cursor: hand;
+    -fx-background-radius: -cloud-radius-md;
+}
+.btn-ghost:hover { -fx-background-color: -cloud-bg; }
+ 
+.btn-danger-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-cursor: hand;
+}
+.btn-danger-outline:hover {
+    -fx-background-color: -cloud-bg;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-text-primary;
+}
+
+/* ==========================================================
+   INPUT FIELDS
+   ========================================================== */
+ 
+.input-field {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border-mid;
+    -fx-border-width: 1.5;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-padding: 10 12 10 12;
+    -fx-font-family: -cloud-font;
+    -fx-font-size: -cloud-text-lg;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+.input-field:focused {
+    -fx-border-color: -cloud-primary;
+    -fx-border-width: 2;
+    -fx-background-color: #fffafa;
+}
+.input-field.input-error {
+    -fx-border-color: -cloud-danger-text;
+    -fx-border-width: 2;
+    -fx-background-color: -cloud-danger-bg;
+}
+
+/* ==========================================================
+   SURFACE CARDS
+   ========================================================== */
+ 
+.surface-card {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-effect: -cloud-shadow-card;
+}
+ 
+.surface-card-bordered {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: -cloud-radius-lg;
+    -fx-effect: -cloud-shadow-card;
+}
+
+/* ==========================================================
+   STATUS BADGES — dùng chung mọi screen
+   ========================================================== */
+ 
+.badge {
+    -fx-background-radius: 20;
+    -fx-font-family: -cloud-font;
+    -fx-font-size: -cloud-text-sm;
+    -fx-font-weight: bold;
+    -fx-padding: 3 10 3 10;
+}
+.badge-running  { 
+    -fx-background-color: -cloud-success-bg-alt; 
+    -fx-text-fill: -cloud-success-text-alt; 
+}
+.badge-open     { 
+    -fx-background-color: -cloud-info-bg-alt;    
+    -fx-text-fill: -cloud-info-text-alt; 
+}
+.badge-finished { 
+    -fx-background-color: -cloud-danger-bg;      
+    -fx-text-fill: -cloud-danger-text; 
+}
+.badge-canceled { 
+    -fx-background-color: #f1f1f1;               
+    -fx-text-fill: -cloud-text-muted; 
+}
+.badge-outbid   { 
+    -fx-background-color: -cloud-warn-bg;        
+    -fx-text-fill: -cloud-warn-text; 
+}
+.badge-winning  { 
+    -fx-background-color: -cloud-primary-pale;   
+    -fx-text-fill: -cloud-primary-deeper; 
+}
+
+/* ==========================================================
+   SCROLLBAR SLIM — áp lên ScrollPane qua styleClass
+   ========================================================== */
+ 
+.slim-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+.slim-scroll > .viewport { 
+    -fx-background-color: transparent; 
+}
+ 
+.slim-scroll .scroll-bar:vertical {
+    -fx-pref-width: 6;
+    -fx-background-color: transparent;
+}
+.slim-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #cccccc;
+    -fx-background-radius: 3;
+}
+.slim-scroll .scroll-bar:vertical .thumb:hover { 
+    -fx-background-color: #aaaaaa; 
+}
+.slim-scroll .scroll-bar .increment-button,
+.slim-scroll .scroll-bar .decrement-button {
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+    -fx-opacity: 0;
+}
+.slim-scroll .scroll-bar .track { 
+    -fx-background-color: transparent; 
+}
+
+/* ==========================================================
+   TABLE VIEW — shared style
+   ========================================================== */
+ 
+.data-table {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+}
+.data-table .column-header-background {
+    -fx-background-color: -cloud-rose-light;
+    -fx-background-insets: 0;
+}
+.data-table .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -cloud-rose-border transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-size: 42px;
+}
+.data-table .column-header .label {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 10;
+}
+.data-table .filler {
+    -fx-background-color: -cloud-rose-light;
+    -fx-border-color: transparent transparent -cloud-rose-border transparent;
+    -fx-border-width: 0 0 1.5 0;
+}
+.data-table .table-row-cell {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent #f5f0f0 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 46px;
+}
+.data-table .table-row-cell:hover  { -fx-background-color: -cloud-primary-light; }
+.data-table .table-row-cell:selected       { -fx-background-color: -cloud-surface; }
+.data-table .table-row-cell:selected:hover { -fx-background-color: -cloud-primary-light; }
+.data-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 6 0 10;
+    -fx-font-size: -cloud-text-base;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: transparent;
+}
+.data-table .table-row-cell:selected .table-cell { -fx-text-fill: -cloud-text-primary; }
+.data-table .table-placeholder {
+    -fx-font-size: -cloud-text-base;
+    -fx-text-fill: -cloud-text-light;
+}
+ 
+/* ── Nút trong row table ── */
+.btn-table-action {
+    -fx-background-color: -cloud-primary-dark;
+    -fx-text-fill: -cloud-surface;
+    -fx-border-color: transparent;
+    -fx-background-radius: -cloud-radius-sm;
+    -fx-font-size: -cloud-text-sm;
+    -fx-font-weight: bold;
+    -fx-padding: 4 14 4 14;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-cursor: hand;
+    -fx-effect: -cloud-shadow-sm;
+}
+.btn-table-action:hover   { -fx-background-color: -cloud-primary-deeper; }
+.btn-table-action:pressed { -fx-scale-x: 0.96; -fx-scale-y: 0.96; }
+/* Chặn row selection đổi màu nút */
+.data-table .table-row-cell:selected .btn-table-action       { -fx-background-color: -cloud-primary-dark; }
+.data-table .table-row-cell:selected .btn-table-action:hover { -fx-background-color: -cloud-primary-deeper; }
+ 
+/* ==========================================================
+   TYPOGRAPHY HELPERS
+   ========================================================== */
+ 
+.text-primary   { -fx-text-fill: -cloud-text-primary; }
+.text-secondary { -fx-text-fill: -cloud-text-secondary; }
+.text-muted     { -fx-text-fill: -cloud-text-muted; }
+.text-accent    { -fx-text-fill: -cloud-primary; }
+.text-rose      { -fx-text-fill: -cloud-rose; }
+.text-bold      { -fx-font-weight: bold; }
+.text-sm        { -fx-font-size: -cloud-text-sm; }
+.text-base      { -fx-font-size: -cloud-text-base; }
+.text-lg        { -fx-font-size: -cloud-text-lg; }
+.text-xl        { -fx-font-size: -cloud-text-xl; }
+ 
+.section-title {
+    -fx-font-size: -cloud-text-md;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+.section-subtitle {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-text-muted;
+}
+.empty-state-label {
+    -fx-font-size: -cloud-text-md;
+    -fx-text-fill: -cloud-text-light;
+    -fx-font-style: italic;
+}
+.error-label {
+    -fx-font-size: -cloud-text-sm;
+    -fx-text-fill: -cloud-rose;
+    -fx-font-weight: bold;
+}
+ 
+/* ==========================================================
+   LOADING SPINNER
+   ========================================================== */
+ 
+.loading-spinner {
+    -fx-fill: transparent;
+    -fx-stroke: -cloud-primary-dark;
+    -fx-stroke-width: 4;
+    -fx-stroke-line-cap: round;
+}
+ 
+/* ==========================================================
+   NOTIFICATION BADGE (topbar bell)
+   ========================================================== */
+ 
+.notification-badge {
+    -fx-background-color: #ff3b30;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-background-radius: -cloud-radius-full;
+    -fx-min-width: 12px;  -fx-max-width: 12px;
+    -fx-min-height: 12px; -fx-max-height: 12px;
+    -fx-translate-x: 6px;
+    -fx-translate-y: 6px;
+}
