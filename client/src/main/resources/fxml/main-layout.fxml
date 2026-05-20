@@ -13,10 +13,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<StackPane styleClass="main-root" stylesheets="@../css/styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.shared.MainLayoutController">
+<StackPane styleClass="main-root" stylesheets="@../css/main-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.shared.MainLayoutController">
    <children>
-      <BorderPane stylesheets="@../css/styles.css">
-      
+      <BorderPane>
           <top>
               <HBox alignment="CENTER_LEFT" spacing="15" styleClass="top-bar">
                <Button contentDisplay="CENTER" mnemonicParsing="false" onAction="#toggleSidebar" styleClass="circular-menu-btn">
@@ -49,10 +48,11 @@
                <Label fx:id="lblAccountBalance" styleClass="header-balance-label" text="Account Balance: " />
                <Label fx:id="lblLockBalance" styleClass="header-balance-label" text="Label" />
                <Label fx:id="lblAvailableBalance" styleClass="header-balance-label" text="Label" />
+               <Button fx:id="btnToggleTheme" mnemonicParsing="false" onAction="#handleToggleTheme" prefHeight="30.0" styleClass="btn-secondary" text="Dark" />
                <Button mnemonicParsing="false" onAction="#handleDeposit" prefHeight="30.0" styleClass="btn-primary" text="Deposit" />
                <StackPane>
                   <children>
-                     <Button fx:id="btnBell" mnemonicParsing="false" onAction="#handleBell" style="-fx-background-color: transparent;">
+                     <Button fx:id="btnBell" mnemonicParsing="false" onAction="#handleBell" styleClass="btn-ghost">
                         <graphic>
                            <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                               <image>

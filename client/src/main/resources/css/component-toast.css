@@ -1,3 +1,5 @@
+@import "tokens.css";
+@import "base.css";
 /* ==========================================================
    Covers: Toast root alignment, main layout card container,
            header layouts, icon circle vectors, typography text,
@@ -81,4 +83,39 @@
 .toast-close-btn:pressed {
     -fx-scale-x: 0.95; 
     -fx-scale-y: 0.95;
+}
+.toast-icon-check {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-primary;
+}
+
+.toast-label {
+    -fx-font-family: -cloud-font;
+    -fx-font-size: -cloud-text-sm;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.toast-amount {
+    -fx-font-family: -cloud-font;
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-primary;
+}
+
+.toast-progress {
+    -fx-accent: -cloud-primary;
+    -fx-background-color: transparent;
+}
+
+.toast-progress > .track {
+    -fx-background-color: -cloud-primary-light;
+    -fx-background-radius: 0 0 -cloud-radius-lg -cloud-radius-lg;
+}
+
+.toast-progress > .bar {
+    -fx-background-color: -cloud-primary;
+    -fx-background-radius: 0 0 -cloud-radius-lg -cloud-radius-lg;
+    -fx-background-insets: 0;
+    -fx-padding: 0.18em;
 }

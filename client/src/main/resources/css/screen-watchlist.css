@@ -1,3 +1,5 @@
+@import "tokens.css";
+@import "base.css";
 /* ==========================================================
    screen-watchlist.css — CloudBid Watchlist Screen
    Covers: Header cards, layout containers, empty states,
@@ -167,6 +169,66 @@
 }
 
 .wl-btn-remove:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+
+.wl-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.wl-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.wl-list {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.wl-row {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-effect: -cloud-shadow-card;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-padding: 12;
+}
+
+.wl-row:hover {
+    -fx-effect: -cloud-shadow-md;
+    -fx-border-color: -cloud-border-mid;
+}
+
+.wl-thumb {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: -cloud-radius-md;
+}
+
+.wl-btn-unfollow {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-text-fill: -cloud-text-muted;
+    -fx-font-size: -cloud-text-base;
+    -fx-cursor: hand;
+}
+
+.wl-btn-unfollow:hover {
+    -fx-background-color: -cloud-danger-bg;
+    -fx-text-fill: -cloud-danger-text;
+    -fx-border-color: -cloud-danger-badge;
+}
+
+.wl-btn-unfollow:pressed {
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
 }

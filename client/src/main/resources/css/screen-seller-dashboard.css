@@ -1,3 +1,5 @@
+@import "tokens.css";
+@import "base.css";
 /* ==========================================================
    screen-seller-dashboard.css — Seller & Bidder Dashboard
    Covers: Root layout, main content, metric cards, 
@@ -203,4 +205,87 @@
 
 .auction-table .table-row-cell:selected .btn-view-row:hover {
     -fx-background-color: -cloud-primary-dark;
+}
+
+.bdd-root {
+    -fx-background-color: -cloud-bg;
+    -fx-font-family: -cloud-font;
+}
+
+.metric-value-dash,
+.metric-value-bank {
+    -fx-font-size: -cloud-text-2xl;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.metric-sub {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.metric-sub-green {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-success-text;
+}
+
+.metric-sub-red {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-danger-text;
+}
+
+.metric-action-link {
+    -fx-text-fill: -cloud-primary;
+    -fx-font-size: -cloud-text-xs;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.metric-action-link:hover {
+    -fx-text-fill: -cloud-primary-dark;
+    -fx-underline: true;
+}
+
+.content-area {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-lg;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: -cloud-radius-lg;
+    -fx-effect: -cloud-shadow-card;
+}
+
+.tab-bar {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: -cloud-radius-lg -cloud-radius-lg 0 0;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-border-width: 0 0 0.5 0;
+    -fx-padding: 4 4 0 4;
+}
+
+.tab-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: -cloud-radius-md -cloud-radius-md 0 0;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20;
+    -fx-cursor: hand;
+}
+
+.tab-btn:hover {
+    -fx-background-color: -cloud-primary-light;
+    -fx-text-fill: -cloud-primary;
+}
+
+.tab-btn:selected {
+    -fx-background-color: -cloud-surface;
+    -fx-text-fill: -cloud-primary;
+    -fx-border-color: transparent transparent -cloud-primary transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.table-placeholder {
+    -fx-font-size: -cloud-text-base;
+    -fx-text-fill: -cloud-text-muted;
 }

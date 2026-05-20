@@ -1,0 +1,91 @@
+/* ==========================================================
+   tokens-dark.css - CloudBid Dark Theme Token Overrides
+   Apply by adding the "theme-dark" style class to the scene root.
+   This file intentionally overrides only design tokens.
+   ========================================================== */
+
+.root.theme-dark {
+
+    /* Brand / Primary */
+    -cloud-primary:          #fb7185;
+    -cloud-primary-dark:     #f43f5e;
+    -cloud-primary-deeper:   #e11d48;
+    -cloud-primary-light:    rgba(251, 113, 133, 0.16);
+    -cloud-primary-pale:     rgba(251, 113, 133, 0.22);
+
+    /* Rose */
+    -cloud-rose:             #f472b6;
+    -cloud-rose-dark:        #ec4899;
+    -cloud-rose-deeper:      #db2777;
+    -cloud-rose-deepest:     #be185d;
+    -cloud-rose-bg:          rgba(244, 114, 182, 0.14);
+    -cloud-rose-border:      rgba(244, 114, 182, 0.36);
+    -cloud-rose-light:       rgba(244, 114, 182, 0.18);
+
+    /* Neutrals */
+    -cloud-bg:               #0f172a;
+    -cloud-surface:          #172033;
+    -cloud-surface-alt:      #202b3f;
+    -cloud-border:           #2f3b52;
+    -cloud-border-mid:       #44516a;
+    -cloud-border-strong:    #667085;
+
+    /* Text */
+    -cloud-text-primary:     #f8fafc;
+    -cloud-text-heading:     #ffffff;
+    -cloud-text-secondary:   #d7dde8;
+    -cloud-text-muted:       #aab4c5;
+    -cloud-text-placeholder: #8f9bad;
+    -cloud-text-disabled:    #687386;
+    -cloud-text-light:       #778397;
+
+    /* Semantic: success */
+    -cloud-success-bg:       rgba(34, 197, 94, 0.16);
+    -cloud-success-bg-alt:   rgba(34, 197, 94, 0.20);
+    -cloud-success-text:     #86efac;
+    -cloud-success-text-alt: #4ade80;
+    -cloud-success-badge:    #22c55e;
+    -cloud-success-dark:     #14532d;
+
+    /* Semantic: info */
+    -cloud-info-bg:          rgba(59, 130, 246, 0.16);
+    -cloud-info-bg-alt:      rgba(59, 130, 246, 0.20);
+    -cloud-info-text:        #93c5fd;
+    -cloud-info-text-alt:    #60a5fa;
+    -cloud-info-badge:       #3b82f6;
+    -cloud-info-dark:        #1e3a8a;
+
+    /* Semantic: warning */
+    -cloud-warn-bg:          rgba(245, 158, 11, 0.16);
+    -cloud-warn-text:        #fbbf24;
+    -cloud-warn-text-mild:   #f59e0b;
+
+    /* Semantic: danger */
+    -cloud-danger-bg:        rgba(239, 68, 68, 0.16);
+    -cloud-danger-text:      #fca5a5;
+    -cloud-danger-text-alt:  #f87171;
+    -cloud-danger-badge:     #ef4444;
+
+    /* Shadows */
+    -cloud-shadow-sm:        dropshadow(three-pass-box, rgba(0,0,0,0.22), 6, 0, 0, 2);
+    -cloud-shadow-md:        dropshadow(three-pass-box, rgba(0,0,0,0.32), 12, 0, 0, 4);
+    -cloud-shadow-card:      dropshadow(three-pass-box, rgba(0,0,0,0.28), 8, 0, 0, 2);
+    -cloud-shadow-lg:        dropshadow(three-pass-box, rgba(0,0,0,0.45), 20, 0, 0, 10);
+    -cloud-shadow-login:     dropshadow(three-pass-box, rgba(0,0,0,0.45), 20, 0, 0, 10);
+    -cloud-shadow-rose:      dropshadow(three-pass-box, rgba(244,114,182,0.22), 15, 0, 0, 8);
+    -cloud-shadow-primary:   dropshadow(three-pass-box, rgba(251,113,133,0.24), 6, 0, 0, 1.5);
+}
+
+.root.theme-dark .text-field,
+.root.theme-dark .password-field,
+.root.theme-dark .text-area,
+.root.theme-dark .combo-box,
+.root.theme-dark .date-picker {
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+
+.root.theme-dark .table-view,
+.root.theme-dark .list-view,
+.root.theme-dark .scroll-pane {
+    -fx-background-color: -cloud-surface;
+}

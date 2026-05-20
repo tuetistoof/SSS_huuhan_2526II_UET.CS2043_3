@@ -1,4 +1,6 @@
-/* ==========================================================
+
+@import "tokens.css";
+@import "base.css";/* ==========================================================
    screen-create-auction.css — CloudBid Create Auction Wizard
    Covers: Wizard Shell, Left Navigation Sidebar, Steps Indicator,
            Form Layouts, Section Divisions, Images Upload Box,
@@ -223,4 +225,104 @@
     -fx-opacity: 0.55;
     -fx-cursor: default;
     -fx-effect: none;
+}
+
+
+.wizard-nav-title {
+    -fx-font-size: -cloud-text-xl;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.step-row {
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-padding: 6 10 6 10;
+}
+
+.step-row > .stack-pane {
+    -fx-min-width: 26;
+    -fx-max-width: 26;
+    -fx-min-height: 26;
+    -fx-max-height: 26;
+    -fx-background-radius: -cloud-radius-full;
+    -fx-alignment: center;
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+}
+
+.step-num {
+    -fx-font-size: -cloud-text-base;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.step-label {
+    -fx-font-size: -cloud-text-md;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.step-sublabel {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.step-row-active > .stack-pane {
+    -fx-background-color: -cloud-primary;
+    -fx-border-color: -cloud-primary;
+}
+
+.step-row-active .step-num {
+    -fx-text-fill: -cloud-surface;
+}
+
+.step-row-active .step-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.wizard-input {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-padding: 8 10 8 10;
+    -fx-font-size: -cloud-text-base;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.wizard-input:focused {
+    -fx-border-color: -cloud-primary;
+    -fx-effect: dropshadow(three-pass-box, rgba(212,83,126,0.15), 4, 0, 0, 0);
+}
+
+.image-url-container {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: -cloud-radius-md;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: -cloud-radius-md;
+    -fx-padding: 12;
+}
+
+.url-input-field {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: -cloud-radius-sm;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: -cloud-radius-sm;
+    -fx-padding: 7 10 7 10;
+    -fx-font-size: -cloud-text-sm;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.url-input-field:focused {
+    -fx-border-color: -cloud-primary;
+}
+
+.noti-label {
+    -fx-font-size: -cloud-text-xs;
+    -fx-text-fill: -cloud-text-muted;
 }
