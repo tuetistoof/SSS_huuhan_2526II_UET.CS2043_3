@@ -144,7 +144,7 @@ public class AuctionListController implements MessageListener {
                     Platform.runLater(() -> {
                         for (AuctionDTO a : masterList) {
                             if (bid.getAuctionId().equals(a.getId())) {
-                                a.setCurrentPrice(bid.getCurrentPrice());
+                                a.getBidDto().add(bid);
                                 break;
                             }
                         }

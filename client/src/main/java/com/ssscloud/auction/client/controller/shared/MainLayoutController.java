@@ -240,7 +240,7 @@ public class MainLayoutController implements MessageListener {
         if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
         BidderDisplayDTO dummy = new BidderDisplayDTO();
         dummy.setId(auctionId);
-        loadBiddingRoom(dummy);
+        loadBiddingRoomAsBidder(dummy);
     }
 
     // --- Role-based UI visibility ---
@@ -335,7 +335,7 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navActiveBids);
         clearContent();
         ViewLoader.LoadResult<BiddedAuctionsListController> r = ViewLoader.load("bidded-auction-list.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
 
@@ -369,7 +369,7 @@ public class MainLayoutController implements MessageListener {
             switch (user.getRole()) {
                 case BIDDER -> {
                     BidderDashboardController ctrl = loader.getController();
-                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsBidder);
                     currentController = ctrl;
                 }
 
@@ -409,7 +409,7 @@ public class MainLayoutController implements MessageListener {
         contentArea.getChildren().add(r.root());
     }
 
-    public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
+    public void loadBiddingRoomAsBidder(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
         loadBiddingRoomGeneral(basicInfo.getId(), false);
     }
@@ -441,7 +441,7 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navWatchlist);
         clearContent();
         ViewLoader.LoadResult<WatchlistController> r = ViewLoader.load("watchlist.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
 

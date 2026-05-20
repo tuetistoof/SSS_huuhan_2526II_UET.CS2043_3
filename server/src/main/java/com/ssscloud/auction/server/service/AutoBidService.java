@@ -258,26 +258,6 @@ public class AutoBidService {
         }
     }
 
-    /**
-     * Convert BidTransaction to BidDTO for client response.
-     */
-    public BidDTO toBidDto(BidTransaction bidTransaction, long currentAuctionPrice) throws Exception {
-        try {
-            BidDTO bidDto = new BidDTO();
-            bidDto.setAuctionId(bidTransaction.getAuctionId());
-            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
-            bidDto.setBidAmount(bidTransaction.getBidAmount());
-            bidDto.setCurrentPrice(currentAuctionPrice);
-            bidDto.setBidTime(bidTransaction.getBidTime());
-            bidDto.setBidType(bidTransaction.getType().name());
-            return bidDto;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
-                    exception);
-            throw exception;
-        }
-    }
 
     // --- PRIVATE METHODS ---
 

@@ -128,13 +128,13 @@ public class BidController {
         try {
             logger.log(Level.INFO, "Cancelling auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
             String jsonPayload = JsonUtils.toJson(rawRequest);
-            AutoBidRequest autoBidRequest = JsonUtils.fromJson(jsonPayload, AutoBidRequest.class);
+            String auctionId = JsonUtils.fromJson(jsonPayload, String.class);
 
-            validateCancelAutoBidRequest(autoBidRequest);
+            validateCancelAutoBidRequest(auctionId);
 
-            boolean isCancel = autoBidService.removeRegistration(autoBidRequest.getAuctionId(), bidderId);
+            boolean isCancel = autoBidService.removeRegistration(auctionId, bidderId);
             if (isCancel){
-                return JsonUtils.toJson(ApiResponse.success("Auto-bid registration has been cancelled successfully."));
+                return JsonUtils.toJson(ApiResponse.success(isCancel, "Auto-bid registration has been cancelled successfully."));
             } else {
                 return JsonUtils.toJson(ApiResponse.error("Auto-bid registration cancellation failed."));
             }
@@ -195,12 +195,9 @@ public class BidController {
         }
     }
 
-    private void validateCancelAutoBidRequest(AutoBidRequest autoBidRequest) throws ControllerException {
+    private void validateCancelAutoBidRequest(String auctionId) throws ControllerException {
         try {
-            if (autoBidRequest == null) {
-                throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The cancel auto-bid request payload cannot be null.");
-            }
-            if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
+            if (auctionId == null || auctionId.isBlank()) {
                 throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to cancel auto-bid registration.");
             }
         } catch (ControllerException e) {

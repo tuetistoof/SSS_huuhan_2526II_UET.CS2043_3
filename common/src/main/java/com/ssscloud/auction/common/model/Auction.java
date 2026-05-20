@@ -1,5 +1,9 @@
 package com.ssscloud.auction.common.model;
 
+import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.dto.response.ItemDTO;
+import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
@@ -27,9 +31,11 @@ public class Auction implements Subject {
 
     // Lock riêng cho bidTransaction
     private final ReadWriteLock bidLock = new ReentrantReadWriteLock();
+
     public ReadWriteLock getBidLock() {
         return bidLock;
     }
+
     public Auction() {
         this.auctionConfig = null;
         this.bidTransaction = new ArrayList<>();
@@ -83,7 +89,7 @@ public class Auction implements Subject {
         }
     }
 
-    public BidTransaction getLastBidTransaction (){
+    public BidTransaction getLastBidTransaction() {
         bidLock.readLock().lock();
         try {
             if (!bidTransaction.isEmpty()) {
@@ -180,6 +186,30 @@ public class Auction implements Subject {
 
         try {
             return bidTransaction.size();
+        } finally {
+            bidLock.readLock().unlock();
+        }
+    }
+
+    public BidDTO toBidDtoForBidUpdate() {
+        bidLock.readLock().lock();
+
+        try {
+            BidTransaction bidTransaction = this.getLastBidTransaction();
+            if (bidTransaction == null) {
+                return null;
+            }
+
+            BidDTO bidDto = new BidDTO();
+            bidDto.setAuctionId(bidTransaction.getAuctionId());
+            bidDto.setBidderId(bidTransaction.getBidderId());
+            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
+            bidDto.setBidAmount(bidTransaction.getBidAmount());
+            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
+            bidDto.setBidTime(bidTransaction.getBidTime());
+            bidDto.setAntiSnipingEndTime(auctionConfig.getEndTime());
+            bidDto.setBidType(bidTransaction.getType().name());
+            return bidDto;
         } finally {
             bidLock.readLock().unlock();
         }

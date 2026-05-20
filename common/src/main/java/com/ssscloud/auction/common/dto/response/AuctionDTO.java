@@ -5,6 +5,7 @@ import com.ssscloud.auction.common.enums.BidType;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class AuctionDTO implements Serializable {
 
@@ -18,14 +19,10 @@ public class AuctionDTO implements Serializable {
     private LocalDateTime endTime;
     private AuctionStatus status;
 
-    private UserDTO userDTO;
+    private UserDTO sellerDTO;
     private ItemDTO itemDTO;
-
-    private String sellerName;
-    private long currentPrice;
-    private String highestBidderName;
-    private BidType highestBidType;
-    private int bidCount;
+    
+    private List <BidDTO> BidDto;
 
     public AuctionDTO() {
     }
@@ -53,7 +50,7 @@ public class AuctionDTO implements Serializable {
     }
     public LocalDateTime getStartTime() {
         return startTime;
-    }
+    }   
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
@@ -77,41 +74,27 @@ public class AuctionDTO implements Serializable {
     public void setItemDTO(ItemDTO itemDTO) {
         this.itemDTO = itemDTO;
     }
-    public UserDTO getUserDTO() {
-        return userDTO;
-    }
-    public void setUserDTO(UserDTO userDTO) {
-        this.userDTO = userDTO;
-    }
 
-
-    public long getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(long currentPrice) { this.currentPrice = currentPrice; }
-
-    public void setBidCount(int bidCount) {
-        this.bidCount = bidCount;
-    }
-    public int getBidCount() {
-        return bidCount;
-    }   
-
-    public void setHighestBidderName(String highestBidderName) {
-        this.highestBidderName = highestBidderName;
-    }
-    public String getHighestBidderName() {
-        return highestBidderName;
-    }
-    public BidType getHighestBidType() {
-        return highestBidType;
-    }
-    public void setHighestBidType(BidType highestBidType) {
-        this.highestBidType = highestBidType;
-    }
-
-    
 
     public long getMinIncrement(){return minIncrement;}
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
+
+    public List<BidDTO> getBidDto() {
+        return BidDto;
+    }
+    public void setBidDto(List<BidDTO> bidDto) {
+        BidDto = bidDto;
+    }
+    public UserDTO getSellerDTO() {
+        return sellerDTO;
+    }
+    public void setSellerDTO(UserDTO sellerDTO) {
+        this.sellerDTO = sellerDTO;
+    }
+
+    public BidDTO getLaseBidDTO(){
+        return BidDto.getLast();
+    }
 
     @Override
     public String toString() {
@@ -119,12 +102,8 @@ public class AuctionDTO implements Serializable {
             "id='"                + id                + '\'' +
             ", name='"            + name              + '\'' +
             ", startPrice="       + startPrice        +
-            ", currentPrice="     + currentPrice      +
             ", minIncrement="     + minIncrement      +
             ", status="           + status            +
-            ", sellerName='"      + sellerName        + '\'' +
-            ", highestBidder='"   + highestBidderName + '\'' +
-            ", bidCount="         + bidCount          +
             ", startTime="        + startTime         +
             ", endTime="          + endTime           +
             '}';

@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.service;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
@@ -28,6 +29,7 @@ import com.ssscloud.auction.server.util.SessionRegistry;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -339,16 +341,39 @@ public class AuctionService {
         auctionDto.setEndTime(auction.getAuctionConfig().getEndTime());
         auctionDto.setStatus(auction.getStatus());
 
-        auctionDto.setUserDTO(sellerDto);
+        List <BidTransaction> bidTransactions = auction.getBidTransaction();
+        List <BidDTO> bidDto = new ArrayList<>();
+        if (bidTransactions != null && !bidTransactions.isEmpty())
+            for (BidTransaction bidTransaction : bidTransactions) {
+                try {
+                    bidDto.add(toBidDto(bidTransaction));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        auctionDto.setBidDto(bidDto);
+        auctionDto.setSellerDTO(sellerDto);
         auctionDto.setItemDTO(itemDto);
-        BidTransaction lastBidTransaction = auction.getLastBidTransaction();
-
-        auctionDto.setCurrentPrice(lastBidTransaction.getBidAmount());
-        auctionDto.setHighestBidderName(lastBidTransaction.getBidderUsername());
-        auctionDto.setHighestBidType(lastBidTransaction.getType());
-        auctionDto.setBidCount(auction.getBidCount());
-
         return auctionDto;
+    }
+
+    public BidDTO toBidDto(BidTransaction bidTransaction) throws Exception {
+        try {
+            BidDTO bidDto = new BidDTO();
+            bidDto.setAuctionId(bidTransaction.getAuctionId());
+            bidDto.setBidderId(bidTransaction.getBidderId());
+            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
+            bidDto.setBidAmount(bidTransaction.getBidAmount());
+            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
+            bidDto.setBidTime(bidTransaction.getBidTime());
+            bidDto.setBidType(bidTransaction.getType().name());
+            return bidDto;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
+                    exception);
+            throw exception;
+        }
     }
 
     private void validateCreateAuctionRequest(CreateAuctionRequest request, String sellerId) throws ServiceException {
