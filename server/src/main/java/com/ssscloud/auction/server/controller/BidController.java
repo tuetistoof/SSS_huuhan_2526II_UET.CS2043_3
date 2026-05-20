@@ -8,6 +8,7 @@ import com.ssscloud.auction.common.dto.request.AutoBidRequest;
 import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.BidDTO;
+import com.ssscloud.auction.common.dto.response.AutoBidStatusDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.BidTransaction;
@@ -97,13 +98,22 @@ public class BidController {
     public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
         try {
             logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
-            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-            
-            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(jsonPayload);
-            boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
+            String auctionId = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+
+            // Check in-memory map — trả về maxBid + increment để client restore UI đầy đủ
+            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionId);
+            AutoBidService.AutoBidEntry entry = entries.stream()
+                    .filter(e -> e.bidderId.equals(bidderId))
+                    .findFirst()
+                    .orElse(null);
+
+            AutoBidStatusDTO statusDTO =
+                    entry != null
+                    ? new AutoBidStatusDTO(true, entry.maxBid, entry.increment)
+                    : new AutoBidStatusDTO(false, 0, 0);
 
             return JsonUtils.toJson(ApiResponse.success(
-                java.util.Map.of("active", isActive),
+                statusDTO,
                 "Auto-bid status retrieved successfully."
             ));
         } catch (ControllerException controllerException) {

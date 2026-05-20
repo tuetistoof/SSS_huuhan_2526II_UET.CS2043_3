@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<HBox fx:id="rowRoot" alignment="CENTER_LEFT" spacing="16" styleClass="bda-row" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.BiddedAuctionsListRowController">
+<HBox fx:id="rowRoot" alignment="CENTER_LEFT" spacing="16" styleClass="bda-row" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListRowController">
     <padding><Insets bottom="12" left="16" right="16" top="12" /></padding>
     <children>
 

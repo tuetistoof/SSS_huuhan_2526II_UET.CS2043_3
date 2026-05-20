@@ -1,17 +1,15 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.seller;
 
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SessionManager;
+import com.ssscloud.auction.client.util.ServerResponse;
+
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.dto.request.ItemData;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
  
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -79,7 +77,7 @@ public class CreateAuctionController{
     
     private int currentStep = 1;
 
-    private final AuctionClientSocket socket  = AuctionClientSocket.getInstance();
+    private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
     private final SessionManager      session = SessionManager.getInstance();
  
     private Consumer<AuctionDTO> onSuccessCallback;
@@ -260,7 +258,7 @@ public class CreateAuctionController{
 
         //3.Disable nút bấm để tránh bấm nhiều lần
         btnSubmit.setDisable(true);
-        btnSubmit.setText("Đang tạo...");
+        btnSubmit.setText("Creating...");
 
         //4.Tạo request DTO
         CreateAuctionRequest reqDTO = new CreateAuctionRequest();
@@ -272,61 +270,22 @@ public class CreateAuctionController{
         reqDTO.setItemData(itemData);
         reqDTO.setSellerId(session.getCurrentUser().getId());
 
-        //5.Wrap trong client message
-        ClientMessage msg = new ClientMessage("CREATE_AUCTION", reqDTO);
-        String JsonRequest = JsonUtils.toJson(msg);
-        // AI recommend: có thể cần msg.setType("REQUEST")
+        String json = JsonUtils.toJson(new ClientMessage("CREATE_AUCTION", reqDTO));
+        dispatcher.request(json, raw -> {
+            btnSubmit.setDisable(false);
+            btnSubmit.setText("Create");
 
-        //6. Gửi qua socket thì gửi thread riêng không gửi luông tong UI thread
-        new Thread(() -> {
-            boolean isSuccess = false;
-            String errorMsg = "Không nhận được phản hồi từ Server";
-            AuctionDTO newAuction = null;
-
-            try{
-                String jsonResponse = socket.sendAndReceive(JsonRequest);
-                //nhận về, nhận cũng ở client message
-                if (jsonResponse != null && !jsonResponse.isEmpty()){
-                    ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                    if ("CREATE_AUCTION_RESPONSE".equals(serverMsg.getAction())) {
-                        String rawData = JsonUtils.toJson(serverMsg.getData());
-                        Type type = new TypeToken<ApiResponse<AuctionDTO>>(){}.getType();
-                        ApiResponse<AuctionDTO> apiResp = JsonUtils.fromJsonGeneric(rawData, type);
- 
-                        isSuccess = apiResp.isSuccess();
-                        if (isSuccess) {
-                            // Double-parse vì Gson đọc data thành LinkedTreeMap
-                            String auctionJson = JsonUtils.toJson(apiResp.getData());
-                            newAuction = JsonUtils.fromJson(auctionJson, AuctionDTO.class);
-                        } else {
-                            errorMsg = apiResp.getMessage();
-                        }
-                    } else {
-                        errorMsg = "Action không khớp từ server: " + serverMsg.getAction();
-                    }
-                }
-                
-            } catch (Exception e){
-                errorMsg = "Lỗi kết nối: " + e.getMessage();
-                e.printStackTrace();
+            AuctionDTO newAuction = ServerResponse.unwrap(raw, "CREATE_AUCTION_RESPONSE", AuctionDTO.class);
+            if (newAuction != null) {
+                if (onSuccessCallback != null) onSuccessCallback.accept(newAuction);
+            } else {
+                showError(ServerResponse.errorMessage(raw));
             }
-            final boolean finalSuccess = isSuccess;
-            final String  finalError   = errorMsg;
-            final AuctionDTO finalAuction = newAuction;
-
-            //7. cập nhật UI
-            Platform.runLater(() -> {
-                // Re-enable button dù thành công hay thất bại
-                btnSubmit.setDisable(false);
-                btnSubmit.setText("Tạo phiên");
-                if (finalSuccess) {
-                    if (onSuccessCallback != null) onSuccessCallback.accept(finalAuction);
-                } else {
-                    showError(finalError);
-                }
-            });
-
-        }).start();
+        }, () -> {
+            btnSubmit.setDisable(false);
+            btnSubmit.setText("Create");
+            showError("No response from server");
+        });
     }
 
     @FXML
