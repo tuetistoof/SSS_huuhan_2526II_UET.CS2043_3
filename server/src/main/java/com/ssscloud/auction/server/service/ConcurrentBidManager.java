@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +44,7 @@ public class ConcurrentBidManager {
     private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions to prevent new bids
+    private final Set<String> drainingAuctions = ConcurrentHashMap.newKeySet();
 
     private ConcurrentBidManager() {}
 
@@ -127,19 +129,16 @@ public class ConcurrentBidManager {
     }
 
     public void shutdown(String auctionId) throws Exception {
-        closedAuctions.add(auctionId);
-        bidTaskQueues.remove(auctionId);
+        drainingAuctions.add(auctionId);          
         Thread workerThread = workerThreads.remove(auctionId);
         if (workerThread != null) {
             workerThread.interrupt();
-            workerThread.join(5000);
-            if (workerThread.isAlive()) {
-                // Thread không chịu dừng sau 5s — log CRITICAL để ops biết
-                logger.log(Level.SEVERE,
-                    "CRITICAL: bid worker still alive after 5s shutdown for auctionId: "
-                    + auctionId + ". Data consistency at risk.");
-            }
+            workerThread.join(5000);               
         }
+        // ← Sau join(), mới xóa
+        bidTaskQueues.remove(auctionId);           // ← Xóa queue (sau join)
+        drainingAuctions.remove(auctionId);        // ← Clear drain flag (sau join)
+        closedAuctions.add(auctionId);
     }
 
     // --- PRIVATE METHODS ---
@@ -165,33 +164,47 @@ public class ConcurrentBidManager {
     }
 
     public void softClose(String auctionId) {
-        closedAuctions.add(auctionId);
+        closedAuctions.add(auctionId);    // chặn bid/autobid mới
+        drainingAuctions.add(auctionId);  // đánh dấu worker cần tự thoát khi queue rỗng
         logger.log(Level.INFO,
-            "softClose: auction {0} marked closed — no new bids accepted. Worker still draining.",
+            "softClose: auction {0} marked closed — no new bids accepted. Worker draining.",
             auctionId);
     }
 
     private void runWorker(String auctionId) {
-        try {
+            try {
             BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
-            if (taskQueue == null) {
-                return;
-            }
+            if (taskQueue == null) return;
 
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    BidTask task = taskQueue.take();
+                    // Nếu đang drain: poll có timeout thay vì take() block mãi
+                    BidTask task;
+                    if (drainingAuctions.contains(auctionId)) {
+                        task = taskQueue.poll(200, TimeUnit.MILLISECONDS);
+                        if (task == null) {
+                            // Queue rỗng + đang drain → worker tự thoát
+                            logger.log(Level.INFO,
+                                "bid-worker-{0}: queue drained, exiting gracefully.", auctionId);
+                            break;
+                        }
+                    } else {
+                        task = taskQueue.take(); // block bình thường
+                    }
                     processTask(task);
                 } catch (InterruptedException e) {
-                    logger.log(Level.INFO, "Execution interrupted for bid worker associated with auctionId: " + auctionId);
+                    logger.log(Level.INFO,
+                        "Execution interrupted for bid worker associated with auctionId: " + auctionId);
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
+                    logger.log(Level.SEVERE,
+                        "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
                 }
             }
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
+            logger.log(Level.SEVERE,
+                "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
         }
     }
 
