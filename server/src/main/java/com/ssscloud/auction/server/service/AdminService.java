@@ -4,6 +4,9 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,14 +31,39 @@ import com.ssscloud.auction.server.util.SessionRegistry;
  * AdminService handles business logic for admin operations:
  * viewing all auctions, retrieving dashboard metrics, and canceling auctions.
  */
+// FILE: server/src/main/java/com/ssscloud/auction/server/service/AdminService.java
+//
+// THAY ĐỔI: cancelAuction() → chia thành 2 bước:
+//   1. gracefulCancel()  : softClose + broadcast countdown + delay 10s + cancel thật
+//   2. doCancel()        : logic cancel hiện tại (đổi status, DB, refund, cleanup) — không đổi
+//
+// THÊM MỚI:
+//   - field: ScheduledExecutorService cancelScheduler
+//   - method: gracefulCancel()
+//   - method: broadcastCancelCountdown()
+//
+// IMPORT CẦN THÊM:
+//   import java.util.concurrent.Executors;
+//   import java.util.concurrent.ScheduledExecutorService;
+//   import java.util.concurrent.TimeUnit;
+
 public class AdminService {
 
     private static final Logger logger = Logger.getLogger(AdminService.class.getName());
+    private static final int CANCEL_COUNTDOWN_SECONDS = 10;
 
     private final AdminDAO      adminDAO;
     private final AuctionDAO    auctionDAO;
     private final AutoBidService autoBidService;
     private final UserDAO       userDAO;
+
+    // Scheduler riêng cho delayed cancel — dùng single thread vì cancel không cần parallel
+    private final ScheduledExecutorService cancelScheduler =
+            Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "auction-cancel-scheduler");
+                t.setDaemon(true);
+                return t;
+            });
 
     public AdminService(AdminDAO adminDAO, AuctionDAO auctionDAO, AutoBidService autoBidService, UserDAO userDAO) {
         this.adminDAO       = adminDAO;
@@ -85,92 +113,213 @@ public class AdminService {
     }
 
     /**
-     * Admin cancel một auction đang OPEN hoặc RUNNING.
-     * Luồng: validate → đổi status RAM → shutdown worker → update DB → refund → dọn dẹp.
+     * Entry point cho admin cancel — thay thế cancelAuction() cũ.
      *
-     * FIX #1: Bổ sung getLockAmount(auctionId) thay cho dòng syntax lỗi bị bỏ dở.
-     * FIX #3: Cải thiện rollback — phân biệt lỗi xảy ra TRƯỚC hay SAU khi DB đã commit,
-     *         tránh tình trạng RAM và DB lệch nhau.
+     * Flow:
+     *   1. Validate + check auction còn active
+     *   2. softClose() → chặn bid/autoBid mới ngay lập tức
+     *   3. Broadcast AUCTION_CANCEL_COUNTDOWN tới tất cả user trong phòng
+     *   4. Schedule doCancel() sau CANCEL_COUNTDOWN_SECONDS giây
+     *
+     * Method này return ngay (non-blocking) sau khi schedule xong.
+     * doCancel() chạy async trên cancelScheduler.
      */
     public void cancelAuction(String auctionId, String reason) throws ServiceException, Exception {
-        logger.log(Level.INFO, "Admin canceling auctionId: {0}, reason: {1}", new Object[]{auctionId, reason});
+        logger.log(Level.INFO, "Admin initiating graceful cancel for auctionId: {0}, reason: {1}",
+            new Object[]{auctionId, reason});
 
         // 1. Validate
         if (auctionId == null || auctionId.isBlank()) {
-            throw new ServiceException(ErrorCode.INVALID_AUCTION_ID, "The auction identifier is required.");
+            throw new ServiceException(ErrorCode.INVALID_AUCTION_ID,
+                "The auction identifier is required.");
         }
 
         Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
         if (auction == null) {
-            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Auction not found or already ended: " + auctionId);
+            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
+                "Auction not found or already ended: " + auctionId);
         }
 
-        // 2. Atomic Status Change (Khóa Race Condition)
-        AuctionStatus previousStatus;
+        // 2. Check status trước khi commit vào graceful flow
         synchronized (auction) {
             if (!auction.getStatus().isActive()) {
-                throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction is already ended.");
+                throw new ServiceException(ErrorCode.AUCTION_CLOSED,
+                    "Auction is already ended.");
             }
-            previousStatus = auction.getStatus();
-            auction.setStatus(AuctionStatus.CANCELED);
         }
 
-        // FIX #3: Dùng flag để biết DB đã được update chưa.
-        // Nếu DB chưa update → rollback RAM là hợp lệ.
-        // Nếu DB đã update → KHÔNG rollback RAM (tránh RAM lệch DB), chỉ log CRITICAL.
-        boolean dbUpdated = false;
+        // 3. softClose — chặn bid mới ngay, worker vẫn drain queue hiện tại
+        ConcurrentBidManager.getInstance().softClose(auctionId);
 
-        try {
-            // 3. Tắt Worker
-            ConcurrentBidManager.getInstance().shutdown(auctionId);
+        // 4. Broadcast countdown tới client
+        broadcastCancelCountdown(auction, reason, CANCEL_COUNTDOWN_SECONDS);
 
-            // FIX #1: Lấy lockAmount của người đang giữ giá cao nhất từ lastBidTransaction
-            // (thay cho dòng "ConcurrentBidManager.getInstance()." bị bỏ dở)
-            long lockAmount = 0;
-            if (auction.getLastBidTransaction() != null) {
-                lockAmount = auction.getLastBidTransaction().getLockedBalance();
-            }
-
-            // 4. Cập nhật DB
-            auctionDAO.updateStatus(auctionId, AuctionStatus.CANCELED);
-            dbUpdated = true; // DB đã commit — từ đây KHÔNG rollback RAM nữa
-
-            // 5. Hoàn tiền cho người đang giữ giá (nếu có)
-            refundWinner(auction, lockAmount);
-
-            // 6. Dọn dẹp tài nguyên
-            AuctionRegistry.getInstance().remove(auctionId);
-            autoBidService.clearRegistrations(auctionId);
-            broadcastAuctionCanceled(auction, reason);
-            ChangeManager.getInstance().detachByAdmin(auction);
-
-            logger.log(Level.INFO, "Auction successfully canceled by admin: {0}", auctionId);
-
-        } catch (Exception e) {
-            if (!dbUpdated) {
-                // DB chưa bị thay đổi → rollback RAM về trạng thái cũ là an toàn
-                synchronized (auction) {
-                    auction.setStatus(previousStatus);
-                }
-                logger.log(Level.WARNING, "Auction cancel aborted (before DB update), RAM rolled back for: " + auctionId, e);
-            } else {
-                // DB đã CANCELED → KHÔNG rollback RAM, giữ nguyên CANCELED trong RAM
-                // để RAM đồng bộ với DB. Chỉ log để ops team xử lý cleanup thủ công.
+        // 5. Schedule doCancel() sau 10s — chạy async, không block response về admin
+        cancelScheduler.schedule(() -> {
+            try {
+                doCancel(auctionId, reason);
+            } catch (Exception e) {
                 logger.log(Level.SEVERE,
-                    "CRITICAL: DB was updated to CANCELED but post-cancel cleanup failed for auctionId: "
-                    + auctionId + ". Manual cleanup (refund/registry/autobid) may be required.", e);
+                    "[SYSTEM_FAILURE] doCancel failed for auctionId: " + auctionId, e);
             }
-            throw e;
-        }
+        }, CANCEL_COUNTDOWN_SECONDS, TimeUnit.SECONDS);
+
+        logger.log(Level.INFO,
+            "Graceful cancel scheduled for auctionId: {0} — fires in {1}s",
+            new Object[]{auctionId, CANCEL_COUNTDOWN_SECONDS});
     }
 
     // --- PRIVATE METHODS ---
 
     /**
+     * Thực hiện cancel thật sau khi countdown hết.
+     * Logic giống cancelAuction() cũ — validate → đổi status RAM → shutdown worker
+     * → update DB → refund → cleanup.
+     */
+    private void doCancel(String auctionId, String reason) throws ServiceException, Exception {
+        logger.log(Level.INFO, "doCancel executing for auctionId: {0}", auctionId);
+
+        Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+        if (auction == null) {
+            // Có thể auction đã bị scheduleClose() kết thúc trong 10s chờ
+            logger.log(Level.WARNING,
+                "doCancel: auction no longer in registry (may have finished naturally): " + auctionId);
+            return;
+        }
+
+        // Atomic status change — dùng synchronized để race với scheduleClose()
+        AuctionStatus previousStatus;
+        synchronized (auction) {
+            if (!auction.getStatus().isActive()) {
+                // scheduleClose() đã chạy trước → auction đã FINISHED → không cancel nữa
+                logger.log(Level.WARNING,
+                    "doCancel: auction already in terminal state {0}, skipping cancel: {1}",
+                    new Object[]{auction.getStatus(), auctionId});
+                return;
+            }
+            previousStatus = auction.getStatus();
+            auction.setStatus(AuctionStatus.CANCELED);
+        }
+
+        boolean dbUpdated = false;
+        Exception refundException = null;
+
+        try {
+            // shutdown() — interrupt worker + join(5000)
+            // Worker đã drain queue trong 10s chờ nên lúc này queue gần như trống.
+            ConcurrentBidManager.getInstance().shutdown(auctionId);
+
+            long lockAmount = 0;
+            if (auction.getLastBidTransaction() != null) {
+                lockAmount = auction.getLastBidTransaction().getLockedBalance();
+            }
+
+            auctionDAO.updateStatus(auctionId, AuctionStatus.CANCELED);
+            dbUpdated = true;
+
+            try {
+                refundWinner(auction, lockAmount);
+            } catch (Exception e) {
+                refundException = e;
+                logger.log(Level.SEVERE,
+                    "Refund failed after DB cancel for auctionId: " + auctionId
+                    + ". Balance may need manual correction for winnerId: "
+                    + auction.getHighestBidderId(), e);
+            }
+
+        } catch (Exception e) {
+            if (!dbUpdated) {
+                synchronized (auction) {
+                    auction.setStatus(previousStatus);
+                }
+                logger.log(Level.WARNING,
+                    "doCancel aborted before DB update, RAM rolled back: " + auctionId, e);
+            } else {
+                logger.log(Level.SEVERE,
+                    "CRITICAL: DB updated to CANCELED but subsequent step failed for auctionId: " + auctionId, e);
+            }
+            throw e;
+
+        } finally {
+            if (dbUpdated) {
+                cleanupCanceledAuction(auction, auctionId, reason);
+            }
+        }
+
+        if (refundException != null) {
+            throw refundException;
+        }
+
+        logger.log(Level.INFO, "Auction successfully canceled: {0}", auctionId);
+    }
+
+    /**
+     * Broadcast AUCTION_CANCEL_COUNTDOWN tới tất cả user đang trong phòng đấu giá.
+     * Client dùng để hiện countdown "Auction sẽ bị hủy sau Xs" và disable nút bid.
+     */
+    private void broadcastCancelCountdown(Auction auction, String reason, int countdownSeconds) {
+        String auctionId   = auction.getAuctionConfig().getId();
+        String auctionName = auction.getAuctionConfig().getName();
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("auctionId",        auctionId);
+        payload.put("auctionName",      auctionName);
+        payload.put("reason",           reason != null ? reason : "");
+        payload.put("countdownSeconds", countdownSeconds);
+
+        String message = JsonUtils.toJson(ClientMessage.push("AUCTION_CANCEL_COUNTDOWN", payload));
+
+        SessionRegistry.getInstance().getAllWriters().forEach((userId, writer) -> {
+            if (ChangeManager.getInstance().hasObserver(auction, userId)) {
+                try {
+                    synchronized (writer) {
+                        writer.println(message);
+                        writer.flush();
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.WARNING,
+                        "Failed to deliver AUCTION_CANCEL_COUNTDOWN to userId: " + userId, e);
+                }
+            }
+        });
+
+        logger.log(Level.INFO,
+            "Broadcast AUCTION_CANCEL_COUNTDOWN for auctionId: {0}, countdown: {1}s",
+            new Object[]{auctionId, countdownSeconds});
+    }
+
+    /**
+     * Dọn dẹp tài nguyên sau khi DB đã commit CANCELED.
+     * Mỗi bước được try/catch riêng — lỗi ở một bước không chặn các bước còn lại.
+     */
+    private void cleanupCanceledAuction(Auction auction, String auctionId, String reason) {
+        try {
+            AuctionRegistry.getInstance().remove(auctionId);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to remove auction from registry: " + auctionId, e);
+        }
+
+        try {
+            autoBidService.clearRegistrations(auctionId);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to clear auto-bid registrations: " + auctionId, e);
+        }
+
+        try {
+            broadcastAuctionCanceled(auction, reason);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to broadcast AUCTION_CANCELED: " + auctionId, e);
+        }
+
+        try {
+            ChangeManager.getInstance().detachByAdmin(auction);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to detach observers: " + auctionId, e);
+        }
+    }
+
+    /**
      * Push thông báo AUCTION_CANCELED kèm lý do tới tất cả subscriber đang trong phòng.
-     *
-     * FIX #4: Thêm writer.flush() để đảm bảo message được gửi ngay,
-     *         nhất quán với notifyUnsettledBalanceUpdate() đã có flush().
      */
     private void broadcastAuctionCanceled(Auction auction, String reason) {
         String auctionId   = auction.getAuctionConfig().getId();
@@ -188,7 +337,7 @@ public class AdminService {
                 try {
                     synchronized (writer) {
                         writer.println(message);
-                        writer.flush(); // FIX #4: flush để đảm bảo message không nằm trong buffer
+                        writer.flush();
                     }
                 } catch (Exception exception) {
                     logger.log(Level.WARNING,
@@ -200,36 +349,30 @@ public class AdminService {
 
     /**
      * Hoàn tiền cho bidder đang giữ giá cao nhất khi auction bị cancel.
-     *
-     * FIX #2 (cải thiện): Bỏ dòng check thừa "if (winningBid == 0) winningBid = ..."
-     *   vì nhánh ternary đã bao phủ hoàn toàn trường hợp lockAmount == 0.
-     *   Nếu cả hai đều bằng 0 (chưa có bid nào) → winnerId sẽ null → không vào refund block,
-     *   hành vi đúng.
      */
     private void refundWinner(Auction auction, long lockAmount) throws Exception {
         String winnerId   = auction.getHighestBidderId();
         String sellerId   = auction.getSellerId();
         long   winningBid = lockAmount > 0 ? lockAmount : auction.getCurrentPrice();
 
-        // Chỉ refund khi thực sự có người đang giữ giá VÀ số tiền > 0
         if (winnerId != null && winningBid > 0) {
             try {
-                // Unlock bidder's balance
                 userDAO.unlockBidderBalance(winnerId, winningBid);
                 SessionRegistry.getInstance().addUnsettledBalance(winnerId, -winningBid);
                 notifyUnsettledBalanceUpdate(winnerId, SessionRegistry.getInstance().getUnsettledBalance(winnerId));
 
-                // Deduct seller's pending balance
                 if (sellerId != null) {
                     userDAO.updatePendingBalance(sellerId, -winningBid);
                     SessionRegistry.getInstance().addUnsettledBalance(sellerId, -winningBid);
                     notifyUnsettledBalanceUpdate(sellerId, SessionRegistry.getInstance().getUnsettledBalance(sellerId));
                 }
 
-                logger.log(Level.INFO, "Refunded winning bid of {0} to bidderId: {1} and updated pending balance for sellerId: {2} after auction cancellation.",
-                        new Object[]{winningBid, winnerId, sellerId});
+                logger.log(Level.INFO,
+                    "Refunded winning bid of {0} to bidderId: {1} and updated pending balance for sellerId: {2} after auction cancellation.",
+                    new Object[]{winningBid, winnerId, sellerId});
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "Failed to refund winning bid to bidderId: " + winnerId + " or update sellerId: " + sellerId, e);
+                logger.log(Level.SEVERE,
+                    "Failed to refund winning bid to bidderId: " + winnerId + " or update sellerId: " + sellerId, e);
                 throw new DAOException(ErrorCode.ACCOUNT_BALANCE_UPDATE_FAILED, "Failed to refund winning bid", e);
             }
         }

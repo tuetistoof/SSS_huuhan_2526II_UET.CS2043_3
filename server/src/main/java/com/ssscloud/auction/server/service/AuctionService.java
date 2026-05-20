@@ -143,7 +143,7 @@ public class AuctionService {
     public void scheduleClose(Auction auction) throws Exception {
         String auctionId = auction.getAuctionConfig().getId();
         LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
-        
+
         long delayMilliseconds = Duration.between(LocalDateTime.now(), endTime).toMillis();
         if (delayMilliseconds < 0) {
             delayMilliseconds = 0;
@@ -151,29 +151,54 @@ public class AuctionService {
 
         scheduler.schedule(() -> {
             try {
+                // Anti-sniping có thể đã extend endTime — reschedule nếu chưa đến giờ
                 if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
-                    scheduleClose(auction); // Reschedule with updated end time
+                    scheduleClose(auction);
                     return;
                 }
 
-                AuctionStatus currentStatus = auction.getStatus();
-                if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
-                    auction.finish();
-                    auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                    AuctionRegistry.getInstance().remove(auctionId);
-                    ConcurrentBidManager.getInstance().shutdown(auctionId); 
-
-                    settleAuctionBalances(auction);
-                    
-                    ChangeManager.getInstance().notify(auction);
-                    notificationService.notifyAuctionEnded(auction);
-                    logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
+                // FIX BUG 3: atomic compare-and-set, giống pattern của cancelAuction().
+                // synchronized(auction) đảm bảo chỉ MỘT trong hai thread
+                // (scheduler hoặc admin cancel) được phép đổi status.
+                // Thread thua sẽ thấy status đã bị đổi và tự exit.
+                boolean shouldProceed;
+                synchronized (auction) {
+                    AuctionStatus currentStatus = auction.getStatus();
+                    if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
+                        auction.finish(); // set FINISHED bên trong lock
+                        shouldProceed = true;
+                    } else {
+                        // Admin đã cancel (CANCELED) hoặc trạng thái khác — không làm gì
+                        shouldProceed = false;
+                    }
                 }
+
+                // Mọi side-effect chạy NGOÀI lock để tránh giữ lock lâu
+                if (!shouldProceed) {
+                    logger.log(Level.INFO,
+                        "scheduleClose skipped — auction already in terminal state: " + auctionId);
+                    return;
+                }
+
+                // Từ đây chỉ thread thắng (shouldProceed = true) mới chạy tiếp
+                auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                AuctionRegistry.getInstance().remove(auctionId);
+                ConcurrentBidManager.getInstance().shutdown(auctionId);
+
+                settleAuctionBalances(auction);
+
+                ChangeManager.getInstance().notify(auction);
+                notificationService.notifyAuctionEnded(auction);
+                logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
+
             } catch (ServiceException serviceException) {
-                logger.log(Level.WARNING, "Business logic error in scheduled auction closure for auctionId: " + auctionId, serviceException);
+                logger.log(Level.WARNING,
+                    "Business logic error in scheduled auction closure for auctionId: " + auctionId,
+                    serviceException);
             } catch (Exception exception) {
-                logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: " + auctionId, exception);
-                // Background tasks should not rethrow to prevent thread termination unless managed
+                logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: "
+                    + auctionId, exception);
             }
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
@@ -192,7 +217,7 @@ public class AuctionService {
  
         try {
             // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
-            boolean winnerSettled = userDAO.settleSellerBalance(sellerId, finalPrice);
+            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, finalPrice);
             if (!winnerSettled) {
                 logger.log(Level.WARNING,
                         "settleWinnerBalance: no rows affected — locked insufficient? "

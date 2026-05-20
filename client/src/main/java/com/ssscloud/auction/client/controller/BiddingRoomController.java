@@ -1157,5 +1157,69 @@ public class BiddingRoomController implements MessageListener{
         }
     }
 
+    private void handleCancelCountdown(JsonObject root) {
+        JsonObject data = root.has("data") ? root.get("data").getAsJsonObject() : new JsonObject();
+        String reason   = data.has("reason") ? data.get("reason").getAsString() : "";
+        int totalSeconds = data.has("countdownSeconds")
+                ? data.get("countdownSeconds").getAsInt()
+                : 10;
+ 
+        // Dừng countdown timer auction (đồng hồ đếm ngược thời gian kết thúc) nếu đang chạy
+        // Giữ nguyên countdownTimer field để handleAuctionCanceled() vẫn có thể stop nó sau
+        if (countdownTimer != null) {
+            countdownTimer.stop();
+        }
+ 
+        Platform.runLater(() -> {
+            // Disable tất cả input bid ngay lập tức
+            btnPlaceBid.setDisable(true);
+            btnAutoToggle.setDisable(true);
+            txtManualBid.setDisable(true);
+            if (txtMaxBid != null)        txtMaxBid.setDisable(true);
+            if (txtAutoIncrement != null) txtAutoIncrement.setDisable(true);
+ 
+            // Hiện banner đếm ngược
+            if (lblOutbid != null) {
+                lblOutbid.setVisible(true);
+                lblOutbid.setManaged(true);
+            }
+ 
+            // Dùng int[] để có thể modify từ bên trong lambda
+            int[] remaining = {totalSeconds};
+ 
+            // Cập nhật label ngay lần đầu
+            updateCancelBanner(lblOutbid, remaining[0], reason);
+ 
+            // Timeline tick mỗi 1 giây
+            countdownTimer = new Timeline(
+                new KeyFrame(javafx.util.Duration.seconds(1), e -> {
+                    remaining[0]--;
+                    if (remaining[0] > 0) {
+                        updateCancelBanner(lblOutbid, remaining[0], reason);
+                    } else {
+                        // Hết countdown — server sẽ push AUCTION_CANCELED ngay sau đây
+                        // Hiện trạng thái chờ để tránh label nhảy số âm
+                        if (lblOutbid != null) {
+                            lblOutbid.setText("⚠ Đang hủy phiên đấu giá...");
+                        }
+                        countdownTimer.stop();
+                    }
+                })
+            );
+            countdownTimer.setCycleCount(totalSeconds);
+            countdownTimer.play();
+        });
+    }
+ 
+    /**
+     * Cập nhật nội dung banner đếm ngược.
+     * Tách ra method riêng để dễ thay đổi format text sau này.
+     */
+    private void updateCancelBanner(javafx.scene.control.Label label, int secondsLeft, String reason) {
+        if (label == null) return;
+        String reasonPart = (reason != null && !reason.isBlank()) ? " — Lý do: " + reason : "";
+        label.setText("⚠ Phiên đấu giá sẽ bị hủy sau " + secondsLeft + "s" + reasonPart);
+    }
+
 }
     

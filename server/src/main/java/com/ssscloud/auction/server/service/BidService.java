@@ -54,9 +54,7 @@ public class BidService {
             User bidder = userDAO.findById(bidderId);
             validatePlaceBidderAccount(bidder, placeBidRequest.getBidAmount());
             userDAO.lockBidderBalance(bidderId, placeBidRequest.getBidAmount());
-            SessionRegistry.getInstance().addUnsettledBalance(bidderId, placeBidRequest.getBidAmount());
-            ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername,
-                    placeBidRequest.getBidAmount(), placeBidRequest.getBidAmount(), BidType.MANUAL);
+            SessionRegistry.getInstance().addUnsettledBalance(bidderId, placeBidRequest.getBidAmount());    
             try {
                 ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername,
                     placeBidRequest.getBidAmount(), placeBidRequest.getBidAmount(), BidType.MANUAL);
