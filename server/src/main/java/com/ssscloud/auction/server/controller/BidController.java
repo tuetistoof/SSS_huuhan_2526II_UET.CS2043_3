@@ -122,7 +122,6 @@ public class BidController {
             logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
             throw exception;
         }
-
     }
 
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) throws ControllerException {
@@ -146,14 +145,16 @@ public class BidController {
 
     private void validateAutoBidRequest(AutoBidRequest autoBidRequest) throws ControllerException {
         try {
+            // FIX #4: Kiểm tra null/blank TRƯỚC khi query DB để tránh NullPointerException
             if (autoBidRequest == null) {
                 throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The auto-bid request payload cannot be null.");
             }
-            if (!auctionDAO.findByAuctionId(autoBidRequest.getAuctionId()).getStatus().isActive()) {
-                throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active.");
-            }
             if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
                 throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required for auto-bid registration.");
+            }
+            // Chỉ query DB sau khi đã chắc chắn auctionId không null
+            if (!auctionDAO.findByAuctionId(autoBidRequest.getAuctionId()).getStatus().isActive()) {
+                throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active.");
             }
             if (autoBidRequest.getMaxBid() <= 0) {
                 throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");
