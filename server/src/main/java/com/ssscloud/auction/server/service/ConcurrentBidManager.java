@@ -272,10 +272,6 @@ public class ConcurrentBidManager {
                     }
                 }
  
-                ChangeManager.getInstance().notify(auctionEntity);
-                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(),
-                        auctionEntity.getHighestBidderId());
- 
                 if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
                     auctionEntity.setStatus(AuctionStatus.RUNNING);
                     auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
@@ -285,6 +281,9 @@ public class ConcurrentBidManager {
                 if (updatedEndTime != null && auctionDAO != null) {
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
+                ChangeManager.getInstance().notify(auctionEntity);
+                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(),
+                        auctionEntity.getHighestBidderId());
  
             } else {
                 // --- Nhánh BID THUA ---

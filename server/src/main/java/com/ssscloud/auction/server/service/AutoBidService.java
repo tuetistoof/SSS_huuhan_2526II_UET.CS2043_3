@@ -115,10 +115,10 @@ public class AutoBidService {
             }
 
             String auctionId = auctionEntity.getAuctionConfig().getId();
-            BidTransaction bidTransaction = auctionEntity.getLastBidTransaction();
-            long currentAuctionPrice = bidTransaction == null ? auctionEntity.getCurrentPrice()
-                    : bidTransaction.getBidAmount();
-            String highestAuctionBidderId = bidTransaction == null ? null : bidTransaction.getBidderId();
+            BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
+            long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()
+                    : lastBidTransaction.getBidAmount();
+            String highestAuctionBidderId = lastBidTransaction == null ? null : lastBidTransaction.getBidderId();
 
             List<AutoBidEntry> autoBidEntriesList = registrationsMap.get(auctionId);
             if (autoBidEntriesList == null || autoBidEntriesList.isEmpty()) {
@@ -150,15 +150,20 @@ public class AutoBidService {
                 }
             }
 
-            long secondHighestBidAmount = 0;
+            long secondHighestBidAmount = -1;
             for (AutoBidEntry entry : entriesSnapshotList) {
                 if (!entry.bidderId.equals(winningEntry.bidderId) && entry.maxBid > secondHighestBidAmount) {
                     secondHighestBidAmount = entry.maxBid;
                 }
             }
-
-            long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
-            long calculatedBidAmount = Math.min(basePrice + winningEntry.increment, winningEntry.maxBid);
+            long calculatedBidAmount = 0;
+            if (lastBidTransaction == null && secondHighestBidAmount == -1){
+                calculatedBidAmount = currentAuctionPrice;
+            }
+            else{
+                long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
+                calculatedBidAmount = Math.min(basePrice + winningEntry.increment, winningEntry.maxBid);
+            }
 
             if (calculatedBidAmount > currentAuctionPrice) {
                 userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);

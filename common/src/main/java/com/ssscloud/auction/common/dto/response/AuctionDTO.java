@@ -22,7 +22,7 @@ public class AuctionDTO implements Serializable {
     private UserDTO sellerDTO;
     private ItemDTO itemDTO;
     
-    private List <BidDTO> BidDto;
+    private List <BidDTO> bidDto;
 
     public AuctionDTO() {
     }
@@ -80,10 +80,10 @@ public class AuctionDTO implements Serializable {
     public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
 
     public List<BidDTO> getBidDto() {
-        return BidDto;
+        return bidDto;
     }
     public void setBidDto(List<BidDTO> bidDto) {
-        BidDto = bidDto;
+        this.bidDto = bidDto;
     }
     public UserDTO getSellerDTO() {
         return sellerDTO;
@@ -93,7 +93,13 @@ public class AuctionDTO implements Serializable {
     }
 
     public BidDTO getLaseBidDTO(){
-        return BidDto.getLast();
+        return bidDto.getLast();
+    }
+    public long getCurrentPrice ()
+    {
+        if (bidDto.isEmpty())
+            return startPrice;
+        else return bidDto.getLast().getBidAmount();
     }
 
     @Override

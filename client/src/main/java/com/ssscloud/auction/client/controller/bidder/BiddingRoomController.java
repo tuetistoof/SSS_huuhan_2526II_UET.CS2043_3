@@ -2,7 +2,6 @@ package com.ssscloud.auction.client.controller.bidder;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -288,14 +287,15 @@ public class BiddingRoomController implements MessageListener {
     private void populateUI() {
         if (currentAuction == null)
             return;
+        long currentPrice = getCurrentPrice();
+        String leader = getCurrentLeader();
+
         if (lblAuctionName != null)
             lblAuctionName.setText(currentAuction.getName() != null ? currentAuction.getName() : "-");
         if (lblCurrentPrice != null)
-            lblCurrentPrice.setText(String.format("%,d ₫", currentAuction.getLaseBidDTO().getBidAmount()));
-        if (lblLeaderName != null) {
-            String leader = currentAuction.getLaseBidDTO().getBidderUsername();
+            lblCurrentPrice.setText(String.format("%,d ₫", currentPrice));
+        if (lblLeaderName != null)
             lblLeaderName.setText("Leading: " + (leader != null ? leader : "-"));
-        }
         btnPlaceBid.setDisable(true);
         if (lblMinIncrement != null)
             lblMinIncrement.setText(currentAuction.getMinIncrement() > 0
@@ -304,12 +304,12 @@ public class BiddingRoomController implements MessageListener {
         if (lblStartPrice != null)
             lblStartPrice.setText(String.format("%,d ₫", currentAuction.getStartPrice()));
         if (lblMinHint != null) {
-            if (currentAuction.getBidDto().size() == 0) {
+            if (!hasBids()) {
                 lblMinHint.setText("At least: " + String.format("%,d ₫", currentAuction.getStartPrice())
                         + " (start price)");
             } else {
                 lblMinHint.setText("At least: " + String.format("%,d ₫",
-                        currentAuction.getLaseBidDTO().getBidAmount() + currentAuction.getMinIncrement()));
+                        currentPrice + currentAuction.getMinIncrement()));
             }
         }
         if (lblStatusBadge != null && currentAuction.getStatus() != null) {
@@ -348,11 +348,10 @@ public class BiddingRoomController implements MessageListener {
     private void loadBidHistoryAsync(List<BidDTO> list) {
         if (list == null)
             return;
-        Collections.reverse(list);
-        mergeBidHistory(list);
+        List<BidDTO> copiedList = new ArrayList<>(list);
+        mergeBidHistory(copiedList);
         BidDTO latest = findLatestBid();
-        if (latest != null && latest.getBidAmount() >= currentAuction.getLaseBidDTO().getBidAmount()) {
-            currentAuction.getBidDto().add(latest);
+        if (latest != null) {
             lblCurrentPrice.setText(String.format("%,d ₫", latest.getBidAmount()));
             lblLeaderName.setText("Leading: " + latest.getBidderUsername());
             if (lblMinHint != null)
@@ -432,6 +431,33 @@ public class BiddingRoomController implements MessageListener {
         }
     }
 
+    private boolean hasBids() {
+        return currentAuction != null
+                && currentAuction.getBidDto() != null
+                && !currentAuction.getBidDto().isEmpty();
+    }
+
+    private List<BidDTO> getAuctionBids() {
+        if (currentAuction.getBidDto() == null) {
+            currentAuction.setBidDto(new ArrayList<>());
+        }
+        return currentAuction.getBidDto();
+    }
+
+    private BidDTO getLastBidOrNull() {
+        return hasBids() ? currentAuction.getLaseBidDTO() : null;
+    }
+
+    private long getCurrentPrice() {
+        BidDTO lastBid = getLastBidOrNull();
+        return lastBid != null ? lastBid.getBidAmount() : currentAuction.getStartPrice();
+    }
+
+    private String getCurrentLeader() {
+        BidDTO lastBid = getLastBidOrNull();
+        return lastBid != null ? lastBid.getBidderUsername() : null;
+    }
+
     // ------------------- @FXML handlers -------------------
 
     @FXML
@@ -483,18 +509,18 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
-        if (currentAuction.getBidDto().size() == 0) {
-            if (amount < currentAuction.getStartPrice()) {
-                showError("Bid amount cannot be lower than start price: "
+        if (!hasBids()) {
+            if (amount <= currentAuction.getStartPrice()) {
+                showError("Bid amount must be higher than start price: "
                         + String.format("%,d ₫", currentAuction.getStartPrice()));
                 return;
             }
         } else {
-            if (amount <= currentAuction.getLaseBidDTO().getBidAmount()) {
+            if (amount <= getCurrentPrice()) {
                 showError("Bid amount cannot be lower than current price");
                 return;
             }
-            if (amount < currentAuction.getLaseBidDTO().getBidAmount() + currentAuction.getMinIncrement()) {
+            if (amount < getCurrentPrice() + currentAuction.getMinIncrement()) {
                 showError("Bid amount needs to pass min increment ("
                         + String.format("%,d ₫", currentAuction.getMinIncrement()) + ")");
                 return;
@@ -636,8 +662,12 @@ public class BiddingRoomController implements MessageListener {
             showError("Invalid max bid or increment.");
             return;
         }
-        if (maxBid <= currentAuction.getLaseBidDTO().getBidAmount()) {
+        if (maxBid <= getCurrentPrice()) {
             showError("Max bid must be higher than current price.");
+            return;
+        }
+        if (increment <= 0) {
+            showError("Increment must be larger than 0.");
             return;
         }
 
@@ -699,8 +729,8 @@ public class BiddingRoomController implements MessageListener {
                 && !bid.getAuctionId().equals(currentAuction.getId()))
             return;
 
-        String prevLeader = currentAuction.getLaseBidDTO().getBidderUsername();
-        long prevPrice = currentAuction.getLaseBidDTO().getBidAmount();
+        String prevLeader = getCurrentLeader();
+        long prevPrice = getCurrentPrice();
         boolean isNewLeader = bid.getBidAmount() >= prevPrice;
 
         mergeBidIntoHistory(bid);
@@ -708,7 +738,7 @@ public class BiddingRoomController implements MessageListener {
         if (!isNewLeader)
             return;
 
-        currentAuction.getBidDto().add(bid);
+        getAuctionBids().add(bid);
 
         try {
             if (currentUserName != null && currentUserName.equals(bid.getBidderUsername())) {
