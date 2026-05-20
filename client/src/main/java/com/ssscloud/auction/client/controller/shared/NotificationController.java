@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.shared;
 
 import java.lang.reflect.Type;
 import com.google.gson.reflect.TypeToken;
@@ -12,8 +12,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
+import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
@@ -33,6 +34,8 @@ import javafx.scene.layout.VBox;
 public class NotificationController implements MessageListener {
     @FXML private Label  lblBadge; // badge hiển thị số lượng thông báo chưa đọc
     @FXML private ListView<NotifItem> listNotifs; 
+
+    private final SocketDispatcher          dispatcher = SocketDispatcher.getInstance();
     private final AuctionClientSocket           socket  = AuctionClientSocket.getInstance();
     private final ObservableList<NotifItem>     notifs  = FXCollections.observableArrayList();
     private Consumer<String> onNavigateToAuction; //callback về MainLayout để navigate vào BiddingRoom
@@ -53,35 +56,14 @@ public class NotificationController implements MessageListener {
         setupList();
     }
     public void fetchPending() {
-        new Thread(() -> {
-            try {
-                String json = JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS", null));
-                String responseJson = socket.sendAndReceive(json);
-                if (responseJson == null) return;
+        String json = JsonUtils.toJson(ClientMessage.request("GET_PENDING_NOTIFICATIONS", null));
 
-            // Bước 1: parse ClientMessage
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || serverMsg.getData() == null) return;
-                if (!"GET_PENDING_NOTIFICATIONS_RESPONSE".equals(serverMsg.getAction())) return;
-
-            // Bước 2: data là ApiResponse<List<NotificationDTO>>
-                String dataJson = JsonUtils.toJson(serverMsg.getData());
-                Type type = new TypeToken<ApiResponse<List<NotificationDTO>>>() {}.getType();
-                ApiResponse<List<NotificationDTO>> apiResp = JsonUtils.fromJsonGeneric(dataJson, type);
-                System.out.println("[fetchPending] parsed " + (apiResp != null ? apiResp.getData() : null));
-
-
-                if (apiResp == null || !apiResp.isSuccess() || apiResp.getData() == null) return;
-
-            // Bước 3: lấy List thực sự rồi xử lý
-                List<NotificationDTO> list = apiResp.getData();
-                Platform.runLater(() -> handlePendingList(list));
-
-            } catch (Exception e) {
-                System.err.println("[NotificationController] fetchPending lỗi: " + e.getMessage());
-            }
-        }).start();
+        dispatcher.request(json, raw -> {
+            List<NotificationDTO> list = ServerResponse.unwrapDirectList(raw, "GET_PENDING_NOTIFICATIONS_RESPONSE", NotificationDTO.class);
+            if (list != null) handlePendingList(list);
+        });
     }
+
     private void handlePendingList(List<NotificationDTO> list) {
         if (list == null || list.isEmpty()) return;
         for (NotificationDTO dto : list) {

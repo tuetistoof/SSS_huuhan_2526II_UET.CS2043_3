@@ -1,16 +1,29 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.shared;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+import java.text.DecimalFormat;
 import java.util.Optional;
 
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.controller.seller.SellerDashboardController;
+import com.ssscloud.auction.client.controller.admin.AdminDashboardController;
+import com.ssscloud.auction.client.controller.bidder.AuctionListController;
+import com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListController;
+import com.ssscloud.auction.client.controller.bidder.BidderDashboardController;
+import com.ssscloud.auction.client.controller.bidder.BiddingRoomController;
+import com.ssscloud.auction.client.controller.bidder.WatchlistController;
+import com.ssscloud.auction.client.controller.seller.CreateAuctionController;
+import com.ssscloud.auction.client.controller.seller.DepositCardController;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
+import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
+import com.ssscloud.auction.client.util.ViewLoader;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
@@ -96,10 +109,11 @@ public class MainLayoutController implements MessageListener {
     private long currentUnsettledBalance;
 
     private AuctionClientSocket socket = AuctionClientSocket.getInstance();
+    private final SocketDispatcher    dispatcher = SocketDispatcher.getInstance();
 
     private Runnable onSuccessCallback;
     
-    java.text.DecimalFormat formatter = new java.text.DecimalFormat("#,###");
+    DecimalFormat formatter = new DecimalFormat("#,###");
  
     public void setOnSuccessCallback(Runnable callback) {
         this.onSuccessCallback = callback;
@@ -122,41 +136,19 @@ public class MainLayoutController implements MessageListener {
 
     // --- Balance update API (called externally by DepositCardController, etc.) ---
 
-    /**
-     * Called after a successful deposit to update the total account balance.
-     * Re-renders all three balance labels so available balance stays consistent.
-     */
+
     public void updateBalance(long newBalance) {
         currentBalance = newBalance;
         SessionManager.getInstance().getCurrentUser().setAccountBalance(newBalance);
         renderBalanceLabels(currentBalance, currentUnsettledBalance);
     }
 
-    /**
-     * Called in response to an UNSETTLED_UPDATE push from the server.
-     * Updates the locked/pending and available balance labels in real-time.
-     */
     public void updateUnsettledBalance(long newUnsettled) {
         currentUnsettledBalance = newUnsettled;
         SessionManager.getInstance().getCurrentUser().setUnsettledBalance(newUnsettled);
         renderBalanceLabels(currentBalance, currentUnsettledBalance);
     }
 
-    // --- Private helpers ---
-
-    /**
-     * Single source of truth for rendering all three balance labels.
-     *
-     * Bidder semantics:
-     *   accountBalance  = total wallet
-     *   unsettled       = locked (amount held for current winning bid)
-     *   available       = accountBalance - locked  (free to spend)
-     *
-     * Seller semantics:
-     *   accountBalance  = settled earnings already in wallet
-     *   unsettled       = pending (sum of current highest bids across active auctions)
-     *   available       = accountBalance  (pending isn't deducted, it's incoming)
-     */
     private void renderBalanceLabels(long balance, long unsettled) {
         lblAccountBalance.setText("Balance: " + formatter.format(balance));
 
@@ -191,18 +183,8 @@ public class MainLayoutController implements MessageListener {
                     Platform.runLater(() -> updateUnsettledBalance(newUnsettled));
                 }
                 case "BALANCE_UPDATE" -> {
-                    System.out.println("[DEBUG] đã nhận balance update");
                     long newBalance = root.get("data").getAsLong();
                     Platform.runLater(() -> updateBalance(newBalance));
-                }
-                case "AUCTION_ENDED" -> {
-                    System.out.println("[DEBUG] đã nhận auction ended");
-                    JsonObject data     = root.getAsJsonObject("data");
-                    String     winnerId = data.has("winnerId") ? data.get("winnerId").getAsString() : "";
-                    String     winner   = data.has("winner")   ? data.get("winner").getAsString()   : "N/A";
-                    long       price    = data.has("finalPrice") ? data.get("finalPrice").getAsLong() : 0L;
-                    String     myId     = user.getId();
-                    //Platform.runLater(() -> showAuctionEndedAlert(winnerId, winner, price, myId));
                 }
             }
         } catch (Exception e) {
@@ -222,19 +204,15 @@ public class MainLayoutController implements MessageListener {
         SessionManager.getInstance().logout();
 
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Phiên đăng nhập hết hạn");
+        alert.setTitle("Login session expired");
         alert.setHeaderText(null);
-        alert.setContentText("Tài khoản của bạn đã đăng nhập ở nơi khác. Bạn đã bị đăng xuất.");
-        alert.showAndWait();
+        alert.setContentText("Your account are logged in from another location! Logging out.");
+        alert.showAndWait(); //blocking intentionally, not thread block
 
-        try {
-            Parent loginRoot = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
-            Stage stage = (Stage) contentArea.getScene().getWindow();
-            stage.getScene().setRoot(loginRoot);
-            stage.setMaximized(false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Parent loginRoot = ViewLoader.load("login-signup.fxml").root();
+        Stage stage = (Stage) contentArea.getScene().getWindow();
+        stage.getScene().setRoot(loginRoot);
+        stage.setMaximized(false);
     }
 
     // --- Notification ---
@@ -254,7 +232,7 @@ public class MainLayoutController implements MessageListener {
                 }
             });
         } catch (IOException e) {
-            System.err.println("Không load được notification-popup.fxml: " + e.getMessage());
+            System.err.println("[MainlayoutController] can extract notification-popup.fxml: " + e.getMessage());
         }
     }
 
@@ -354,35 +332,22 @@ public class MainLayoutController implements MessageListener {
 
     @FXML
     void handleNavActiveBids(MouseEvent event) {
-        updateActiveStyle(navActiveBids); 
+        updateActiveStyle(navActiveBids);
         clearContent();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidded-auction-list.fxml"));
-            Parent biddedAuctionListView = loader.load();
-            BiddedAuctionsListController ctrl = loader.getController();
-            ctrl.setOnOpenAuction(this::loadBiddingRoom);
-            contentArea.getChildren().add(biddedAuctionListView);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load file bidded-auction-list.fxml");
-        }
+        ViewLoader.LoadResult<BiddedAuctionsListController> r = ViewLoader.load("bidded-auction-list.fxml");
+        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        contentArea.getChildren().add(r.root());
     }
 
     @FXML
     void handleDeposit(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/DepositCard.fxml"));
-            Parent root = loader.load();
-            DepositCardController ctrl = loader.getController();
-            ctrl.setMainLayoutController(this);
-            Stage depositStage = new Stage();
-            depositStage.setTitle("Nạp tiền vào tài khoản");
-            depositStage.setScene(new Scene(root));
-            depositStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            depositStage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        ViewLoader.LoadResult<DepositCardController> r = ViewLoader.load("DepositCard.fxml");
+        r.controller().setMainLayoutController(this);
+        Stage depositStage = new Stage();
+        depositStage.setTitle("Deposit");
+        depositStage.setScene(new Scene(r.root()));
+        depositStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        depositStage.show();
     }
 
     @FXML
@@ -431,31 +396,17 @@ public class MainLayoutController implements MessageListener {
     void handleNavNewAuctionRoom(MouseEvent event) {
         updateActiveStyle(navNewAuctionRoom); 
         clearContent();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
-            Parent createAuctionView = loader.load();
-            CreateAuctionController controller = loader.getController();
-            controller.setOnSuccessCallback(newAuction -> {
-                updateActiveStyle(null);
-                clearContent();
-                try {
-                    FXMLLoader roomLoader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-                    Parent view = roomLoader.load();
-                    BiddingRoomController ctrl = roomLoader.getController();
-                    ctrl.setAuction(newAuction); 
-                    ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
-                    currentController = ctrl;
-                    contentArea.getChildren().add(view);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(createAuctionView);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load file create-auction.fxml");
-        }
+        ViewLoader.LoadResult<CreateAuctionController> r = ViewLoader.load("create-auction.fxml");
+        r.controller().setOnSuccessCallback(newAuction -> {
+            updateActiveStyle(null);
+            clearContent();
+            ViewLoader.LoadResult<BiddingRoomController> room = ViewLoader.load("bidding-room.fxml");
+            room.controller().setAuction(newAuction);
+            room.controller().setOnSuccessCallback(() -> handleNavDashboard(null));
+            currentController = room.controller();
+            contentArea.getChildren().add(room.root());
+        });
+        contentArea.getChildren().add(r.root());
     }
 
     public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
@@ -489,16 +440,9 @@ public class MainLayoutController implements MessageListener {
     void handleNavWatchlist(MouseEvent event) {
         updateActiveStyle(navWatchlist);
         clearContent();
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/watchlist.fxml"));
-            Parent watchlistView = loader.load();
-            WatchlistController ctrl = loader.getController();
-            ctrl.setOnOpenAuction(this::loadBiddingRoom);
-            contentArea.getChildren().add(watchlistView);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Lỗi load file watchlist.fxml");
-        }
+        ViewLoader.LoadResult<WatchlistController> r = ViewLoader.load("watchlist.fxml");
+        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        contentArea.getChildren().add(r.root());
     }
 
     @FXML void handleNavWonItems(MouseEvent event) {}
@@ -510,11 +454,10 @@ public class MainLayoutController implements MessageListener {
         Duration duration = Duration.millis(150);
         double targetWidth = isSidebarExpanded ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
 
-        KeyFrame kf = new KeyFrame(duration,
+        timeline.getKeyFrames().add(new KeyFrame(duration,
                 new KeyValue(sidebar.prefWidthProperty(), targetWidth),
                 new KeyValue(sidebar.minWidthProperty(),  targetWidth),
-                new KeyValue(sidebar.maxWidthProperty(),  targetWidth));
-        timeline.getKeyFrames().add(kf);
+                new KeyValue(sidebar.maxWidthProperty(),  targetWidth)));
 
         Label[] navLabels = {
             lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleNAR, lblSidebarTitleW, lblSidebarTitleWI
@@ -542,41 +485,35 @@ public class MainLayoutController implements MessageListener {
         if (loading != null && loadingController != null) {
                 loading.setVisible(true);
                 loadingController.playAnimation();
-        } else { System.out.println("Loading overlay not ready"); return; }
-        new Thread(() -> {
-            GetAuctionDetailsRequest req = new GetAuctionDetailsRequest(auctionId);
-            String jsonResponse = socket.sendAndReceive(
-                    JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req)));
-
-            AuctionDTO fullAuctionData = null;
-            if (jsonResponse != null && !jsonResponse.isEmpty()) {
-                ClientMessage serverMsg = JsonUtils.fromJson(jsonResponse, ClientMessage.class);
-                if ("GET_AUCTION_DETAILS_RESPONSE".equals(serverMsg.getAction())) {
-                    String raw = JsonUtils.toJson(serverMsg.getData());
-                    Type type = new TypeToken<ApiResponse<AuctionDTO>>() {}.getType();
-                    ApiResponse<AuctionDTO> resp = JsonUtils.fromJsonGeneric(raw, type);
-                    if (resp != null && resp.isSuccess()) fullAuctionData = resp.getData();
-                }
+        } else { 
+            System.out.println("Loading overlay not ready"); 
+            return; }
+        loading.setVisible(true);
+        loadingController.playAnimation();
+ 
+        GetAuctionDetailsRequest req  = new GetAuctionDetailsRequest(auctionId);
+        String                   json = JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS", req));
+ 
+        dispatcher.request(json, raw -> {
+            loading.setVisible(false);
+            loadingController.stopAnimation();
+ 
+            AuctionDTO auction = ServerResponse.unwrap(raw, "GET_AUCTION_DETAILS_RESPONSE", AuctionDTO.class);
+            if (auction != null) {
+                updateActiveStyle(null);
+                clearContent();
+                ViewLoader.LoadResult<BiddingRoomController> r = ViewLoader.load("bidding-room.fxml");
+                r.controller().setAuction(auction);
+                r.controller().setOnSuccessCallback(() -> handleNavDashboard(null));
+                if (isViewOnly) r.controller().enableSellerViewMode();
+                currentController = r.controller();
+                contentArea.getChildren().add(r.root());
+            } else {
+                System.out.println("Cannot load auction data for: " + auctionId);
             }
-
-            final AuctionDTO finalData = fullAuctionData;
-            Platform.runLater(() -> {
-                if (finalData != null) {
-                    updateActiveStyle(null);
-                    clearContent();
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/bidding-room.fxml"));
-                        Parent view = loader.load();
-                        BiddingRoomController ctrl = loader.getController();
-                        ctrl.setAuction(finalData);
-                        ctrl.setOnSuccessCallback(() -> handleNavDashboard(null));
-                        if (isViewOnly) ctrl.enableSellerViewMode();
-                        currentController = ctrl;
-                        contentArea.getChildren().add(view);
-                    } catch (IOException e) { e.printStackTrace(); }
-                } else { System.out.println("Cannot load auction data for auction id: " + auctionId); }
-                if (loading != null) loading.setVisible(false);
-            });
-        }).start();
+        }, () -> {
+            loading.setVisible(false);
+            loadingController.stopAnimation();
+        });
     }
 }

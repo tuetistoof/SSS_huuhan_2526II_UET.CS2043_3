@@ -1,17 +1,14 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.seller;
 
-import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.SocketDispatcher;
+import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
-import com.google.gson.reflect.TypeToken;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,7 +25,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -70,7 +66,7 @@ public class SellerDashboardController {
     @FXML private TableColumn<SellerDisplayDTO, String> colStatus;
     @FXML private TableColumn<SellerDisplayDTO, Void>   colActions;
 
-    private final AuctionClientSocket socket  = AuctionClientSocket.getInstance();
+    private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
     private final SessionManager      session = SessionManager.getInstance();
 
     private final ObservableList<SellerDisplayDTO> masterList   = FXCollections.observableArrayList();
@@ -168,47 +164,15 @@ public class SellerDashboardController {
             return;
         }
  
-        new Thread(() -> {
-            try {
-                String requestJson = JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS", null));
- 
-                String responseJson = socket.sendAndReceive(requestJson);
- 
-                if (responseJson == null) {
-                    renderList(new ArrayList<>()); return;
-                }
- 
-                ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-                if (serverMsg == null || serverMsg.getData() == null) {
-                    renderList(new ArrayList<>()); return;
-                }
- 
-                String innerJson = JsonUtils.toJson(serverMsg.getData()); 
-                ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
- 
-                if (apiResp == null || !apiResp.isSuccess()) {
-                    renderList(new ArrayList<>()); return;
-                }
- 
-                String listJson = JsonUtils.toJson(apiResp.getData()); 
-                Type listType = new TypeToken<ListResponse<SellerDisplayDTO>>() {}.getType();
-                ListResponse<SellerDisplayDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listType);
-                List<SellerDisplayDTO> items = (listResp != null && listResp.getData() != null) ? listResp.getData() : new ArrayList<>();
-                renderList(items);
- 
-            } catch (Exception e) {
-                e.printStackTrace();
-                renderList(new ArrayList<>());
-            }
-        }).start();
-    }
-    private void renderList(List<SellerDisplayDTO> items) {
-        Platform.runLater(() -> {
+        String json = JsonUtils.toJson(ClientMessage.request("GET_MY_AUCTIONS", null));
+
+        dispatcher.request(json, raw -> {
+            List<SellerDisplayDTO> items = ServerResponse.unwrapList(raw, null, SellerDisplayDTO.class);
+            if (items == null) items = new ArrayList<>();
             refreshMetrics(items);
             masterList.setAll(items);
         });
     }
-
     
     private void populateAccountInfo() {
         UserDTO user = session.getCurrentUser();

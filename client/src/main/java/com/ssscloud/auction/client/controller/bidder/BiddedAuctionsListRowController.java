@@ -1,10 +1,9 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
 import java.time.format.DateTimeFormatter;
 
 import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;

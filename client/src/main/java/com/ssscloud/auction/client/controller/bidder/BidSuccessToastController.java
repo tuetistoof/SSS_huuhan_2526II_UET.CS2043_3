@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller;
+package com.ssscloud.auction.client.controller.bidder;
 
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
@@ -33,9 +33,8 @@ public class BidSuccessToastController {
     private static final double AUTO_CLOSE_SECONDS = 4.5;
     private static final String SOUND_PATH         = "/sounds/success.mp3";
 
-    private static final NumberFormat CURRENCY_FMT =
-            NumberFormat.getIntegerInstance(new Locale("vi", "VN"));
-
+   private static final NumberFormat CURRENCY_FMT =
+        NumberFormat.getIntegerInstance(Locale.of("vi", "VN"));
     private Timeline  autoCloseTimeline;
     private Popup popup;
 
