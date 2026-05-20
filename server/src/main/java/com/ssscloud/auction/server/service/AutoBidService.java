@@ -40,7 +40,6 @@ public class AutoBidService {
     // --- ATTRIBUTES ---
 
     private final Map<String, List<AutoBidEntry>> registrationsMap = new ConcurrentHashMap<>();
-    private final Map<String, Map<String, AtomicInteger>> bidCountsMap = new ConcurrentHashMap<>();
     // Race-condition guard: auctionId được đánh dấu ngay khi clearRegistrations()
     // chạy,
     // để register() gọi sau đó không thể tạo entry mới cho auction đã bị cancel.
@@ -161,10 +160,20 @@ public class AutoBidService {
             long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
             long calculatedBidAmount = Math.min(basePrice + winningEntry.increment, winningEntry.maxBid);
 
-            if (calculatedBidAmount <= currentAuctionPrice) {
-                logger.log(Level.INFO, "Calculated auto-bid " + calculatedBidAmount
-                        + " is insufficient against current price " + currentAuctionPrice);
-                return;
+            if (calculatedBidAmount > currentAuctionPrice) {
+                userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
+                SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
+
+                try {
+                    ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
+                } catch (Exception submitException) {
+                    userDAO.unlockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
+                    SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, -winningEntry.maxBid);
+                    throw submitException;
+                }
+            }
+            else{
+                entriesSnapshotList.add (winningEntry);
             }
 
             List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
@@ -175,19 +184,8 @@ public class AutoBidService {
             }
 
             autoBidEntriesList.removeAll(entriesToRemoveList);
-            incrementBidCount(auctionId, winningEntry.bidderId);
             entriesToRemoveList.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
 
-            userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
-            SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
-
-            try {
-                ConcurrentBidManager.getInstance().submitBid(auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername, calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
-            } catch (Exception submitException) {
-                userDAO.unlockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
-                SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, -winningEntry.maxBid);
-                throw submitException;
-            }
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.trigger for auctionId: "
@@ -212,27 +210,6 @@ public class AutoBidService {
             throw exception;
         }
     }
-
-    /**
-     * Get the total number of auto-bids placed by a specific bidder in an auction.
-     */
-    public int getAutoBidCount(String auctionId, String bidderId) throws Exception {
-        try {
-            Map<String, AtomicInteger> auctionCountsMap = bidCountsMap.get(auctionId);
-            if (auctionCountsMap == null) {
-                return 0;
-            }
-            AtomicInteger count = auctionCountsMap.get(bidderId);
-            return count == null ? 0 : count.get();
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.getAutoBidCount for bidderId: "
-                            + bidderId,
-                    exception);
-            throw exception;
-        }
-    }
-
     /**
      * Clear all auto-bid registrations for a specific auction.
      * Đánh dấu auctionId vào cancelledAuctionIds TRƯỚC khi remove khỏi map,
@@ -244,13 +221,39 @@ public class AutoBidService {
             cancelledAuctionIds.add(auctionId);
             // 2. Xóa entries và bidCounts
             registrationsMap.remove(auctionId);
-            bidCountsMap.remove(auctionId);
             logger.log(Level.INFO, "Auto-bid registrations successfully cleared for auctionId: " + auctionId);
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.clearRegistrations for auctionId: "
                             + auctionId,
                     exception);
+            throw exception;
+        }
+    }
+
+    public boolean removeRegistration(String auctionId, String bidderId) throws Exception {
+        try {
+            List<AutoBidEntry> entries = registrationsMap.get(auctionId);
+            
+            // Nếu tìm thấy danh sách đấu thầu của phiên auctionId
+            if (entries != null) {
+                boolean isRemoved = entries.removeIf(entry -> entry.bidderId.equals(bidderId));
+                
+                if (isRemoved) {
+                    logger.log(Level.INFO, "Auto-bid registration removed for bidderId: " + bidderId + " in auctionId: " + auctionId);
+                } else {
+                    logger.log(Level.INFO, "BidderId: " + bidderId + " not found in auctionId: " + auctionId);
+                }
+                
+                return isRemoved;
+            } 
+            
+            // Trường hợp không tìm thấy phiên đấu thầu (auctionId) nào trong map
+            logger.log(Level.INFO, "No auto-bid entries found for auctionId: " + auctionId);
+            return false;
+
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AutoBidService.removeRegistration for bidderId: " + bidderId, exception);
             throw exception;
         }
     }
@@ -277,23 +280,6 @@ public class AutoBidService {
     }
 
     // --- PRIVATE METHODS ---
-
-    /**
-     * Increment auto-bid count for a bidder in an auction.
-     */
-    private void incrementBidCount(String auctionId, String bidderId) throws Exception {
-        try {
-            bidCountsMap.computeIfAbsent(auctionId, auctionKey -> new ConcurrentHashMap<>())
-                    .computeIfAbsent(bidderId, bidderKey -> new AtomicInteger(0))
-                    .incrementAndGet();
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.incrementBidCount for bidderId: "
-                            + bidderId,
-                    exception);
-            throw exception;
-        }
-    }
 
     /**
      * Notify a bidder that their auto-bid has been stopped.

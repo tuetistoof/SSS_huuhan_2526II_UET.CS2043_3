@@ -149,6 +149,11 @@ public class MessageHandler {
                     String controllerResponse = bidController.registerAutoBid(clientMessage.getData(), clientHandler.getUserId(), clientHandler.getUsername());
                     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
+
+                case "CANCEL_AUTOBID": {
+                    String controllerResponse = bidController.cancelAutoBid(clientMessage.getData(), clientHandler.getUserId(), clientHandler.getUsername());
+                    return JsonUtils.toJson(ClientMessage.request("CANCEL_AUTOBID_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
                 
                 case "GET_AUTOBID_STATUS": {
                     String controllerResponse = bidController.getAutoBidStatus(clientMessage.getData(), clientHandler.getUserId());

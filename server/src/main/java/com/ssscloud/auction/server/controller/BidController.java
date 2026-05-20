@@ -114,6 +114,28 @@ public class BidController {
         }
     }
 
+    public String cancelAutoBid (Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Cancelling auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            AutoBidRequest autoBidRequest = JsonUtils.fromJson(jsonPayload, AutoBidRequest.class);
+
+            validateCancelAutoBidRequest(autoBidRequest);
+
+            boolean isCancel = autoBidService.removeRegistration(autoBidRequest.getAuctionId(), bidderId);
+            if (isCancel){
+                return JsonUtils.toJson(ApiResponse.success("Auto-bid registration has been cancelled successfully."));
+            } else {
+                return JsonUtils.toJson(ApiResponse.error("Auto-bid registration cancellation failed."));
+            }
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected critical failure during auto-bid cancellation.", exception);
+            throw exception;
+        }
+    }
+
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) throws ControllerException {
         try {
             if (placeBidRequest == null) {
@@ -160,6 +182,21 @@ public class BidController {
     private void validateBidHistoryRequest(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
             throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to retrieve bid history.");
+        }
+    }
+
+    private void validateCancelAutoBidRequest(AutoBidRequest autoBidRequest) throws ControllerException {
+        try {
+            if (autoBidRequest == null) {
+                throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "The cancel auto-bid request payload cannot be null.");
+            }
+            if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to cancel auto-bid registration.");
+            }
+        } catch (ControllerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "Cancel auto-bid request validation failed: " + e.getMessage(), e);
         }
     }
 }

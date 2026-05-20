@@ -103,7 +103,7 @@ public class BidService {
 
         if (lastBid == null) {
             // Chưa có bid — chỉ cần >= startPrice
-            if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
+            if (bidAmount <= auction.getAuctionConfig().getStartPrice()) {
                 throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
                         "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
             }
