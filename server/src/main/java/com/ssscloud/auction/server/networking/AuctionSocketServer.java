@@ -30,6 +30,7 @@ import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.QueryDAO;
+import com.ssscloud.auction.server.dao.QueryDAO.AuctionScheduleInfo;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.service.AdminService;
 import com.ssscloud.auction.server.service.AuctionService;
@@ -92,7 +93,7 @@ public class AuctionSocketServer {
         UserService userService             = new UserService(userDAO);
         ItemService itemService             = new ItemService(itemDAO);
         NotificationService notificationService = new NotificationService(queryDAO, notificationDAO);
-        AuctionService auctionService       = new AuctionService(auctionDAO, userDAO, userService, itemService, notificationService);
+        AuctionService auctionService       = new AuctionService(auctionDAO, userDAO, userService, itemService, notificationService, autoBidService);
         AdminService adminService           = new AdminService(adminDAO, auctionDAO, autoBidService, userDAO); // [ADMIN]
 
         // ── Controllers ───────────────────────────────────────────────────
@@ -103,6 +104,7 @@ public class AuctionSocketServer {
         QueryController queryController             = new QueryController(queryDAO);
         AdminController adminController             = new AdminController(adminService); // [ADMIN]
 
+        
         ConcurrentBidManager.initialize(userDAO, bidDAO, autoBidService, auctionDAO, notificationController);
 
         MessageHandler messageHandler = new MessageHandler(
@@ -114,8 +116,8 @@ public class AuctionSocketServer {
                 adminController); // [ADMIN]
 
         // Recover active auctions from the database and start the safety-net maintenance task
-        recoverLiveAuctions(auctionDAO, auctionService);
-        startAuctionCloser(auctionDAO, auctionService, notificationService);
+        recoverLiveAuctions(auctionDAO, auctionService, queryDAO);
+        startAuctionCloser(auctionDAO, auctionService, notificationService, autoBidService);
 
         logger.log(Level.INFO, "[Server] Initializing main networking listener on port 5000...");
 
@@ -139,40 +141,50 @@ public class AuctionSocketServer {
      * On server restart, reloads all auctions with OPEN or RUNNING status from the database,
      * registers them into the AuctionRegistry, and schedules the closing timers.
      */
-    private static void recoverLiveAuctions(AuctionDAO auctionDAO, AuctionService auctionService) throws Exception {
+    /**
+ * Khi server restart: query nhẹ auctionId+endTime (không load full Auction),
+ * không registerIfAbsent (Registry chỉ add khi user SUBSCRIBE_AUCTION).
+ * Auction overdue → updateStatus + settle qua DB.
+ * Auction còn hạn  → chỉ schedule timer.
+ */
+    private static void recoverLiveAuctions(AuctionDAO auctionDAO, AuctionService auctionService,
+                                            QueryDAO queryDAO) throws Exception {
         try {
-            List<Auction> liveAuctionList = new ArrayList<>(); // List naming suffix
-            liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.OPEN));
-            liveAuctionList.addAll(auctionDAO.findByStatus(AuctionStatus.RUNNING));
-
+            List<AuctionScheduleInfo> scheduleInfoList = queryDAO.findActiveScheduleInfos();
             LocalDateTime now = LocalDateTime.now();
-            for (Auction auction : liveAuctionList) {
-                String auctionId = auction.getAuctionConfig().getId(); // Id suffix
 
-                if (auction.getAuctionConfig().getEndTime() != null
-                        && auction.getAuctionConfig().getEndTime().isBefore(now)) {
-                    // Finalize auctions that exceeded their conclusion time during server downtime.
-                    auction.finish();
+            for (AuctionScheduleInfo info : scheduleInfoList) {
+                String auctionId = info.getAuctionId();
+
+                if (info.getEndTime() != null && info.getEndTime().isBefore(now)) {
+                    // Overdue trong lúc server down
                     auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                    logger.log(Level.INFO, "[Recovery] Successfully finalized overdue auctionId: " + auctionId);
+
+                    // Load full để có bid data cho settle
+                    Auction overdue = auctionDAO.findByAuctionId(auctionId);
+                    if (overdue != null) {
+                        auctionService.settleAuctionBalancesPublic(overdue); // FIX VĐ 4
+                    }
+                    logger.log(Level.INFO, "[Recovery] Finalized + settled overdue auctionId: " + auctionId);
                 } else {
-                    // Re-register active auctions and reschedule automatic closure.
-                    AuctionRegistry.getInstance().register(auction);
-                    auctionService.scheduleClose(auction);
-                    logger.log(Level.INFO, "[Recovery] Re-registered active auctionId: " + auctionId);
+                    // Còn hạn — chỉ schedule timer, KHÔNG register Registry  (FIX VĐ 1)
+                    auctionService.scheduleCloseById(auctionId, info.getEndTime());
+                    logger.log(Level.INFO, "[Recovery] Scheduled close for auctionId: " + auctionId);
                 }
             }
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Infrastructure failure during auction state recovery from database.", exception);
+            logger.log(Level.SEVERE, "Infrastructure failure during auction state recovery.", exception);
             throw exception;
         }
     }
 
     /**
-     * Safety-net task: periodically scans for overdue auctions that might have been missed by
-     * standard scheduling mechanisms (e.g., edge cases during high load).
+     * Safety-net: cứ 30s scan DB tìm auction overdue bị sót.
+     * FIX VĐ 3: gọi clearRegistrations + settle đầy đủ.
      */
-    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService, NotificationService notificationService) throws Exception {
+    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService,
+                                            NotificationService notificationService,
+                                            AutoBidService autoBidService) throws Exception {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "auction-closer");
             t.setDaemon(true);
@@ -182,7 +194,7 @@ public class AuctionSocketServer {
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 LocalDateTime now = LocalDateTime.now();
-                List<Auction> overdueAuctionList = new ArrayList<>(); // List naming suffix
+                List<Auction> overdueAuctionList = new ArrayList<>();
 
                 auctionDAO.findByStatus(AuctionStatus.RUNNING).stream()
                         .filter(a -> a.getAuctionConfig().getEndTime() != null
@@ -195,23 +207,31 @@ public class AuctionSocketServer {
                         .forEach(overdueAuctionList::add);
 
                 for (Auction fromDB : overdueAuctionList) {
-                    String auctionId = fromDB.getAuctionConfig().getId(); // Id suffix
+                    String auctionId = fromDB.getAuctionConfig().getId();
 
-                    // Prioritize objects in the AuctionRegistry as they have real-time observers attached.
                     Auction liveAuction = AuctionRegistry.getInstance().get(auctionId);
                     Auction target = (liveAuction != null) ? liveAuction : fromDB;
 
                     if (target.getStatus() == AuctionStatus.FINISHED) continue;
 
-                    target.finish();
+                    synchronized (target) {
+                        if (target.getStatus() == AuctionStatus.FINISHED) continue; // double-check
+                        target.finish();
+                    }
+
                     auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
                     AuctionRegistry.getInstance().remove(auctionId);
+                    ConcurrentBidManager.getInstance().shutdown(auctionId);
+                    autoBidService.clearRegistrations(auctionId); // FIX VĐ 3
+
+                    auctionService.settleAuctionBalancesPublic(target); // FIX VĐ 4
+
                     ChangeManager.getInstance().notify(target);
-                    notificationService.notifyAuctionEnded(target); // Notify watchers
-                    logger.log(Level.INFO, "[AuctionCloser] Safety-net finalizing auctionId: " + auctionId);
+                    notificationService.notifyAuctionEnded(target);
+                    logger.log(Level.INFO, "[AuctionCloser] Safety-net finalized auctionId: " + auctionId);
                 }
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "[AuctionCloser] Maintenance task encountered a scheduled check failure.", e);
+                logger.log(Level.SEVERE, "[AuctionCloser] Scheduled check failure.", e);
             }
         }, 30, 30, TimeUnit.SECONDS);
     }

@@ -80,10 +80,6 @@ public class AutoBidService {
             User bidder = userDAO.findById(bidderId);
             validateBidderAccount(bidder, autoBidRequest.getMaxBid());
 
-            // Race-condition guard: kiểm tra lại sau khi validate xong, trước khi ghi vào
-            // map.
-            // Nếu clearRegistrations() đã chạy (cancel) trong khoảng thời gian validate,
-            // cancelledAuctionIds sẽ chứa auctionId này → từ chối insert.
             if (cancelledAuctionIds.contains(autoBidRequest.getAuctionId())) {
                 throw new ServiceException(ErrorCode.AUCTION_CLOSED,
                         "Cannot register auto-bid: The auction has been cancelled.");
@@ -165,6 +161,7 @@ public class AutoBidService {
                 calculatedBidAmount = Math.min(basePrice + winningEntry.increment, winningEntry.maxBid);
             }
 
+            List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
             if (calculatedBidAmount > currentAuctionPrice) {
                 userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
                 SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
@@ -176,21 +173,18 @@ public class AutoBidService {
                     SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, -winningEntry.maxBid);
                     throw submitException;
                 }
-            }
-            else{
-                entriesSnapshotList.add (winningEntry);
-            }
 
-            List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
-            for (AutoBidEntry entry : autoBidEntriesList) {
-                if (!entry.bidderId.equals(winningEntry.bidderId)) {
-                    entriesToRemoveList.add(entry);
+                for (AutoBidEntry entry : autoBidEntriesList) {
+                    if (!entry.bidderId.equals(winningEntry.bidderId)) {
+                        entriesToRemoveList.add(entry);
+                    }
                 }
             }
-
+            else{
+                entriesToRemoveList.addAll(autoBidEntriesList);
+            }
             autoBidEntriesList.removeAll(entriesToRemoveList);
             entriesToRemoveList.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
-
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.trigger for auctionId: "

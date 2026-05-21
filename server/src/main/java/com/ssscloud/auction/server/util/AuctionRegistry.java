@@ -13,10 +13,6 @@ public class AuctionRegistry {
 
     private final Map<String, Auction> activeAuctions = new ConcurrentHashMap<>();
 
-    public void register(Auction auction) {
-        activeAuctions.put(auction.getAuctionConfig().getId(), auction);
-    }
-
     public void registerIfAbsent(Auction auction) {  
         activeAuctions.putIfAbsent(auction.getAuctionConfig().getId(), auction);
     }

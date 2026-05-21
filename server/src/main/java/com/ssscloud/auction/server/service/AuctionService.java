@@ -57,14 +57,18 @@ public class AuctionService {
     private final ItemService itemService;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private final NotificationService notificationService;
+    private final AutoBidService autoBidService;
 
-
-    public AuctionService(AuctionDAO auctionDAO, UserDAO userDAO, UserService userService, ItemService itemService, NotificationService notificationService) {
-        this.auctionDAO = auctionDAO;
-        this.userDAO = userDAO;
-        this.userService = userService;
-        this.itemService = itemService;
+    // Sửa constructor
+    public AuctionService(AuctionDAO auctionDAO, UserDAO userDAO, UserService userService,
+                        ItemService itemService, NotificationService notificationService,
+                        AutoBidService autoBidService) {
+        this.auctionDAO          = auctionDAO;
+        this.userDAO             = userDAO;
+        this.userService         = userService;
+        this.itemService         = itemService;
         this.notificationService = notificationService;
+        this.autoBidService      = autoBidService;
     }
 
     // --- PUBLIC METHODS ---
@@ -99,7 +103,7 @@ public class AuctionService {
                 throw new ServiceException(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
             }
     
-            AuctionRegistry.getInstance().register(auction); 
+            AuctionRegistry.getInstance().registerIfAbsent(auction); 
     
             scheduleClose(auction); 
             logger.log(Level.INFO, "Auction successfully created and registered with ID: {0}", auctionConfig.getId());
@@ -154,24 +158,26 @@ public class AuctionService {
 
         scheduler.schedule(() -> {
             try {
-                // Anti-sniping có thể đã extend endTime — reschedule nếu chưa đến giờ
                 if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
                     scheduleClose(auction);
                     return;
                 }
-
-                // FIX BUG 3: atomic compare-and-set, giống pattern của cancelAuction().
-                // synchronized(auction) đảm bảo chỉ MỘT trong hai thread
-                // (scheduler hoặc admin cancel) được phép đổi status.
-                // Thread thua sẽ thấy status đã bị đổi và tự exit.
                 boolean shouldProceed;
                 synchronized (auction) {
                     AuctionStatus currentStatus = auction.getStatus();
                     if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
                         auction.finish(); // set FINISHED bên trong lock
                         shouldProceed = true;
+                        auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                        AuctionRegistry.getInstance().remove(auctionId);
+                        ConcurrentBidManager.getInstance().shutdown(auctionId);
+                        autoBidService.clearRegistrations(auctionId);  // FIX VĐ 2: dọn AutoBidEntry
+
+                        settleAuctionBalances(auction);
+
+                        ChangeManager.getInstance().notify(auction);
+                        notificationService.notifyAuctionEnded(auction);
                     } else {
-                        // Admin đã cancel (CANCELED) hoặc trạng thái khác — không làm gì
                         shouldProceed = false;
                     }
                 }
@@ -204,6 +210,42 @@ public class AuctionService {
                     + auctionId, exception);
             }
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
+    }
+    /**
+     * Dùng cho recovery: chỉ cần auctionId + endTime, không load full Auction.
+     * Khi timer kích hoạt mới fetch từ Registry hoặc DB.
+     */
+    public void scheduleCloseById(String auctionId, LocalDateTime endTime) {
+        long delayMs = Duration.between(LocalDateTime.now(), endTime).toMillis();
+        if (delayMs < 0) delayMs = 0;
+
+        scheduler.schedule(() -> {
+            try {
+                Auction auction = AuctionRegistry.getInstance().get(auctionId);
+                if (auction == null) {
+                    auction = auctionDAO.findByAuctionId(auctionId);
+                }
+                if (auction == null) {
+                    logger.log(Level.WARNING, "[Recovery] scheduleCloseById: auction not found: " + auctionId);
+                    return;
+                }
+                // Anti-sniping có thể đã extend endTime — reschedule nếu chưa tới giờ
+                if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
+                    scheduleClose(auction);
+                    return;
+                }
+                scheduleClose(auction);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "[Recovery] scheduleCloseById error for auctionId: " + auctionId, e);
+            }
+        }, delayMs, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Public wrapper để AuctionSocketServer (safety-net + recovery) gọi settle.
+     */
+    public void settleAuctionBalancesPublic(Auction auction) {
+        settleAuctionBalances(auction);
     }
 
     private void settleAuctionBalances(Auction auction) {
