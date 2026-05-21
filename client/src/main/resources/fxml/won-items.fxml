@@ -90,9 +90,6 @@
                                        text="You haven't won any auctions yet."
                                        wrapText="true" />
                                 <Region prefHeight="16" />
-                                <Button onAction="#handleExploreAuctions"
-                                        styleClass="wi-btn-explore"
-                                        text="Explore Auctions" />
                             </children>
                         </VBox>
 

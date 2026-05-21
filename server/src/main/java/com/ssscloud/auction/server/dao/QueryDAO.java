@@ -330,71 +330,72 @@ public class QueryDAO extends BaseDAO{
     // ── Query ─────────────────────────────────────────────────────────────────
 
     public List<BidderDisplayDTO> findWatchlistDetailsByUser(String userId) throws DAOException, Exception {
-    List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
-    
-    String sql = 
-        "SELECT a.id, " +
-        "       e.name AS auction_name, " +          
-        "       ac.end_time, " +                     
-        "       u_seller.username AS seller_username, " + 
-        "       ei.name AS item_name, " +            
-        "       i.type AS item_type, " +             
-        "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " + 
-        "       (SELECT img.image_url FROM item_image_url img " +
-        "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + 
-        "FROM watchlist w " +
-        "JOIN auction a ON w.auction_id = a.id " +
-        "JOIN auction_config ac ON a.id = ac.id " +
-        "JOIN entity e ON a.id = e.id " +            
-        "JOIN user u_seller ON a.seller_id = u_seller.id " + 
-        "JOIN item i ON a.item_id = i.id " +
-        "JOIN entity ei ON i.id = ei.id " +          
-        "LEFT JOIN ( " +
-        "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
-        "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
-        "                         WHERE b2.auction_id = b1.auction_id) " +
-        ") AS last_bid ON last_bid.auction_id = a.id " +
-        "WHERE w.user_id = ?";
+        List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
+        
+        String sql = 
+            "SELECT a.id, " +
+            "       e.name AS auction_name, " +          
+            "       ac.end_time, " +                     
+            "       u_seller.username AS seller_username, " + 
+            "       ei.name AS item_name, " +            
+            "       i.type AS item_type, " +             
+            "       COALESCE(last_bid.bid_amount, ac.start_price) AS current_price, " + 
+            "       (SELECT img.image_url FROM item_image_url img " +
+            "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + 
+            "FROM watchlist w " +
+            "JOIN auction a ON w.auction_id = a.id " +
+            "JOIN auction_config ac ON a.id = ac.id " +
+            "JOIN entity e ON a.id = e.id " +            
+            "JOIN user u_seller ON a.seller_id = u_seller.id " + 
+            "JOIN item i ON a.item_id = i.id " +
+            "JOIN entity ei ON i.id = ei.id " +          
+            "LEFT JOIN ( " +
+            "    SELECT b1.auction_id, b1.bid_amount FROM bid_transaction b1 " +
+            "    WHERE b1.bid_time = (SELECT MAX(b2.bid_time) FROM bid_transaction b2 " +
+            "                         WHERE b2.auction_id = b1.auction_id) " +
+            ") AS last_bid ON last_bid.auction_id = a.id " +
+            "WHERE w.user_id = ?" +
+            "  AND a.status = 'RUNNING'";
 
-    Connection connection = null;
-    PreparedStatement preparedStatement = null;
-    ResultSet resultSet = null;
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
 
-    try {
-        connection = getConnection();
-        preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setString(1, userId);
-        resultSet = preparedStatement.executeQuery();
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, userId);
+            resultSet = preparedStatement.executeQuery();
 
-        while (resultSet.next()) {
-            BidderDisplayDTO dto = new BidderDisplayDTO();
-            dto.setId(resultSet.getString("id"));
-            dto.setAuctionName(resultSet.getString("auction_name"));
-            dto.setItemName(resultSet.getString("item_name"));
-            dto.setItemType(resultSet.getString("item_type"));
-            dto.setCurrentPrice(resultSet.getLong("current_price"));
-            
-            dto.setEndTime(resultSet.getObject("end_time", LocalDateTime.class));
-            
-            dto.setSellerUsername(resultSet.getString("seller_username"));
-            
-            String imageUrlRaw = resultSet.getString("image_url");
-            List<String> imageUrlList = (imageUrlRaw != null) ? List.of(imageUrlRaw) : new ArrayList<>();
-            dto.setImageUrl(imageUrlList);
-            
-            auctionDetailsList.add(dto);
+            while (resultSet.next()) {
+                BidderDisplayDTO dto = new BidderDisplayDTO();
+                dto.setId(resultSet.getString("id"));
+                dto.setAuctionName(resultSet.getString("auction_name"));
+                dto.setItemName(resultSet.getString("item_name"));
+                dto.setItemType(resultSet.getString("item_type"));
+                dto.setCurrentPrice(resultSet.getLong("current_price"));
+                
+                dto.setEndTime(resultSet.getObject("end_time", LocalDateTime.class));
+                
+                dto.setSellerUsername(resultSet.getString("seller_username"));
+                
+                String imageUrlRaw = resultSet.getString("image_url");
+                List<String> imageUrlList = (imageUrlRaw != null) ? List.of(imageUrlRaw) : new ArrayList<>();
+                dto.setImageUrl(imageUrlList);
+                
+                auctionDetailsList.add(dto);
+            }
+            logger.log(Level.INFO, "Successfully retrieved {0} detailed watchlist items for userId: {1}", new Object[]{auctionDetailsList.size(), userId});
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.WATCHLIST_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user watchlist details.", sqlException);
+        } catch (Exception exception) {
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
         }
-        logger.log(Level.INFO, "Successfully retrieved {0} detailed watchlist items for userId: {1}", new Object[]{auctionDetailsList.size(), userId});
-    } catch (SQLException sqlException) {
-        throw new DAOException(ErrorCode.WATCHLIST_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user watchlist details.", sqlException);
-    } catch (Exception exception) {
-        throw exception;
-    } finally {
-        closeResource(resultSet, preparedStatement);
-        closeConnect(connection);
+        return auctionDetailsList;
     }
-    return auctionDetailsList;
-}
 
     public List<String> findUserIdsByAuction(String auctionId) throws DAOException, Exception {
         String sql = "SELECT user_id FROM watchlist WHERE auction_id = ?";
@@ -441,6 +442,75 @@ public class QueryDAO extends BaseDAO{
             closeResource(resultSet, preparedStatement);
             closeConnect(connection);
         }
+    }
+
+    // ── Query ───────────────────────────────────────────────────────
+
+    public List<BidderDisplayDTO> findWonItemsByUser(String userId) throws DAOException, Exception {
+        List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
+        String sql =
+            "SELECT a.id, " +
+             "       e.name AS auction_name, " +          
+             "       ac.end_time, " +                      
+             "       u_seller.username AS seller_username, " + 
+             "       ei.name AS item_name, " +             
+             "       i.type AS item_type, " +              
+             "       last_bid.bid_amount AS current_price, " + 
+             "       (SELECT img.image_url FROM item_image_url img " +
+             "        WHERE img.item_id = a.item_id LIMIT 1) AS image_url " + 
+             "FROM auction a " +
+             "JOIN auction_config ac ON a.id = ac.id " +
+             "JOIN entity e ON a.id = e.id " +            
+             "JOIN user u_seller ON a.seller_id = u_seller.id " + 
+             "JOIN item i ON a.item_id = i.id " +
+             "JOIN entity ei ON i.id = ei.id " +          
+             "JOIN ( " +
+             "    SELECT b1.auction_id, b1.bidder_id, b1.bid_amount FROM bid_transaction b1 " +
+             "    WHERE b1.bid_amount = (SELECT MAX(b2.bid_amount) FROM bid_transaction b2 " +
+             "                           WHERE b2.auction_id = b1.auction_id) " +
+             ") AS last_bid ON last_bid.auction_id = a.id " +
+             "WHERE a.status = 'FINISHED' " +
+             "  AND last_bid.bidder_id = ? " +
+             "ORDER BY ac.end_time DESC";
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, userId);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                BidderDisplayDTO dto = new BidderDisplayDTO();
+                
+                dto.setId(resultSet.getString("id"));
+                dto.setAuctionName(resultSet.getString("auction_name"));
+                dto.setItemName(resultSet.getString("item_name"));
+                dto.setItemType(resultSet.getString("item_type"));
+                dto.setCurrentPrice(resultSet.getLong("current_price"));
+
+                dto.setEndTime(resultSet.getObject("end_time", LocalDateTime.class));
+                
+                dto.setSellerUsername(resultSet.getString("seller_username"));
+                
+                String imageUrlRaw = resultSet.getString("image_url");
+                List<String> imageUrlList = (imageUrlRaw != null) ? List.of(imageUrlRaw) : new ArrayList<>();
+                dto.setImageUrl(imageUrlList);
+
+                auctionDetailsList.add(dto);
+            }
+            logger.log(Level.INFO, "Successfully retrieved {0} detailed won items for userId: {1}", new Object[]{auctionDetailsList.size(), userId});
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.WON_ITEMS_DETAILS_RETRIEVAL_FAILED, "Database failure while retrieving user won items details.", sqlException);
+        } catch (Exception exception) {
+            throw exception;
+        } finally {
+            closeResource(resultSet, preparedStatement);
+            closeConnect(connection);
+        }
+        return auctionDetailsList;
     }
 
     // --- PRIVATE METHODS ---

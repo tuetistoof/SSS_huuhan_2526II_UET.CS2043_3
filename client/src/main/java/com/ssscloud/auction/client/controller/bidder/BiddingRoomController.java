@@ -13,6 +13,7 @@ import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import com.google.gson.JsonObject;
@@ -167,8 +168,10 @@ public class BiddingRoomController implements MessageListener {
     private List<String> itemUrls;
     private int currentImageIndex = 0;
 
-    private String currentUserName = SessionManager.getInstance().getCurrentUser() != null
-            ? SessionManager.getInstance().getCurrentUser().getUsername()
+    private UserDTO currentUser = SessionManager.getInstance().getCurrentUser();
+
+    private String currentUserName = currentUser != null
+            ? currentUser.getUsername()
             : null;
 
     private Runnable onSuccessCallback;
@@ -249,6 +252,17 @@ public class BiddingRoomController implements MessageListener {
 
         Platform.runLater(() -> {
             populateUI();
+            BidDTO LastBid = currentAuction.getLaseBidDTO();
+            if (LastBid != null) {
+                if (LastBid.getBidderId().equals(currentUser.getId()) && LastBid.getBidType().equalsIgnoreCase("AUTO")) {
+                    applyAutoBidState(true);
+                } else {
+                    applyAutoBidState(false);
+                }
+            } else {
+                applyAutoBidState(false);
+            }
+
             setUpItemImage(itemUrls);
             if (btnFollow != null) {
                 btnFollow.setDisable(true);

@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;
@@ -106,13 +106,6 @@ public class ItemsWonController {
     private void filterAuctionDone() {           // "Electronics" button
         setActiveFilter(aFilterElectronics, "ELECTRONIC");
         renderUI(applyFilter(masterList));
-    }
-
-    @FXML
-    private void handleExploreAuctions() {
-        // No-op — MainLayout sẽ bắt sự kiện này qua callback nếu cần,
-        // hoặc để button navigate sang Auction List screen.
-        // Hiện tại để trống như changeBankAccount() trong SellerDashboard.
     }
 
     // ── Render ────────────────────────────────────────────────────────────────

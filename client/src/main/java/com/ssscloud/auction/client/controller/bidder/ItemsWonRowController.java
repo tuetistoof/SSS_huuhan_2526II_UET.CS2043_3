@@ -2,7 +2,7 @@ package com.ssscloud.auction.client.controller.bidder;
 
 import java.time.format.DateTimeFormatter;
 
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

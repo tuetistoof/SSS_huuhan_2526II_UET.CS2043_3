@@ -464,11 +464,11 @@ public class MainLayoutController implements MessageListener {
     @FXML void handleNavWonItems(MouseEvent event) {
         updateActiveStyle(navWonItems);
         clearContent();
-        ViewLoader.LoadResult<ItemsWonController> r = ViewLoader.load("items-won.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        ViewLoader.LoadResult<ItemsWonController> r = ViewLoader.load("won-items.fxml");
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
-    
+
     @FXML void handleSearching(MouseEvent event) {}
 
     @FXML
