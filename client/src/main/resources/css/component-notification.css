@@ -1,5 +1,6 @@
 @import "tokens.css";
 @import "base.css";
+
 /* ==========================================================
    component-notification.css — CloudBid Notification Center
    Covers: Notification cell states (Read/Unread), interactive hovers,
@@ -9,13 +10,13 @@
 
 .notif-unread {
     -fx-background-color: -cloud-rose-light; 
-    -fx-background-radius: -cloud-radius-md;  
+    -fx-background-radius: 8px;  
     -fx-cursor: hand;
 }
 
 .notif-read {
     -fx-background-color: -cloud-surface;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-background-radius: 8px;
     -fx-cursor: hand;
 }
 
@@ -27,8 +28,8 @@
 
 .notif-icon {
     -fx-background-radius: 18; 
-    -fx-font-size: -cloud-text-lg; 
-    -fx-font-family: -cloud-font;
+    -fx-font-size: 16px; 
+    -fx-font-family: Segoe UI, Arial, sans-serif;
 }
 
 /* ── Loại 1: Thông báo Bị vượt giá (Outbid Notification Icon) ── */
@@ -46,16 +47,16 @@
    ========================================================= */
 
 .notif-title {
-    -fx-font-size: -cloud-text-base; 
+    -fx-font-size: 13px; 
     -fx-text-fill: -cloud-rose-dark; 
 }
 
 .notif-time {
-    -fx-font-size: -cloud-text-sm; 
+    -fx-font-size: 11px; 
     -fx-text-fill: -cloud-text-muted;
 }
 
 .notif-desc {
-    -fx-font-size: -cloud-text-base; 
+    -fx-font-size: 13px; 
     -fx-text-fill: -cloud-text-secondary; 
 }

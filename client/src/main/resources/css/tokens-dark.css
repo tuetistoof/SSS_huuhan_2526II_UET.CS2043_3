@@ -1,81 +1,72 @@
 /* ==========================================================
-   tokens-dark.css - CloudBid Dark Theme Token Overrides
-   Apply by adding the "theme-dark" style class to the scene root.
-   This file intentionally overrides only design tokens.
+   tokens-dark.css - CloudBid Dark Theme (Optimized for #1A1A1E)
    ========================================================== */
 
-.root.theme-dark {
-
-    /* Brand / Primary */
-    -cloud-primary:          #fb7185;
-    -cloud-primary-dark:     #f43f5e;
-    -cloud-primary-deeper:   #e11d48;
-    -cloud-primary-light:    rgba(251, 113, 133, 0.16);
-    -cloud-primary-pale:     rgba(251, 113, 133, 0.22);
+.root.theme-dark,
+.theme-dark,
+.theme-dark * {
+    /* Brand / Primary — Dựa trên #1A1A1E */
+    -cloud-primary:          #FF4081;   /* Hồng neon chuẩn */
+    -cloud-primary-dark:     #E91E63;
+    -cloud-primary-deeper:   #C2185B;
+    -cloud-primary-light:    rgba(255, 64, 129, 0.15);
+    -cloud-primary-pale:     rgba(255, 64, 129, 0.20);
 
     /* Rose */
-    -cloud-rose:             #f472b6;
-    -cloud-rose-dark:        #ec4899;
-    -cloud-rose-deeper:      #db2777;
-    -cloud-rose-deepest:     #be185d;
-    -cloud-rose-bg:          rgba(244, 114, 182, 0.14);
-    -cloud-rose-border:      rgba(244, 114, 182, 0.36);
-    -cloud-rose-light:       rgba(244, 114, 182, 0.18);
+    -cloud-rose:             #F8BBD0;
+    -cloud-rose-dark:        #F06292;
+    -cloud-rose-deeper:      #E91E63;
+    -cloud-rose-deepest:     #880E4F;
+    -cloud-rose-bg:          rgba(233, 30, 99, 0.12);
+    -cloud-rose-border:      rgba(233, 30, 99, 0.30);
+    -cloud-rose-light:       rgba(233, 30, 99, 0.15);
 
-    /* Neutrals */
-    -cloud-bg:               #0f172a;
-    -cloud-surface:          #172033;
-    -cloud-surface-alt:      #202b3f;
-    -cloud-border:           #2f3b52;
-    -cloud-border-mid:       #44516a;
-    -cloud-border-strong:    #667085;
+    /* Neutrals - Tương thích với #1A1A1E */
+    -cloud-bg:               #1A1A1E;   /* Nền của bạn */
+    -cloud-surface:          #25252A;   /* Sidebar / Panel */
+    -cloud-surface-alt:      #2D2D35;   /* Vùng đệm */
+    -cloud-border:           #3D3D45;   /* Viền mảnh */
+    -cloud-border-mid:       #4A4A55;
+    -cloud-border-strong:    #5A5A65;
 
     /* Text */
-    -cloud-text-primary:     #f8fafc;
-    -cloud-text-heading:     #ffffff;
-    -cloud-text-secondary:   #d7dde8;
-    -cloud-text-muted:       #aab4c5;
-    -cloud-text-placeholder: #8f9bad;
-    -cloud-text-disabled:    #687386;
-    -cloud-text-light:       #778397;
+    -cloud-text-primary:     #ffffff;   /* Trắng ngà dễ nhìn */
+    -cloud-text-heading:     #FFFFFF;
+    -cloud-text-secondary:   #A09DB8;
+    -cloud-text-muted:       #7A7A85;
+    -cloud-text-placeholder: #c4c3c5;
+    -cloud-text-disabled:    #b0b0b0;
+    -cloud-text-light:       #8A8A95;
 
     /* Semantic: success */
-    -cloud-success-bg:       rgba(34, 197, 94, 0.16);
-    -cloud-success-bg-alt:   rgba(34, 197, 94, 0.20);
-    -cloud-success-text:     #86efac;
-    -cloud-success-text-alt: #4ade80;
-    -cloud-success-badge:    #22c55e;
-    -cloud-success-dark:     #14532d;
+    -cloud-success-bg:       rgba(105, 240, 174, 0.12);
+    -cloud-success-bg-alt:   rgba(105, 240, 174, 0.18);
+    -cloud-success-text:     #69F0AE;
+    -cloud-success-text-alt: #46D190;
+    -cloud-success-badge:    #69F0AE;
+    -cloud-success-dark:     #0D3A25;
 
     /* Semantic: info */
-    -cloud-info-bg:          rgba(59, 130, 246, 0.16);
-    -cloud-info-bg-alt:      rgba(59, 130, 246, 0.20);
-    -cloud-info-text:        #93c5fd;
-    -cloud-info-text-alt:    #60a5fa;
-    -cloud-info-badge:       #3b82f6;
-    -cloud-info-dark:        #1e3a8a;
+    -cloud-info-bg:          rgba(79, 195, 247, 0.12);
+    -cloud-info-bg-alt:      rgba(79, 195, 247, 0.18);
+    -cloud-info-text:        #4FC3F7;
+    -cloud-info-text-alt:    #29B6F6;
+    -cloud-info-badge:       #03A9F4;
+    -cloud-info-dark:        #01579B;
 
     /* Semantic: warning */
-    -cloud-warn-bg:          rgba(245, 158, 11, 0.16);
-    -cloud-warn-text:        #fbbf24;
-    -cloud-warn-text-mild:   #f59e0b;
+    -cloud-warn-bg:          rgba(255, 183, 77, 0.12);
+    -cloud-warn-text:        #FFB74D;
+    -cloud-warn-text-mild:   #F9A825;
 
     /* Semantic: danger */
-    -cloud-danger-bg:        rgba(239, 68, 68, 0.16);
-    -cloud-danger-text:      #fca5a5;
-    -cloud-danger-text-alt:  #f87171;
-    -cloud-danger-badge:     #ef4444;
-
-    /* Shadows */
-    -cloud-shadow-sm:        dropshadow(three-pass-box, rgba(0,0,0,0.22), 6, 0, 0, 2);
-    -cloud-shadow-md:        dropshadow(three-pass-box, rgba(0,0,0,0.32), 12, 0, 0, 4);
-    -cloud-shadow-card:      dropshadow(three-pass-box, rgba(0,0,0,0.28), 8, 0, 0, 2);
-    -cloud-shadow-lg:        dropshadow(three-pass-box, rgba(0,0,0,0.45), 20, 0, 0, 10);
-    -cloud-shadow-login:     dropshadow(three-pass-box, rgba(0,0,0,0.45), 20, 0, 0, 10);
-    -cloud-shadow-rose:      dropshadow(three-pass-box, rgba(244,114,182,0.22), 15, 0, 0, 8);
-    -cloud-shadow-primary:   dropshadow(three-pass-box, rgba(251,113,133,0.24), 6, 0, 0, 1.5);
+    -cloud-danger-bg:        rgba(247, 86, 103, 0.12);
+    -cloud-danger-text:      #FF8A80;
+    -cloud-danger-text-alt:  #F75667;
+    -cloud-danger-badge:     #F75667;
 }
 
+/* Các rule CSS bên dưới giữ nguyên không đổi */
 .root.theme-dark .text-field,
 .root.theme-dark .password-field,
 .root.theme-dark .text-area,
@@ -88,4 +79,213 @@
 .root.theme-dark .list-view,
 .root.theme-dark .scroll-pane {
     -fx-background-color: -cloud-surface;
+}
+/* ==========================================================
+   DARK THEME — Overrides cho hardcoded hex không dùng token
+   Nguyên tắc: chỉ sửa giá trị hardcoded, không đụng token vars.
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   base.css — input, badge, scrollbar, table row
+   ---------------------------------------------------------- */
+
+/* input-field focus: #fffafa → dark surface */
+.theme-dark .input-field:focused {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+/* badge-canceled: bg #f1f1f1, không có text → surface + muted */
+.theme-dark .badge-canceled {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* slim-scroll thumb: #cccccc / #aaaaaa → dimmer trên dark */
+.theme-dark .slim-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: -cloud-border-strong;
+}
+.theme-dark .slim-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: -cloud-text-muted;
+}
+
+/* data-table row border: #f5f0f0 → border token */
+.theme-dark .data-table .table-row-cell {
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+/* ----------------------------------------------------------
+   layout-main.css — search bar, sidebar, table, metric, badge
+   ---------------------------------------------------------- */
+
+/* search-bar bg: #f1f3f4 → surface-alt; text cần sáng */
+.theme-dark .search-bar {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+.theme-dark .search-bar:focused {
+    -fx-background-color: -cloud-surface;
+}
+
+/* sidebar label: #444444 → primary text */
+.theme-dark .sidebar-item .label {
+    -fx-text-fill: -cloud-text-secondary;
+}
+.theme-dark .sidebar-item:hover .label,
+.theme-dark .sidebar-item.active-nav .label {
+    -fx-text-fill: -cloud-primary;
+}
+
+/* metric-card: bg #fffaf0 → surface */
+.theme-dark .metric-card {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+}
+
+/* table column header bg: #fafafa → surface */
+.theme-dark .table-view .column-header-background {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+/* table row cell: border #f5f5f5 + hover #fff7f8 */
+.theme-dark .table-view .table-row-cell {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+.theme-dark .table-view .table-row-cell:hover {
+    -fx-background-color: -cloud-surface-alt;
+}
+.theme-dark .table-view .table-cell {
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* filter-tab inactive border: #dddddd → border token */
+.theme-dark .filter-tab {
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+/* badge-finished: bg #f5f5f5 + text #757575 */
+.theme-dark .badge-finished {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* badge-winning: text #c62828 tối → dùng primary */
+.theme-dark .badge-winning {
+    -fx-text-fill: -cloud-primary;
+}
+
+/* scrollbar track: #eeeeee → surface */
+.theme-dark .main-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: -cloud-surface;
+}
+.theme-dark .main-scroll-pane .scroll-bar:vertical .thumb {
+    -fx-background-color: -cloud-border-strong;
+}
+.theme-dark .main-scroll-pane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: -cloud-text-muted;
+}
+
+/* ----------------------------------------------------------
+   screen-bidding-room.css — back btn, badges, stat, input,
+   list cells, chart, info rows, outbid warning
+   ---------------------------------------------------------- */
+
+/* br-badge-ended text: #444441 tối trên danger badge → surface */
+.theme-dark .br-badge-ended {
+    -fx-text-fill: -cloud-surface;
+}
+
+/* br-btn-back: border + text hardcoded gray → light */
+.theme-dark .br-btn-back {
+    -fx-border-color: -cloud-border-mid;
+    -fx-text-fill: -cloud-text-secondary;
+}
+.theme-dark .br-btn-back:hover {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-border-strong;
+}
+
+/* br-product-btn-change-image: #ffebf2 → dark rose tinted */
+.theme-dark .br-product-btn-change-image {
+    -fx-background-color: -cloud-rose-bg;
+}
+.theme-dark .br-product-btn-change-image:hover {
+    -fx-background-color: -cloud-rose-light;
+}
+
+/* br-stat-card border: #f0f0f0 → border token */
+.theme-dark .br-stat-card {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border;
+}
+
+/* br-stat-num-green: #3B6D11 tối → success token */
+.theme-dark .br-stat-num-green {
+    -fx-text-fill: -cloud-success-text;
+}
+
+/* br-input border: #dddddd + prompt #bbbbbb */
+.theme-dark .br-input {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border-mid;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+.theme-dark .br-input:focused {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-rose;
+}
+
+/* br-btn-follow: bg white → transparent */
+.theme-dark .br-btn-follow {
+    -fx-background-color: -cloud-surface;
+}
+.theme-dark .br-btn-follow:hover {
+    -fx-background-color: -cloud-rose-bg;
+}
+
+/* br-bid-list cell: border #f5f5f5 + hover #fff7f9 */
+.theme-dark .br-bid-list .list-cell {
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+.theme-dark .br-bid-list .list-cell:hover {
+    -fx-background-color: -cloud-surface-alt;
+}
+.theme-dark .br-bid-list .list-cell:selected {
+    -fx-background-color: -cloud-rose-bg;
+}
+
+/* br-bid-type-auto: bg #E6F1FB + text #185FA5 tối → info tokens */
+.theme-dark .br-bid-type-auto {
+    -fx-background-color: -cloud-info-bg;
+    -fx-text-fill: -cloud-info-text;
+}
+
+/* br-chart plot: bg #fafafa + border #f0f0f0 + grid lines */
+.theme-dark .br-chart .chart-plot-background {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border;
+}
+.theme-dark .br-chart .chart-vertical-grid-lines {
+    -fx-stroke: -cloud-border;
+}
+.theme-dark .br-chart .chart-horizontal-grid-lines {
+    -fx-stroke: -cloud-border;
+}
+.theme-dark .br-chart .axis {
+    -fx-tick-label-fill: -cloud-text-muted;
+}
+
+/* br-info-row border: #f5f5f5 → border token */
+.theme-dark .br-info-row {
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+/* outbid-warning: bg #FFF0F0 + border #F4C0C0 → danger tokens */
+.theme-dark .outbid-warning {
+    -fx-background-color: -cloud-danger-bg;
+    -fx-border-color: -cloud-danger-text-alt;
+    -fx-text-fill: -cloud-danger-text;
 }

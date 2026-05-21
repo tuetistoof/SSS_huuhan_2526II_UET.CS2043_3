@@ -1,5 +1,6 @@
 @import "tokens.css";
 @import "base.css";
+
 /* ==========================================================
    layout-main.css — Main Application Layout
    Covers: root, top-bar, sidebar, content-area, scroll,
@@ -13,7 +14,7 @@
    ========================================= */
 .main-root {
     -fx-background-color: -cloud-bg;
-    -fx-font-family: -cloud-font;
+    -fx-font-family: Segoe UI, Arial, sans-serif;
 }
 
 /* =========================================
@@ -30,8 +31,8 @@
 
 .circular-menu-btn {
     -fx-background-color: -cloud-surface;
-    -fx-background-radius: -cloud-radius-full;
-    -fx-border-radius: -cloud-radius-full;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
     -fx-cursor: hand;
     -fx-padding: 10px;
 }
@@ -46,21 +47,21 @@
 
 .app-logo-btn {
     -fx-background-color: transparent;
-    -fx-font-size: -cloud-text-xl;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-primary;
     -fx-cursor: hand;
     -fx-padding: 6 10 6 5;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-background-radius: 8px;
 }
 
 .toggle-btn {
     -fx-background-color: transparent;
-    -fx-background-radius: -cloud-radius-full;
+    -fx-background-radius: 50%;
     -fx-cursor: hand;
     -fx-padding: 8;
     -fx-text-fill: -cloud-text-secondary;
-    -fx-font-size: -cloud-text-lg;
+    -fx-font-size: 16px;
 }
 .toggle-btn:hover {
     -fx-background-color: -cloud-surface-alt;
@@ -73,7 +74,7 @@
     -fx-border-color: transparent;
     -fx-border-width: 1.5;
     -fx-padding: 8 16 8 16;
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-text-fill: -cloud-text-heading;
     -fx-prompt-text-fill: -cloud-text-placeholder;
 }
@@ -83,12 +84,12 @@
 }
 
 .header-balance-label {
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-heading;
 }
 .header-balance-value {
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-heading;
 }
@@ -103,7 +104,7 @@
 }
 
 .header-username {
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-heading;
 }
@@ -111,9 +112,9 @@
 .notification-badge {
     -fx-background-color: #ff3b30;
     -fx-text-fill: white;
-    -fx-font-size: -cloud-text-xs;
+    -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-background-radius: -cloud-radius-full;
+    -fx-background-radius: 50%;
     -fx-min-width: 12px;
     -fx-min-height: 12px;
     -fx-max-width: 12px;
@@ -135,7 +136,7 @@
 }
 
 .sidebar-group-label {
-    -fx-font-size: -cloud-text-lg;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-primary;
     -fx-padding: 12 8 4 8;
@@ -144,14 +145,14 @@
 .sidebar-item {
     -fx-padding: 9 12 9 12;
     -fx-spacing: 10;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-background-radius: 8px;
     -fx-cursor: hand;
     -fx-background-color: transparent;
     -fx-alignment: center-left;
 }
 .sidebar-item.active-nav {
     -fx-background-color: -cloud-primary-light;
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-alignment: CENTER_LEFT;
     -fx-padding: 7 16 7 13;
@@ -165,11 +166,11 @@
     -fx-text-fill: -cloud-primary;
 }
 .sidebar-item .label {
-    -fx-font-size: -cloud-text-md;
+    -fx-font-size: 14px;
     -fx-text-fill: #444444;
 }
 .sidebar-item.active-nav .label {
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-text-fill: -cloud-primary;
     -fx-font-weight: bold;
 }
@@ -178,10 +179,10 @@
     -fx-background-color: transparent;
     -fx-border-color: -cloud-primary;
     -fx-border-width: 1.5;
-    -fx-border-radius: -cloud-radius-md;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-text-fill: -cloud-primary;
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-cursor: hand;
     -fx-padding: 8 0 8 0;
@@ -238,7 +239,7 @@
    ========================================= */
 .dashboard-header {
     -fx-background-color: -cloud-primary-pale;
-    -fx-background-radius: -cloud-radius-lg;
+    -fx-background-radius: 12px;
     -fx-padding: 20 24 20 24;
 }
 
@@ -247,10 +248,10 @@
     -fx-background-radius: 10;
     -fx-padding: 16 20 16 20;
     -fx-min-width: 140px;
-    -fx-effect: -cloud-shadow-sm;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 6, 0, 0, 2);
 }
 .metric-card-value {
-    -fx-font-size: -cloud-text-3xl;
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-heading;
 }
@@ -259,7 +260,7 @@
     -fx-text-fill: -cloud-text-muted;
 }
 .metric-card-sub {
-    -fx-font-size: -cloud-text-sm;
+    -fx-font-size: 11px;
     -fx-text-fill: -cloud-text-disabled;
 }
 
@@ -269,7 +270,7 @@
 .btn-primary {
     -fx-background-color: -cloud-primary;
     -fx-text-fill: white;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-background-radius: 8px;
     -fx-padding: 0 18 0 18;
     -fx-cursor: hand;
 }
@@ -289,7 +290,7 @@
     -fx-border-color: transparent transparent #dddddd transparent;
     -fx-border-width: 0 0 2 0;
     -fx-text-fill: -cloud-text-muted;
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-cursor: hand;
     -fx-padding: 8 16 8 16;
     -fx-background-radius: 0;
@@ -306,7 +307,7 @@
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 10;
     -fx-padding: 0;
-    -fx-effect: -cloud-shadow-card;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
 }
 
 .table-view {
@@ -338,13 +339,13 @@
     -fx-background-color: -cloud-primary-light;
 }
 .table-view .table-cell {
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-text-fill: -cloud-text-heading;
     -fx-padding: 10 12 10 12;
 }
 
 .empty-state-label {
-    -fx-font-size: -cloud-text-md;
+    -fx-font-size: 14px;
     -fx-text-fill: -cloud-text-light;
     -fx-font-style: italic;
 }
@@ -357,7 +358,7 @@
     -fx-background-radius: 20;
     -fx-padding: 3 10 3 10;
     -fx-text-fill: -cloud-success-text;
-    -fx-font-size: -cloud-text-sm;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 .badge-upcoming {
@@ -365,7 +366,7 @@
     -fx-background-radius: 20;
     -fx-padding: 3 10 3 10;
     -fx-text-fill: -cloud-info-text;
-    -fx-font-size: -cloud-text-sm;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 .badge-finished {
@@ -373,14 +374,14 @@
     -fx-background-radius: 20;
     -fx-padding: 3 10 3 10;
     -fx-text-fill: #757575;
-    -fx-font-size: -cloud-text-sm;
+    -fx-font-size: 11px;
 }
 .badge-outbid {
     -fx-background-color: -cloud-warn-bg;
     -fx-background-radius: 20;
     -fx-padding: 3 10 3 10;
     -fx-text-fill: -cloud-warn-text;
-    -fx-font-size: -cloud-text-sm;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 .badge-winning {
@@ -388,7 +389,7 @@
     -fx-background-radius: 20;
     -fx-padding: 3 10 3 10;
     -fx-text-fill: #c62828;
-    -fx-font-size: -cloud-text-sm;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 
@@ -397,7 +398,7 @@
    ========================================= */
 .auction-card {
     -fx-background-color: -cloud-surface;
-    -fx-background-radius: -cloud-radius-lg;
+    -fx-background-radius: 12px;
     -fx-padding: 0;
     -fx-cursor: hand;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 8, 0, 0, 2);
@@ -406,12 +407,12 @@
     -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.15), 12, 0, 0, 4);
 }
 .auction-card-title {
-    -fx-font-size: -cloud-text-md;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-primary;
 }
 .auction-card-price {
-    -fx-font-size: -cloud-text-lg;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-primary;
 }
@@ -424,7 +425,7 @@
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-warn-text;
     -fx-background-color: -cloud-warn-bg;
-    -fx-background-radius: -cloud-radius-sm;
+    -fx-background-radius: 6px;
     -fx-padding: 3 8 3 8;
 }
 
@@ -446,9 +447,9 @@
    ========================================= */
 .inner-card {
     -fx-background-color: -cloud-surface;
-    -fx-background-radius: -cloud-radius-lg;
+    -fx-background-radius: 12px;
     -fx-padding: 20 24 20 24;
-    -fx-effect: -cloud-shadow-card;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
 }
 
 /* =========================================

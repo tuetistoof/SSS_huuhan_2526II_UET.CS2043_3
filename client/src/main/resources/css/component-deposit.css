@@ -1,5 +1,6 @@
 @import "tokens.css";
 @import "base.css";
+
 /* ==========================================================
    component-deposit-card.css — CloudBid Deposit Popover
    Covers: Main dialog container, inner typography headers,
@@ -8,31 +9,31 @@
 
 .deposit-card {
     -fx-background-color: -cloud-surface;
-    -fx-font-family: -cloud-font;
+    -fx-font-family: Segoe UI, Arial, sans-serif;
     
-    -fx-background-radius: -cloud-radius-xl;
-    -fx-border-radius: -cloud-radius-xl;
+    -fx-background-radius: 15px;
+    -fx-border-radius: 15px;
     -fx-padding: 25;
     
-    -fx-effect: -cloud-shadow-rose;
+    -fx-effect: dropshadow(three-pass-box, rgba(206,90,130,0.2), 15, 0, 0, 8);
 }
 
 .deposit-title {
-    -fx-font-size: -cloud-text-xl;
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-rose;   
 }
 
 .deposit-field {
-    -fx-background-radius: -cloud-radius-md;
-    -fx-border-radius: -cloud-radius-md;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
     
     -fx-border-color: -cloud-rose-border;
     -fx-background-color: -cloud-rose-light;
     
     -fx-border-width: 1;
     -fx-padding: 10;
-    -fx-font-size: -cloud-text-lg; 
+    -fx-font-size: 16px; 
     -fx-text-fill: -cloud-text-primary;
 }
 
@@ -43,9 +44,9 @@
 
 .btn-deposit-confirm {
     -fx-background-color: -cloud-rose; 
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-background-radius: 8px;
     -fx-padding: 10 25 10 25;
     -fx-cursor: hand;
     
@@ -66,10 +67,10 @@
     -fx-background-color: transparent;
     -fx-border-color: -cloud-rose-border;
     -fx-border-width: 1;
-    -fx-border-radius: -cloud-radius-md;
-    -fx-background-radius: -cloud-radius-md;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
     -fx-text-fill: -cloud-rose;
-    -fx-font-size: -cloud-text-base;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-padding: 9 24 9 24;
     -fx-cursor: hand;

@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<StackPane styleClass="main-root" stylesheets="@../css/main-layout.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.shared.MainLayoutController">
+<StackPane styleClass="main-root" stylesheets="@../css/layout-main.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.shared.MainLayoutController">
    <children>
       <BorderPane>
           <top>
