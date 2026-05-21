@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 
 public class BidTransactionDAO extends BaseDAO {
     // Logging Standards: Declared first

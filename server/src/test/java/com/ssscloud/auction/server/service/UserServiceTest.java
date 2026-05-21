@@ -10,13 +10,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import com.ssscloud.auction.common.dto.request.LoginRequest;
-import com.ssscloud.auction.common.dto.request.RegisterRequest;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.model.Bidder;
-import com.ssscloud.auction.common.model.Seller;
+import com.ssscloud.auction.common.model.user.Bidder;
+import com.ssscloud.auction.common.model.user.Seller;
+import com.ssscloud.auction.common.payload.request.LoginRequest;
+import com.ssscloud.auction.common.payload.request.RegisterRequest;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.server.dao.UserDAO;
 
 public class UserServiceTest {

@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
-import com.ssscloud.auction.common.dto.response.AdminMetrics;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.payload.response.DTO.AdminDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
+import com.ssscloud.auction.common.payload.response.request.AdminMetrics;
 
 /**
  * AdminDAO handles data access operations for admin-specific queries.

@@ -12,10 +12,10 @@ import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.Art;
-import com.ssscloud.auction.common.model.Electronic;
-import com.ssscloud.auction.common.model.Vehicle;
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.model.item.Art;
+import com.ssscloud.auction.common.model.item.Electronic;
+import com.ssscloud.auction.common.model.item.Vehicle;
 
 public class ItemDAO extends BaseDAO {
     // Logging Standards: Declared first as a private static final attribute

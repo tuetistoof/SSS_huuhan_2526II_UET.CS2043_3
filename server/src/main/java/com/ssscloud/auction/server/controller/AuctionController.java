@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
-import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
+import com.ssscloud.auction.common.payload.request.GetAuctionDetailsRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
+import com.ssscloud.auction.common.payload.response.request.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AuctionService;
 

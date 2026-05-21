@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Timeout;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
-import com.ssscloud.auction.common.model.Auction;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AdminDAO;

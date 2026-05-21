@@ -3,14 +3,14 @@ package com.ssscloud.auction.server.service;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.Auction;
-import com.ssscloud.auction.common.model.BidTransaction;
-import com.ssscloud.auction.common.model.Bidder;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.model.base.User;
+import com.ssscloud.auction.common.model.user.Bidder;
+import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
@@ -103,7 +103,7 @@ public class BidService {
 
         if (lastBid == null) {
             // Chưa có bid — chỉ cần >= startPrice
-            if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
+            if (bidAmount <= auction.getAuctionConfig().getStartPrice()) {
                 throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
                         "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
             }
