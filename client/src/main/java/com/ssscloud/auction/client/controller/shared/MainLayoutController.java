@@ -15,6 +15,7 @@ import com.ssscloud.auction.client.controller.bidder.BidderDashboardController;
 import com.ssscloud.auction.client.controller.bidder.BiddingRoomController;
 import com.ssscloud.auction.client.controller.bidder.DepositCardController;
 import com.ssscloud.auction.client.controller.bidder.WatchlistController;
+import com.ssscloud.auction.client.controller.bidder.ItemsWonController;
 import com.ssscloud.auction.client.controller.seller.CreateAuctionController;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
@@ -459,7 +460,14 @@ public class MainLayoutController implements MessageListener {
         contentArea.getChildren().add(r.root());
     }
 
-    @FXML void handleNavWonItems(MouseEvent event) {}
+    @FXML void handleNavWonItems(MouseEvent event) {
+        updateActiveStyle(navWonItems);
+        clearContent();
+        ViewLoader.LoadResult<ItemsWonController> r = ViewLoader.load("items-won.fxml");
+        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        contentArea.getChildren().add(r.root());
+    }
+    
     @FXML void handleSearching(MouseEvent event) {}
 
     @FXML
