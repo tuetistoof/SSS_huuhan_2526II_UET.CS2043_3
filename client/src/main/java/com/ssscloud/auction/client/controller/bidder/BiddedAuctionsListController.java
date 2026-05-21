@@ -8,10 +8,10 @@ import java.util.function.Consumer;
 
 import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
+import com.ssscloud.auction.common.payload.response.request.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;

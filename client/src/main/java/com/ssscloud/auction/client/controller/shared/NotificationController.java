@@ -1,7 +1,5 @@
 package com.ssscloud.auction.client.controller.shared;
 
-import java.lang.reflect.Type;
-import com.google.gson.reflect.TypeToken;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -14,8 +12,8 @@ import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.NotificationDTO;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.NotificationDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;

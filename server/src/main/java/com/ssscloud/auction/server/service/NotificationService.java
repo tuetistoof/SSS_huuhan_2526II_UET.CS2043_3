@@ -11,12 +11,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.NotificationDTO;
-import com.ssscloud.auction.common.model.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.NotificationDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.common.exception.ServiceException;
+import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.QueryDAO;

@@ -1,22 +1,22 @@
 package com.ssscloud.auction.server.networking;
 
-import com.ssscloud.auction.common.dto.response.BidDTO;
-import com.ssscloud.auction.common.model.Auction;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.ssscloud.auction.common.dto.ClientMessage;
+
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.observer.Observer;
 import com.ssscloud.auction.common.observer.Subject;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 /**

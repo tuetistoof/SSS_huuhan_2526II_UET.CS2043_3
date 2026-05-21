@@ -6,13 +6,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.AutoBidRequest;
-import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.AutoBidStatusDTO;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.AutoBidRequest;
+import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import com.google.gson.JsonObject;

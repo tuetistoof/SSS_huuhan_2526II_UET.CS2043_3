@@ -6,10 +6,10 @@ import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.application.Platform;
@@ -138,7 +138,7 @@ public class AuctionListController implements MessageListener {
                 case "BID_UPDATE" -> {
                     // Cập nhật thẳng currentPrice vào item trong list — không cần round trip server
                     String dataJson = JsonUtils.toJson(msg.getData());
-                    BidDTO bid = JsonUtils.fromJson(dataJson, com.ssscloud.auction.common.dto.response.BidDTO.class);
+                    BidDTO bid = JsonUtils.fromJson(dataJson, com.ssscloud.auction.common.payload.response.DTO.BidDTO.class);
                     if (bid == null || bid.getAuctionId() == null) return;
 
                     Platform.runLater(() -> {
