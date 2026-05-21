@@ -1,9 +1,10 @@
 package com.ssscloud.auction.server.util;
 
-import com.ssscloud.auction.common.model.Auction;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.ssscloud.auction.common.model.auction.Auction;
 
 public class AuctionRegistry {
     private static final AuctionRegistry instance = new AuctionRegistry();

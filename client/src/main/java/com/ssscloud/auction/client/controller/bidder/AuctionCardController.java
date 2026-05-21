@@ -8,7 +8,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 
 public class AuctionCardController {
 

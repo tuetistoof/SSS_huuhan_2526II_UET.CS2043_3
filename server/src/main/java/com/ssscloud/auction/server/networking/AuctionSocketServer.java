@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
-import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.controller.AdminController;
 import com.ssscloud.auction.server.controller.AuctionController;

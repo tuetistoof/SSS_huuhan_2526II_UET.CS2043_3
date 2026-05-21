@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 
 public class BiddedAuctionsListDAO extends BaseDAO{
     // ── Query ─────────────────────────────────────────────────────────────────

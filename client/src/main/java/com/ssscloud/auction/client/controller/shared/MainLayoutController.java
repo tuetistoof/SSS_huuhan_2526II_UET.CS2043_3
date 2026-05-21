@@ -6,6 +6,14 @@ import java.text.DecimalFormat;
 import java.util.Optional;
 
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.GetAuctionDetailsRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AdminDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.controller.seller.SellerDashboardController;
 import com.ssscloud.auction.client.controller.admin.AdminDashboardController;
@@ -23,13 +31,6 @@ import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.client.util.ThemeManager;
 import com.ssscloud.auction.client.util.ViewLoader;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
-import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -244,7 +245,7 @@ public class MainLayoutController implements MessageListener {
         if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
         BidderDisplayDTO dummy = new BidderDisplayDTO();
         dummy.setId(auctionId);
-        loadBiddingRoom(dummy);
+        loadBiddingRoomAsBidder(dummy);
     }
 
     // --- Role-based UI visibility ---
@@ -349,7 +350,7 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navActiveBids);
         clearContent();
         ViewLoader.LoadResult<BiddedAuctionsListController> r = ViewLoader.load("bidded-auction-list.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
 
@@ -383,7 +384,7 @@ public class MainLayoutController implements MessageListener {
             switch (user.getRole()) {
                 case BIDDER -> {
                     BidderDashboardController ctrl = loader.getController();
-                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsBidder);
                     currentController = ctrl;
                 }
 
@@ -423,7 +424,7 @@ public class MainLayoutController implements MessageListener {
         contentArea.getChildren().add(r.root());
     }
 
-    public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
+    public void loadBiddingRoomAsBidder(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
         loadBiddingRoomGeneral(basicInfo.getId(), false);
     }
@@ -455,7 +456,7 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navWatchlist);
         clearContent();
         ViewLoader.LoadResult<WatchlistController> r = ViewLoader.load("watchlist.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
 

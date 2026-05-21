@@ -3,11 +3,10 @@ package com.ssscloud.auction.client.controller.seller;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.client.util.ServerResponse;
-
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
-import com.ssscloud.auction.common.dto.request.ItemData;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
+import com.ssscloud.auction.common.payload.request.ItemData;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
  
 import javafx.event.ActionEvent;

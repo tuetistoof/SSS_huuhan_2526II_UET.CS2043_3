@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.ssscloud.auction.common.dto.ClientMessage;
+import com.ssscloud.auction.common.payload.ClientMessage;
 
 /**
  * send: chi gui ma khong cho response (dung cho push/fire-and-forget).

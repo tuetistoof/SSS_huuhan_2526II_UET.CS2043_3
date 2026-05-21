@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.Admin;
-import com.ssscloud.auction.common.model.Bidder;
-import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.User;
+import com.ssscloud.auction.common.model.user.Admin;
+import com.ssscloud.auction.common.model.user.Bidder;
+import com.ssscloud.auction.common.model.user.Seller;
 
 public class UserDAO extends BaseDAO {
     // Logging Standards: Declared first as a private static final attribute
@@ -520,7 +520,7 @@ public class UserDAO extends BaseDAO {
             String sql = "UPDATE bidder SET " +
                         "account_balance = account_balance - ?, " +
                         "locked_balance  = locked_balance  - ? " +
-                        "WHERE id = ? AND locked_balance >= ?";
+                        "WHERE id = ?";
             Connection        connection = null;
             PreparedStatement ps         = null;
             try {
@@ -529,7 +529,6 @@ public class UserDAO extends BaseDAO {
                 ps.setLong(1, finalPrice);   // account_balance -= finalPrice (tiền thực trả)
                 ps.setLong(2, lockAmount);   // locked_balance  -= lockAmount (tiền đã lock thực tế)
                 ps.setString(3, winnerId);
-                ps.setLong(4, lockAmount);   // guard: locked_balance >= lockAmount
                 int rows = ps.executeUpdate();
                 if (rows > 0) {
                     logger.log(Level.INFO, "Settle winner: deducted {0} from account, released {1} from lock for userId: {2}",

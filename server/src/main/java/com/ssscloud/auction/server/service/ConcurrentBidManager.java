@@ -7,17 +7,18 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.ClientMessage;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.model.Auction;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
@@ -43,6 +44,7 @@ public class ConcurrentBidManager {
     private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
     private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions to prevent new bids
+    private final Set<String> drainingAuctions = ConcurrentHashMap.newKeySet();
 
     private ConcurrentBidManager() {}
 
@@ -127,19 +129,16 @@ public class ConcurrentBidManager {
     }
 
     public void shutdown(String auctionId) throws Exception {
-        try {
-            closedAuctions.add(auctionId);
-            bidTaskQueues.remove(auctionId);
-            Thread workerThread = workerThreads.remove(auctionId);
-            if (workerThread != null) {
-                workerThread.interrupt();
-                workerThread.join(5000); // Wait up to 5 seconds for the thread to terminate gracefully
-                logger.log(Level.INFO, "Bid worker thread terminated for auctionId: " + auctionId);
-            }
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error during shutdown for auctionId: " + auctionId, exception);
-            throw exception;
+        drainingAuctions.add(auctionId);          
+        Thread workerThread = workerThreads.remove(auctionId);
+        if (workerThread != null) {
+            workerThread.interrupt();
+            workerThread.join(5000);               
         }
+        // ← Sau join(), mới xóa
+        bidTaskQueues.remove(auctionId);           // ← Xóa queue (sau join)
+        drainingAuctions.remove(auctionId);        // ← Clear drain flag (sau join)
+        closedAuctions.add(auctionId);
     }
 
     // --- PRIVATE METHODS ---
@@ -164,81 +163,138 @@ public class ConcurrentBidManager {
         }
     }
 
+    public void softClose(String auctionId) {
+        closedAuctions.add(auctionId);    // chặn bid/autobid mới
+        drainingAuctions.add(auctionId);  // đánh dấu worker cần tự thoát khi queue rỗng
+        logger.log(Level.INFO,
+            "softClose: auction {0} marked closed — no new bids accepted. Worker draining.",
+            auctionId);
+    }
+
     private void runWorker(String auctionId) {
-        try {
+            try {
             BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
-            if (taskQueue == null) {
-                return;
-            }
+            if (taskQueue == null) return;
 
             while (!Thread.currentThread().isInterrupted()) {
                 try {
-                    BidTask task = taskQueue.take();
+                    // Nếu đang drain: poll có timeout thay vì take() block mãi
+                    BidTask task;
+                    if (drainingAuctions.contains(auctionId)) {
+                        task = taskQueue.poll(200, TimeUnit.MILLISECONDS);
+                        if (task == null) {
+                            // Queue rỗng + đang drain → worker tự thoát
+                            logger.log(Level.INFO,
+                                "bid-worker-{0}: queue drained, exiting gracefully.", auctionId);
+                            break;
+                        }
+                    } else {
+                        task = taskQueue.take(); // block bình thường
+                    }
                     processTask(task);
                 } catch (InterruptedException e) {
-                    logger.log(Level.INFO, "Execution interrupted for bid worker associated with auctionId: " + auctionId);
+                    logger.log(Level.INFO,
+                        "Execution interrupted for bid worker associated with auctionId: " + auctionId);
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
+                    logger.log(Level.SEVERE,
+                        "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
                 }
             }
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
+            logger.log(Level.SEVERE,
+                "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
         }
     }
 
     private void processTask(BidTask task) throws Exception {
+        Auction auctionEntity = task.auction;
+        String auctionId = auctionEntity.getAuctionConfig().getId();
+ 
+        // Cờ theo dõi: bid đã được commit vào auction object chưa?
+        // - false (default): task.bidderId chưa là winner → cần unlock nếu có lỗi
+        // - true: task.bidderId đã là highestBidder → KHÔNG unlock (tiền sẽ settle sau)
+        boolean bidCommitted = false;
+ 
         try {
-            Auction auctionEntity = task.auction;
             if (!auctionEntity.getStatus().isActive()) {
-                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is not active for auctionId: " + auctionEntity.getAuctionConfig().getId());
+                // Auction đã kết thúc/cancel — BidService đã unlock trong catch của submitBid().
+                // Trường hợp này xảy ra khi cancel chạy SAU submitBid() nhưng TRƯỚC processTask().
+                // cancelAuction.refundWinner() sẽ unlock theo highestBidder hiện tại, không phải task này.
+                // → Cần unlock task.bidderId ở đây vì đây là bid bị hủy bỏ, không phải winner.
+                logger.log(Level.WARNING,
+                    "processTask: auction not active, unlocking bid for bidderId={0}, auctionId={1}",
+                    new Object[]{task.bidderId, auctionId});
+                userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
+                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
+                return; // Không throw — đây là luồng bình thường khi auction bị cancel
             }
-            String auctionId = auctionEntity.getAuctionConfig().getId();
+ 
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
-            long currentAuctionPrice = lastBidTransaction != null ? lastBidTransaction.getBidAmount() : auctionEntity.getAuctionConfig().getStartPrice();
+            long currentAuctionPrice = lastBidTransaction != null
+                    ? lastBidTransaction.getBidAmount()
+                    : auctionEntity.getAuctionConfig().getStartPrice();
+ 
             if (task.bidAmount > currentAuctionPrice) {
+                // --- Nhánh BID THẮNG ---
+ 
+                // Bước 1: Unlock bidder CŨ (nếu có)
                 String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
                 if (previousBidderId != null) {
                     long unlockAmount = lastBidTransaction.getLockedBalance();
                     userDAO.unlockBidderBalance(previousBidderId, unlockAmount);
                     SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -unlockAmount);
                 }
-
+ 
+                // Bước 2: Cập nhật pending balance seller
                 long delta = task.bidAmount - currentAuctionPrice;
-                // Seller
                 userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
                 SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
-
-                BidTransaction bidTransaction = new BidTransaction(auctionId, task.bidderId, task.bidderUsername,
+ 
+                // Bước 3: Tạo và commit bid transaction
+                BidTransaction bidTransaction = new BidTransaction(
+                        auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, task.lockedAmount, LocalDateTime.now(), task.bidType);
-
-                auctionEntity.placeBid(bidTransaction);
+ 
+                auctionEntity.placeBid(bidTransaction); // ← sau dòng này, task.bidderId là winner
+ 
+                // FIX: Đánh dấu bid đã commit — từ đây KHÔNG unlock task.bidderId nếu có lỗi
+                bidCommitted = true;
+ 
                 if (bidTransactionDAO != null) {
                     try {
                         bidTransactionDAO.saveBidTransaction(bidTransaction);
                     } catch (Exception e) {
-                        logger.log(Level.SEVERE, "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
+                        // Chỉ log — không rollback vì in-memory state đã commit
+                        logger.log(Level.SEVERE,
+                            "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
                     }
                 }
-                ChangeManager.getInstance().notify(auctionEntity);
-                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(), auctionEntity.getHighestBidderId());
+ 
                 if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
                     auctionEntity.setStatus(AuctionStatus.RUNNING);
                     auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
                 }
-                
+ 
                 LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
                 if (updatedEndTime != null && auctionDAO != null) {
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
-
+                ChangeManager.getInstance().notify(auctionEntity);
+                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(),
+                        auctionEntity.getHighestBidderId());
+ 
             } else {
-                logger.log(Level.INFO, "Bid task skipped: amount " + task.bidAmount + " is not higher than current price " + currentAuctionPrice);
+                // --- Nhánh BID THUA ---
+                // bidAmount <= currentPrice → reject và trả tiền ngay
+                logger.log(Level.INFO,
+                    "Bid task skipped: amount " + task.bidAmount
+                    + " is not higher than current price " + currentAuctionPrice);
                 userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
                 SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
             }
-
+ 
             if (autoBidService != null) {
                 try {
                     autoBidService.trigger(auctionEntity);
@@ -246,8 +302,31 @@ public class ConcurrentBidManager {
                     logger.log(Level.WARNING, "Auto-bid trigger failed for auctionId: " + auctionId, e);
                 }
             }
+ 
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error during bid task processing", exception);
+            if (!bidCommitted) {
+                logger.log(Level.SEVERE,
+                    "[BALANCE_RECOVERY] processTask failed before commit — unlocking bidderId={0}, amount={1}, auctionId={2}. Cause: {3}",
+                    new Object[]{task.bidderId, task.lockedAmount, auctionId, exception.getMessage()});
+                try {
+                    userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
+                    SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
+                } catch (Exception unlockEx) {
+                    // Unlock cũng fail — log CRITICAL để ops can thiệp thủ công
+                    logger.log(Level.SEVERE,
+                        "[CRITICAL_BALANCE_LEAK] Failed to unlock balance for bidderId=" + task.bidderId
+                        + ", auctionId=" + auctionId
+                        + ". MANUAL CORRECTION REQUIRED. unlockError: " + unlockEx.getMessage(),
+                        unlockEx);
+                }
+            } else {
+                logger.log(Level.SEVERE,
+                    "[CRITICAL] processTask failed AFTER bid commit for bidderId=" + task.bidderId
+                    + ", auctionId=" + auctionId
+                    + ". Balance NOT unlocked — will be handled by settle/cancel flow. Error: "
+                    + exception.getMessage(),
+                    exception);
+            }
             throw exception;
         }
     }

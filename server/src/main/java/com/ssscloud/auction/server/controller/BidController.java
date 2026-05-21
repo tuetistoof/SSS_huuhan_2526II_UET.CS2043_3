@@ -4,13 +4,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.request.AutoBidRequest;
-import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
+import com.ssscloud.auction.common.payload.request.AutoBidRequest;
+import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
@@ -97,19 +98,50 @@ public class BidController {
     public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
         try {
             logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
-            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-            
-            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(jsonPayload);
-            boolean isActive = entries.stream().anyMatch(e -> e.bidderId.equals(bidderId));
+            String auctionId = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
+
+            // Check in-memory map — trả về maxBid + increment để client restore UI đầy đủ
+            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionId);
+            AutoBidService.AutoBidEntry entry = entries.stream()
+                    .filter(e -> e.bidderId.equals(bidderId))
+                    .findFirst()
+                    .orElse(null);
+
+            AutoBidStatusDTO statusDTO =
+                    entry != null
+                    ? new AutoBidStatusDTO(true, entry.maxBid, entry.increment)
+                    : new AutoBidStatusDTO(false, 0, 0);
 
             return JsonUtils.toJson(ApiResponse.success(
-                java.util.Map.of("active", isActive),
+                statusDTO,
                 "Auto-bid status retrieved successfully."
             ));
         } catch (ControllerException controllerException) {
             throw controllerException;
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
+            throw exception;
+        }
+    }
+
+    public String cancelAutoBid (Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Cancelling auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            String auctionId = JsonUtils.fromJson(jsonPayload, String.class);
+
+            validateCancelAutoBidRequest(auctionId);
+
+            boolean isCancel = autoBidService.removeRegistration(auctionId, bidderId);
+            if (isCancel){
+                return JsonUtils.toJson(ApiResponse.success(isCancel, "Auto-bid registration has been cancelled successfully."));
+            } else {
+                return JsonUtils.toJson(ApiResponse.error("Auto-bid registration cancellation failed."));
+            }
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected critical failure during auto-bid cancellation.", exception);
             throw exception;
         }
     }
@@ -160,6 +192,18 @@ public class BidController {
     private void validateBidHistoryRequest(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
             throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to retrieve bid history.");
+        }
+    }
+
+    private void validateCancelAutoBidRequest(String auctionId) throws ControllerException {
+        try {
+            if (auctionId == null || auctionId.isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to cancel auto-bid registration.");
+            }
+        } catch (ControllerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "Cancel auto-bid request validation failed: " + e.getMessage(), e);
         }
     }
 }

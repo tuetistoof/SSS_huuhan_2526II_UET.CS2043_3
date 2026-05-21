@@ -1,13 +1,14 @@
 package com.ssscloud.auction.server.factory;
 
-import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
-import com.ssscloud.auction.common.dto.request.ItemData;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.FactoryException;
-import com.ssscloud.auction.common.model.Art;
-import com.ssscloud.auction.common.model.Electronic;
-import com.ssscloud.auction.common.model.Vehicle;
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.model.item.Art;
+import com.ssscloud.auction.common.model.item.Electronic;
+import com.ssscloud.auction.common.model.item.Vehicle;
+import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
+import com.ssscloud.auction.common.payload.request.ItemData;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

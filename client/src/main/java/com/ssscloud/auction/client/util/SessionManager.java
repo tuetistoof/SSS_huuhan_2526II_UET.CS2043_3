@@ -1,6 +1,6 @@
 package com.ssscloud.auction.client.util;
 
-import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 
 public class SessionManager {
     private static final SessionManager instance = new SessionManager();

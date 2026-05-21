@@ -1,12 +1,13 @@
 package com.ssscloud.auction.client.util;
 
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidDTO;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 
 import java.util.List;
+
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 
 /**
  * Tách chart logic ra khỏi BiddingRoomController.

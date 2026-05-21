@@ -1,9 +1,9 @@
 package com.ssscloud.auction.server.controller;
 
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ListResponse;
 import com.ssscloud.auction.common.exception.ControllerException;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
+import com.ssscloud.auction.common.payload.response.request.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.BiddedAuctionsListDAO;
 

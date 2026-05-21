@@ -4,8 +4,8 @@ import static org.mockito.Mockito.lenient;
 
 import java.util.List;
 
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 

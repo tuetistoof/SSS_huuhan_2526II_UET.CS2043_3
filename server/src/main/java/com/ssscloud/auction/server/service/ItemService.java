@@ -5,8 +5,8 @@ import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.dto.response.ItemDTO;
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.factory.ItemDTOFactory;
 
@@ -24,9 +24,9 @@ public class ItemService {
     public void saveItem(Item item) throws ServiceException, Exception {
         try {
             boolean isSaved = switch (item.getType()) {
-                case "ART"        -> itemDAO.saveArt((com.ssscloud.auction.common.model.Art) item);
-                case "VEHICLE"    -> itemDAO.saveVehicle((com.ssscloud.auction.common.model.Vehicle) item);
-                case "ELECTRONIC" -> itemDAO.saveElectronic((com.ssscloud.auction.common.model.Electronic) item);
+                case "ART"        -> itemDAO.saveArt((com.ssscloud.auction.common.model.item.Art) item);
+                case "VEHICLE"    -> itemDAO.saveVehicle((com.ssscloud.auction.common.model.item.Vehicle) item);
+                case "ELECTRONIC" -> itemDAO.saveElectronic((com.ssscloud.auction.common.model.item.Electronic) item);
                 default -> {
                     logger.log(Level.WARNING, "Unsupported item type encountered during save: " + item.getType());
                     throw new ServiceException(ErrorCode.ITEM_TYPE_UNSUPPORTED, "The provided item type is currently not supported: " + item.getType());

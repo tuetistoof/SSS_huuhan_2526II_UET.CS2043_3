@@ -1,22 +1,22 @@
 package com.ssscloud.auction.server.networking;
 
-import com.ssscloud.auction.common.dto.response.BidDTO;
-import com.ssscloud.auction.common.model.Auction;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.ssscloud.auction.common.dto.ClientMessage;
+
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.observer.Observer;
 import com.ssscloud.auction.common.observer.Subject;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 /**
@@ -62,7 +62,7 @@ public class ClientObserver implements Observer {
                 notifyExecutor.submit(() -> push("AUCTION_ENDED", payload));
             } else {
                 // Snapshot DTO on worker thread before submitting
-                BidDTO bidDto = buildBidDto(auction);
+                BidDTO bidDto = auction.toBidDtoForBidUpdate();
                 notifyExecutor.submit(() -> push("BID_UPDATE", bidDto));
             }
         } catch (Exception e) {
@@ -92,20 +92,25 @@ public class ClientObserver implements Observer {
     /**
      * Snapshot BidDTO from auction state. Called synchronously on the worker thread.
      */
-    private BidDTO buildBidDto(Auction auction) {
-        BidDTO bidDto = new BidDTO();
-        bidDto.setAuctionId(auction.getAuctionConfig().getId());
-        bidDto.setCurrentPrice(auction.getCurrentPrice());
-        bidDto.setBidderUsername(auction.getHighestBidderName());
-        bidDto.setHighestBidderId(auction.getHighestBidderId());
-        bidDto.setNewEndTime(auction.getAuctionConfig().getEndTime());
-
-        BidTransaction latestBidTransaction = auction.getLastBidTransaction();
-        if (latestBidTransaction == null) return bidDto;
-        bidDto.setBidAmount(latestBidTransaction.getBidAmount());
-        bidDto.setBidTime(latestBidTransaction.getBidTime());
-        bidDto.setBidType(latestBidTransaction.getType().name());
-        return bidDto;
+    public BidDTO buildBidDto(Auction auction) throws Exception {
+        try {
+            BidTransaction bidTransaction = auction.getLastBidTransaction();
+            BidDTO bidDto = new BidDTO();
+            bidDto.setAuctionId(bidTransaction.getAuctionId());
+            bidDto.setBidderId(bidTransaction.getBidderId());
+            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
+            bidDto.setBidAmount(bidTransaction.getBidAmount());
+            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
+            bidDto.setBidTime(bidTransaction.getBidTime());
+            bidDto.setAntiSnipingEndTime(auction.getAuctionConfig().getEndTime());
+            bidDto.setBidType(bidTransaction.getType().name());
+            return bidDto;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
+                    exception);
+            throw exception;
+        }
     }
 
     /**

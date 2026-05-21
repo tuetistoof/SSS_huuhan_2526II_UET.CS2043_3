@@ -1,21 +1,23 @@
 package com.ssscloud.auction.server.service;
 
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.CreateAuctionRequest;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ItemDTO;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.model.Auction;
-import com.ssscloud.auction.common.model.Bidder;
-import com.ssscloud.auction.common.model.Seller;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.model.base.User;
+import com.ssscloud.auction.common.model.user.Bidder;
+import com.ssscloud.auction.common.model.user.Seller;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
@@ -27,6 +29,7 @@ import com.ssscloud.auction.server.util.SessionRegistry;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -143,7 +146,7 @@ public class AuctionService {
     public void scheduleClose(Auction auction) throws Exception {
         String auctionId = auction.getAuctionConfig().getId();
         LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
-        
+
         long delayMilliseconds = Duration.between(LocalDateTime.now(), endTime).toMillis();
         if (delayMilliseconds < 0) {
             delayMilliseconds = 0;
@@ -151,29 +154,54 @@ public class AuctionService {
 
         scheduler.schedule(() -> {
             try {
+                // Anti-sniping có thể đã extend endTime — reschedule nếu chưa đến giờ
                 if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
-                    scheduleClose(auction); // Reschedule with updated end time
+                    scheduleClose(auction);
                     return;
                 }
 
-                AuctionStatus currentStatus = auction.getStatus();
-                if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
-                    auction.finish();
-                    auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                    AuctionRegistry.getInstance().remove(auctionId);
-                    ConcurrentBidManager.getInstance().shutdown(auctionId); 
-
-                    settleAuctionBalances(auction);
-                    
-                    ChangeManager.getInstance().notify(auction);
-                    notificationService.notifyAuctionEnded(auction);
-                    logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
+                // FIX BUG 3: atomic compare-and-set, giống pattern của cancelAuction().
+                // synchronized(auction) đảm bảo chỉ MỘT trong hai thread
+                // (scheduler hoặc admin cancel) được phép đổi status.
+                // Thread thua sẽ thấy status đã bị đổi và tự exit.
+                boolean shouldProceed;
+                synchronized (auction) {
+                    AuctionStatus currentStatus = auction.getStatus();
+                    if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
+                        auction.finish(); // set FINISHED bên trong lock
+                        shouldProceed = true;
+                    } else {
+                        // Admin đã cancel (CANCELED) hoặc trạng thái khác — không làm gì
+                        shouldProceed = false;
+                    }
                 }
+
+                // Mọi side-effect chạy NGOÀI lock để tránh giữ lock lâu
+                if (!shouldProceed) {
+                    logger.log(Level.INFO,
+                        "scheduleClose skipped — auction already in terminal state: " + auctionId);
+                    return;
+                }
+
+                // Từ đây chỉ thread thắng (shouldProceed = true) mới chạy tiếp
+                auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+                AuctionRegistry.getInstance().remove(auctionId);
+                ConcurrentBidManager.getInstance().shutdown(auctionId);
+
+                settleAuctionBalances(auction);
+
+                ChangeManager.getInstance().notify(auction);
+                notificationService.notifyAuctionEnded(auction);
+                logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
+
             } catch (ServiceException serviceException) {
-                logger.log(Level.WARNING, "Business logic error in scheduled auction closure for auctionId: " + auctionId, serviceException);
+                logger.log(Level.WARNING,
+                    "Business logic error in scheduled auction closure for auctionId: " + auctionId,
+                    serviceException);
             } catch (Exception exception) {
-                logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: " + auctionId, exception);
-                // Background tasks should not rethrow to prevent thread termination unless managed
+                logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: "
+                    + auctionId, exception);
             }
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
@@ -192,7 +220,7 @@ public class AuctionService {
  
         try {
             // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
-            boolean winnerSettled = userDAO.settleSellerBalance(sellerId, finalPrice);
+            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, finalPrice);
             if (!winnerSettled) {
                 logger.log(Level.WARNING,
                         "settleWinnerBalance: no rows affected — locked insufficient? "
@@ -313,14 +341,39 @@ public class AuctionService {
         auctionDto.setEndTime(auction.getAuctionConfig().getEndTime());
         auctionDto.setStatus(auction.getStatus());
 
-        auctionDto.setUserDTO(sellerDto);
+        List <BidTransaction> bidTransactions = auction.getBidTransaction();
+        List <BidDTO> bidDto = new ArrayList<>();
+        if (bidTransactions != null && !bidTransactions.isEmpty())
+            for (BidTransaction bidTransaction : bidTransactions) {
+                try {
+                    bidDto.add(toBidDto(bidTransaction));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        auctionDto.setBidDto(bidDto);
+        auctionDto.setSellerDTO(sellerDto);
         auctionDto.setItemDTO(itemDto);
-
-        auctionDto.setCurrentPrice(auction.getCurrentPrice());
-        auctionDto.setHighestBidderName(auction.getHighestBidderName());
-        auctionDto.setBidCount(auction.getBidCount());
-
         return auctionDto;
+    }
+
+    public BidDTO toBidDto(BidTransaction bidTransaction) throws Exception {
+        try {
+            BidDTO bidDto = new BidDTO();
+            bidDto.setAuctionId(bidTransaction.getAuctionId());
+            bidDto.setBidderId(bidTransaction.getBidderId());
+            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
+            bidDto.setBidAmount(bidTransaction.getBidAmount());
+            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
+            bidDto.setBidTime(bidTransaction.getBidTime());
+            bidDto.setBidType(bidTransaction.getType().name());
+            return bidDto;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
+                    exception);
+            throw exception;
+        }
     }
 
     private void validateCreateAuctionRequest(CreateAuctionRequest request, String sellerId) throws ServiceException {
