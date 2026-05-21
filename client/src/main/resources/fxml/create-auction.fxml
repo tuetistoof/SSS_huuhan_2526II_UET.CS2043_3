@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: f2f2f2;" styleClass="wizard-shell" stylesheets="@../css/create-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.seller.CreateAuctionController">
+<StackPane prefHeight="700.0" prefWidth="1000.0" styleClass="wizard-shell" stylesheets="@../css/screen-create-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.seller.CreateAuctionController">
     <children>
         
         <HBox maxHeight="750.0" maxWidth="950.0" styleClass="wizard-shell">
@@ -234,7 +234,7 @@
                         </StackPane>
                         
                               <Region VBox.vgrow="ALWAYS" />
-                        <Label fx:id="lblError" style="-fx-font-weight: bold;" text="" textFill="#f75667">
+                        <Label fx:id="lblError" styleClass="error-label" >
                      <font>
                         <Font size="14.0" />
                      </font>

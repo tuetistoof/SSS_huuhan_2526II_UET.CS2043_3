@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane stylesheets="@../css/bidded-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListController">
+<AnchorPane stylesheets="@../css/screen-bidded-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListController">
     <children>
         <VBox spacing="0" AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="0">
 
@@ -43,7 +43,7 @@
                     <VBox fx:id="emptyState" alignment="CENTER" managed="true" styleClass="bda-empty-state" visible="true" VBox.vgrow="ALWAYS">
                         <padding><Insets bottom="60" top="60" /></padding>
                         <children>
-                            <Label style="-fx-font-size: 48px;" text="🛒" />
+                            <Label style="-fx-font-size: 48px;" text="🛒" styleClass="empty-state-emoji" />
                             <Region prefHeight="12" />
                             <Label styleClass="bda-empty-title" text="No Active Bids" />
                             <Region prefHeight="6" />

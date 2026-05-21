@@ -1,0 +1,328 @@
+@import "tokens.css";
+@import "base.css";
+
+/* ==========================================================
+   screen-create-auction.css — CloudBid Create Auction Wizard
+   Covers: Wizard Shell, Left Navigation Sidebar, Steps Indicator,
+           Form Layouts, Section Divisions, Images Upload Box,
+           and Wizard Context Action Buttons.
+   ========================================================== */
+
+/* =========================================================
+   WIZARD OUTER SHELL (Khung ngoài bao bọc biểu mẫu)
+   ========================================================= */
+.wizard-shell {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.auction-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+/* =========================================================
+   LEFT NAVIGATION SIDEBAR (Cột danh sách các bước bên trái)
+   ========================================================= */
+.wizard-nav {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-padding: 45 20 28 20;
+    -fx-pref-width: 250;
+    -fx-min-width: 250;
+    -fx-max-width: 250;
+    -fx-border-color: transparent -cloud-border transparent transparent;
+    -fx-border-width: 0 0.5 0 0;
+    -fx-spacing: 20;
+}
+
+/* ── Từng dòng bước (Step Container) ── */
+.wizard-step-row {
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-padding: 6 10 6 10;
+}
+
+/* ── Vòng tròn số (Step Badge/Circle) ── */
+.wizard-step-circle {
+    -fx-min-width: 26;
+    -fx-max-width: 26;
+    -fx-min-height: 26;
+    -fx-max-height: 26;
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+    
+    /* Mặc định: Trạng thái chưa tới (Inflow / Pending) */
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+}
+
+.wizard-step-num {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.wizard-step-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* ── TRẠNG THÁI BƯỚC ĐANG HOẠT ĐỘNG (:active) ── */
+.wizard-step-row:active .wizard-step-circle {
+    -fx-background-color: -cloud-primary;
+    -fx-border-color: -cloud-primary;
+}
+
+.wizard-step-row:active .wizard-step-num {
+    -fx-text-fill: -cloud-surface;
+}
+
+.wizard-step-row:active .wizard-step-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* =========================================================
+   FORM MAIN CONTENT AREA (Khu vực biểu mẫu bên phải)
+   ========================================================= */
+.wizard-content {
+    -fx-background-color: -cloud-surface;
+    -fx-padding: 30 40 30 40;
+}
+
+/* ── Phân đoạn nhỏ trong Form (Subsection Wrapper) ── */
+.wizard-subsection {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 8px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 8px;
+    -fx-padding: 14 16 14 16;
+    -fx-spacing: 10;
+}
+
+.wizard-subsection-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.form-label-bold {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* =========================================================
+   IMAGE UPLOAD COMPONENT (Khu vực tải lên ảnh tài sản)
+   ========================================================= */
+.image-upload-box {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+    -fx-border-style: dashed;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 24;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+/* Hiệu ứng kéo thả hoặc di chuột vào vùng tải ảnh */
+.image-upload-box:hover {
+    -fx-background-color: -cloud-primary-light;
+    -fx-border-color: -cloud-primary;
+}
+
+.upload-icon-label {
+    -fx-font-size: 26px;
+    -fx-text-fill: -cloud-text-light;
+}
+.image-upload-box:hover .upload-icon-label {
+    -fx-text-fill: -cloud-primary;
+}
+
+.upload-text-main {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.upload-text-sub {
+    -fx-font-size: 10px;
+    -fx-text-fill: -cloud-text-light;
+}
+
+/* ── Thẻ hiển thị Preview ảnh đã chọn ── */
+.image-preview-thumbnail {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 4;
+}
+
+/* =========================================================
+   CONTEXT CONTEXT WIZARD NAVIGATION BUTTONS
+   ========================================================= */
+
+/* ── Nút "Quay lại" / "Trở về" (Secondary Style) ── */
+.btn-wizard-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8 24 8 24;
+}
+
+.btn-wizard-secondary:hover {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-text-primary;
+}
+
+.btn-wizard-secondary:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* ── Nút "Tiếp tục" / "Xác nhận tạo" (Primary Style) ── */
+.btn-wizard-primary {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 8 24 8 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.2), 6, 0, 0, 1.5);
+}
+
+.btn-wizard-primary:hover {
+    -fx-background-color: -cloud-primary-dark;
+}
+
+.btn-wizard-primary:pressed {
+    -fx-background-color: -cloud-primary-deeper;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.btn-wizard-primary:disabled {
+    -fx-background-color: -cloud-border-strong;
+    -fx-opacity: 0.55;
+    -fx-cursor: default;
+    -fx-effect: none;
+}
+
+.wizard-nav-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.step-row {
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-padding: 6 10 6 10;
+}
+
+.step-row > .stack-pane {
+    -fx-min-width: 26;
+    -fx-max-width: 26;
+    -fx-min-height: 26;
+    -fx-max-height: 26;
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1.5;
+}
+
+.step-num {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.step-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.step-sublabel {
+    -fx-font-size: 10px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.step-row-active > .stack-pane {
+    -fx-background-color: -cloud-primary;
+    -fx-border-color: -cloud-primary;
+}
+
+.step-row-active .step-num {
+    -fx-text-fill: -cloud-surface;
+}
+
+.step-row-active .step-label {
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.wizard-input {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+    -fx-padding: 8 10 8 10;
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.wizard-input:focused {
+    -fx-border-color: -cloud-primary;
+    -fx-effect: dropshadow(three-pass-box, rgba(212,83,126,0.15), 4, 0, 0, 0);
+}
+
+.image-url-container {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 8px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 8px;
+    -fx-padding: 12;
+}
+
+.url-input-field {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 6px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 6px;
+    -fx-padding: 7 10 7 10;
+    -fx-font-size: 11px;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.url-input-field:focused {
+    -fx-border-color: -cloud-primary;
+}
+
+.noti-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: -cloud-text-muted;
+}

@@ -1,0 +1,123 @@
+@import "tokens.css";
+@import "base.css";
+
+/* ==========================================================
+   Covers: Toast root alignment, main layout card container,
+           header layouts, icon circle vectors, typography text,
+           and the interactive close button.
+   ========================================================== */
+
+
+.toast-root {
+    -fx-alignment: TOP_RIGHT;
+    -fx-padding: 16 16 0 0;
+}
+
+.toast-card {
+    -fx-background-color: -cloud-surface;
+    
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 20, 0, 0, 10);
+    
+    -fx-min-width: 280;
+    -fx-max-width: 320;
+}
+
+.toast-header {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.toast-icon-wrap {
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 28;
+    -fx-max-height: 28;
+}
+
+.toast-icon-circle {
+    -fx-fill: -cloud-primary-light;
+    -fx-stroke: -cloud-primary;
+    -fx-stroke-width: 1.5;
+}
+
+.toast-body {
+    -fx-padding: 0 16 16 16;
+}
+
+.toast-title {
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-size: 13px; 
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary; 
+}
+
+.toast-subtitle {
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-size: 11px; 
+    -fx-text-fill: -cloud-text-placeholder; 
+}
+
+.toast-close-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: -cloud-text-light;
+    -fx-font-size: 13px;  
+    -fx-padding: 4 6 4 6;
+    -fx-background-radius: 50%; 
+    -fx-cursor: hand;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+}
+
+.toast-close-btn:hover {
+    -fx-background-color: -cloud-surface-alt; 
+    -fx-text-fill: -cloud-primary;    
+}
+
+.toast-close-btn:pressed {
+    -fx-scale-x: 0.95; 
+    -fx-scale-y: 0.95;
+}
+
+.toast-icon-check {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-primary;
+}
+
+.toast-label {
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.toast-amount {
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-primary;
+}
+
+.toast-progress {
+    -fx-accent: -cloud-primary;
+    -fx-background-color: transparent;
+}
+
+.toast-progress > .track {
+    -fx-background-color: -cloud-primary-light;
+    -fx-background-radius: 0 0 12px 12px;
+}
+
+.toast-progress > .bar {
+    -fx-background-color: -cloud-primary;
+    -fx-background-radius: 0 0 12px 12px;
+    -fx-background-insets: 0;
+    -fx-padding: 0.18em;
+}

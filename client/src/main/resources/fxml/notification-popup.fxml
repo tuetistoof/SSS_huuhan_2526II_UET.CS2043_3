@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-       stylesheets="@../css/notification.css"
+       stylesheets="@../css/component-notification.css"
        fx:controller="com.ssscloud.auction.client.controller.shared.NotificationController"
        prefWidth="340"
        maxHeight="500"

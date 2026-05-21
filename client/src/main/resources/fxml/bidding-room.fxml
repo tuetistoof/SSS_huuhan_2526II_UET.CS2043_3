@@ -15,16 +15,8 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<!--
-  BiddingRoom — fits vào contentArea (StackPane) của MainLayout
-  Root: ScrollPane > VBox  để cuộn được khi cửa sổ nhỏ
-  Cấu trúc:
-    1. Header card (hồng)         — tên phiên + badge + timer + nút Back
-    2. Row 2 cột                  — cột trái: giá hiện tại | cột phải: form bid
-    3. Card dưới                  — tab Lịch sử / Biểu đồ / Thông tin
--->
 
-<ScrollPane fitToWidth="true" styleClass="br-scroll" stylesheets="@../css/auctionroom.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.BiddingRoomController">
+<ScrollPane fitToWidth="true" styleClass="br-scroll" stylesheets="@../css/screen-bidding-room.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.BiddingRoomController">
   <content>
     <VBox spacing="12" styleClass="br-root">
       <padding><Insets bottom="24" left="24" right="24" top="20" /></padding>

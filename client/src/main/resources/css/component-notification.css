@@ -1,0 +1,62 @@
+@import "tokens.css";
+@import "base.css";
+
+/* ==========================================================
+   component-notification.css — CloudBid Notification Center
+   Covers: Notification cell states (Read/Unread), interactive hovers,
+           icon wrapper bubbles, and structured typography.
+   ========================================================== */
+
+
+.notif-unread {
+    -fx-background-color: -cloud-rose-light; 
+    -fx-background-radius: 8px;  
+    -fx-cursor: hand;
+}
+
+.notif-read {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.notif-unread:hover, 
+.notif-read:hover {
+    -fx-background-color: -cloud-primary-pale; 
+}
+
+
+.notif-icon {
+    -fx-background-radius: 18; 
+    -fx-font-size: 16px; 
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+}
+
+/* ── Loại 1: Thông báo Bị vượt giá (Outbid Notification Icon) ── */
+.notif-icon-outbid {
+    -fx-background-color: -cloud-primary-light; 
+}
+
+/* ── Loại 2: Phiên đấu giá kết thúc (Auction Ended Notification Icon) ── */
+.notif-icon-ended {
+    -fx-background-color: -cloud-info-bg;
+}
+
+/* =========================================================
+   TYPOGRAPHY ELEMENTS (Thành phần chữ cấu trúc)
+   ========================================================= */
+
+.notif-title {
+    -fx-font-size: 13px; 
+    -fx-text-fill: -cloud-rose-dark; 
+}
+
+.notif-time {
+    -fx-font-size: 11px; 
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.notif-desc {
+    -fx-font-size: 13px; 
+    -fx-text-fill: -cloud-text-secondary; 
+}

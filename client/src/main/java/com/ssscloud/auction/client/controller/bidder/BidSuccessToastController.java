@@ -45,8 +45,10 @@ public class BidSuccessToastController {
                 FXMLLoader loader = new FXMLLoader(BidSuccessToastController.class.getResource("/fxml/bid-success-toast.fxml"));
                 Parent toastNode = loader.load();
 
-                toastNode.getStylesheets().add(BidSuccessToastController.class.getResource("/css/toast.css").toExternalForm());
-
+                URL stylesheet = BidSuccessToastController.class.getResource("/css/component-toast.css");
+                if (stylesheet != null) {
+                    toastNode.getStylesheets().add(stylesheet.toExternalForm());
+                }
                 BidSuccessToastController controller = loader.getController();
                 controller.setup(auctionName, amount);
 
