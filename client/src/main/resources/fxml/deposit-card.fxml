@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="350.0" styleClass="deposit-card" stylesheets="@../css/deposit-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.DepositCardController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="350.0" styleClass="deposit-card" stylesheets="@../css/component-deposit-card.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.DepositCardController">
    <children>
       <VBox alignment="CENTER_LEFT" layoutX="37.0" layoutY="45.0" spacing="10.0">
          <children>
@@ -17,7 +17,7 @@
             <Label fx:id="lblError" styleClass="error-label" text="Error" wrapText="true" />
             <HBox>
                <children>
-                  <Button mnemonicParsing="false" onAction="#handelConfirm" styleClass="btn-deposit-confirm" text="Confirm" />
+                  <Button mnemonicParsing="false" onAction="#handleConfirm" styleClass="btn-deposit-confirm" text="Confirm" />
                   <Region prefWidth="80.0" />
                   <Button mnemonicParsing="false" onAction="#handleCancle" styleClass="btn-deposit-cancel" text="Cancel" />
                </children>

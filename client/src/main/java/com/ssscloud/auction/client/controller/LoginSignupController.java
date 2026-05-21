@@ -105,7 +105,7 @@ public class LoginSignupController {
             if (userDTO != null) {
                 SessionManager.getInstance().setCurrentUser(userDTO);
                 try {
-                    Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
+                    Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/main-layout.fxml"));
                     Stage stage = (Stage) btnLogin.getScene().getWindow();
                     stage.setMaximized(true);
                     stage.getScene().setRoot(homeRoot);

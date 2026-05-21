@@ -1,0 +1,246 @@
+@import "tokens.css";
+@import "base.css";
+
+/* ==========================================================
+   screen-bidded-auction.css — CloudBid Bidded Auctions Screen
+   Covers: Header cards, status summary badges, layout grids,
+           empty states, item rows, and contextual action buttons.
+   ========================================================== */
+
+/* =========================================================
+   HEADER CARD (Pink Accent Tint)
+   ========================================================= */
+.bda-header-card {
+    -fx-background-color: -cloud-rose-bg;
+    -fx-background-radius: 12px;
+    -fx-border-color: -cloud-rose-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 12px;
+}
+
+.bda-page-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.bda-page-sub {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* ── Nhãn đếm tổng số lượng phiên ── */
+.bda-count-badge {
+    -fx-background-color: -cloud-primary;
+    -fx-background-radius: 15px;
+    -fx-min-width: 32px;
+    -fx-min-height: 28px;
+    -fx-padding: 4 10 4 10;
+    -fx-alignment: center;
+}
+
+.bda-count-text {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-surface;
+}
+
+/* =========================================================
+   CONTENT AREA & LAYOUT CONTEXTS
+   ========================================================= */
+.bda-content-area {
+    -fx-background-color: -cloud-bg;
+}
+
+/* =========================================================
+   EMPTY STATE (Trạng thái chưa tham gia đấu giá phiên nào)
+   ========================================================= */
+.bda-empty-state {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.bda-empty-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.bda-empty-sub {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-light;
+}
+
+/* =========================================================
+   BIDDED AUCTION CARD (Thẻ thông tin từng phiên)
+   ========================================================= */
+.bda-item-card {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+}
+
+/* Hiệu ứng tương tác hover nổi nhẹ tinh tế */
+.bda-item-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.10), 12, 0, 0, 4);
+    -fx-border-color: -cloud-border-mid;
+}
+
+.bda-row-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.bda-row-seller {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+/* ── Hiển thị giá bid cao nhất hiện tại ── */
+.bda-row-price {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* ── Hiển thị giá của riêng cá nhân người dùng đã đặt ── */
+.bda-row-mybid {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-primary;
+}
+
+/* ── Label hiển thị thời gian còn lại (Timer) ── */
+.bda-row-timer {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-warn-text; /* Màu cam cảnh báo từ tokens */
+}
+
+.bda-row-timer-safe {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+/* =========================================================
+   AUCTION TYPE & STATE BADGES
+   ========================================================= */
+.bda-badge-type {
+    -fx-background-color: -cloud-primary-pale;
+    -fx-background-radius: 6px;
+    -fx-text-fill: -cloud-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 6 2 6;
+}
+
+/* ── Nhãn trạng thái thắng/thua (Kế thừa màu ngữ nghĩa chuẩn) ── */
+.bda-badge-winning {
+    -fx-background-color: -cloud-success-bg;
+    -fx-background-radius: 6px;
+    -fx-text-fill: -cloud-success-text;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+}
+
+.bda-badge-outbid {
+    -fx-background-color: -cloud-danger-bg;
+    -fx-background-radius: 6px;
+    -fx-text-fill: -cloud-danger-text;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+/* ── Nút "Vào phòng" (Đồng bộ hoàn toàn với cấu trúc btn-primary trong base.css) ── */
+.bda-btn-enter {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-padding: 6 16 6 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.2), 6, 0, 0, 1.5);
+}
+
+.bda-btn-enter:hover {
+    -fx-background-color: -cloud-primary-dark;
+}
+
+.bda-btn-enter:pressed {
+    -fx-background-color: -cloud-primary-deeper;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* ── Nút "Bỏ quan tâm" (Dạng Secondary/Outline nhẹ nhàng) ── */
+.bda-btn-unfollow {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -cloud-text-muted;
+    -fx-font-size: 13px;
+    -fx-padding: 5 16 5 16;
+    -fx-cursor: hand;
+}
+
+.bda-btn-unfollow:hover {
+    -fx-background-color: -cloud-bg;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-text-primary;
+}
+
+.bda-btn-unfollow:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+}
+
+.bda-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.bda-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.bda-list {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.bda-row {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+    -fx-padding: 12;
+}
+
+.bda-row:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.10), 12, 0, 0, 4);
+    -fx-border-color: -cloud-border-mid;
+}
+
+.bda-thumb {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 8px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 8px;
+}

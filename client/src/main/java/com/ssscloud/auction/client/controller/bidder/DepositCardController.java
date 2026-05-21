@@ -1,4 +1,4 @@
-package com.ssscloud.auction.client.controller.seller;
+package com.ssscloud.auction.client.controller.bidder;
 
 import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -12,7 +12,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-
 public class DepositCardController {
 
     @FXML private Label lblError;
@@ -28,7 +27,7 @@ public class DepositCardController {
     }
 
     @FXML
-    void handelConfirm(ActionEvent event) {
+    void handleConfirm(ActionEvent event) {
         lblError.setVisible(false);
         lblError.setManaged(false);
         String amountTxt = txtDepositValue.getText();

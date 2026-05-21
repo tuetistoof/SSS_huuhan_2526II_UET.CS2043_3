@@ -210,8 +210,8 @@ public class BiddingRoomController implements MessageListener {
             root.setAlignment(Pos.CENTER_LEFT);
             root.setPadding(new Insets(4, 0, 4, 0));
             nameTimeBox.getChildren().addAll(nameLabel, timeLabel);
-            nameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #222222;");
-            timeLabel.getStyleClass().add("br-bid-time");
+            nameLabel.getStyleClass().add("br-bid-name");
+            timeLabel.getStyleClass().add("br-bid-time");     
             amountLabel.getStyleClass().add("br-bid-amount");
             HBox.setHgrow(spacer, Priority.ALWAYS);
             root.getChildren().addAll(badgeLabel, nameTimeBox, spacer, amountLabel);

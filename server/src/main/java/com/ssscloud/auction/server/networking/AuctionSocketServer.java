@@ -74,7 +74,6 @@ public class AuctionSocketServer {
             throw exception;
         }
     }
-
     public static void main(String[] args) throws Exception {
         setupLogger();
 
