@@ -427,6 +427,11 @@
     -fx-font-size: 10px;
     -fx-padding: 1 6 1 6;
 }
+.br-bid-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
 .br-bid-amount {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
