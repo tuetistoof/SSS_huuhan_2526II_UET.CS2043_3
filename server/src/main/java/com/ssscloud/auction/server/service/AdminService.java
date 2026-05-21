@@ -151,11 +151,7 @@ public class AdminService {
                 "The auction identifier is required.");
         }
 
-        Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
-        if (auction == null) {
-            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
-                "Auction not found or already ended: " + auctionId);
-        }
+        Auction auction = ensureLiveAuctionLoaded(auctionId);
 
         // --- FIX Bug C: atomic guard — chỉ 1 cancel được chạy tại 1 thời điểm ---
         // cancelInProgress.add() trả false nếu auctionId đã có trong set → reject
@@ -421,5 +417,24 @@ public class AdminService {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Failed to notify balance update for userId: " + userId, e);
         }
+    }
+    private Auction ensureLiveAuctionLoaded(String auctionId) throws ServiceException, Exception {
+        Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+        if (auction != null) {
+            return auction;
+        }
+
+        auction = auctionDAO.findByAuctionId(auctionId);
+        if (auction == null) {
+            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
+                "Auction not found or already ended: " + auctionId);
+        }
+        if (!auction.getStatus().isActive() || auction.isExpired()) {
+            throw new ServiceException(ErrorCode.AUCTION_CLOSED,
+                "Auction not found or already ended: " + auctionId);
+        }
+
+        AuctionRegistry.getInstance().registerIfAbsent(auction);
+        return AuctionRegistry.getInstance().getLiveAuction(auctionId);
     }
 }

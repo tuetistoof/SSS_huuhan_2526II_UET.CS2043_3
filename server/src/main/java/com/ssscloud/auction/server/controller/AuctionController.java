@@ -68,6 +68,19 @@ public class AuctionController {
             throw exception;
         }
     }
+    public void ensureLiveAuctionLoaded(String auctionId) throws ControllerException, Exception { //hàm này để đăng kí vào registry
+        try {
+            if (auctionId == null || auctionId.isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "AuctionId identifier is mandatory.");
+            }
+            auctionService.ensureLiveAuctionLoaded(auctionId);
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while loading live auction.", exception);
+            throw exception;
+        }
+    }
 
     private void validateCreateAuctionRequest(CreateAuctionRequest createAuctionRequest) {
         if (createAuctionRequest == null) {

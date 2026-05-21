@@ -184,7 +184,7 @@ public class MessageHandler {
                     if (auctionId == null || auctionId.isBlank()) {
                         return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The auctionId identifier is missing.")));
                     }
-
+                    auctionController.ensureLiveAuctionLoaded(auctionId); //ktra có trong registry chưa nếu không thì cho vào
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
                     if (liveAuctionEntity == null) {
                         return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The specified auction does not exist: " + auctionId)));

@@ -20,6 +20,8 @@ import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
+import com.ssscloud.auction.server.dao.QueryDAO;
+import com.ssscloud.auction.server.dao.QueryDAO.AuctionScheduleInfo;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.factory.ItemDTOFactory;
 import com.ssscloud.auction.server.factory.ItemFactory;
@@ -52,6 +54,7 @@ public class AuctionService {
     private static final Logger logger = Logger.getLogger(AuctionService.class.getName()); // Logging Standards: Declared first
     
     private final AuctionDAO auctionDAO;
+    private final QueryDAO queryDAO;
     private final UserDAO userDAO; 
     private final UserService userService;
     private final ItemService itemService;
@@ -60,10 +63,11 @@ public class AuctionService {
     private final AutoBidService autoBidService;
 
     // Sửa constructor
-    public AuctionService(AuctionDAO auctionDAO, UserDAO userDAO, UserService userService,
+    public AuctionService(AuctionDAO auctionDAO, QueryDAO queryDAO, UserDAO userDAO, UserService userService,
                         ItemService itemService, NotificationService notificationService,
                         AutoBidService autoBidService) {
         this.auctionDAO          = auctionDAO;
+        this.queryDAO            = queryDAO;
         this.userDAO             = userDAO;
         this.userService         = userService;
         this.itemService         = itemService;
@@ -148,8 +152,17 @@ public class AuctionService {
 
 
     public void scheduleClose(Auction auction) throws Exception {
-        String auctionId = auction.getAuctionConfig().getId();
-        LocalDateTime endTime = auction.getAuctionConfig().getEndTime();
+        scheduleClose(
+                auction.getAuctionConfig().getId(),
+                auction.getAuctionConfig().getEndTime());
+    }
+
+    public void scheduleClose(String auctionId, LocalDateTime endTime) {
+        if (endTime == null) {
+            logger.log(Level.WARNING,
+                    "scheduleClose skipped because endTime is null for auctionId: " + auctionId);
+            return;
+        }
 
         long delayMilliseconds = Duration.between(LocalDateTime.now(), endTime).toMillis();
         if (delayMilliseconds < 0) {
@@ -158,87 +171,167 @@ public class AuctionService {
 
         scheduler.schedule(() -> {
             try {
-                if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
-                    scheduleClose(auction);
-                    return;
-                }
-                boolean shouldProceed;
-                synchronized (auction) {
-                    AuctionStatus currentStatus = auction.getStatus();
-                    if (currentStatus == AuctionStatus.OPEN || currentStatus == AuctionStatus.RUNNING) {
-                        auction.finish(); // set FINISHED bên trong lock
-                        shouldProceed = true;
-                        auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                        AuctionRegistry.getInstance().remove(auctionId);
-                        ConcurrentBidManager.getInstance().shutdown(auctionId);
-                        autoBidService.clearRegistrations(auctionId);  // FIX VĐ 2: dọn AutoBidEntry
-
-                        settleAuctionBalances(auction);
-
-                        ChangeManager.getInstance().notify(auction);
-                        notificationService.notifyAuctionEnded(auction);
-                    } else {
-                        shouldProceed = false;
-                    }
-                }
-
-                // Mọi side-effect chạy NGOÀI lock để tránh giữ lock lâu
-                if (!shouldProceed) {
+                AuctionScheduleInfo scheduleInfo = queryDAO.findActiveScheduleInfoById(auctionId);
+                if (scheduleInfo == null) {
                     logger.log(Level.INFO,
-                        "scheduleClose skipped — auction already in terminal state: " + auctionId);
+                            "scheduleClose skipped - auction is no longer active: " + auctionId);
                     return;
                 }
 
-                // Từ đây chỉ thread thắng (shouldProceed = true) mới chạy tiếp
-                auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                AuctionRegistry.getInstance().remove(auctionId);
-                ConcurrentBidManager.getInstance().shutdown(auctionId);
+                LocalDateTime latestEndTime = scheduleInfo.getEndTime();
+                if (latestEndTime != null && LocalDateTime.now().isBefore(latestEndTime)) {
+                    scheduleClose(auctionId, latestEndTime);
+                    return;
+                }
 
-                settleAuctionBalances(auction);
-
-                ChangeManager.getInstance().notify(auction);
-                notificationService.notifyAuctionEnded(auction);
-                logger.log(Level.INFO, "Auction has been automatically concluded: " + auctionId);
-
+                closeAuctionById(auctionId);
             } catch (ServiceException serviceException) {
                 logger.log(Level.WARNING,
-                    "Business logic error in scheduled auction closure for auctionId: " + auctionId,
-                    serviceException);
+                        "Business logic error in scheduled auction closure for auctionId: " + auctionId,
+                        serviceException);
             } catch (Exception exception) {
                 logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: "
-                    + auctionId, exception);
+                        "[SYSTEM_FAILURE] Unexpected system error during scheduled auction closure for auctionId: "
+                                + auctionId,
+                        exception);
             }
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
     }
-    /**
-     * Dùng cho recovery: chỉ cần auctionId + endTime, không load full Auction.
-     * Khi timer kích hoạt mới fetch từ Registry hoặc DB.
-     */
-    public void scheduleCloseById(String auctionId, LocalDateTime endTime) {
-        long delayMs = Duration.between(LocalDateTime.now(), endTime).toMillis();
-        if (delayMs < 0) delayMs = 0;
+    
 
-        scheduler.schedule(() -> {
-            try {
-                Auction auction = AuctionRegistry.getInstance().get(auctionId);
-                if (auction == null) {
-                    auction = auctionDAO.findByAuctionId(auctionId);
-                }
-                if (auction == null) {
-                    logger.log(Level.WARNING, "[Recovery] scheduleCloseById: auction not found: " + auctionId);
-                    return;
-                }
-                // Anti-sniping có thể đã extend endTime — reschedule nếu chưa tới giờ
-                if (LocalDateTime.now().isBefore(auction.getAuctionConfig().getEndTime())) {
-                    scheduleClose(auction);
-                    return;
-                }
-                scheduleClose(auction);
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "[Recovery] scheduleCloseById error for auctionId: " + auctionId, e);
+
+    public boolean closeAuctionById(String auctionId) throws ServiceException, Exception {
+        validateAuctionId(auctionId);
+
+        Auction auction = AuctionRegistry.getInstance().get(auctionId);
+        if (auction == null) {
+            auction = auctionDAO.findByAuctionId(auctionId);
+        }
+        if (auction == null) {
+            throw new ServiceException(
+                    ErrorCode.AUCTION_NOT_FOUND,
+                    "Auction not found with identifier: " + auctionId);
+        }
+
+        return closeAuction(auction);
+    }
+
+    public boolean closeAuction(Auction auction) throws ServiceException, Exception {
+        if (auction == null) {
+            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Auction cannot be null.");
+        }
+
+        String auctionId = auction.getAuctionConfig().getId();
+        Auction liveAuction = AuctionRegistry.getInstance().get(auctionId);
+        Auction targetAuction = (liveAuction != null) ? liveAuction : auction;
+
+        synchronized (targetAuction) {
+            AuctionStatus currentStatus = targetAuction.getStatus();
+            if (currentStatus != AuctionStatus.OPEN && currentStatus != AuctionStatus.RUNNING) {
+                logger.log(Level.INFO,
+                        "closeAuction skipped - auction already in terminal state: " + auctionId);
+                return false;
             }
-        }, delayMs, TimeUnit.MILLISECONDS);
+        }
+
+        if (!auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED)) {
+            logger.log(Level.INFO,
+                    "closeAuction skipped - DB status is no longer active: " + auctionId);
+            return false;
+        }
+
+        try {
+            synchronized (targetAuction) {
+                targetAuction.finish();
+            }
+
+            AuctionRegistry.getInstance().remove(auctionId);
+            ConcurrentBidManager.getInstance().shutdown(auctionId);
+
+            settleAuctionBalances(targetAuction);
+
+            ChangeManager.getInstance().notify(targetAuction);
+            notificationService.notifyAuctionEnded(targetAuction);
+
+            logger.log(Level.INFO, "Auction has been concluded: " + auctionId);
+            return true;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] closeAuction failed after status transition for auctionId: "
+                            + auctionId,
+                    exception);
+            throw exception;
+        }
+    }
+    
+    public void startAuctionCloser() {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                List<AuctionScheduleInfo> overdueScheduleInfoList =
+                        queryDAO.findOverdueScheduleInfos(LocalDateTime.now());
+
+                for (AuctionScheduleInfo scheduleInfo : overdueScheduleInfoList) {
+                    String auctionId = scheduleInfo.getAuctionId();
+                    if (closeAuctionById(auctionId)) {
+                        logger.log(Level.INFO,
+                                "[AuctionCloser] Safety-net finalized auctionId: " + auctionId);
+                    }
+                }
+            } catch (Exception exception) {
+                logger.log(Level.SEVERE,
+                        "[AuctionCloser] Maintenance task encountered a scheduled check failure.",
+                        exception);
+            }
+        }, 1, 1, TimeUnit.MINUTES);
+    }
+
+    //Cleanup
+
+    public void shutdownScheduler() {
+        scheduler.shutdown();
+        try {
+            if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        } catch (InterruptedException interruptedException) {
+            scheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+
+
+//HELPERS
+    public Auction ensureLiveAuctionLoaded(String auctionId) throws ServiceException, Exception {
+        validateAuctionId(auctionId);
+
+        Auction auction = AuctionRegistry.getInstance().get(auctionId);
+        if (auction != null) {
+            if (auction.getStatus().isActive() && !auction.isExpired()) {
+                return auction;
+            }
+            if (auction.getStatus().isActive() && auction.isExpired()) {
+                closeAuctionById(auctionId);
+            }
+            throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction has already concluded.");
+        }
+
+        auction = auctionDAO.findByAuctionId(auctionId);
+        if (auction == null) {
+            throw new ServiceException(
+                    ErrorCode.AUCTION_NOT_FOUND,
+                    "Auction not found with identifier: " + auctionId);
+        }
+        if (!auction.getStatus().isActive()) {
+            throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction has already concluded.");
+        }
+        if (auction.isExpired()) {
+            closeAuctionById(auctionId);
+            throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction has already concluded.");
+        }
+
+        AuctionRegistry.getInstance().registerIfAbsent(auction);
+        return AuctionRegistry.getInstance().get(auctionId);
     }
 
     /**
