@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.FileHandler;
@@ -17,7 +15,6 @@ import java.util.logging.SimpleFormatter;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.model.auction.Auction;
-import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.server.controller.AdminController;
 import com.ssscloud.auction.server.controller.AuctionController;
 import com.ssscloud.auction.server.controller.BidController;
@@ -27,6 +24,7 @@ import com.ssscloud.auction.server.controller.UserController;
 import com.ssscloud.auction.server.dao.AdminDAO;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
+import com.ssscloud.auction.server.dao.DatabaseConnection;
 import com.ssscloud.auction.server.dao.ItemDAO;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.QueryDAO;
@@ -40,7 +38,6 @@ import com.ssscloud.auction.server.service.ConcurrentBidManager;
 import com.ssscloud.auction.server.service.ItemService;
 import com.ssscloud.auction.server.service.NotificationService;
 import com.ssscloud.auction.server.service.UserService;
-import com.ssscloud.auction.server.util.AuctionRegistry;
 
 /**
  * AuctionSocketServer is the primary entry point for the auction system backend.
@@ -54,9 +51,6 @@ public class AuctionSocketServer {
 
     // --- PUBLIC METHODS ---
 
-    /**
-     * Configures the global logging system to output to a file in the project root.
-     */
     public static void setupLogger() throws Exception {
         try {
             // Create "server.log" in the root directory. Enable append mode to preserve historical data.
@@ -74,6 +68,7 @@ public class AuctionSocketServer {
             throw exception;
         }
     }
+    
     public static void main(String[] args) throws Exception {
         setupLogger();
 
@@ -92,7 +87,7 @@ public class AuctionSocketServer {
         UserService userService             = new UserService(userDAO);
         ItemService itemService             = new ItemService(itemDAO);
         NotificationService notificationService = new NotificationService(queryDAO, notificationDAO);
-        AuctionService auctionService       = new AuctionService(auctionDAO, userDAO, userService, itemService, notificationService, autoBidService);
+        AuctionService auctionService       = new AuctionService(auctionDAO, queryDAO, userDAO, userService, itemService, notificationService, autoBidService);
         AdminService adminService           = new AdminService(adminDAO, auctionDAO, autoBidService, userDAO); // [ADMIN]
 
         // ── Controllers ───────────────────────────────────────────────────
@@ -114,23 +109,46 @@ public class AuctionSocketServer {
                 notificationController,
                 adminController); // [ADMIN]
 
-        // Recover active auctions from the database and start the safety-net maintenance task
         recoverLiveAuctions(auctionDAO, auctionService, queryDAO);
-        startAuctionCloser(auctionDAO, auctionService, notificationService, autoBidService);
-
+        auctionService.startAuctionCloser(); //1p query db để kiểm tra có miss không
         logger.log(Level.INFO, "[Server] Initializing main networking listener on port 5000...");
+        
+        ServerSocket serverSocket = new ServerSocket(5000);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {  //shutdown
+            logger.info("[Shutdown] SIGTERM nhận được, bắt đầu graceful shutdown...");
 
-        try (ServerSocket serverSocket = new ServerSocket(5000)) {
+            try { serverSocket.close(); } catch (Exception ignored) {} //ngừng nhận connection mới
+
+            workerPool.shutdown(); //clienthanlder ko nhận thêm thread
+            try { workerPool.awaitTermination(10, TimeUnit.SECONDS); }
+            catch (InterruptedException ignored) {}
+
+            auctionService.shutdownScheduler(); //xử lí nốt cái thread còn tồn đọng
+
+            try { //đóng db pool (bắt buộc nằm trong khối try catch)
+                DatabaseConnection.getInstance().close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } 
+            logger.info("[Shutdown] Hoàn tất.");
+        }, "shutdown-hook"));
+
+        try { //vòng lặp chạy chính
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 workerPool.execute(new ClientHandler(clientSocket, messageHandler));
             }
         } catch (IOException ioException) {
-            logger.log(Level.SEVERE, "Socket Initialization Error: Main listener loop terminated unexpectedly.", ioException);
-            throw ioException;
+            if (!serverSocket.isClosed()) { // phân biệt shutdown bình thường vs lỗi thật
+                logger.log(Level.SEVERE, "Socket Initialization Error: Main listener loop terminated unexpectedly.", ioException);
+                throw ioException;
+            }
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Critical unexpected error in server main loop.", exception);
             throw exception;
+        }  finally {
+            try { serverSocket.close(); } catch (Exception ignored) {}
+        
         }
     }
 
@@ -167,7 +185,7 @@ public class AuctionSocketServer {
                     logger.log(Level.INFO, "[Recovery] Finalized + settled overdue auctionId: " + auctionId);
                 } else {
                     // Còn hạn — chỉ schedule timer, KHÔNG register Registry  (FIX VĐ 1)
-                    auctionService.scheduleCloseById(auctionId, info.getEndTime());
+                    auctionService.scheduleClose(auctionId, info.getEndTime());
                     logger.log(Level.INFO, "[Recovery] Scheduled close for auctionId: " + auctionId);
                 }
             }
@@ -177,61 +195,4 @@ public class AuctionSocketServer {
         }
     }
 
-    /**
-     * Safety-net: cứ 30s scan DB tìm auction overdue bị sót.
-     * FIX VĐ 3: gọi clearRegistrations + settle đầy đủ.
-     */
-    private static void startAuctionCloser(AuctionDAO auctionDAO, AuctionService auctionService,
-                                            NotificationService notificationService,
-                                            AutoBidService autoBidService) throws Exception {
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "auction-closer");
-            t.setDaemon(true);
-            return t;
-        });
-
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                LocalDateTime now = LocalDateTime.now();
-                List<Auction> overdueAuctionList = new ArrayList<>();
-
-                auctionDAO.findByStatus(AuctionStatus.RUNNING).stream()
-                        .filter(a -> a.getAuctionConfig().getEndTime() != null
-                                && a.getAuctionConfig().getEndTime().isBefore(now))
-                        .forEach(overdueAuctionList::add);
-
-                auctionDAO.findByStatus(AuctionStatus.OPEN).stream()
-                        .filter(a -> a.getAuctionConfig().getEndTime() != null
-                                && a.getAuctionConfig().getEndTime().isBefore(now))
-                        .forEach(overdueAuctionList::add);
-
-                for (Auction fromDB : overdueAuctionList) {
-                    String auctionId = fromDB.getAuctionConfig().getId();
-
-                    Auction liveAuction = AuctionRegistry.getInstance().get(auctionId);
-                    Auction target = (liveAuction != null) ? liveAuction : fromDB;
-
-                    if (target.getStatus() == AuctionStatus.FINISHED) continue;
-
-                    synchronized (target) {
-                        if (target.getStatus() == AuctionStatus.FINISHED) continue; // double-check
-                        target.finish();
-                    }
-
-                    auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
-                    AuctionRegistry.getInstance().remove(auctionId);
-                    ConcurrentBidManager.getInstance().shutdown(auctionId);
-                    autoBidService.clearRegistrations(auctionId); // FIX VĐ 3
-
-                    auctionService.settleAuctionBalancesPublic(target); // FIX VĐ 4
-
-                    ChangeManager.getInstance().notify(target);
-                    notificationService.notifyAuctionEnded(target);
-                    logger.log(Level.INFO, "[AuctionCloser] Safety-net finalized auctionId: " + auctionId);
-                }
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, "[AuctionCloser] Scheduled check failure.", e);
-            }
-        }, 30, 30, TimeUnit.SECONDS);
-    }
 }
