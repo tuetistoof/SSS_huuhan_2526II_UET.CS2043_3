@@ -20,6 +20,7 @@ public class SellerDisplayDTO {
         this.itemName = itemName;
         this.startPrice = startPrice;
         this.currentPrice = currentPrice;
+        this.bidCount = bidCount;
         this.endTime = endTime;
         this.status = status;
     }
