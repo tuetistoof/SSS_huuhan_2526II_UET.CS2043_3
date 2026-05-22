@@ -247,6 +247,7 @@ public class AuctionService {
 
             AuctionRegistry.getInstance().remove(auctionId);
             ConcurrentBidManager.getInstance().shutdown(auctionId);
+            
 
             settleAuctionBalances(targetAuction);
 

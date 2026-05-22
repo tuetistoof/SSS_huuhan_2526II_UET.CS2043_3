@@ -184,11 +184,17 @@ public class MessageHandler {
                     if (auctionId == null || auctionId.isBlank()) {
                         return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The auctionId identifier is missing.")));
                     }
-                    auctionController.ensureLiveAuctionLoaded(auctionId); //ktra có trong registry chưa nếu không thì cho vào
+                    auctionController.ensureLiveAuctionLoaded(auctionId);
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+
                     if (liveAuctionEntity == null) {
-                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The specified auction does not exist: " + auctionId)));
+                    // null sau ensureLiveAuctionLoaded = auction FINISHED/CANCELED hoặc không tồn tại
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("Auction is not active: " + auctionId)));
                     }
+                    
+                    // Double-check trạng thái RAM — phòng closeAuction() chạy đúng lúc này
+                    if (liveAuctionEntity.getStatus().isEnded()) {
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("Auction has just ended: " + auctionId)));}
 
                     String userId = clientHandler.getUserId();
                     if (!ChangeManager.getInstance().hasObserver(liveAuctionEntity, userId)) {
@@ -208,6 +214,9 @@ public class MessageHandler {
                                 .forEach(o -> {
                                     if (o instanceof ClientObserver co) co.shutdown();
                                 });
+                        if (ChangeManager.getInstance().observerCount(liveAuctionEntity) == 0) {
+                            AuctionRegistry.getInstance().remove(auctionId);
+                        }
                         logger.log(Level.INFO, "ClientHandler for userId: " + clientHandler.getUserId()
                                 + " unsubscribed from auctionId: " + auctionId);
                     }
