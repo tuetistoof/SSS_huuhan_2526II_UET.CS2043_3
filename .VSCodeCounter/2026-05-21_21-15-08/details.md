@@ -1,0 +1,187 @@
+# Details
+
+Date : 2026-05-21 21:15:08
+
+Directory /run/media/kphong/01D9FC5BE0347CE0/study/lập trình nâng cao/SSS_huuhan_2526II_UET.CS2043_3
+
+Total : 172 files,  17747 codes, 1982 comments, 3267 blanks, all 22996 lines
+
+[Summary](results.md) / Details / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
+
+## Files
+| filename | language | code | comment | blank | total |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| [.continue/agents/new-config.yaml](/.continue/agents/new-config.yaml) | YAML | 14 | 6 | 4 | 24 |
+| [.github/workflows/ci.yml](/.github/workflows/ci.yml) | YAML | 64 | 0 | 12 | 76 |
+| [.mvn/wrapper/maven-wrapper.properties](/.mvn/wrapper/maven-wrapper.properties) | Java Properties | 3 | 0 | 1 | 4 |
+| [auction\_system\_flow\_diagrams.html](/auction_system_flow_diagrams.html) | HTML | 11 | 1 | 1 | 13 |
+| [client/pom.xml](/client/pom.xml) | XML | 46 | 0 | 4 | 50 |
+| [client/src/main/java/com/ssscloud/auction/client/ClientApplication.java](/client/src/main/java/com/ssscloud/auction/client/ClientApplication.java) | Java | 25 | 2 | 7 | 34 |
+| [client/src/main/java/com/ssscloud/auction/client/Launcher.java](/client/src/main/java/com/ssscloud/auction/client/Launcher.java) | Java | 6 | 0 | 1 | 7 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/LoginSignupController.java](/client/src/main/java/com/ssscloud/auction/client/controller/LoginSignupController.java) | Java | 145 | 0 | 19 | 164 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/SignUpController.java](/client/src/main/java/com/ssscloud/auction/client/controller/SignUpController.java) | Java | 163 | 5 | 31 | 199 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/admin/AdminDashboardController.java](/client/src/main/java/com/ssscloud/auction/client/controller/admin/AdminDashboardController.java) | Java | 342 | 9 | 51 | 402 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/AuctionCardController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/AuctionCardController.java) | Java | 72 | 2 | 16 | 90 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/AuctionListController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/AuctionListController.java) | Java | 158 | 14 | 23 | 195 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/BidSuccessToastController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/BidSuccessToastController.java) | Java | 117 | 0 | 23 | 140 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddedAuctionsListController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddedAuctionsListController.java) | Java | 95 | 6 | 24 | 125 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddedAuctionsListRowController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddedAuctionsListRowController.java) | Java | 63 | 0 | 13 | 76 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/BidderDashboardController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/BidderDashboardController.java) | Java | 109 | 1 | 29 | 139 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddingRoomController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/BiddingRoomController.java) | Java | 637 | 46 | 90 | 773 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/WatchlistController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/WatchlistController.java) | Java | 68 | 0 | 12 | 80 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/bidder/WatchlistRowController.java](/client/src/main/java/com/ssscloud/auction/client/controller/bidder/WatchlistRowController.java) | Java | 66 | 0 | 12 | 78 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/seller/CreateAuctionController.java](/client/src/main/java/com/ssscloud/auction/client/controller/seller/CreateAuctionController.java) | Java | 344 | 24 | 50 | 418 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/seller/DepositCardController.java](/client/src/main/java/com/ssscloud/auction/client/controller/seller/DepositCardController.java) | Java | 58 | 0 | 16 | 74 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/seller/SellerDashboardController.java](/client/src/main/java/com/ssscloud/auction/client/controller/seller/SellerDashboardController.java) | Java | 227 | 15 | 44 | 286 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/shared/LoadingController.java](/client/src/main/java/com/ssscloud/auction/client/controller/shared/LoadingController.java) | Java | 29 | 0 | 7 | 36 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/shared/MainLayoutController.java](/client/src/main/java/com/ssscloud/auction/client/controller/shared/MainLayoutController.java) | Java | 432 | 11 | 77 | 520 |
+| [client/src/main/java/com/ssscloud/auction/client/controller/shared/NotificationController.java](/client/src/main/java/com/ssscloud/auction/client/controller/shared/NotificationController.java) | Java | 212 | 2 | 30 | 244 |
+| [client/src/main/java/com/ssscloud/auction/client/networking/AuctionClientSocket.java](/client/src/main/java/com/ssscloud/auction/client/networking/AuctionClientSocket.java) | Java | 147 | 9 | 23 | 179 |
+| [client/src/main/java/com/ssscloud/auction/client/networking/MessageListener.java](/client/src/main/java/com/ssscloud/auction/client/networking/MessageListener.java) | Java | 4 | 0 | 3 | 7 |
+| [client/src/main/java/com/ssscloud/auction/client/networking/SocketDispatcher.java](/client/src/main/java/com/ssscloud/auction/client/networking/SocketDispatcher.java) | Java | 25 | 26 | 8 | 59 |
+| [client/src/main/java/com/ssscloud/auction/client/observer/BidUpdateListener.java](/client/src/main/java/com/ssscloud/auction/client/observer/BidUpdateListener.java) | Java | 3 | 0 | 3 | 6 |
+| [client/src/main/java/com/ssscloud/auction/client/util/AuctionCountdownTimer.java](/client/src/main/java/com/ssscloud/auction/client/util/AuctionCountdownTimer.java) | Java | 47 | 1 | 11 | 59 |
+| [client/src/main/java/com/ssscloud/auction/client/util/PriceChartManager.java](/client/src/main/java/com/ssscloud/auction/client/util/PriceChartManager.java) | Java | 77 | 9 | 18 | 104 |
+| [client/src/main/java/com/ssscloud/auction/client/util/SceneManager.java](/client/src/main/java/com/ssscloud/auction/client/util/SceneManager.java) | Java | 7 | 0 | 3 | 10 |
+| [client/src/main/java/com/ssscloud/auction/client/util/ServerResponse.java](/client/src/main/java/com/ssscloud/auction/client/util/ServerResponse.java) | Java | 75 | 28 | 17 | 120 |
+| [client/src/main/java/com/ssscloud/auction/client/util/SessionManager.java](/client/src/main/java/com/ssscloud/auction/client/util/SessionManager.java) | Java | 22 | 0 | 10 | 32 |
+| [client/src/main/java/com/ssscloud/auction/client/util/ViewLoader.java](/client/src/main/java/com/ssscloud/auction/client/util/ViewLoader.java) | Java | 18 | 0 | 6 | 24 |
+| [client/src/main/resources/client.properties](/client/src/main/resources/client.properties) | Java Properties | 2 | 9 | 2 | 13 |
+| [client/src/main/resources/css/admin-dashboard.css](/client/src/main/resources/css/admin-dashboard.css) | PostCSS | 374 | 36 | 49 | 459 |
+| [client/src/main/resources/css/auction-card.css](/client/src/main/resources/css/auction-card.css) | PostCSS | 30 | 2 | 3 | 35 |
+| [client/src/main/resources/css/auctionroom.css](/client/src/main/resources/css/auctionroom.css) | PostCSS | 427 | 17 | 35 | 479 |
+| [client/src/main/resources/css/bidded-auction.css](/client/src/main/resources/css/bidded-auction.css) | PostCSS | 174 | 11 | 30 | 215 |
+| [client/src/main/resources/css/create-auction.css](/client/src/main/resources/css/create-auction.css) | PostCSS | 223 | 17 | 31 | 271 |
+| [client/src/main/resources/css/deposit-card.css](/client/src/main/resources/css/deposit-card.css) | PostCSS | 56 | 5 | 5 | 66 |
+| [client/src/main/resources/css/notification.css](/client/src/main/resources/css/notification.css) | PostCSS | 41 | 4 | 10 | 55 |
+| [client/src/main/resources/css/seller-dashboard.css](/client/src/main/resources/css/seller-dashboard.css) | PostCSS | 233 | 26 | 34 | 293 |
+| [client/src/main/resources/css/styles.css](/client/src/main/resources/css/styles.css) | PostCSS | 494 | 62 | 45 | 601 |
+| [client/src/main/resources/css/toast.css](/client/src/main/resources/css/toast.css) | PostCSS | 91 | 7 | 14 | 112 |
+| [client/src/main/resources/css/watchlist.css](/client/src/main/resources/css/watchlist.css) | PostCSS | 158 | 10 | 27 | 195 |
+| [client/src/main/resources/fxml/AdminDashboard.fxml](/client/src/main/resources/fxml/AdminDashboard.fxml) | XML | 114 | 10 | 19 | 143 |
+| [client/src/main/resources/fxml/BidderDashboard.fxml](/client/src/main/resources/fxml/BidderDashboard.fxml) | XML | 61 | 0 | 3 | 64 |
+| [client/src/main/resources/fxml/DepositCard.fxml](/client/src/main/resources/fxml/DepositCard.fxml) | XML | 26 | 0 | 3 | 29 |
+| [client/src/main/resources/fxml/MainLayout.fxml](/client/src/main/resources/fxml/MainLayout.fxml) | XML | 150 | 0 | 12 | 162 |
+| [client/src/main/resources/fxml/SellerDashboard.fxml](/client/src/main/resources/fxml/SellerDashboard.fxml) | XML | 114 | 14 | 20 | 148 |
+| [client/src/main/resources/fxml/auction-card.fxml](/client/src/main/resources/fxml/auction-card.fxml) | XML | 26 | 0 | 3 | 29 |
+| [client/src/main/resources/fxml/bid-success-toast.fxml](/client/src/main/resources/fxml/bid-success-toast.fxml) | XML | 39 | 4 | 10 | 53 |
+| [client/src/main/resources/fxml/bidded-auction-list-row.fxml](/client/src/main/resources/fxml/bidded-auction-list-row.fxml) | XML | 43 | 3 | 8 | 54 |
+| [client/src/main/resources/fxml/bidded-auction-list.fxml](/client/src/main/resources/fxml/bidded-auction-list.fxml) | XML | 54 | 4 | 9 | 67 |
+| [client/src/main/resources/fxml/bidding-room.fxml](/client/src/main/resources/fxml/bidding-room.fxml) | XML | 168 | 31 | 27 | 226 |
+| [client/src/main/resources/fxml/create-auction.fxml](/client/src/main/resources/fxml/create-auction.fxml) | XML | 237 | 0 | 22 | 259 |
+| [client/src/main/resources/fxml/loading.fxml](/client/src/main/resources/fxml/loading.fxml) | XML | 8 | 0 | 3 | 11 |
+| [client/src/main/resources/fxml/login-signup.fxml](/client/src/main/resources/fxml/login-signup.fxml) | XML | 81 | 0 | 8 | 89 |
+| [client/src/main/resources/fxml/notification-popup.fxml](/client/src/main/resources/fxml/notification-popup.fxml) | XML | 51 | 0 | 5 | 56 |
+| [client/src/main/resources/fxml/signup.fxml](/client/src/main/resources/fxml/signup.fxml) | XML | 98 | 0 | 7 | 105 |
+| [client/src/main/resources/fxml/watchlist-row.fxml](/client/src/main/resources/fxml/watchlist-row.fxml) | XML | 38 | 3 | 8 | 49 |
+| [client/src/main/resources/fxml/watchlist.fxml](/client/src/main/resources/fxml/watchlist.fxml) | XML | 54 | 5 | 9 | 68 |
+| [common/pom.xml](/common/pom.xml) | XML | 31 | 0 | 3 | 34 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/ClientMessage.java](/common/src/main/java/com/ssscloud/auction/common/dto/ClientMessage.java) | Java | 38 | 2 | 13 | 53 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/AdminCancelRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/AdminCancelRequest.java) | Java | 28 | 0 | 8 | 36 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/AutoBidRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/AutoBidRequest.java) | Java | 28 | 0 | 9 | 37 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/CreateAuctionRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/CreateAuctionRequest.java) | Java | 39 | 0 | 16 | 55 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/GetAuctionDetailsRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/GetAuctionDetailsRequest.java) | Java | 21 | 0 | 7 | 28 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/GetAuctionsRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/GetAuctionsRequest.java) | Java | 10 | 0 | 6 | 16 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/ItemData.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/ItemData.java) | Java | 38 | 5 | 18 | 61 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/LoginRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/LoginRequest.java) | Java | 22 | 1 | 10 | 33 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/PlaceBidRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/PlaceBidRequest.java) | Java | 23 | 2 | 8 | 33 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/request/RegisterRequest.java](/common/src/main/java/com/ssscloud/auction/common/dto/request/RegisterRequest.java) | Java | 53 | 2 | 16 | 71 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/AdminDisplayDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/AdminDisplayDTO.java) | Java | 68 | 0 | 12 | 80 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/AdminMetrics.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/AdminMetrics.java) | Java | 36 | 1 | 7 | 44 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/ApiResponse.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/ApiResponse.java) | Java | 64 | 10 | 15 | 89 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/ArtDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/ArtDTO.java) | Java | 11 | 0 | 4 | 15 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/AuctionDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/AuctionDTO.java) | Java | 102 | 0 | 22 | 124 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/AutoBidStatusDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/AutoBidStatusDTO.java) | Java | 15 | 0 | 5 | 20 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/BidDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/BidDTO.java) | Java | 42 | 0 | 14 | 56 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/BidHistoryResponse.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/BidHistoryResponse.java) | Java | 24 | 0 | 9 | 33 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/BidderDisplayDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/BidderDisplayDTO.java) | Java | 92 | 0 | 9 | 101 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/ElectricDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/ElectricDTO.java) | Java | 18 | 0 | 4 | 22 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/ItemDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/ItemDTO.java) | Java | 36 | 3 | 13 | 52 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/ItemListResponse.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/ItemListResponse.java) | Java | 28 | 3 | 10 | 41 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/ListResponse.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/ListResponse.java) | Java | 18 | 5 | 8 | 31 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/NotificationDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/NotificationDTO.java) | Java | 43 | 4 | 8 | 55 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/SellerDisplayDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/SellerDisplayDTO.java) | Java | 70 | 0 | 21 | 91 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/UserDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/UserDTO.java) | Java | 68 | 0 | 19 | 87 |
+| [common/src/main/java/com/ssscloud/auction/common/dto/response/VehicleDTO.java](/common/src/main/java/com/ssscloud/auction/common/dto/response/VehicleDTO.java) | Java | 18 | 0 | 4 | 22 |
+| [common/src/main/java/com/ssscloud/auction/common/enums/AuctionStatus.java](/common/src/main/java/com/ssscloud/auction/common/enums/AuctionStatus.java) | Java | 14 | 0 | 7 | 21 |
+| [common/src/main/java/com/ssscloud/auction/common/enums/BidType.java](/common/src/main/java/com/ssscloud/auction/common/enums/BidType.java) | Java | 8 | 0 | 3 | 11 |
+| [common/src/main/java/com/ssscloud/auction/common/enums/UserRole.java](/common/src/main/java/com/ssscloud/auction/common/enums/UserRole.java) | Java | 15 | 0 | 4 | 19 |
+| [common/src/main/java/com/ssscloud/auction/common/exception/BaseException.java](/common/src/main/java/com/ssscloud/auction/common/exception/BaseException.java) | Java | 16 | 16 | 5 | 37 |
+| [common/src/main/java/com/ssscloud/auction/common/exception/ControllerException.java](/common/src/main/java/com/ssscloud/auction/common/exception/ControllerException.java) | Java | 9 | 22 | 4 | 35 |
+| [common/src/main/java/com/ssscloud/auction/common/exception/DAOException.java](/common/src/main/java/com/ssscloud/auction/common/exception/DAOException.java) | Java | 9 | 0 | 4 | 13 |
+| [common/src/main/java/com/ssscloud/auction/common/exception/ErrorCode.java](/common/src/main/java/com/ssscloud/auction/common/exception/ErrorCode.java) | Java | 109 | 104 | 108 | 321 |
+| [common/src/main/java/com/ssscloud/auction/common/exception/FactoryException.java](/common/src/main/java/com/ssscloud/auction/common/exception/FactoryException.java) | Java | 6 | 15 | 3 | 24 |
+| [common/src/main/java/com/ssscloud/auction/common/exception/ServiceException.java](/common/src/main/java/com/ssscloud/auction/common/exception/ServiceException.java) | Java | 9 | 22 | 4 | 35 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Admin.java](/common/src/main/java/com/ssscloud/auction/common/model/Admin.java) | Java | 13 | 0 | 3 | 16 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Art.java](/common/src/main/java/com/ssscloud/auction/common/model/Art.java) | Java | 26 | 5 | 7 | 38 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Auction.java](/common/src/main/java/com/ssscloud/auction/common/model/Auction.java) | Java | 230 | 12 | 59 | 301 |
+| [common/src/main/java/com/ssscloud/auction/common/model/BidTransaction.java](/common/src/main/java/com/ssscloud/auction/common/model/BidTransaction.java) | Java | 70 | 4 | 19 | 93 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Bidder.java](/common/src/main/java/com/ssscloud/auction/common/model/Bidder.java) | Java | 26 | 5 | 10 | 41 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Electronic.java](/common/src/main/java/com/ssscloud/auction/common/model/Electronic.java) | Java | 37 | 2 | 11 | 50 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Seller.java](/common/src/main/java/com/ssscloud/auction/common/model/Seller.java) | Java | 61 | 1 | 5 | 67 |
+| [common/src/main/java/com/ssscloud/auction/common/model/Vehicle.java](/common/src/main/java/com/ssscloud/auction/common/model/Vehicle.java) | Java | 34 | 5 | 9 | 48 |
+| [common/src/main/java/com/ssscloud/auction/common/model/base/AuctionConfig.java](/common/src/main/java/com/ssscloud/auction/common/model/base/AuctionConfig.java) | Java | 56 | 3 | 3 | 62 |
+| [common/src/main/java/com/ssscloud/auction/common/model/base/Entity.java](/common/src/main/java/com/ssscloud/auction/common/model/base/Entity.java) | Java | 33 | 3 | 4 | 40 |
+| [common/src/main/java/com/ssscloud/auction/common/model/base/Item.java](/common/src/main/java/com/ssscloud/auction/common/model/base/Item.java) | Java | 64 | 4 | 15 | 83 |
+| [common/src/main/java/com/ssscloud/auction/common/model/base/User.java](/common/src/main/java/com/ssscloud/auction/common/model/base/User.java) | Java | 43 | 3 | 6 | 52 |
+| [common/src/main/java/com/ssscloud/auction/common/observer/ChangeManager.java](/common/src/main/java/com/ssscloud/auction/common/observer/ChangeManager.java) | Java | 55 | 6 | 11 | 72 |
+| [common/src/main/java/com/ssscloud/auction/common/observer/Observer.java](/common/src/main/java/com/ssscloud/auction/common/observer/Observer.java) | Java | 5 | 5 | 2 | 12 |
+| [common/src/main/java/com/ssscloud/auction/common/observer/Subject.java](/common/src/main/java/com/ssscloud/auction/common/observer/Subject.java) | Java | 4 | 6 | 3 | 13 |
+| [common/src/main/java/com/ssscloud/auction/common/util/BidValidator.java](/common/src/main/java/com/ssscloud/auction/common/util/BidValidator.java) | Java | 12 | 0 | 5 | 17 |
+| [common/src/main/java/com/ssscloud/auction/common/util/DateTimeUtils.java](/common/src/main/java/com/ssscloud/auction/common/util/DateTimeUtils.java) | Java | 21 | 5 | 9 | 35 |
+| [common/src/main/java/com/ssscloud/auction/common/util/JsonUtils.java](/common/src/main/java/com/ssscloud/auction/common/util/JsonUtils.java) | Java | 59 | 3 | 8 | 70 |
+| [common/src/main/java/com/ssscloud/auction/common/util/LocalDateTimeAdapter.java](/common/src/main/java/com/ssscloud/auction/common/util/LocalDateTimeAdapter.java) | Java | 17 | 0 | 5 | 22 |
+| [common/src/main/resources/messages.properties](/common/src/main/resources/messages.properties) | Java Properties | 0 | 0 | 2 | 2 |
+| [common/src/test/java/com/ssscloud/auction/common/util/BidValidatorTest.java](/common/src/test/java/com/ssscloud/auction/common/util/BidValidatorTest.java) | Java | 42 | 7 | 15 | 64 |
+| [docker-compose.yml](/docker-compose.yml) | YAML | 30 | 0 | 1 | 31 |
+| [mvnw.cmd](/mvnw.cmd) | Batch | 139 | 26 | 25 | 190 |
+| [pom.xml](/pom.xml) | XML | 29 | 0 | 7 | 36 |
+| [server/Dockerfile](/server/Dockerfile) | Docker | 9 | 0 | 1 | 10 |
+| [server/pom.xml](/server/pom.xml) | XML | 103 | 0 | 7 | 110 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/AdminController.java](/server/src/main/java/com/ssscloud/auction/server/controller/AdminController.java) | Java | 119 | 41 | 37 | 197 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/AuctionController.java](/server/src/main/java/com/ssscloud/auction/server/controller/AuctionController.java) | Java | 74 | 3 | 18 | 95 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/BidController.java](/server/src/main/java/com/ssscloud/auction/server/controller/BidController.java) | Java | 151 | 3 | 21 | 175 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/BiddedAuctionsListController.java](/server/src/main/java/com/ssscloud/auction/server/controller/BiddedAuctionsListController.java) | Java | 22 | 1 | 6 | 29 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/NotificationController.java](/server/src/main/java/com/ssscloud/auction/server/controller/NotificationController.java) | Java | 93 | 3 | 20 | 116 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/QueryController.java](/server/src/main/java/com/ssscloud/auction/server/controller/QueryController.java) | Java | 139 | 3 | 26 | 168 |
+| [server/src/main/java/com/ssscloud/auction/server/controller/UserController.java](/server/src/main/java/com/ssscloud/auction/server/controller/UserController.java) | Java | 118 | 0 | 18 | 136 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/AdminDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/AdminDAO.java) | Java | 171 | 28 | 35 | 234 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/AuctionDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/AuctionDAO.java) | Java | 293 | 17 | 35 | 345 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/BaseDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/BaseDAO.java) | Java | 60 | 14 | 10 | 84 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/BidTransactionDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/BidTransactionDAO.java) | Java | 173 | 4 | 21 | 198 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/BiddedAuctionsListDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/BiddedAuctionsListDAO.java) | Java | 96 | 4 | 14 | 114 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/DatabaseConnection.java](/server/src/main/java/com/ssscloud/auction/server/dao/DatabaseConnection.java) | Java | 89 | 7 | 18 | 114 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/ItemDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/ItemDAO.java) | Java | 393 | 3 | 51 | 447 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/NotificationDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/NotificationDAO.java) | Java | 87 | 9 | 10 | 106 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/QueryDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/QueryDAO.java) | Java | 373 | 9 | 47 | 429 |
+| [server/src/main/java/com/ssscloud/auction/server/dao/UserDAO.java](/server/src/main/java/com/ssscloud/auction/server/dao/UserDAO.java) | Java | 539 | 7 | 65 | 611 |
+| [server/src/main/java/com/ssscloud/auction/server/factory/ItemDTOFactory.java](/server/src/main/java/com/ssscloud/auction/server/factory/ItemDTOFactory.java) | Java | 133 | 7 | 21 | 161 |
+| [server/src/main/java/com/ssscloud/auction/server/factory/ItemFactory.java](/server/src/main/java/com/ssscloud/auction/server/factory/ItemFactory.java) | Java | 110 | 3 | 21 | 134 |
+| [server/src/main/java/com/ssscloud/auction/server/networking/AuctionSocketServer.java](/server/src/main/java/com/ssscloud/auction/server/networking/AuctionSocketServer.java) | Java | 160 | 28 | 30 | 218 |
+| [server/src/main/java/com/ssscloud/auction/server/networking/ClientHandler.java](/server/src/main/java/com/ssscloud/auction/server/networking/ClientHandler.java) | Java | 131 | 6 | 17 | 154 |
+| [server/src/main/java/com/ssscloud/auction/server/networking/ClientObserver.java](/server/src/main/java/com/ssscloud/auction/server/networking/ClientObserver.java) | Java | 92 | 29 | 17 | 138 |
+| [server/src/main/java/com/ssscloud/auction/server/networking/MessageHandler.java](/server/src/main/java/com/ssscloud/auction/server/networking/MessageHandler.java) | Java | 243 | 14 | 51 | 308 |
+| [server/src/main/java/com/ssscloud/auction/server/service/AdminService.java](/server/src/main/java/com/ssscloud/auction/server/service/AdminService.java) | Java | 271 | 101 | 53 | 425 |
+| [server/src/main/java/com/ssscloud/auction/server/service/AntiSnipingService.java](/server/src/main/java/com/ssscloud/auction/server/service/AntiSnipingService.java) | Java | 35 | 9 | 11 | 55 |
+| [server/src/main/java/com/ssscloud/auction/server/service/AuctionService.java](/server/src/main/java/com/ssscloud/auction/server/service/AuctionService.java) | Java | 288 | 32 | 57 | 377 |
+| [server/src/main/java/com/ssscloud/auction/server/service/AutoBidService.java](/server/src/main/java/com/ssscloud/auction/server/service/AutoBidService.java) | Java | 341 | 55 | 46 | 442 |
+| [server/src/main/java/com/ssscloud/auction/server/service/BidService.java](/server/src/main/java/com/ssscloud/auction/server/service/BidService.java) | Java | 136 | 23 | 17 | 176 |
+| [server/src/main/java/com/ssscloud/auction/server/service/ConcurrentBidManager.java](/server/src/main/java/com/ssscloud/auction/server/service/ConcurrentBidManager.java) | Java | 286 | 26 | 40 | 352 |
+| [server/src/main/java/com/ssscloud/auction/server/service/ItemService.java](/server/src/main/java/com/ssscloud/auction/server/service/ItemService.java) | Java | 58 | 2 | 12 | 72 |
+| [server/src/main/java/com/ssscloud/auction/server/service/NotificationService.java](/server/src/main/java/com/ssscloud/auction/server/service/NotificationService.java) | Java | 149 | 7 | 25 | 181 |
+| [server/src/main/java/com/ssscloud/auction/server/service/UserService.java](/server/src/main/java/com/ssscloud/auction/server/service/UserService.java) | Java | 242 | 7 | 35 | 284 |
+| [server/src/main/java/com/ssscloud/auction/server/util/AuctionRegistry.java](/server/src/main/java/com/ssscloud/auction/server/util/AuctionRegistry.java) | Java | 29 | 2 | 9 | 40 |
+| [server/src/main/java/com/ssscloud/auction/server/util/SessionRegistry.java](/server/src/main/java/com/ssscloud/auction/server/util/SessionRegistry.java) | Java | 78 | 8 | 21 | 107 |
+| [server/src/main/resources/application.properties](/server/src/main/resources/application.properties) | Java Properties | 5 | 5 | 3 | 13 |
+| [server/src/main/resources/db/init.sql](/server/src/main/resources/db/init.sql) | MS SQL | 281 | 96 | 64 | 441 |
+| [server/src/main/resources/logback.xml](/server/src/main/resources/logback.xml) | XML | 11 | 0 | 1 | 12 |
+| [server/src/test/java/com/ssscloud/auction/server/service/AdminServiceTest.java](/server/src/test/java/com/ssscloud/auction/server/service/AdminServiceTest.java) | Java | 335 | 126 | 102 | 563 |
+| [server/src/test/java/com/ssscloud/auction/server/service/AntiSnipingServiceTest.java](/server/src/test/java/com/ssscloud/auction/server/service/AntiSnipingServiceTest.java) | Java | 68 | 16 | 24 | 108 |
+| [server/src/test/java/com/ssscloud/auction/server/service/AutoBidServiceTest.java](/server/src/test/java/com/ssscloud/auction/server/service/AutoBidServiceTest.java) | Java | 260 | 95 | 73 | 428 |
+| [server/src/test/java/com/ssscloud/auction/server/service/BidServiceTest.java](/server/src/test/java/com/ssscloud/auction/server/service/BidServiceTest.java) | Java | 162 | 19 | 39 | 220 |
+| [server/src/test/java/com/ssscloud/auction/server/service/CancelAuctionRaceConditionTest.java](/server/src/test/java/com/ssscloud/auction/server/service/CancelAuctionRaceConditionTest.java) | Java | 342 | 168 | 77 | 587 |
+| [server/src/test/java/com/ssscloud/auction/server/service/ConcurrentBidManagerTest.java](/server/src/test/java/com/ssscloud/auction/server/service/ConcurrentBidManagerTest.java) | Java | 321 | 121 | 68 | 510 |
+| [server/src/test/java/com/ssscloud/auction/server/service/DAOTtest.java](/server/src/test/java/com/ssscloud/auction/server/service/DAOTtest.java) | Java | 16 | 0 | 5 | 21 |
+| [server/src/test/java/com/ssscloud/auction/server/service/UserServiceTest.java](/server/src/test/java/com/ssscloud/auction/server/service/UserServiceTest.java) | Java | 81 | 2 | 24 | 107 |
+
+[Summary](results.md) / Details / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

@@ -112,7 +112,7 @@ public class CancelAuctionRaceConditionTest {
             36
         );
         auction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, ITEM_ID);
-        AuctionRegistry.getInstance().register(auction);
+        AuctionRegistry.getInstance().registerIfAbsent(auction);
 
         ConcurrentBidManager.initialize(
             userDAO, bidTransactionDAO, autoBidService, auctionDAO, notificationController
@@ -547,7 +547,7 @@ public class CancelAuctionRaceConditionTest {
             36
         );
         Auction freshAuction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, ITEM_ID);
-        AuctionRegistry.getInstance().register(freshAuction);
+        AuctionRegistry.getInstance().registerIfAbsent(freshAuction);
         System.out.println("[HELPER] Fresh auction created with status: " + freshAuction.getStatus());
 
         // Submit bid BIDDER_OLD và đợi worker xử lý xong
