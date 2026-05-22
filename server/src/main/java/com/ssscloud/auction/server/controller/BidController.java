@@ -95,35 +95,6 @@ public class BidController {
         }
     }
 
-    public String getAutoBidStatus(Object rawRequest, String bidderId) throws ControllerException, Exception {
-        try {
-            logger.log(Level.INFO, "Retrieving user bid status for the specified auction.");
-            String auctionId = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
-
-            // Check in-memory map — trả về maxBid + increment để client restore UI đầy đủ
-            List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionId);
-            AutoBidService.AutoBidEntry entry = entries.stream()
-                    .filter(e -> e.bidderId.equals(bidderId))
-                    .findFirst()
-                    .orElse(null);
-
-            AutoBidStatusDTO statusDTO =
-                    entry != null
-                    ? new AutoBidStatusDTO(true, entry.maxBid, entry.increment)
-                    : new AutoBidStatusDTO(false, 0, 0);
-
-            return JsonUtils.toJson(ApiResponse.success(
-                statusDTO,
-                "Auto-bid status retrieved successfully."
-            ));
-        } catch (ControllerException controllerException) {
-            throw controllerException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected failure while retrieving auto-bid status.", exception);
-            throw exception;
-        }
-    }
-
     public String cancelAutoBid (Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
         try {
             logger.log(Level.INFO, "Cancelling auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});

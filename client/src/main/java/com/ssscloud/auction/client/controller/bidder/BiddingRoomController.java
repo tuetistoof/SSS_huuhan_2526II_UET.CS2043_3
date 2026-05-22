@@ -146,8 +146,6 @@ public class BiddingRoomController implements MessageListener {
     @FXML
     private Button tabBtnInfo;
     @FXML
-    private TextField txtAutoIncrement;
-    @FXML
     private TextField txtManualBid;
     @FXML
     private TextField txtMaxBid;
@@ -292,8 +290,6 @@ public class BiddingRoomController implements MessageListener {
         txtManualBid.setDisable(true);
         if (txtMaxBid != null)
             txtMaxBid.setDisable(true);
-        if (txtAutoIncrement != null)
-            txtAutoIncrement.setDisable(true);
         if (lblTimer != null)
             lblTimer.setText(isCancelled ? "Canceled" : "Finished");
     }
@@ -377,35 +373,6 @@ public class BiddingRoomController implements MessageListener {
     }
 
     /**
-     * Lấy trạng thái auto-bid từ server - non-blocking, callback trên FX thread.
-     * Server: GET_AUTOBID_STATUS → ApiResponse<Boolean>
-     * Dùng ServerResponse.unwrap() để bóc 2 lớp ClientMessage + ApiResponse.
-     */
-    private void setupBidStatusAsync() {
-        if (currentAuction == null)
-            return;
-        String json = JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS", currentAuction.getId()));
-        dispatcher.request(json, raw -> {
-            // ServerResponse.unwrap bóc ClientMessage → ApiResponse → Boolean
-            AutoBidStatusDTO status = ServerResponse.unwrap(raw, "GET_AUTOBID_STATUS_RESPONSE", AutoBidStatusDTO.class);
-            if (status != null && status.isActive()) {
-                maxBid = status.getMaxBid();
-                increment = status.getIncrement();
-
-                boolean isActive = status.isActive();
-                System.out.println("[setupBidStatus] isAutoBidding=" + isActive);
-                applyAutoBidState(isActive);
-            } else {
-                applyAutoBidState(false);
-            }
-        }, () -> {
-            // Timeout/lỗi - default false, không treo UI
-            System.err.println("[setupBidStatus] timeout/error - defaulting false");
-            applyAutoBidState(false);
-        });
-    }
-
-    /**
      * Áp dụng trạng thái auto-bid lên toàn bộ UI.
      * Gọi từ: setupBidStatusAsync, handleToggleAutoBid, handleAutoBidStopped.
      * Luôn chạy trên FX thread.
@@ -420,12 +387,9 @@ public class BiddingRoomController implements MessageListener {
                 formManual.setManaged(false);
                 if (maxBid > 0)
                     txtMaxBid.setText(String.valueOf(maxBid));
-                if (increment > 0)
-                    txtAutoIncrement.setText(String.valueOf(increment));
                 btnTabAuto.getStyleClass().setAll("br-tab-active");
                 btnTabManual.getStyleClass().setAll("br-tab");
                 txtMaxBid.setDisable(true);
-                txtAutoIncrement.setDisable(true);
                 btnAutoToggle.setText("Cancel Auto Bid");
                 btnAutoToggle.setDisable(false);
                 btnAutoToggle.getStyleClass().remove("br-btn-secondary");
@@ -440,9 +404,7 @@ public class BiddingRoomController implements MessageListener {
                 btnTabAuto.getStyleClass().setAll("br-tab-active");
                 btnTabManual.getStyleClass().setAll("br-tab");
                 txtMaxBid.setDisable(false);
-                txtAutoIncrement.setDisable(false);
                 txtMaxBid.clear();
-                txtAutoIncrement.clear();
                 btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
                 btnAutoToggle.getStyleClass().add("br-btn-secondary");
                 resetAutoBidButton();
@@ -647,7 +609,6 @@ public class BiddingRoomController implements MessageListener {
                     autoBidMaxBid = 0;
                     applyAutoBidState(false);
                     txtMaxBid.clear();
-                    txtAutoIncrement.clear();
                 } else {
                     showError(ServerResponse.errorMessage(raw));
                     btnAutoToggle.setDisable(false);
@@ -660,7 +621,7 @@ public class BiddingRoomController implements MessageListener {
         }
 
         // --- Start Auto Bid ---
-        if (txtMaxBid.getText().isEmpty() || txtAutoIncrement.getText().isEmpty()) {
+        if (txtMaxBid.getText().isEmpty()) {
             showError("Please fill in all Auto Bidding fields.");
             return;
         }
@@ -668,7 +629,6 @@ public class BiddingRoomController implements MessageListener {
         long maxBid, increment;
         try {
             maxBid = Long.parseLong(txtMaxBid.getText().trim());
-            increment = Long.parseLong(txtAutoIncrement.getText().trim());
         } catch (NumberFormatException e) {
             showError("Invalid max bid or increment.");
             return;
@@ -677,17 +637,13 @@ public class BiddingRoomController implements MessageListener {
             showError("Max bid must be higher than current price.");
             return;
         }
-        if (increment <= 0) {
-            showError("Increment must be larger than 0.");
-            return;
-        }
 
         btnAutoToggle.setDisable(true);
         btnAutoToggle.setText("Registering...");
 
         final long finalMaxBid = maxBid;
         String json = JsonUtils.toJson(ClientMessage.request("AUTO_BID",
-                new AutoBidRequest(currentAuction.getId(), maxBid, increment)));
+                new AutoBidRequest(currentAuction.getId(), maxBid)));
         dispatcher.request(json, raw -> {
             if (ServerResponse.isSuccess(raw)) {
                 autoBidMaxBid = finalMaxBid;
@@ -804,8 +760,6 @@ public class BiddingRoomController implements MessageListener {
         txtManualBid.setDisable(true);
         if (txtMaxBid != null)
             txtMaxBid.setDisable(true);
-        if (txtAutoIncrement != null)
-            txtAutoIncrement.setDisable(true);
         if (lblStatusBadge != null) {
             lblStatusBadge.setText("Finished");
             lblStatusBadge.getStyleClass().add("br-badge-finished");
