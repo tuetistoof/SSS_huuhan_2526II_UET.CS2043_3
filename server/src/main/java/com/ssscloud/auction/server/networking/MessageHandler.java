@@ -207,18 +207,20 @@ public class MessageHandler {
                 }
                 case "UNSUBSCRIBE_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
+                    if (auctionId == null || auctionId.isBlank()) return null;
+
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
                     if (liveAuctionEntity != null) {
                         ChangeManager.getInstance()
                                 .detachByClientId(liveAuctionEntity, clientHandler.getUserId())
                                 .forEach(o -> {
-                                    if (o instanceof ClientObserver co) co.shutdown();
+                                    if (o instanceof ClientObserver co) co.shutdown(); // tránh trường hợp client đã unsub nhưng vẫn nhận đc update do chưa kịp detach xong (đang trong quá trình detach mà có update đến thì sẽ bị lỗi)
                                 });
-                        if (ChangeManager.getInstance().observerCount(liveAuctionEntity) == 0) {
-                            AuctionRegistry.getInstance().remove(auctionId);
-                        }
-                        logger.log(Level.INFO, "ClientHandler for userId: " + clientHandler.getUserId()
-                                + " unsubscribed from auctionId: " + auctionId);
+                        int remaining = ChangeManager.getInstance().observerCount(liveAuctionEntity);
+                        boolean evicted = AuctionRegistry.getInstance().removeIfNoObservers(auctionId, remaining);
+                        logger.log(Level.INFO, "userId: " + clientHandler.getUserId()
+                                + " unsubscribed from auctionId: " + auctionId
+                                + (evicted ? " — Registry entry evicted (no observers left)." : "."));
                     }
                     return null;
                 }
