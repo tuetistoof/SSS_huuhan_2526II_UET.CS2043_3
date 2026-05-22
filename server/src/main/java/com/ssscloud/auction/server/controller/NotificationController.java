@@ -30,13 +30,12 @@ public class NotificationController {
  
     // --- PUBLIC METHODS ---
 
-    public void notifyWatchers(String auctionId, String highestBidderId) throws ControllerException, Exception {
+    public void notifyWatchers(Auction auction, String highestBidderId) throws ControllerException, Exception {
         try {
-            validateAuctionId(auctionId);
+            //validateAuctionId(auctionId);
             validateUserId(highestBidderId);
             
-            Auction auction = resolveAuction(auctionId);
-            logger.log(Level.INFO, "Triggering outbid notifications for auctionId: {0}", auctionId);
+            logger.log(Level.INFO, "Triggering outbid notifications for auctionId: {0}", auction);
             
             notificationService.notifyWatchers(auction, highestBidderId);
         } catch (ControllerException | ServiceException e) {
@@ -47,12 +46,12 @@ public class NotificationController {
         }
     }
 
-    public void notifyAuctionEnded(String auctionId) throws ControllerException, Exception {
+    public void notifyAuctionEnded(Auction auction) throws ControllerException, Exception {
         try {
-            validateAuctionId(auctionId);
+            //validateAuctionId(auction);
             
-            Auction auction = resolveAuction(auctionId);
-            logger.log(Level.INFO, "Triggering auction-ended notifications for auctionId: {0}", auctionId);
+         
+            logger.log(Level.INFO, "Triggering auction-ended notifications for auctionId: {0}", auction);
             
             notificationService.notifyAuctionEnded(auction);
         } catch (ControllerException | ServiceException e) {

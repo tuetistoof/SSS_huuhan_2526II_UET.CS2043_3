@@ -247,17 +247,20 @@ public class BiddingRoomController implements MessageListener {
         this.currentAuction = auction;
         itemUrls = auction.getItemDTO().getImageUrls();
 
+        boolean isActive = auction.getStatus() == AuctionStatus.OPEN
+                    || auction.getStatus() == AuctionStatus.RUNNING;
         boolean isFinished = auction.getStatus() == AuctionStatus.FINISHED;
         boolean isCancelled = auction.getStatus() == AuctionStatus.CANCELED;
 
         Platform.runLater(() -> {
             populateUI();
             setUpItemImage(itemUrls);
+            loadBidHistoryAsync(auction.getBidDto());
             if (btnFollow != null) {
                 btnFollow.setDisable(true);
                 btnFollow.setText("...");
             }
-            if (isFinished || isCancelled)
+            if (!isActive)
                 disableAllBidUI(isCancelled);
         });
 
@@ -280,8 +283,20 @@ public class BiddingRoomController implements MessageListener {
         });
 
         checkFollowStatus();
-        if (!isFinished && !isCancelled)
+
+        if (isActive) {
+        // Auction đang chạy — cần subscribe để nhận push realtime
+            String subJson = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", auction.getId()));
+            dispatcher.request(subJson, subRaw -> {
+                setupBidStatusAsync();
+                btnPlaceBid.setDisable(false);
+            });
             timer.start(auction.getEndTime());
+        } else {
+            return;
+        }
+
+        
     }
 
     private void disableAllBidUI(boolean isCancelled) {

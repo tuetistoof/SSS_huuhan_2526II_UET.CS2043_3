@@ -54,13 +54,8 @@ public class LoginSignupController {
 
     @FXML
     private void handleForgetPassword(ActionEvent event) {
-        try {
-            Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/forget-pass.fxml"));
-            btnLogin.getScene().setRoot(homeRoot);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Where is my forget-pass.fxml?", e);
-        }
+        showErrorMsg("Sorry we can't help you now. Try to recall your password or create a new one");
+        
     }
     @FXML
     private void handleLogin(ActionEvent event) {
