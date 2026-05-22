@@ -152,9 +152,6 @@ public class BidController {
             if (autoBidRequest.getMaxBid() <= 0) {
                 throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");
             }
-            if (autoBidRequest.getIncrement() <= 0) {
-                throw new ControllerException(ErrorCode.INVALID_INCREMENT, "The bid increment value must be greater than zero.");
-            }
         } catch (Exception e) {
             throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "Auto-bid request validation failed: " + e.getMessage(), e);
         }

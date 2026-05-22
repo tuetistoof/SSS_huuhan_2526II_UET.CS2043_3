@@ -7,10 +7,8 @@ import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.model.base.User;
 import com.ssscloud.auction.common.model.user.Bidder;
-import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.request.AutoBidRequest;
-import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.common.util.BidValidator;
 import com.ssscloud.auction.server.dao.AuctionDAO;
@@ -25,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -89,8 +86,7 @@ public class AutoBidService {
                     autoBidRequest.getAuctionId(), key -> new CopyOnWriteArrayList<>());
 
             autoBidEntriesList.removeIf(entry -> entry.bidderId.equals(bidderId));
-            autoBidEntriesList.add(new AutoBidEntry(bidderId, bidderUsername, (long) autoBidRequest.getMaxBid(),
-                    (long) autoBidRequest.getIncrement()));
+            autoBidEntriesList.add(new AutoBidEntry(bidderId, bidderUsername, autoBidRequest.getMaxBid()));
 
             trigger(auctionEntity);
         } catch (ServiceException serviceException) {
@@ -111,6 +107,7 @@ public class AutoBidService {
             }
 
             String auctionId = auctionEntity.getAuctionConfig().getId();
+            long increment = auctionEntity.getAuctionConfig().getMinIncrement();
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
             long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()
                     : lastBidTransaction.getBidAmount();
@@ -158,7 +155,7 @@ public class AutoBidService {
             }
             else{
                 long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
-                calculatedBidAmount = Math.min(basePrice + winningEntry.increment, winningEntry.maxBid);
+                calculatedBidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
             }
 
             List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
@@ -304,30 +301,34 @@ public class AutoBidService {
             throw new ServiceException(ErrorCode.INVALID_BID_AMOUNT,
                     "The maximum auto-bid amount must be greater than zero.");
         }
-        if (!BidValidator.isPositiveBid(autoBidRequest.getIncrement())) {
-            throw new ServiceException(ErrorCode.INVALID_INCREMENT,
-                    "The auto-bid increment value must be greater than zero.");
-        }
-        if (autoBidRequest.getIncrement() > autoBidRequest.getMaxBid()) {
-            throw new ServiceException(ErrorCode.AUTO_BID_INVALID_RANGE,
-                    "Constraint violation: The increment cannot exceed the maximum bid threshold.");
-        }
     }
 
-    private void validateAutoBidTerms(Auction auctionEntity, AutoBidRequest autoBidRequest, String bidderId)
+    private void validateAutoBidTerms(Auction auction, AutoBidRequest autoBidRequest, String bidderId)
             throws ServiceException {
-        if (auctionEntity == null) {
+        if (auction == null) {
             throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
                     "Resource not found: The specified auction does not exist.");
         }
-        long minIncrement = auctionEntity.getAuctionConfig().getMinIncrement();
-        if (autoBidRequest.getIncrement() < minIncrement) {
-            throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW, "Validation failure: Auto-bid increment "
-                    + autoBidRequest.getIncrement() + " is below the required minimum of " + minIncrement);
-        }
-        if (bidderId.equals(auctionEntity.getSellerId())) {
+        if (bidderId.equals(auction.getSellerId())) {
             throw new ServiceException(ErrorCode.AUTO_SELLER_CANNOT_AUTOBID,
                     "Sellers are prohibited from registering auto-bids for their own auctions.");
+        }
+        long bidAmount = autoBidRequest.getMaxBid();
+        long minIncrement = auction.getAuctionConfig().getMinIncrement();
+        BidTransaction lastBid = auction.getLastBidTransaction();
+
+        if (lastBid == null) {
+            // Chưa có bid — chỉ cần >= startPrice
+            if (bidAmount <= auction.getAuctionConfig().getStartPrice()) {
+                throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
+                        "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
+            }
+        } else {
+            // Đã có bid — phải vượt currentPrice + minIncrement
+            if (bidAmount - auction.getCurrentPrice() < minIncrement) {
+                throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
+                        "The bid increment is lower than the required minimum of " + minIncrement);
+            }
         }
     }
 
@@ -385,14 +386,12 @@ public class AutoBidService {
         public final String bidderId;
         public final String bidderUsername;
         public final long maxBid;
-        public final long increment;
         public final LocalDateTime registeredAt;
 
-        public AutoBidEntry(String bidderId, String bidderUsername, long maxBid, long increment) {
+        public AutoBidEntry(String bidderId, String bidderUsername, long maxBid) {
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
             this.maxBid = maxBid;
-            this.increment = increment;
             this.registeredAt = LocalDateTime.now();
         }
 
