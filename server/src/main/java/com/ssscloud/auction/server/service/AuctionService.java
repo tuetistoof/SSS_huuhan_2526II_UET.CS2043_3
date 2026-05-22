@@ -15,7 +15,6 @@ import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
-import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -106,16 +105,14 @@ public class AuctionService {
                 logger.log(Level.SEVERE, "Critical failure: Unable to persist auction record for name: " + auctionConfig.getName());
                 throw new ServiceException(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
             }
-    
-            AuctionRegistry.getInstance().registerIfAbsent(auction); 
-    
-            scheduleClose(auction); 
+        
+
             logger.log(Level.INFO, "Auction successfully created and registered with ID: {0}", auctionConfig.getId());
     
             UserDTO sellerDto = userService.getByUserId(sellerId);
             ItemDTO itemDto = ItemDTOFactory.toDto(item);
             
-            return auction.toAuctionDto(auction, sellerDto, itemDto);
+            return toAuctionDto(auction, sellerDto, itemDto);
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
@@ -141,7 +138,7 @@ public class AuctionService {
                 throw new ServiceException(ErrorCode.ITEM_NOT_FOUND, "Data integrity error: The item associated with auction " + auctionId + " was not found.");
             }
     
-            return auction.toAuctionDto(auction, sellerDto, itemDto);
+            return toAuctionDto(auction, sellerDto, itemDto);
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
@@ -464,7 +461,53 @@ public class AuctionService {
                     "Failed to push UNSETTLED_UPDATE to userId: " + userId, e);
         }
     }
+    // --- PRIVATE HELPERS ---
 
+    private AuctionDTO toAuctionDto(Auction auction, UserDTO sellerDto, ItemDTO itemDto) {
+        AuctionDTO auctionDto = new AuctionDTO();
+
+        auctionDto.setId(auction.getAuctionConfig().getId());
+        auctionDto.setName(auction.getAuctionConfig().getName());
+        auctionDto.setStartPrice(auction.getAuctionConfig().getStartPrice());
+        auctionDto.setMinIncrement(auction.getAuctionConfig().getMinIncrement());
+        auctionDto.setStartTime(auction.getAuctionConfig().getStartTime());
+        auctionDto.setEndTime(auction.getAuctionConfig().getEndTime());
+        auctionDto.setStatus(auction.getStatus());
+
+        List <BidTransaction> bidTransactions = auction.getBidTransaction();
+        List <BidDTO> bidDto = new ArrayList<>();
+        if (bidTransactions != null && !bidTransactions.isEmpty())
+            for (BidTransaction bidTransaction : bidTransactions) {
+                try {
+                    bidDto.add(toBidDto(bidTransaction));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        auctionDto.setBidDto(bidDto);
+        auctionDto.setSellerDTO(sellerDto);
+        auctionDto.setItemDTO(itemDto);
+        return auctionDto;
+    }
+
+    public BidDTO toBidDto(BidTransaction bidTransaction) throws Exception {
+        try {
+            BidDTO bidDto = new BidDTO();
+            bidDto.setAuctionId(bidTransaction.getAuctionId());
+            bidDto.setBidderId(bidTransaction.getBidderId());
+            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
+            bidDto.setBidAmount(bidTransaction.getBidAmount());
+            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
+            bidDto.setBidTime(bidTransaction.getBidTime());
+            bidDto.setBidType(bidTransaction.getType().name());
+            return bidDto;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
+                    exception);
+            throw exception;
+        }
+    }
 
     private void validateCreateAuctionRequest(CreateAuctionRequest request, String sellerId) throws ServiceException {
         if (request == null) {

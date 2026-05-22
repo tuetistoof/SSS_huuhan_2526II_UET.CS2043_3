@@ -72,7 +72,10 @@ public class ChangeManager {
     }
     public int observerCount(Auction auction) {
         List<Observer> observers = registry.get(auction);
-        return observers == null ? 0 : observers.size();
+        if (observers == null) return 0;
+        synchronized (observers) {
+            return observers.size();
+        }
     }
 
 }
