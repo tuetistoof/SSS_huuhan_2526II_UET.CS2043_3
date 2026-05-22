@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.util;
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,11 +29,11 @@ public class SessionRegistry {
 
     private static class UserSession {
         private final PrintWriter writer;
-        private long unsettledBalance;
+        private AtomicLong unsettledBalance;
 
         UserSession(PrintWriter writer, long unsettledBalance) {
             this.writer = writer;
-            this.unsettledBalance = unsettledBalance;
+            this.unsettledBalance = new AtomicLong(unsettledBalance);
         }
     }
 
@@ -63,13 +64,13 @@ public class SessionRegistry {
 
     public long getUnsettledBalance(String userId) {
         UserSession session = sessions.get(userId);
-        return session != null ? session.unsettledBalance : 0L;
+        return session != null ? session.unsettledBalance.get() : 0L;
     }
 
     public void setUnsettledBalance(String userId, long amount) {
         UserSession session = sessions.get(userId);
         if (session != null) {
-            session.unsettledBalance = amount;
+            session.unsettledBalance.set(amount);
         } else {
             logger.log(Level.WARNING, "setUnsettledBalance: no session found for userId: {0}", userId);
         }
@@ -78,8 +79,8 @@ public class SessionRegistry {
     public void addUnsettledBalance(String userId, long delta) {
         UserSession session = sessions.get(userId);
         if (session != null) {
-            session.unsettledBalance += delta;
-            notifyUnsettledBalanceUpdate(userId, session.unsettledBalance);
+            session.unsettledBalance.addAndGet(delta);
+            notifyUnsettledBalanceUpdate(userId, session.unsettledBalance.get());
         } else {
             logger.log(Level.WARNING, "addUnsettledBalance: no session found for userId: {0}", userId);
         }

@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.service;
 
+import com.ssscloud.auction.common.enums.AppConstant;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
@@ -15,7 +16,6 @@ import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
-import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -97,7 +97,7 @@ public class AuctionService {
                     request.getMinIncrement(),
                     startTime,
                     request.getEndTime(),
-                    36); // Default anti-sniping extension duration
+                    AppConstant.DEFAULT_EXTENSION_SECONDS.getValue()); // Default anti-sniping extension duration
     
             Auction auction = new Auction(auctionConfig, AuctionStatus.OPEN, sellerId, item.getId());
             
@@ -247,7 +247,7 @@ public class AuctionService {
 
             AuctionRegistry.getInstance().remove(auctionId);
             ConcurrentBidManager.getInstance().shutdown(auctionId);
-
+            autoBidService.clearRegistrations(auctionId);
             settleAuctionBalances(targetAuction);
 
             ChangeManager.getInstance().notify(targetAuction);
