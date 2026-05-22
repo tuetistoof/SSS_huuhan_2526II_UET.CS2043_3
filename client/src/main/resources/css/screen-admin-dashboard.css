@@ -1,0 +1,309 @@
+@import "tokens.css";
+@import "base.css";
+
+/* ==========================================================
+   screen-admin-dashboard.css — CloudBid Admin Dashboard
+   Covers: Root layouts, metric containers, shared data tables,
+           action components, and typography helpers.
+   ========================================================== */
+
+/* =========================================================
+   ROOT & BODY LAYOUT
+   ========================================================= */
+.adm-root {
+    -fx-background-color: -cloud-bg;
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+}
+
+.adm-body {
+    -fx-background-color: -cloud-bg;
+}
+
+/* =========================================================
+   METRIC CARDS (Thẻ chỉ số tổng quan)
+   ========================================================= */
+.adm-metric-card {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.adm-metric-val-blue {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-info-text;
+}
+
+.adm-metric-val-red {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-danger-text;
+}
+
+.adm-metric-lbl {
+    -fx-font-size: 11px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+/* =========================================================
+   ADMIN DATA TABLE (Bảng quản lý User/Phiên đấu giá)
+   ========================================================= */
+.adm-table {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+}
+
+.adm-table .column-header-background {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-insets: 0;
+}
+
+.adm-table .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -cloud-border-mid transparent;
+    -fx-border-width: 0 0 1.5 0;
+    -fx-size: 40px;
+}
+
+.adm-table .column-header .label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 0 0 8;
+}
+
+.adm-table .filler {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: transparent transparent -cloud-border-mid transparent;
+    -fx-border-width: 0 0 1.5 0;
+}
+
+.adm-table .table-row-cell {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 44px;
+}
+
+.adm-table .table-row-cell:hover {
+    -fx-background-color: -cloud-primary-light;
+}
+
+.adm-table .table-row-cell:selected {
+    -fx-background-color: -cloud-surface;
+}
+
+.adm-table .table-row-cell:selected:hover {
+    -fx-background-color: -cloud-primary-light;
+}
+
+.adm-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 6 0 8;
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: transparent;
+}
+
+/* =========================================================
+   ROW ACTION BUTTONS (Nút tương tác trong Table)
+   ========================================================= */
+   
+/* ── Nút Ban/Khóa (Tone hính của app) ── */
+.btn-ban-row {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-border-color: transparent;
+    -fx-background-radius: 6px;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+
+.btn-ban-row:hover {
+    -fx-background-color: -cloud-primary-dark;
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.2), 6, 0, 0, 1.5);
+}
+
+.btn-ban-row:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+    -fx-background-color: -cloud-primary-deeper;
+}
+
+/* ── Nút Hủy/Bỏ qua (Dạng Outline nguy hiểm) ── */
+.btn-cancel-row {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-max-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-cursor: hand;
+}
+
+.btn-cancel-row:hover {
+    -fx-background-color: -cloud-danger-bg;
+    -fx-text-fill: -cloud-danger-text;
+    -fx-border-color: -cloud-danger-badge;
+}
+
+.btn-cancel-row:pressed {
+    -fx-scale-x: 0.96;
+    -fx-scale-y: 0.96;
+    -fx-background-color: #fbd5d2;
+}
+
+/* ── Chặn lỗi Row Selection đè màu trạng thái của Button ── */
+.adm-table .table-row-cell:selected .btn-ban-row {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+}
+
+.adm-table .table-row-cell:selected .btn-ban-row:hover {
+    -fx-background-color: -cloud-primary-dark;
+}
+
+.adm-table .table-row-cell:selected .btn-cancel-row {
+    -fx-background-color: transparent;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-border-color: -cloud-border-strong;
+}
+
+.adm-table .table-row-cell:selected .btn-cancel-row:hover {
+    -fx-background-color: -cloud-danger-bg;
+    -fx-text-fill: -cloud-danger-text;
+    -fx-border-color: -cloud-danger-badge;
+}
+
+/* =========================================================
+   PRIMARY ACTIONS & COMPONENT HELPERS
+   ========================================================= */
+/* Đồng bộ hóa hoàn toàn nút Primary dùng riêng ở màn hình Admin với base.css */
+.btn-primary {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.2), 6, 0, 0, 1.5);
+}
+
+.btn-primary:hover { 
+    -fx-background-color: -cloud-primary-dark; 
+}
+
+.btn-primary:pressed { 
+    -fx-background-color: -cloud-primary-deeper;
+    -fx-scale-x: 0.97; 
+    -fx-scale-y: 0.97; 
+}
+
+/* ── Typography & Section Helpers ── */
+.adm-section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.adm-section-desc {
+    -fx-font-size: 10px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.adm-metric-val-green {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-success-text;
+}
+
+.adm-main-card {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.adm-tab-bar {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 12px 12px 0 0;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-border-width: 0 0 0.5 0;
+    -fx-padding: 4 4 0 4;
+}
+
+.adm-tab-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 22 10 22;
+    -fx-cursor: hand;
+}
+
+.adm-tab-btn:hover {
+    -fx-background-color: -cloud-primary-light;
+    -fx-text-fill: -cloud-primary;
+}
+
+.adm-tab-btn:selected {
+    -fx-background-color: -cloud-surface;
+    -fx-text-fill: -cloud-primary;
+    -fx-border-color: transparent transparent -cloud-primary transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.adm-toolbar {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-border-width: 0 0 0.5 0;
+}
+
+.adm-filter-btn {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 50%;
+    -fx-border-color: -cloud-border;
+    -fx-border-radius: 50%;
+    -fx-border-width: 1;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 14 5 14;
+    -fx-cursor: hand;
+}
+
+.adm-filter-btn:hover {
+    -fx-background-color: -cloud-primary-light;
+    -fx-text-fill: -cloud-primary;
+    -fx-border-color: -cloud-primary-pale;
+}
+
+.adm-filter-btn:selected {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-border-color: -cloud-primary;
+}
+
+.adm-table-placeholder {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-muted;
+}

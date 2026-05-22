@@ -1,15 +1,15 @@
 package com.ssscloud.auction.server.service;
 
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
-import com.ssscloud.auction.common.dto.response.AdminMetrics;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.AdminDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
+import com.ssscloud.auction.common.payload.response.request.AdminMetrics;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AdminDAO;
 import com.ssscloud.auction.server.dao.AuctionDAO;
@@ -184,7 +184,6 @@ public class AdminService {
       // --- Broadcast cho client biết auction sắp bị hủy ---
       // countdownSeconds=0: "đang hủy ngay" — không có countdown delay
       broadcastCancelCountdown(auction, reason, 0);
-
       // --- FIX Bug A: doCancel() chạy ĐỒNG BỘ ---
       // Test có thể verify side effects ngay sau khi cancelAuction() return
       doCancel(auctionId, reason);

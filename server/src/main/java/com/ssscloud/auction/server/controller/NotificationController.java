@@ -1,12 +1,12 @@
 package com.ssscloud.auction.server.controller;
 
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.payload.response.DTO.NotificationDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.service.NotificationService;

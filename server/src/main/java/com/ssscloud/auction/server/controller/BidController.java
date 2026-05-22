@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.request.AutoBidRequest;
-import com.ssscloud.auction.common.dto.request.PlaceBidRequest;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.BidDTO;
-import com.ssscloud.auction.common.dto.response.AutoBidStatusDTO;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.BidTransaction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
+import com.ssscloud.auction.common.payload.request.AutoBidRequest;
+import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
@@ -124,6 +124,28 @@ public class BidController {
         }
     }
 
+    public String cancelAutoBid (Object rawRequest, String bidderId, String bidderUsername) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Cancelling auto-bid registration for bidderId: {0}, username: {1}", new Object[]{bidderId, bidderUsername});
+            String jsonPayload = JsonUtils.toJson(rawRequest);
+            String auctionId = JsonUtils.fromJson(jsonPayload, String.class);
+
+            validateCancelAutoBidRequest(auctionId);
+
+            boolean isCancel = autoBidService.removeRegistration(auctionId, bidderId);
+            if (isCancel){
+                return JsonUtils.toJson(ApiResponse.success(isCancel, "Auto-bid registration has been cancelled successfully."));
+            } else {
+                return JsonUtils.toJson(ApiResponse.error("Auto-bid registration cancellation failed."));
+            }
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unexpected critical failure during auto-bid cancellation.", exception);
+            throw exception;
+        }
+    }
+
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest) throws ControllerException {
         try {
             if (placeBidRequest == null) {
@@ -170,6 +192,18 @@ public class BidController {
     private void validateBidHistoryRequest(String auctionId) {
         if (auctionId == null || auctionId.isBlank()) {
             throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to retrieve bid history.");
+        }
+    }
+
+    private void validateCancelAutoBidRequest(String auctionId) throws ControllerException {
+        try {
+            if (auctionId == null || auctionId.isBlank()) {
+                throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required to cancel auto-bid registration.");
+            }
+        } catch (ControllerException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ControllerException(ErrorCode.INVALID_BID_REQUEST, "Cancel auto-bid request validation failed: " + e.getMessage(), e);
         }
     }
 }

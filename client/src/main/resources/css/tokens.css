@@ -1,0 +1,68 @@
+/* ==========================================================
+   tokens.css - CloudBid Light Theme Color Tokens
+   JavaFX looked-up tokens are reliable for Paint values.
+   Keep size, radius, font, and effect values as literals in CSS files.
+   ========================================================== */
+
+.root,
+* {
+    /* Brand / Primary */
+    -cloud-primary:          #f75667;
+    -cloud-primary-dark:     #d64556;
+    -cloud-primary-deeper:   #b02638;
+    -cloud-primary-light:    #fff0f1;
+    -cloud-primary-pale:     #fce4ec;
+
+    /* Rose */
+    -cloud-rose:             #CE5A82;
+    -cloud-rose-dark:        #993556;
+    -cloud-rose-deeper:      #72243E;
+    -cloud-rose-deepest:     #4B1528;
+    -cloud-rose-bg:          #FBEAF0;
+    -cloud-rose-border:      #F4C0D1;
+    -cloud-rose-light:       #fdf0f4;
+
+    /* Neutrals */
+    -cloud-bg:               #f4f4f4;
+    -cloud-surface:          #ffffff;
+    -cloud-surface-alt:      #f8f9fa;
+    -cloud-border:           #ebebeb;
+    -cloud-border-mid:       #d1d1d1;
+    -cloud-border-strong:    #aaaaaa;
+
+    /* Text */
+    -cloud-text-primary:     #222222;
+    -cloud-text-heading:     #1a1a1a;
+    -cloud-text-secondary:   #555555;
+    -cloud-text-muted:       #888888;
+    -cloud-text-placeholder: #999999;
+    -cloud-text-disabled:    #aaaaaa;
+    -cloud-text-light:       #cccccc;
+
+    /* Semantic: success */
+    -cloud-success-bg:       #e8f5e9;
+    -cloud-success-bg-alt:   #e3f5e8;
+    -cloud-success-text:     #2e7d32;
+    -cloud-success-text-alt: #1e7a35;
+    -cloud-success-badge:    #C0DD97;
+    -cloud-success-dark:     #27500A;
+
+    /* Semantic: info */
+    -cloud-info-bg:          #e3f2fd;
+    -cloud-info-bg-alt:      #e8f0fe;
+    -cloud-info-text:        #1565c0;
+    -cloud-info-text-alt:    #1a56c4;
+    -cloud-info-badge:       #B5D4F4;
+    -cloud-info-dark:        #0C447C;
+
+    /* Semantic: warning */
+    -cloud-warn-bg:          #fff3e0;
+    -cloud-warn-text:        #e65100;
+    -cloud-warn-text-mild:   #e07b00;
+
+    /* Semantic: danger */
+    -cloud-danger-bg:        #fdecea;
+    -cloud-danger-text:      #b71c1c;
+    -cloud-danger-text-alt:  #A32D2D;
+    -cloud-danger-badge:     #e36262;
+}

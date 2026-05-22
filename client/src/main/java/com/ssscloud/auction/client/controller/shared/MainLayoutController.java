@@ -2,12 +2,18 @@ package com.ssscloud.auction.client.controller.shared;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.util.Optional;
 
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.GetAuctionDetailsRequest;
+import com.ssscloud.auction.common.payload.response.DTO.AdminDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.controller.seller.SellerDashboardController;
 import com.ssscloud.auction.client.controller.admin.AdminDashboardController;
@@ -15,23 +21,16 @@ import com.ssscloud.auction.client.controller.bidder.AuctionListController;
 import com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListController;
 import com.ssscloud.auction.client.controller.bidder.BidderDashboardController;
 import com.ssscloud.auction.client.controller.bidder.BiddingRoomController;
+import com.ssscloud.auction.client.controller.bidder.DepositCardController;
 import com.ssscloud.auction.client.controller.bidder.WatchlistController;
 import com.ssscloud.auction.client.controller.seller.CreateAuctionController;
-import com.ssscloud.auction.client.controller.seller.DepositCardController;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
+import com.ssscloud.auction.client.util.ThemeManager;
 import com.ssscloud.auction.client.util.ViewLoader;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.GetAuctionDetailsRequest;
-import com.ssscloud.auction.common.dto.response.AdminDisplayDTO;
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -87,6 +86,8 @@ public class MainLayoutController implements MessageListener {
     @FXML private HBox navWonItems;
     @FXML private Button btnLogOut;
 
+    @FXML private Button btnToggleTheme;
+
     @FXML private Label lblBellBadge;
     @FXML private Button btnBell;
     private NotificationController notificationController; 
@@ -132,6 +133,10 @@ public class MainLayoutController implements MessageListener {
         initNotification();
         handleNavDashboard(null);
         socket.addListener(this);
+        Platform.runLater(() ->
+            ThemeManager.apply(btnToggleTheme.getScene(), ThemeManager.Theme.DARK)
+        );
+
     }
 
     // --- Balance update API (called externally by DepositCardController, etc.) ---
@@ -240,7 +245,7 @@ public class MainLayoutController implements MessageListener {
         if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
         BidderDisplayDTO dummy = new BidderDisplayDTO();
         dummy.setId(auctionId);
-        loadBiddingRoom(dummy);
+        loadBiddingRoomAsBidder(dummy);
     }
 
     // --- Role-based UI visibility ---
@@ -306,6 +311,16 @@ public class MainLayoutController implements MessageListener {
         double popupWidth = 340;
         notifPopup.show(bell.getScene().getWindow(), b.getMaxX() - popupWidth, b.getMaxY() + 6);
     }
+    @FXML
+    private void handleToggleTheme() {
+        ThemeManager.toggle(btnToggleTheme.getScene());
+
+        if (ThemeManager.isDark(btnToggleTheme.getScene())) {
+            btnToggleTheme.setText("Light");
+        } else {
+            btnToggleTheme.setText("Dark");
+        }
+    }
 
     @FXML
     void handleLogout(ActionEvent event) {
@@ -335,13 +350,13 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navActiveBids);
         clearContent();
         ViewLoader.LoadResult<BiddedAuctionsListController> r = ViewLoader.load("bidded-auction-list.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
 
     @FXML
     void handleDeposit(ActionEvent event) {
-        ViewLoader.LoadResult<DepositCardController> r = ViewLoader.load("DepositCard.fxml");
+        ViewLoader.LoadResult<DepositCardController> r = ViewLoader.load("deposit-card.fxml");
         r.controller().setMainLayoutController(this);
         Stage depositStage = new Stage();
         depositStage.setTitle("Deposit");
@@ -357,9 +372,9 @@ public class MainLayoutController implements MessageListener {
         try {
             contentArea.getChildren().clear();
             String fxmlPath = switch (user.getRole()) {
-                case BIDDER -> "/fxml/BidderDashboard.fxml";
-                case SELLER -> "/fxml/SellerDashboard.fxml";
-                case ADMIN -> "/fxml/AdminDashboard.fxml";
+                case BIDDER -> "/fxml/bidder-dashboard.fxml";
+                case SELLER -> "/fxml/seller-dashboard.fxml";
+                case ADMIN -> "/fxml/admin-dashboard.fxml";
                 default -> throw new IllegalStateException("Unexpected role: " + user.getRole());
             };
             
@@ -369,7 +384,7 @@ public class MainLayoutController implements MessageListener {
             switch (user.getRole()) {
                 case BIDDER -> {
                     BidderDashboardController ctrl = loader.getController();
-                    ctrl.setOnOpenBidRoom(this::loadBiddingRoom);
+                    ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsBidder);
                     currentController = ctrl;
                 }
 
@@ -409,7 +424,7 @@ public class MainLayoutController implements MessageListener {
         contentArea.getChildren().add(r.root());
     }
 
-    public void loadBiddingRoom(BidderDisplayDTO basicInfo) {
+    public void loadBiddingRoomAsBidder(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
         loadBiddingRoomGeneral(basicInfo.getId(), false);
     }
@@ -441,7 +456,7 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navWatchlist);
         clearContent();
         ViewLoader.LoadResult<WatchlistController> r = ViewLoader.load("watchlist.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoom);
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
     }
 

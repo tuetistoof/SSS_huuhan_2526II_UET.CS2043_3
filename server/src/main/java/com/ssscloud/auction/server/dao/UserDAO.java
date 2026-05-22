@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.model.Admin;
-import com.ssscloud.auction.common.model.Bidder;
-import com.ssscloud.auction.common.model.Seller;
 import com.ssscloud.auction.common.model.base.User;
+import com.ssscloud.auction.common.model.user.Admin;
+import com.ssscloud.auction.common.model.user.Bidder;
+import com.ssscloud.auction.common.model.user.Seller;
 
 public class UserDAO extends BaseDAO {
     // Logging Standards: Declared first as a private static final attribute

@@ -1,26 +1,25 @@
 package com.ssscloud.auction.server.networking;
 
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.PrintWriter;
 import java.lang.reflect.Type;
-import java.util.List;
+
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.response.ApiResponse;
-import com.ssscloud.auction.common.dto.response.AuctionDTO;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.response.UserDTO;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
-import com.ssscloud.auction.common.model.Auction;
+import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.observer.ChangeManager;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
+import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.AdminController;
 import com.ssscloud.auction.server.controller.AuctionController;
@@ -28,7 +27,6 @@ import com.ssscloud.auction.server.controller.BidController;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.controller.QueryController;
 import com.ssscloud.auction.server.controller.UserController;
-import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
@@ -149,6 +147,11 @@ public class MessageHandler {
                     String controllerResponse = bidController.registerAutoBid(clientMessage.getData(), clientHandler.getUserId(), clientHandler.getUsername());
                     return JsonUtils.toJson(ClientMessage.request("AUTO_BID_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
+
+                case "CANCEL_AUTOBID": {
+                    String controllerResponse = bidController.cancelAutoBid(clientMessage.getData(), clientHandler.getUserId(), clientHandler.getUsername());
+                    return JsonUtils.toJson(ClientMessage.request("CANCEL_AUTOBID_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
                 
                 case "GET_AUTOBID_STATUS": {
                     String controllerResponse = bidController.getAutoBidStatus(clientMessage.getData(), clientHandler.getUserId());
@@ -181,7 +184,7 @@ public class MessageHandler {
                     if (auctionId == null || auctionId.isBlank()) {
                         return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The auctionId identifier is missing.")));
                     }
-
+                    auctionController.ensureLiveAuctionLoaded(auctionId); //ktra có trong registry chưa nếu không thì cho vào
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
                     if (liveAuctionEntity == null) {
                         return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The specified auction does not exist: " + auctionId)));

@@ -4,9 +4,9 @@ import com.ssscloud.auction.client.controller.shared.LoadingController;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.ServerResponse;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.RegisterRequest;
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.RegisterRequest;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.event.ActionEvent;

@@ -7,9 +7,9 @@ import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
-import com.ssscloud.auction.common.dto.ClientMessage;
-import com.ssscloud.auction.common.dto.request.LoginRequest;
-import com.ssscloud.auction.common.dto.response.UserDTO;
+import com.ssscloud.auction.common.payload.ClientMessage;
+import com.ssscloud.auction.common.payload.request.LoginRequest;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import javafx.event.ActionEvent;
@@ -105,7 +105,7 @@ public class LoginSignupController {
             if (userDTO != null) {
                 SessionManager.getInstance().setCurrentUser(userDTO);
                 try {
-                    Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/MainLayout.fxml"));
+                    Parent homeRoot = FXMLLoader.load(getClass().getResource("/fxml/main-layout.fxml"));
                     Stage stage = (Stage) btnLogin.getScene().getWindow();
                     stage.setMaximized(true);
                     stage.getScene().setRoot(homeRoot);

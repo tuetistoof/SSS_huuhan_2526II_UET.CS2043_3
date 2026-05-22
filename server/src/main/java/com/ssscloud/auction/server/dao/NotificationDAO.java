@@ -1,8 +1,8 @@
 package com.ssscloud.auction.server.dao;
 
-import com.ssscloud.auction.common.dto.response.NotificationDTO;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.payload.response.DTO.NotificationDTO;
 
 import java.sql.*;
 import java.time.LocalDateTime;

@@ -14,6 +14,7 @@
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.ssscloud.auction.client.controller.bidder.BidSuccessToastController"
            styleClass="toast-root"
+           stylesheets="@/css/component-toast.css"
            pickOnBounds="false">
 
     <VBox fx:id="toastCard" styleClass="toast-card" maxWidth="320.0" pickOnBounds="true">

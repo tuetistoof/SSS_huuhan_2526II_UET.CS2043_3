@@ -1,5 +1,6 @@
 package com.ssscloud.auction.server.dao;
 
+import java.security.Timestamp;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,16 +12,137 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.ssscloud.auction.common.dto.response.BidderDisplayDTO;
-import com.ssscloud.auction.common.dto.response.SellerDisplayDTO;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
+import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
 
 public class QueryDAO extends BaseDAO{
     private static final Logger logger = Logger.getLogger(QueryDAO.class.getName());
 
     // --- PUBLIC METHODS ---
+    // Thêm inner record (hoặc tạo class riêng, nhưng để gọn thì dùng record)
+
+    public static class AuctionScheduleInfo {
+        private final String auctionId;
+        private final AuctionStatus status;
+        private final LocalDateTime endTime;
+
+        public AuctionScheduleInfo(String auctionId, AuctionStatus status, LocalDateTime endTime) {
+            this.auctionId = auctionId;
+            this.status = status;
+            this.endTime   = endTime;
+        }
+
+        public String getAuctionId()      { return auctionId; }
+        public LocalDateTime getEndTime() { return endTime;   }
+    }
+
+    // --- SCHEDULE RECOVERY ---
+
+    /**
+     * Chỉ lấy auctionId + endTime cho auction OPEN/RUNNING.
+     * Nhẹ hơn findByStatus() — không load full Auction object lên RAM.
+     */
+    public List<AuctionScheduleInfo> findActiveScheduleInfos() throws DAOException, Exception {
+        String sql =
+             "SELECT a.id AS auction_id, a.status, ac.end_time " +
+            "FROM auction a " +
+            "JOIN auction_config ac ON a.id = ac.id " +
+            "WHERE a.status IN ('OPEN', 'RUNNING')";
+
+
+        Connection        connection = null;
+        PreparedStatement ps         = null;
+        ResultSet         rs         = null;
+        List<AuctionScheduleInfo> result = new ArrayList<>();
+
+        try {
+            connection = getConnection();
+            ps         = connection.prepareStatement(sql);
+            rs         = ps.executeQuery();
+            while (rs.next()) {
+                result.add(new AuctionScheduleInfo(
+                    rs.getString("auction_id"),
+                    AuctionStatus.valueOf(rs.getString("status")),
+                    rs.getObject("end_time", LocalDateTime.class)
+                ));
+            }
+            logger.log(Level.INFO, "findActiveScheduleInfos: loaded {0} active auction(s).", result.size());
+            return result;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED,
+                "Database failure while retrieving active schedule infos.", sqlException);
+        } finally {
+            closeResource(rs, ps);
+            closeConnect(connection);
+        }
+    }
+    public AuctionScheduleInfo findActiveScheduleInfoById(String auctionId) throws DAOException, Exception {
+        String sql =
+            "SELECT a.id AS auction_id, a.status, ac.end_time " +
+            "FROM auction a " +
+            "JOIN auction_config ac ON a.id = ac.id " +
+            "WHERE a.id = ? AND a.status IN ('OPEN', 'RUNNING')";
+
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, auctionId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapRowToAuctionScheduleInfo(rs);
+            }
+            return null;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED,
+                "Database failure while retrieving active schedule info.", sqlException);
+        } catch (Exception exception) {
+            throw exception;
+        } finally {
+            closeResource(rs, ps);
+            closeConnect(connection);
+        }
+    }
+    public List<AuctionScheduleInfo> findOverdueScheduleInfos(LocalDateTime now) throws DAOException, Exception {
+        String sql =
+            "SELECT a.id AS auction_id, a.status, ac.end_time " +
+            "FROM auction a " +
+            "JOIN auction_config ac ON a.id = ac.id " +
+            "WHERE a.status IN ('OPEN', 'RUNNING') " +
+            "AND ac.end_time < ?";
+
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<AuctionScheduleInfo> result = new ArrayList<>();
+
+        try {
+            connection = getConnection();
+            ps = connection.prepareStatement(sql);
+            ps.setObject(1, now);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                result.add(mapRowToAuctionScheduleInfo(rs));
+            }
+            return result;
+        } catch (SQLException sqlException) {
+            throw new DAOException(ErrorCode.AUCTION_FETCH_FAILED,
+                "Database failure while retrieving overdue schedule infos.", sqlException);
+        } catch (Exception exception) {
+            throw exception;
+        } finally {
+            closeResource(rs, ps);
+            closeConnect(connection);
+        }
+    }
+
+
 
     public List<SellerDisplayDTO> findSellerAuction(String sellerId) throws DAOException, Exception {
         String sql =
@@ -391,6 +513,13 @@ public class QueryDAO extends BaseDAO{
     }
 
     // --- PRIVATE METHODS ---
+    private AuctionScheduleInfo mapRowToAuctionScheduleInfo(ResultSet resultSet) throws SQLException {
+        return new AuctionScheduleInfo(
+            resultSet.getString("auction_id"),
+            AuctionStatus.valueOf(resultSet.getString("status")),
+            resultSet.getObject("end_time", LocalDateTime.class)
+        );
+    }
 
     private BidderDisplayDTO mapRowToBidderDisplayDto(ResultSet resultSet) throws SQLException {
         String imageUrlRaw = resultSet.getString("image_url");
