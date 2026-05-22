@@ -35,7 +35,7 @@ public class DepositCardController {
         if (amount < 5000) {
             lblError.setVisible(true);
             lblError.setManaged(true);
-            lblError.setText("Inavlid amount! Minium deposit is 5,000");
+            lblError.setText("Invalid amount! Minimum deposit is 5,000");
         } 
 
         String json = JsonUtils.toJson(ClientMessage.request("DEPOSIT", amount));
@@ -59,7 +59,7 @@ public class DepositCardController {
 
 
     @FXML
-    void handleCancle(ActionEvent event) {
+    void handleCancel(ActionEvent event) {
         Stage stage = (Stage) lblError.getScene().getWindow();
         stage.close();
     }

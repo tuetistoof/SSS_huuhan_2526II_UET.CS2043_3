@@ -27,7 +27,7 @@
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="16">
                     <children>
-                        <Label fx:id="lblCurrentPrice" styleClass="wl-row-price" text="Curent price" />
+                        <Label fx:id="lblCurrentPrice" styleClass="wl-row-price" text="Current price" />
                         <Label fx:id="lblEndTime" styleClass="wl-row-timer" text="End time" />
                     </children>
                 </HBox>

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.common.payload.ClientMessage;
@@ -28,6 +29,8 @@ public class BiddedAuctionsListController {
     @FXML private Label lblSubtitle, lblTotalCount;
     @FXML private ScrollPane scrollPane;
 
+    private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
+
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
     private Consumer<BidderDisplayDTO> onOpenAuction;
 
@@ -41,38 +44,45 @@ public class BiddedAuctionsListController {
     }
 
     public void loadWatchlist() {
-    new Thread(() -> {
-        try {
+        try { 
             String requestJson = JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS", null));
-            String responseJson = socket.sendAndReceive(requestJson);
-            if (responseJson == null) return;
 
-            ClientMessage serverMsg = JsonUtils.fromJson(responseJson, ClientMessage.class);
-            if (serverMsg == null || serverMsg.getData() == null) return;
+            dispatcher.request(requestJson, raw -> {
+                try {
+                    if (raw == null) return;
 
-            String innerJson = JsonUtils.toJson(serverMsg.getData());
-            ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
-            if (apiResp == null || !apiResp.isSuccess()) {
-                renderUI(new ArrayList<>());
-                return;
-            }
+                    ClientMessage serverMsg = JsonUtils.fromJson(raw, ClientMessage.class);
+                    if (serverMsg == null || serverMsg.getData() == null) return;
 
-            String listJson = JsonUtils.toJson(apiResp.getData());
-            Type listRespType = new TypeToken<ListResponse<BidderDisplayDTO>>(){}.getType();
-            ListResponse<BidderDisplayDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listRespType);
+                    String innerJson = JsonUtils.toJson(serverMsg.getData());
+                    ApiResponse<?> apiResp = JsonUtils.fromJson(innerJson, ApiResponse.class);
+                    if (apiResp == null || !apiResp.isSuccess()) {
+                        renderUI(new ArrayList<>());
+                        return;
+                    }
 
-            List<BidderDisplayDTO> auctions =
-                    (listResp != null && listResp.getData() != null)
-                    ? listResp.getData() : new ArrayList<>();
+                    String listJson = JsonUtils.toJson(apiResp.getData());
+                    Type listRespType = new TypeToken<ListResponse<BidderDisplayDTO>>(){}.getType();
+                    ListResponse<BidderDisplayDTO> listResp = JsonUtils.fromJsonGeneric(listJson, listRespType);
 
-            renderUI(auctions);
+                    List<BidderDisplayDTO> auctions = 
+                            (listResp != null && listResp.getData() != null) 
+                            ? listResp.getData() : new ArrayList<>();
 
-        } catch (Exception e) {
-            System.err.println("[Bidded Auctions List] Lỗi load: " + e.getMessage());
-            e.printStackTrace();
-            renderUI(new ArrayList<>());
-        }
-    }).start();
+                    renderUI(auctions);
+
+                } catch (Exception e) {
+                    System.err.println("[Bidded Auctions List] Lỗi parse dữ liệu: " + e.getMessage());
+                    e.printStackTrace();
+                    renderUI(new ArrayList<>());
+                }
+            });
+
+    } catch (Exception e) {
+        System.err.println("[Bidded Auctions List] Lỗi tạo/gửi request: " + e.getMessage());
+        e.printStackTrace();
+        renderUI(new ArrayList<>());
+    }
 }
 
     private void renderUI(List<BidderDisplayDTO> auctions) {

@@ -19,7 +19,7 @@
                <children>
                   <Button mnemonicParsing="false" onAction="#handleConfirm" styleClass="btn-deposit-confirm" text="Confirm" />
                   <Region prefWidth="80.0" />
-                  <Button mnemonicParsing="false" onAction="#handleCancle" styleClass="btn-deposit-cancel" text="Cancel" />
+                  <Button mnemonicParsing="false" onAction="#handleCancel" styleClass="btn-deposit-cancel" text="Cancel" />
                </children>
             </HBox>
          </children>

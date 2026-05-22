@@ -3096,3 +3096,17 @@ java.net.BindException: Address already in use: bind
 	at java.base/java.net.ServerSocket.<init>(ServerSocket.java:138)
 	at com.ssscloud.auction.server.networking.AuctionSocketServer.main(AuctionSocketServer.java:123)
 
+May 22, 2026 5:34:56 PM com.ssscloud.auction.server.service.NotificationService <init>
+INFO: NotificationService initialized with dependencies: QueryDAO=READY, NotificationDAO=READY
+May 22, 2026 5:34:57 PM com.ssscloud.auction.server.dao.DatabaseConnection <init>
+INFO: HikariCP connection pool initialized successfully for URL: jdbc:mysql://100.67.91.8:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+May 22, 2026 5:34:57 PM com.ssscloud.auction.server.dao.QueryDAO findActiveScheduleInfos
+INFO: findActiveScheduleInfos: loaded 2 active auction(s).
+May 22, 2026 5:34:57 PM com.ssscloud.auction.server.dao.BaseDAO closeConnect
+INFO: Infrastructure status: Centralized database connection has been returned to the pool.
+May 22, 2026 5:34:57 PM com.ssscloud.auction.server.networking.AuctionSocketServer recoverLiveAuctions
+INFO: [Recovery] Scheduled close for auctionId: 0fc70429-5138-483a-bf5a-5373a7d100cf
+May 22, 2026 5:34:57 PM com.ssscloud.auction.server.networking.AuctionSocketServer recoverLiveAuctions
+INFO: [Recovery] Scheduled close for auctionId: 3271191e-e4bc-4b63-877c-2a7637aca7e9
+May 22, 2026 5:34:57 PM com.ssscloud.auction.server.networking.AuctionSocketServer main
+INFO: [Server] Initializing main networking listener on port 5000...

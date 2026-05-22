@@ -46,16 +46,10 @@ public class ItemsWonController {
     // ── State ──────────────────────────────────────────────────────────────────
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
 
-    /** Danh sách gốc — không bao giờ thay đổi sau khi load */
     private List<BidderDisplayDTO> masterList = new ArrayList<>();
-
-    /** Filter đang active: null = All */
     private String activeFilter = null;
-
-    /** Callback ra ngoài để mở BiddingRoom */
     private Consumer<BidderDisplayDTO> onOpenAuction;
 
-    // ── Init ───────────────────────────────────────────────────────────────────
 
     @FXML
     public void initialize() {
@@ -63,13 +57,9 @@ public class ItemsWonController {
         loadWonItems();
     }
 
-    // ── Public API (được MainLayout gọi) ──────────────────────────────────────
-
     public void setOnOpenAuction(Consumer<BidderDisplayDTO> callback) {
         this.onOpenAuction = callback;
     }
-
-    // ── Load data ─────────────────────────────────────────────────────────────
 
     public void loadWonItems() {
         String json = JsonUtils.toJson(ClientMessage.request("GET_WON_ITEMS", null));
@@ -81,8 +71,6 @@ public class ItemsWonController {
             renderUI(applyFilter(masterList));
         });
     }
-
-    // ── Filter handlers (FXML onAction) ───────────────────────────────────────
 
     @FXML
     private void filterAuctionAll() {

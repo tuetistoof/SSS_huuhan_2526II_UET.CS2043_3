@@ -17,7 +17,6 @@ import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.controller.seller.SellerDashboardController;
 import com.ssscloud.auction.client.controller.admin.AdminDashboardController;
-import com.ssscloud.auction.client.controller.bidder.AuctionListController;
 import com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListController;
 import com.ssscloud.auction.client.controller.bidder.BidderDashboardController;
 import com.ssscloud.auction.client.controller.bidder.BiddingRoomController;
@@ -285,8 +284,7 @@ public class MainLayoutController implements MessageListener {
 
     private void cleanupCurrentController() {
         if (currentController == null) return;
-        if      (currentController instanceof BiddingRoomController  c) c.cleanup();
-        else if (currentController instanceof AuctionListController  c) c.cleanup();
+        else if      (currentController instanceof BiddingRoomController  c) c.cleanup();
         currentController = null;
     }
  

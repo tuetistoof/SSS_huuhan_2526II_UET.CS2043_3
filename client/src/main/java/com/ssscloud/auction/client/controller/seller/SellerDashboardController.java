@@ -247,7 +247,7 @@ public class SellerDashboardController {
             ctrl.setOnSuccessCallback((Consumer<AuctionDTO>) newAuction -> loadMyAuctions());
 
             Stage modal = new Stage();
-            modal.setTitle("Creat a new auction");
+            modal.setTitle("Create a new auction");
             modal.initModality(Modality.APPLICATION_MODAL);
             modal.initOwner(tblAuctions.getScene().getWindow());
             modal.setScene(new Scene(root));

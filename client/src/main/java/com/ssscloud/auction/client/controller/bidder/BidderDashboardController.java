@@ -28,7 +28,7 @@ public class BidderDashboardController {
     @FXML private Label lblPageTitle;
     @FXML private ToggleButton tabAll;
     @FXML private ToggleButton tabArts;
-    @FXML private ToggleButton tabElectronnics;
+    @FXML private ToggleButton tabElectronics;
     @FXML private ToggleButton tabVehicles;
     @FXML private Parent loading; // Giao diện của khung loading
     @FXML private LoadingController loadingController;
@@ -74,7 +74,7 @@ public class BidderDashboardController {
             case "ALL":
 
                 tabAll.setSelected(true);
-                tabElectronnics.setSelected(false);
+                tabElectronics.setSelected(false);
                 tabArts.setSelected(false);
                 tabVehicles.setSelected(false);
                 break;
@@ -82,7 +82,7 @@ public class BidderDashboardController {
             case "CATEGORY":
                 tabAll.setSelected(false);
                 
-                if (!tabElectronnics.isSelected() && !tabArts.isSelected() && !tabVehicles.isSelected()) {
+                if (!tabElectronics.isSelected() && !tabArts.isSelected() && !tabVehicles.isSelected()) {
                     tabAll.setSelected(true);
                 }
                 break;
@@ -102,7 +102,7 @@ public class BidderDashboardController {
         }
 
         List<String> activeCategories = new ArrayList<>();
-        if (tabElectronnics.isSelected()) activeCategories.add("ELECTRONIC");
+        if (tabElectronics.isSelected()) activeCategories.add("ELECTRONIC");
         if (tabArts.isSelected()) activeCategories.add("ART");
         if (tabVehicles.isSelected()) activeCategories.add("VEHICLE");
 
