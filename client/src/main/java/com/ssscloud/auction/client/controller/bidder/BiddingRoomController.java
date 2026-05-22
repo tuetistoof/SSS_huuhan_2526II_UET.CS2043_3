@@ -263,16 +263,20 @@ public class BiddingRoomController implements MessageListener {
 
         String subJson = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", auction.getId()));
         dispatcher.request(subJson, subRaw -> {
-            loadBidHistoryAsync(auction.getBidDto());
-            BidDTO highest = findLatestBid();
-            boolean wasMyAuto = highest != null
-                    && highest.getBidderId() != null
-                    && highest.getBidderId().equals(currentUser.getId())
-                    && "AUTO".equalsIgnoreCase(highest.getBidType());
-            Platform.runLater(() -> applyAutoBidState(wasMyAuto));
+            List<BidDTO> snapshot = auction.getBidDto();
+            Platform.runLater(() -> {
+                
+                loadBidHistoryAsync(snapshot);
+                BidDTO highest = findHighestBid();
+                boolean wasMyAuto = highest != null
+                        && highest.getBidderId() != null
+                        && highest.getBidderId().equals(currentUser.getId())
+                        && "AUTO".equalsIgnoreCase(highest.getBidType());
+                applyAutoBidState(wasMyAuto);
 
-            if (!isFinished && !isCancelled)
-                Platform.runLater(() -> btnPlaceBid.setDisable(false));
+                if (!isFinished && !isCancelled)
+                    Platform.runLater(() -> btnPlaceBid.setDisable(false));
+            });
         });
 
         checkFollowStatus();
@@ -359,7 +363,7 @@ public class BiddingRoomController implements MessageListener {
             return;
         List<BidDTO> copiedList = new ArrayList<>(list);
         mergeBidHistory(copiedList);
-        BidDTO latest = findLatestBid();
+        BidDTO latest = findHighestBid();
         if (latest != null) {
             lblCurrentPrice.setText(String.format("%,d ₫", latest.getBidAmount()));
             lblLeaderName.setText("Leading: " + latest.getBidderUsername());
@@ -368,6 +372,7 @@ public class BiddingRoomController implements MessageListener {
                         latest.getBidAmount() + currentAuction.getMinIncrement()));
         }
         lblBidCount.setText(String.valueOf(bidHistory.size()));
+    
     }
 
     /**
@@ -420,12 +425,12 @@ public class BiddingRoomController implements MessageListener {
     }
 
     private long getCurrentPrice() {
-        BidDTO lastBid = findLatestBid();
+        BidDTO lastBid = findHighestBid();
         return lastBid != null ? lastBid.getBidAmount() : currentAuction.getStartPrice();
     }
 
     private String getCurrentLeader() {
-        BidDTO lastBid = findLatestBid();
+        BidDTO lastBid = findHighestBid();
         return lastBid != null ? lastBid.getBidderUsername() : null;
     }
 
@@ -710,8 +715,6 @@ public class BiddingRoomController implements MessageListener {
         String newLeader = getCurrentLeader();
 
         boolean isNewLeader = bid.getBidAmount() >= prevPrice;
-        if (!isNewLeader) return;
-
         if (!isNewLeader)
             return;
 
@@ -837,7 +840,7 @@ public class BiddingRoomController implements MessageListener {
             chartManager.rebuild(bidHistory, currentAuction);
     }
 
-    private BidDTO findLatestBid() {
+    private BidDTO findHighestBid() {
         return bidHistory.stream().max(Comparator.comparingLong(BidDTO::getBidAmount)).orElse(null);
     }
 
