@@ -5,8 +5,10 @@ import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.observer.Subject;
-
+import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
