@@ -8,6 +8,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,6 +34,7 @@ public class NotificationService {
     private final QueryDAO queryDAO; // Dependency Injection: Short name
     private final NotificationDAO notificationDAO;
 
+    // Concurrency: ReadWriteLock for notification operations
     public NotificationService(QueryDAO queryDAO, NotificationDAO notificationDAO) {
         this.queryDAO    = queryDAO;
         this.notificationDAO = notificationDAO; 
@@ -152,11 +157,6 @@ public class NotificationService {
 
     private void savePendingNotification(String userId, String type, String auctionId,
                              String auctionName, long price, String winner) {
-        if (notificationDAO == null) {
-            logger.log(Level.WARNING, "Persistence skipped: NotificationDAO dependency is not available for userId: {0}", userId);
-            return;
-        }
-
         try {
             NotificationDTO notificationDto = new NotificationDTO(); // DTO suffix
             notificationDto.setUserId(userId);

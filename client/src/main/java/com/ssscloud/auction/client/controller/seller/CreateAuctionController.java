@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 
-//TO_DO: chưa làm handleCancle với chuyển màn
+//TO_DO: chưa làm handleCancel với chuyển màn
 //To_DO: start time chưa làm.
 
 public class CreateAuctionController{

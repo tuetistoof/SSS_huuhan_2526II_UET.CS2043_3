@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +37,9 @@ public class ClientObserver implements Observer {
     private final PrintWriter writer;
     private final ExecutorService notifyExecutor;
 
+    
+
+    // Lock for synchronizing access to auction state during update
     public ClientObserver(PrintWriter writer, String clientId) {
         this.clientId = clientId;
         this.writer = writer;
@@ -58,7 +60,7 @@ public class ClientObserver implements Observer {
 
             if (auction.getStatus() == AuctionStatus.FINISHED) {
                 // Snapshot payload on worker thread before submitting
-                Map<String, Object> payload = buildAuctionEndedPayload(auction);
+                Map<String, Object> payload = auction.buildAuctionEndedPayload(auction);
                 notifyExecutor.submit(() -> push("AUCTION_ENDED", payload));
             } else {
                 // Snapshot DTO on worker thread before submitting
@@ -92,44 +94,11 @@ public class ClientObserver implements Observer {
     /**
      * Snapshot BidDTO from auction state. Called synchronously on the worker thread.
      */
-    public BidDTO buildBidDto(Auction auction) throws Exception {
-        try {
-            BidTransaction bidTransaction = auction.getLastBidTransaction();
-            BidDTO bidDto = new BidDTO();
-            bidDto.setAuctionId(bidTransaction.getAuctionId());
-            bidDto.setBidderId(bidTransaction.getBidderId());
-            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
-            bidDto.setBidAmount(bidTransaction.getBidAmount());
-            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
-            bidDto.setBidTime(bidTransaction.getBidTime());
-            bidDto.setAntiSnipingEndTime(auction.getAuctionConfig().getEndTime());
-            bidDto.setBidType(bidTransaction.getType().name());
-            return bidDto;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
-                    exception);
-            throw exception;
-        }
-    }
 
     /**
      * Snapshot auction-ended payload. Called synchronously on the worker thread.
      */
-    private Map<String, Object> buildAuctionEndedPayload(Auction auction) {
-        Map<String, Object> auctionEndedPayload = new HashMap<>(); // Descriptive internal logic name
-        auctionEndedPayload.put("auctionId",  auction.getAuctionConfig().getId());
-        auctionEndedPayload.put("finalPrice", auction.getCurrentPrice());
-        auctionEndedPayload.put("winnerId", auction.getHighestBidderId() != null ? auction.getHighestBidderId() : "");
-        auctionEndedPayload.put("winner",     auction.getHighestBidderName() != null
-                                  ? auction.getHighestBidderName() : "No bids placed"); // Language Policy: Technical English
-        return auctionEndedPayload;
-    }
 
-    /**
-     * Write a JSON message to the client. Runs on the per-client notifyExecutor thread.
-     * No synchronized needed: only one thread (notifyExecutor) ever writes to this writer.
-     */
     private void push(String eventType, Object payload) {
         try {
             synchronized (writer) {   // ← cần giữ vì ConcurrentBidManager cũng ghi vào writer này

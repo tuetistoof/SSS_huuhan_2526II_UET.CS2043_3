@@ -72,7 +72,7 @@ public class ItemDAO extends BaseDAO {
             return true;
         } catch (SQLIntegrityConstraintViolationException sqlConstraintException) {
             safelyRollback(connection);
-            throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Electronic item or entity already exists.", sqlConstraintException);
+                throw new DAOException(ErrorCode.DATA_INTEGRITY_VIOLATION, "Constraint violation: Electronic item or entity already exists.", sqlConstraintException);
         } catch (SQLException sqlException) {
             safelyRollback(connection);
             throw new DAOException(ErrorCode.ITEM_SAVE_FAILED, "Database interaction failure while saving electronic item.", sqlException);

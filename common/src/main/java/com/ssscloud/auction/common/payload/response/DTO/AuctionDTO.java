@@ -92,7 +92,7 @@ public class AuctionDTO implements Serializable {
         this.sellerDTO = sellerDTO;
     }
 
-    public BidDTO getLaseBidDTO(){
+    public BidDTO getLastBidDTO(){
         return bidDto.getLast();
     }
     public long getCurrentPrice ()

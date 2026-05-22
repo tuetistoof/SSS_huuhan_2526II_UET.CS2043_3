@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane prefHeight="650.0" prefWidth="980.0"
+            stylesheets="@../css/screen-won-items.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.ssscloud.auction.client.controller.bidder.ItemsWonController">
+    <children>
+        <VBox spacing="0"
+              AnchorPane.bottomAnchor="0"
+              AnchorPane.leftAnchor="0"
+              AnchorPane.rightAnchor="0"
+              AnchorPane.topAnchor="0">
+            <children>
+
+                <!-- ── HEADER CARD ── -->
+                <VBox styleClass="wi-header-card">
+                    <padding><Insets bottom="18" left="20" right="20" top="18" /></padding>
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <children>
+                                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Label styleClass="wi-page-title" text="Won Items" />
+                                        <Label styleClass="wi-page-sub" text="Auctions you have won" />
+                                    </children>
+                                </VBox>
+                                <StackPane styleClass="wi-count-badge">
+                                    <children>
+                                        <Label fx:id="lblMetricRunning" styleClass="wi-count-text" text="0" />
+                                    </children>
+                                </StackPane>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+
+                <!-- ── CONTENT AREA ── -->
+                <VBox spacing="0" styleClass="wi-content-area" VBox.vgrow="ALWAYS">
+                    <children>
+
+                        <!-- Toolbar / Filter bar -->
+                        <HBox alignment="CENTER_LEFT" spacing="8" styleClass="wi-toolbar">
+                            <padding><Insets bottom="10" left="12" right="12" top="10" /></padding>
+                            <children>
+                                <Button fx:id="aFilterAll"
+                                        onAction="#filterAuctionAll"
+                                        styleClass="wi-filter-btn,wi-filter-btn-selected"
+                                        text="All" />
+                                <Button fx:id="aFilterArts"
+                                        onAction="#filterAuctionRunning"
+                                        styleClass="wi-filter-btn"
+                                        text="Arts" />
+                                <Button fx:id="aFilterVehicles"
+                                        onAction="#filterAuctionOpen"
+                                        styleClass="wi-filter-btn"
+                                        text="Vehicles" />
+                                <Button fx:id="aFilterElectronics"
+                                        onAction="#filterAuctionDone"
+                                        styleClass="wi-filter-btn"
+                                        text="Electronics" />
+                                <Region HBox.hgrow="ALWAYS" />
+                            </children>
+                        </HBox>
+
+                        <!-- Empty state -->
+                        <VBox fx:id="emptyState"
+                              alignment="CENTER"
+                              managed="true"
+                              styleClass="wi-empty-state"
+                              visible="true"
+                              VBox.vgrow="ALWAYS">
+                            <padding><Insets bottom="60" top="60" /></padding>
+                            <children>
+                                <Label style="-fx-font-size: 48px;" text="📦" />
+                                <Region prefHeight="12" />
+                                <Label styleClass="wi-empty-title" text="No Won Items Yet" />
+                                <Region prefHeight="6" />
+                                <Label styleClass="wi-empty-sub"
+                                       text="You haven't won any auctions yet."
+                                       wrapText="true" />
+                                <Region prefHeight="16" />
+                            </children>
+                        </VBox>
+
+                        <!-- Danh sách rows -->
+                        <ScrollPane fx:id="scrollPane"
+                                    fitToWidth="true"
+                                    hbarPolicy="NEVER"
+                                    managed="false"
+                                    styleClass="wi-scroll"
+                                    visible="false"
+                                    VBox.vgrow="ALWAYS">
+                            <content>
+                                <VBox fx:id="listContainer" spacing="8" styleClass="wi-list">
+                                    <padding><Insets bottom="12" left="12" right="12" top="12" /></padding>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+
+                    </children>
+                </VBox>
+
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>

@@ -17,12 +17,12 @@ import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.controller.seller.SellerDashboardController;
 import com.ssscloud.auction.client.controller.admin.AdminDashboardController;
-import com.ssscloud.auction.client.controller.bidder.AuctionListController;
 import com.ssscloud.auction.client.controller.bidder.BiddedAuctionsListController;
 import com.ssscloud.auction.client.controller.bidder.BidderDashboardController;
 import com.ssscloud.auction.client.controller.bidder.BiddingRoomController;
 import com.ssscloud.auction.client.controller.bidder.DepositCardController;
 import com.ssscloud.auction.client.controller.bidder.WatchlistController;
+import com.ssscloud.auction.client.controller.bidder.ItemsWonController;
 import com.ssscloud.auction.client.controller.seller.CreateAuctionController;
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.networking.MessageListener;
@@ -284,8 +284,7 @@ public class MainLayoutController implements MessageListener {
 
     private void cleanupCurrentController() {
         if (currentController == null) return;
-        if      (currentController instanceof BiddingRoomController  c) c.cleanup();
-        else if (currentController instanceof AuctionListController  c) c.cleanup();
+        else if      (currentController instanceof BiddingRoomController  c) c.cleanup();
         currentController = null;
     }
  
@@ -460,7 +459,14 @@ public class MainLayoutController implements MessageListener {
         contentArea.getChildren().add(r.root());
     }
 
-    @FXML void handleNavWonItems(MouseEvent event) {}
+    @FXML void handleNavWonItems(MouseEvent event) {
+        updateActiveStyle(navWonItems);
+        clearContent();
+        ViewLoader.LoadResult<ItemsWonController> r = ViewLoader.load("won-items.fxml");
+        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
+        contentArea.getChildren().add(r.root());
+    }
+
     @FXML void handleSearching(MouseEvent event) {}
 
     @FXML

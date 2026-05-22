@@ -1,0 +1,300 @@
+@import "tokens.css";
+@import "base.css";
+
+/* ==========================================================
+   screen-won-items.css — CloudBid Won Items Screen
+   Covers: Header card, metric badge, toolbar/filter, content
+           area, empty state, list rows, badges, action button.
+   ========================================================== */
+
+/* =========================================================
+   HEADER CARD (Pastel Pink Accent Tint)
+   ========================================================= */
+.wi-header-card {
+    -fx-background-color: #FFE5EC; /* Nền hồng pastel nhạt */
+    -fx-background-radius: 12px;
+    -fx-border-color: #FFC2D1; /* Viền hồng nhạt */
+    -fx-border-width: 0.5;
+    -fx-border-radius: 12px;
+}
+
+.wi-page-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.wi-page-sub {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* ── Badge đếm tổng số Items Won ── */
+.wi-count-badge {
+    -fx-background-color: #FB6F92; /* Nền hồng pastel đậm hơn xíu để nổi chữ */
+    -fx-background-radius: 15px;
+    -fx-min-width: 32px;
+    -fx-min-height: 28px;
+    -fx-padding: 4 10 4 10;
+    -fx-alignment: center;
+}
+
+.wi-count-text {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-surface;
+}
+
+/* =========================================================
+   CONTENT AREA
+   ========================================================= */
+.wi-content-area {
+    -fx-background-color: -cloud-bg;
+}
+
+/* =========================================================
+   TOOLBAR (chứa filter buttons)
+   ========================================================= */
+.wi-toolbar {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-border-width: 0 0 0.5 0;
+}
+
+/* =========================================================
+   FILTER BUTTONS (All / Arts / Vehicles / Electronics)
+   ========================================================= */
+.wi-filter-btn {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 6px;
+    -fx-border-color: -cloud-border;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 14 5 14;
+    -fx-cursor: hand;
+}
+
+.wi-filter-btn:hover {
+    -fx-background-color: #FFE5EC;
+    -fx-text-fill: #FB6F92;
+    -fx-border-color: #FFC2D1;
+}
+
+/* Active filter — set via StyleClass toggle in controller */
+.wi-filter-btn-selected {
+    -fx-background-color: #FB6F92;
+    -fx-text-fill: -cloud-surface;
+    -fx-border-color: #FB6F92;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+.wi-empty-state {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+}
+
+.wi-empty-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.wi-empty-sub {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-light;
+}
+
+/* ── Nút Explore Auctions trong empty state ── */
+.wi-btn-explore {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-border-strong;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20 8 20;
+    -fx-cursor: hand;
+}
+
+.wi-btn-explore:hover {
+    -fx-background-color: #FFE5EC;
+    -fx-text-fill: #FB6F92;
+    -fx-border-color: #FFC2D1;
+}
+
+.wi-btn-explore:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* =========================================================
+   SCROLL & LIST CONTAINER
+   ========================================================= */
+.wi-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.wi-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.wi-list {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* =========================================================
+   WON ITEM ROW (từng dòng item đã thắng)
+   ========================================================= */
+.wi-row {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 8px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8px;
+    -fx-padding: 12;
+}
+
+.wi-row:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.10), 12, 0, 0, 4);
+    -fx-border-color: -cloud-border-mid;
+}
+
+/* ── Thumbnail ── */
+.wi-thumb {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-background-radius: 8px;
+    -fx-border-color: -cloud-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 8px;
+}
+
+/* ── Typography ── */
+.wi-row-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-heading;
+}
+
+.wi-row-seller {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+/* Winning price — đổi sang hồng pastel đậm */
+.wi-row-price {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #FB6F92; 
+}
+
+.wi-row-date {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-muted;
+}
+
+/* ── Item type badge ── */
+.wi-badge-type {
+    -fx-background-color: -cloud-primary-pale;
+    -fx-background-radius: 6px;
+    -fx-text-fill: -cloud-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 6 2 6;
+}
+
+/* ── Won badge ── */
+.wi-badge-won {
+    -fx-background-color: #FFE5EC;
+    -fx-background-radius: 6px;
+    -fx-text-fill: #FB6F92;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+}
+
+/* =========================================================
+   ACTION BUTTON — "Details"
+   ========================================================= */
+.wi-btn-view {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: -cloud-surface;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-border-color: transparent;
+    -fx-padding: 6 16 6 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(247,86,103,0.2), 6, 0, 0, 1.5);
+}
+
+.wi-btn-view:hover {
+    -fx-background-color: -cloud-primary-dark;
+}
+
+.wi-btn-view:pressed {
+    -fx-background-color: -cloud-primary-deeper;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* ==========================================================
+   DARK MODE OVERRIDES
+   ========================================================== */
+
+/* wi-count-badge */
+.theme-dark .wi-count-badge {
+    -fx-background-color: #FFC2D1; 
+}
+
+.theme-dark .wi-count-text {
+    -fx-text-fill: #590D22; /* Màu chữ đỏ rượu trầm cho dễ đọc trên nền hồng nhạt ở dark mode */
+}
+
+/* wi-filter-btn selected */
+.theme-dark .wi-filter-btn-selected {
+    -fx-background-color: #FB6F92;
+    -fx-text-fill: #FFE5EC;
+    -fx-border-color: #FB6F92;
+}
+
+/* wi-row shadow */
+.theme-dark .wi-row {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.20), 8, 0, 0, 2);
+}
+
+.theme-dark .wi-row:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 12, 0, 0, 4);
+}
+
+/* wi-empty-state shadow */
+.theme-dark .wi-empty-state {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.20), 8, 0, 0, 2);
+}
+
+/* wi-btn-view: tắt shadow trên dark */
+.theme-dark .wi-btn-view {
+    -fx-effect: none;
+}
+
+/* wi-btn-explore outline */
+.theme-dark .wi-btn-explore {
+    -fx-border-color: -cloud-border-mid;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .wi-btn-explore:hover {
+    -fx-background-color: #FFE5EC;
+    -fx-text-fill: #FB6F92;
+    -fx-border-color: #FFC2D1;
+}
