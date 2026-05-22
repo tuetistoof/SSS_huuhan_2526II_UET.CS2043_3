@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -27,12 +29,15 @@ import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
 /**
- * ConcurrentBidManager handles asynchronous bid processing for active auctions.
+ * ConcurrentBidManager handles ordered bid processing for active auctions.
  * It utilizes a per-auction queue and worker thread model to ensure thread safety 
- * and sequential consistency of bids within a single auction room.
+ * and sequential consistency of bids within a single auction room. submitBid()
+ * returns only after the worker has committed or rejected the bid.
  */
 public class ConcurrentBidManager {
     private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); // Logging Standards: Declared first
+    private static final int QUEUE_CAPACITY_PER_AUCTION = 10_000;
+    private static final long ENQUEUE_TIMEOUT_MILLIS = 250;
 
     private static volatile ConcurrentBidManager instance = null;
 
@@ -106,8 +111,24 @@ public class ConcurrentBidManager {
         try {
             String auctionId = auctionEntity.getAuctionConfig().getId();
             ensureWorkerRunning(auctionId);
-            bidTaskQueues.get(auctionId).offer(new BidTask(
-                    auctionEntity, bidderId, bidderUsername, bidAmount, lockedAmount, bidType));
+
+            BidTask bidTask = new BidTask(
+                    auctionEntity, bidderId, bidderUsername, bidAmount, lockedAmount, bidType);
+            Thread workerThread = workerThreads.get(auctionId);
+            if (Thread.currentThread() == workerThread) {
+                processTask(bidTask);
+                return;
+            }
+
+            BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
+            if (taskQueue == null
+                    || !taskQueue.offer(bidTask, ENQUEUE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+                throw new ServiceException(
+                        ErrorCode.CONCURRENT_BID_PROCESSING_ERROR,
+                        "Bid queue is overloaded for auctionId: " + auctionId);
+            }
+
+            waitForCommit(bidTask, auctionId);
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error while submitting bid for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
             throw exception;
@@ -125,6 +146,33 @@ public class ConcurrentBidManager {
         } catch (Exception exception) {
             logger.log(Level.SEVERE, "Unexpected error updating dependencies", exception);
             throw exception;
+        }
+    }
+
+    private void waitForCommit(BidTask bidTask, String auctionId) throws Exception {
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    bidTask.awaitCommit();
+                    return;
+                } catch (InterruptedException exception) {
+                    interrupted = true;
+                }
+            }
+        } catch (ExecutionException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof Exception originalException) {
+                throw originalException;
+            }
+            throw new ServiceException(
+                    ErrorCode.CONCURRENT_BID_PROCESSING_ERROR,
+                    "Bid processing failed in auctionId: " + auctionId,
+                    cause);
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -148,7 +196,7 @@ public class ConcurrentBidManager {
             if (closedAuctions.contains(auctionId)) {
                 throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is closed for auctionId: " + auctionId);
             }
-            bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
+            bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>(QUEUE_CAPACITY_PER_AUCTION));
             workerThreads.computeIfAbsent(auctionId, k -> {
                 Thread workerThread = new Thread(() -> runWorker(auctionId));
                 workerThread.setDaemon(true);
@@ -212,31 +260,28 @@ public class ConcurrentBidManager {
         Auction auctionEntity = task.auction;
         String auctionId = auctionEntity.getAuctionConfig().getId();
  
-        // Cờ theo dõi: bid đã được commit vào auction object chưa?
-        // - false (default): task.bidderId chưa là winner → cần unlock nếu có lỗi
-        // - true: task.bidderId đã là highestBidder → KHÔNG unlock (tiền sẽ settle sau)
         boolean bidCommitted = false;
  
         try {
             if (!auctionEntity.getStatus().isActive()) {
-                // Auction đã kết thúc/cancel — BidService đã unlock trong catch của submitBid().
-                // Trường hợp này xảy ra khi cancel chạy SAU submitBid() nhưng TRƯỚC processTask().
-                // cancelAuction.refundWinner() sẽ unlock theo highestBidder hiện tại, không phải task này.
-                // → Cần unlock task.bidderId ở đây vì đây là bid bị hủy bỏ, không phải winner.
                 logger.log(Level.WARNING,
-                    "processTask: auction not active, unlocking bid for bidderId={0}, auctionId={1}",
+                    "processTask: auction not active, rejecting bid for bidderId={0}, auctionId={1}",
                     new Object[]{task.bidderId, auctionId});
-                userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
-                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
-                return; // Không throw — đây là luồng bình thường khi auction bị cancel
+                throw new ServiceException(
+                        ErrorCode.AUCTION_CLOSED,
+                        "Cannot place bid: auction is no longer active for auctionId: " + auctionId);
             }
  
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
             long currentAuctionPrice = lastBidTransaction != null
                     ? lastBidTransaction.getBidAmount()
                     : auctionEntity.getAuctionConfig().getStartPrice();
+            long minIncrement = auctionEntity.getAuctionConfig().getMinIncrement();
+            boolean bidMeetsPriceRule = lastBidTransaction == null
+                    ? task.bidAmount > currentAuctionPrice
+                    : task.bidAmount - currentAuctionPrice >= minIncrement;
  
-            if (task.bidAmount > currentAuctionPrice) {
+            if (bidMeetsPriceRule) {
                 // --- Nhánh BID THẮNG ---
  
                 // Bước 1: Unlock bidder CŨ (nếu có)
@@ -257,10 +302,13 @@ public class ConcurrentBidManager {
                         auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, task.lockedAmount, LocalDateTime.now(), task.bidType);
  
-                auctionEntity.placeBid(bidTransaction); // ← sau dòng này, task.bidderId là winner
+                boolean shouldMarkRunning = auctionEntity.getStatus() == AuctionStatus.OPEN;
+                LocalDateTime updatedEndTime = AntiSnipingService.calculateExtendedEndTime(
+                        auctionEntity.getAuctionConfig());
+                auctionEntity.commitBid(bidTransaction, shouldMarkRunning, updatedEndTime);
  
-                // FIX: Đánh dấu bid đã commit — từ đây KHÔNG unlock task.bidderId nếu có lỗi
                 bidCommitted = true;
+                task.completeSuccess();
  
                 if (bidTransactionDAO != null) {
                     try {
@@ -272,12 +320,10 @@ public class ConcurrentBidManager {
                     }
                 }
  
-                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
-                    auctionEntity.setStatus(AuctionStatus.RUNNING);
+                if (shouldMarkRunning && auctionDAO != null) {
                     auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
                 }
  
-                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
                 if (updatedEndTime != null && auctionDAO != null) {
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
@@ -287,12 +333,13 @@ public class ConcurrentBidManager {
  
             } else {
                 // --- Nhánh BID THUA ---
-                // bidAmount <= currentPrice → reject và trả tiền ngay
                 logger.log(Level.INFO,
                     "Bid task skipped: amount " + task.bidAmount
-                    + " is not higher than current price " + currentAuctionPrice);
-                userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
-                SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
+                    + " does not satisfy current price " + currentAuctionPrice
+                    + " with min increment " + minIncrement);
+                throw new ServiceException(
+                        ErrorCode.INCREMENT_TOO_LOW,
+                        "The bid no longer satisfies the current price and minimum increment.");
             }
  
             if (autoBidService != null) {
@@ -306,20 +353,12 @@ public class ConcurrentBidManager {
         } catch (Exception exception) {
             if (!bidCommitted) {
                 logger.log(Level.SEVERE,
-                    "[BALANCE_RECOVERY] processTask failed before commit — unlocking bidderId={0}, amount={1}, auctionId={2}. Cause: {3}",
+                    "[BID_REJECTED_BEFORE_COMMIT] bidderId={0}, amount={1}, auctionId={2}. Cause: {3}",
                     new Object[]{task.bidderId, task.lockedAmount, auctionId, exception.getMessage()});
-                try {
-                    userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
-                    SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
-                } catch (Exception unlockEx) {
-                    // Unlock cũng fail — log CRITICAL để ops can thiệp thủ công
-                    logger.log(Level.SEVERE,
-                        "[CRITICAL_BALANCE_LEAK] Failed to unlock balance for bidderId=" + task.bidderId
-                        + ", auctionId=" + auctionId
-                        + ". MANUAL CORRECTION REQUIRED. unlockError: " + unlockEx.getMessage(),
-                        unlockEx);
-                }
+                task.completeFailure(exception);
+                throw exception;
             } else {
+                task.completeSuccess();
                 logger.log(Level.SEVERE,
                     "[CRITICAL] processTask failed AFTER bid commit for bidderId=" + task.bidderId
                     + ", auctionId=" + auctionId
@@ -327,7 +366,6 @@ public class ConcurrentBidManager {
                     + exception.getMessage(),
                     exception);
             }
-            throw exception;
         }
     }
 
@@ -338,6 +376,7 @@ public class ConcurrentBidManager {
         final long bidAmount;
         final long lockedAmount;
         final BidType bidType;
+        private final CompletableFuture<Void> commitFuture = new CompletableFuture<>();
 
         BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, long lockedAmount, BidType bidType) {
             this.auction = auction;
@@ -346,6 +385,18 @@ public class ConcurrentBidManager {
             this.bidAmount = bidAmount;
             this.lockedAmount = lockedAmount;
             this.bidType = bidType;
+        }
+
+        void completeSuccess() {
+            commitFuture.complete(null);
+        }
+
+        void completeFailure(Exception exception) {
+            commitFuture.completeExceptionally(exception);
+        }
+
+        void awaitCommit() throws InterruptedException, ExecutionException {
+            commitFuture.get();
         }
     }
 }

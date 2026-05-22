@@ -1,7 +1,6 @@
 package com.ssscloud.auction.common.payload.response.DTO;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
-import com.ssscloud.auction.common.enums.BidType;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -18,6 +17,7 @@ public class AuctionDTO implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private AuctionStatus status;
+    private long version;
 
     private UserDTO sellerDTO;
     private ItemDTO itemDTO;
@@ -66,6 +66,14 @@ public class AuctionDTO implements Serializable {
     }
     public AuctionStatus getStatus() {
         return status;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 
     public ItemDTO getItemDTO() {
