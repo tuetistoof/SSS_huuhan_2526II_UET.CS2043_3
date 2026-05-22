@@ -138,10 +138,17 @@
     -fx-background-color: -cloud-danger-bg;      
     -fx-text-fill: -cloud-danger-text; 
 }
-.badge-canceled { 
-    -fx-background-color: #f1f1f1;               
-    -fx-text-fill: -cloud-text-muted; 
+
+.badge-canceled {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-muted;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
 }
+
 .badge-outbid   { 
     -fx-background-color: -cloud-warn-bg;        
     -fx-text-fill: -cloud-warn-text; 

@@ -153,10 +153,10 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("CANCEL_AUTOBID_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
                 
-                // case "GET_AUTOBID_STATUS": {
-                //     String controllerResponse = bidController.getAutoBidStatus(clientMessage.getData(), clientHandler.getUserId());
-                //     return JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
-                // }
+                case "GET_AUTOBID_STATUS": {
+                    String controllerResponse = bidController.getAutoBidStatus(clientMessage.getData(), clientHandler.getUserId());
+                    return JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                }
 
 
                 case "GET_MY_AUCTIONS": {
