@@ -106,10 +106,8 @@ public class AuctionService {
                 logger.log(Level.SEVERE, "Critical failure: Unable to persist auction record for name: " + auctionConfig.getName());
                 throw new ServiceException(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
             }
-    
-            AuctionRegistry.getInstance().registerIfAbsent(auction); 
-    
-            scheduleClose(auction); 
+        
+
             logger.log(Level.INFO, "Auction successfully created and registered with ID: {0}", auctionConfig.getId());
     
             UserDTO sellerDto = userService.getByUserId(sellerId);

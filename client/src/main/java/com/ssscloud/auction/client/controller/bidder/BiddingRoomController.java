@@ -13,6 +13,7 @@ import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
+import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 
 import com.google.gson.JsonObject;
@@ -167,8 +168,10 @@ public class BiddingRoomController implements MessageListener {
     private List<String> itemUrls;
     private int currentImageIndex = 0;
 
-    private String currentUserName = SessionManager.getInstance().getCurrentUser() != null
-            ? SessionManager.getInstance().getCurrentUser().getUsername()
+    private UserDTO currentUser = SessionManager.getInstance().getCurrentUser();
+
+    private String currentUserName = currentUser != null
+            ? currentUser.getUsername()
             : null;
 
     private Runnable onSuccessCallback;
@@ -244,31 +247,37 @@ public class BiddingRoomController implements MessageListener {
         this.currentAuction = auction;
         itemUrls = auction.getItemDTO().getImageUrls();
 
+        boolean isActive = auction.getStatus() == AuctionStatus.OPEN
+                    || auction.getStatus() == AuctionStatus.RUNNING;
         boolean isFinished = auction.getStatus() == AuctionStatus.FINISHED;
         boolean isCancelled = auction.getStatus() == AuctionStatus.CANCELED;
 
         Platform.runLater(() -> {
             populateUI();
             setUpItemImage(itemUrls);
+            loadBidHistoryAsync(auction.getBidDto());
             if (btnFollow != null) {
                 btnFollow.setDisable(true);
                 btnFollow.setText("...");
             }
-            if (isFinished || isCancelled)
+            if (!isActive)
                 disableAllBidUI(isCancelled);
         });
-
-        String subJson = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", auction.getId()));
-        dispatcher.request(subJson, subRaw -> {
-            loadBidHistoryAsync(auction.getBidDto());
-            setupBidStatusAsync();
-            if (!isFinished && !isCancelled)
-                btnPlaceBid.setDisable(false);
-        });
-
         checkFollowStatus();
-        if (!isFinished && !isCancelled)
+
+        if (isActive) {
+        // Auction đang chạy — cần subscribe để nhận push realtime
+            String subJson = JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_AUCTION", auction.getId()));
+            dispatcher.request(subJson, subRaw -> {
+                setupBidStatusAsync();
+                btnPlaceBid.setDisable(false);
+            });
             timer.start(auction.getEndTime());
+        } else {
+            return;
+        }
+
+        
     }
 
     private void disableAllBidUI(boolean isCancelled) {
@@ -362,35 +371,6 @@ public class BiddingRoomController implements MessageListener {
     }
 
     /**
-     * Lấy trạng thái auto-bid từ server - non-blocking, callback trên FX thread.
-     * Server: GET_AUTOBID_STATUS → ApiResponse<Boolean>
-     * Dùng ServerResponse.unwrap() để bóc 2 lớp ClientMessage + ApiResponse.
-     */
-    private void setupBidStatusAsync() {
-        if (currentAuction == null)
-            return;
-        String json = JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS", currentAuction.getId()));
-        dispatcher.request(json, raw -> {
-            // ServerResponse.unwrap bóc ClientMessage → ApiResponse → Boolean
-            AutoBidStatusDTO status = ServerResponse.unwrap(raw, "GET_AUTOBID_STATUS_RESPONSE", AutoBidStatusDTO.class);
-            if (status != null && status.isActive()) {
-                maxBid = status.getMaxBid();
-                increment = status.getIncrement();
-
-                boolean isActive = status.isActive();
-                System.out.println("[setupBidStatus] isAutoBidding=" + isActive);
-                applyAutoBidState(isActive);
-            } else {
-                applyAutoBidState(false);
-            }
-        }, () -> {
-            // Timeout/lỗi - default false, không treo UI
-            System.err.println("[setupBidStatus] timeout/error - defaulting false");
-            applyAutoBidState(false);
-        });
-    }
-
-    /**
      * Áp dụng trạng thái auto-bid lên toàn bộ UI.
      * Gọi từ: setupBidStatusAsync, handleToggleAutoBid, handleAutoBidStopped.
      * Luôn chạy trên FX thread.
@@ -398,63 +378,54 @@ public class BiddingRoomController implements MessageListener {
     private void applyAutoBidState(boolean active) {
         isAutoBidding = active;
         if (active) {
-            formAuto.setVisible(true);
-            formAuto.setManaged(true);
-            formManual.setVisible(false);
-            formManual.setManaged(false);
-            if (maxBid > 0)
-                txtMaxBid.setText(String.valueOf(maxBid));
-            if (increment > 0)
-                txtAutoIncrement.setText(String.valueOf(increment));
-            btnTabAuto.getStyleClass().setAll("br-tab-active");
-            btnTabManual.getStyleClass().setAll("br-tab");
-            txtMaxBid.setDisable(true);
-            txtAutoIncrement.setDisable(true);
-            btnAutoToggle.setText("Cancel Auto Bid");
-            btnAutoToggle.setDisable(false);
-            btnAutoToggle.getStyleClass().remove("br-btn-secondary");
-            btnAutoToggle.getStyleClass().add("br-btn-auto-active");
+            Platform.runLater(() -> {
+                formAuto.setVisible(true);
+                formAuto.setManaged(true);
+                formManual.setVisible(false);
+                formManual.setManaged(false);
+                if (maxBid > 0)
+                    txtMaxBid.setText(String.valueOf(maxBid));
+                if (increment > 0)
+                    txtAutoIncrement.setText(String.valueOf(increment));
+                btnTabAuto.getStyleClass().setAll("br-tab-active");
+                btnTabManual.getStyleClass().setAll("br-tab");
+                txtMaxBid.setDisable(true);
+                txtAutoIncrement.setDisable(true);
+                btnAutoToggle.setText("Cancel Auto Bid");
+                btnAutoToggle.setDisable(false);
+                btnAutoToggle.getStyleClass().remove("br-btn-secondary");
+                btnAutoToggle.getStyleClass().add("br-btn-auto-active");
+            });
         } else {
-            formAuto.setVisible(true);
-            formAuto.setManaged(true);
-            formManual.setVisible(false);
-            formManual.setManaged(false);
-            btnTabAuto.getStyleClass().setAll("br-tab-active");
-            btnTabManual.getStyleClass().setAll("br-tab");
-            txtMaxBid.setDisable(false);
-            txtAutoIncrement.setDisable(false);
-            txtMaxBid.clear();
-            txtAutoIncrement.clear();
-            btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
-            btnAutoToggle.getStyleClass().add("br-btn-secondary");
-            resetAutoBidButton();
+            Platform.runLater(() -> {
+                formAuto.setVisible(false);
+                formAuto.setManaged(false);
+                formManual.setVisible(true);
+                formManual.setManaged(true);
+                btnTabAuto.getStyleClass().setAll("br-tab-active");
+                btnTabManual.getStyleClass().setAll("br-tab");
+                txtMaxBid.setDisable(false);
+                txtAutoIncrement.setDisable(false);
+                txtMaxBid.clear();
+                txtAutoIncrement.clear();
+                btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
+                btnAutoToggle.getStyleClass().add("br-btn-secondary");
+                resetAutoBidButton();
+            });
         }
     }
 
     private boolean hasBids() {
-        return currentAuction != null
-                && currentAuction.getBidDto() != null
-                && !currentAuction.getBidDto().isEmpty();
-    }
-
-    private List<BidDTO> getAuctionBids() {
-        if (currentAuction.getBidDto() == null) {
-            currentAuction.setBidDto(new ArrayList<>());
-        }
-        return currentAuction.getBidDto();
-    }
-
-    private BidDTO getLastBidOrNull() {
-        return hasBids() ? currentAuction.getLaseBidDTO() : null;
+        return !bidHistory.isEmpty();
     }
 
     private long getCurrentPrice() {
-        BidDTO lastBid = getLastBidOrNull();
+        BidDTO lastBid = findLatestBid();
         return lastBid != null ? lastBid.getBidAmount() : currentAuction.getStartPrice();
     }
 
     private String getCurrentLeader() {
-        BidDTO lastBid = getLastBidOrNull();
+        BidDTO lastBid = findLatestBid();
         return lastBid != null ? lastBid.getBidderUsername() : null;
     }
 
@@ -731,14 +702,18 @@ public class BiddingRoomController implements MessageListener {
 
         String prevLeader = getCurrentLeader();
         long prevPrice = getCurrentPrice();
-        boolean isNewLeader = bid.getBidAmount() >= prevPrice;
 
         mergeBidIntoHistory(bid);
         lblBidCount.setText(String.valueOf(bidHistory.size()));
+
+        long newPrice = getCurrentPrice();     // đọc từ bidHistory sau khi merge
+        String newLeader = getCurrentLeader();
+
+        boolean isNewLeader = bid.getBidAmount() >= prevPrice;
+        if (!isNewLeader) return;
+
         if (!isNewLeader)
             return;
-
-        getAuctionBids().add(bid);
 
         try {
             if (currentUserName != null && currentUserName.equals(bid.getBidderUsername())) {
@@ -752,10 +727,10 @@ public class BiddingRoomController implements MessageListener {
         } catch (Exception ignored) {
         }
 
-        lblCurrentPrice.setText(String.format("%,d ₫", bid.getBidAmount()));
-        lblLeaderName.setText("Leading: " + (bid.getBidderUsername() != null ? bid.getBidderUsername() : "-"));
+        lblCurrentPrice.setText(String.format("%,d ₫", newPrice));
+        lblLeaderName.setText("Leading: " + (newLeader != null ? newLeader : "-"));
         if (lblMinHint != null)
-            lblMinHint.setText("Min: " + String.format("%,d ₫", bid.getBidAmount() + currentAuction.getMinIncrement()));
+            lblMinHint.setText("Min: " + String.format("%,d ₫", newPrice + currentAuction.getMinIncrement()));
 
         if (bid.getAntiSnipingEndTime() != null && bid.getAntiSnipingEndTime().isAfter(currentAuction.getEndTime())) {
             currentAuction.setEndTime(bid.getAntiSnipingEndTime());

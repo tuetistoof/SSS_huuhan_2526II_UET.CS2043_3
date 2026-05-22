@@ -92,6 +92,19 @@ public class QueryController {
         }
     }
 
+    public String getWonItemsList(String userId) throws ControllerException, Exception {
+        try {
+            logger.log(Level.INFO, "Retrieving won items list for userId: {0}", userId);
+            List<BidderDisplayDTO> wonItemsList = queryDAO.findWonItemsByUser(userId);
+            return JsonUtils.toJson(ApiResponse.success(new ListResponse<>(wonItemsList), "User's won items retrieved successfully. Total items: " + wonItemsList.size()));
+        } catch (ControllerException controllerException) {
+            throw controllerException;
+        } catch (Exception exception) {
+            logger.log(Level.SEVERE, "Unhandled system error while retrieving user's won items list.", exception);
+            throw exception;
+        }
+    }
+
     public String follow(Object rawRequest, String userId) throws ControllerException, Exception {
         try {
             logger.log(Level.INFO, "Processing follow auction request for userId: {0}", userId);

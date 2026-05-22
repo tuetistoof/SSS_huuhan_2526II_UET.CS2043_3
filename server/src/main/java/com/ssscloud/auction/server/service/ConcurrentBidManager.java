@@ -282,7 +282,7 @@ public class ConcurrentBidManager {
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
                 ChangeManager.getInstance().notify(auctionEntity);
-                notificationController.notifyWatchers(auctionEntity.getAuctionConfig().getId(),
+                notificationController.notifyWatchers(auctionEntity,
                         auctionEntity.getHighestBidderId());
  
             } else {

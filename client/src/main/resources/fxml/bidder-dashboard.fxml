@@ -43,7 +43,7 @@
                            </padding>
                            <children>
                               <ToggleButton fx:id="tabAll" onAction="#filterAll" selected="true" styleClass="tab-btn" text="Tất cả" />
-                              <ToggleButton fx:id="tabElectronnics" onAction="#filterElectronics" styleClass="tab-btn" text="Đồ điện tử" />
+                              <ToggleButton fx:id="tabElectronics" onAction="#filterElectronics" styleClass="tab-btn" text="Đồ điện tử" />
                               <ToggleButton fx:id="tabArts" onAction="#filterArts" styleClass="tab-btn" text="Tác phẩm nghệ thuật" />
                               <ToggleButton fx:id="tabVehicles" onAction="#filterVehicles" styleClass="tab-btn" text="Xe cộ" />
                            </children>

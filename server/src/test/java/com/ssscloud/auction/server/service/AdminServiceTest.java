@@ -85,7 +85,7 @@ public class AdminServiceTest {
             36
         );
         auction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, "item-001");
-        AuctionRegistry.getInstance().register(auction);
+        AuctionRegistry.getInstance().registerIfAbsent(auction);
 
         try {
             ConcurrentBidManager.initialize(userDAO, null, autoBidService, auctionDAO, null);
@@ -206,7 +206,7 @@ public class AdminServiceTest {
             36
         );
         Auction finishedAuction = new Auction(config, AuctionStatus.FINISHED, SELLER_ID, "item-002");
-        AuctionRegistry.getInstance().register(finishedAuction);
+        AuctionRegistry.getInstance().registerIfAbsent(finishedAuction);
 
         ServiceException ex = assertThrows(ServiceException.class,
             () -> adminService.cancelAuction("finished-001", REASON));
@@ -308,7 +308,7 @@ public class AdminServiceTest {
             30
         );
         Auction openAuction = new Auction(config, AuctionStatus.OPEN, SELLER_ID, "item-003");
-        AuctionRegistry.getInstance().register(openAuction);
+        AuctionRegistry.getInstance().registerIfAbsent(openAuction);
 
         adminService.cancelAuction("open-001", REASON);
 
@@ -435,8 +435,7 @@ public class AdminServiceTest {
             36
         );
         Auction canceledAuction = new Auction(config, AuctionStatus.CANCELED, SELLER_ID, "item-004");
-        AuctionRegistry.getInstance().register(canceledAuction);
-
+        AuctionRegistry.getInstance().registerIfAbsent(canceledAuction);
         ServiceException ex = assertThrows(ServiceException.class,
             () -> adminService.cancelAuction("canceled-001", REASON));
 
@@ -455,7 +454,7 @@ public class AdminServiceTest {
             36
         );
         Auction paidAuction = new Auction(config, AuctionStatus.PAID, SELLER_ID, "item-005");
-        AuctionRegistry.getInstance().register(paidAuction);
+        AuctionRegistry.getInstance().registerIfAbsent(paidAuction);
 
         ServiceException ex = assertThrows(ServiceException.class,
             () -> adminService.cancelAuction("paid-001", REASON));

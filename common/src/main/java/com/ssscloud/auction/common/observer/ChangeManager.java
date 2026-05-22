@@ -6,6 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.ssscloud.auction.common.model.auction.Auction;
 /**
  * ChangeManager holds the registry of Subjects and their Observers, and provides methods to attach/detach observers and notify them of changes.
  * It is implemented as a thread-safe singleton to ensure consistent state across the application.
@@ -67,6 +69,13 @@ public class ChangeManager {
         List<Observer> observers = registry.get(subject);
         if (observers == null) return false;
         return observers.stream().anyMatch(o -> observerId.equals(o.getObserverId()));
+    }
+    public int observerCount(Auction auction) {
+        List<Observer> observers = registry.get(auction);
+        if (observers == null) return 0;
+        synchronized (observers) {
+            return observers.size();
+        }
     }
 
 }

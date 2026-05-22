@@ -91,7 +91,7 @@ public class ConcurrentBidManagerTest {
             36
         );
         auction = new Auction(config, AuctionStatus.RUNNING, "seller-id", "item-id");
-        AuctionRegistry.getInstance().register(auction);
+        AuctionRegistry.getInstance().registerIfAbsent(auction);
     }
 
     @AfterEach
@@ -199,7 +199,7 @@ public class ConcurrentBidManagerTest {
             36
         );
         Auction auction2 = new Auction(config2, AuctionStatus.RUNNING, "seller-2", "item-2");
-        AuctionRegistry.getInstance().register(auction2);
+        AuctionRegistry.getInstance().registerIfAbsent(auction2);
 
         int threadCount = 5;
         CountDownLatch startLatch = new CountDownLatch(1);

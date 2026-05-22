@@ -87,7 +87,7 @@ public class AutoBidServiceTest {
             36
         );
         auction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, "item-001");
-        AuctionRegistry.getInstance().register(auction);
+        AuctionRegistry.getInstance().registerIfAbsent(auction);
     }
 
     @AfterEach
@@ -119,7 +119,7 @@ public class AutoBidServiceTest {
             36
         );
         Auction finishedAuction = new Auction(config, AuctionStatus.FINISHED, SELLER_ID, "item-002");
-        AuctionRegistry.getInstance().register(finishedAuction);
+        AuctionRegistry.getInstance().registerIfAbsent(finishedAuction);
 
         assertDoesNotThrow(() -> autoBidService.trigger(finishedAuction));
         assertEquals(0, finishedAuction.getBidTransaction().size());

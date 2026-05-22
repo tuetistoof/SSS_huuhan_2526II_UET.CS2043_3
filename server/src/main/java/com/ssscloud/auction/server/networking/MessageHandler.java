@@ -153,10 +153,10 @@ public class MessageHandler {
                     return JsonUtils.toJson(ClientMessage.request("CANCEL_AUTOBID_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
                 }
                 
-                case "GET_AUTOBID_STATUS": {
-                    String controllerResponse = bidController.getAutoBidStatus(clientMessage.getData(), clientHandler.getUserId());
-                    return JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
-                }
+                // case "GET_AUTOBID_STATUS": {
+                //     String controllerResponse = bidController.getAutoBidStatus(clientMessage.getData(), clientHandler.getUserId());
+                //     return JsonUtils.toJson(ClientMessage.request("GET_AUTOBID_STATUS_RESPONSE", JsonUtils.fromJson(controllerResponse, ApiResponse.class)));
+                // }
 
 
                 case "GET_MY_AUCTIONS": {
@@ -184,11 +184,17 @@ public class MessageHandler {
                     if (auctionId == null || auctionId.isBlank()) {
                         return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The auctionId identifier is missing.")));
                     }
-                    auctionController.ensureLiveAuctionLoaded(auctionId); //ktra có trong registry chưa nếu không thì cho vào
+                    auctionController.ensureLiveAuctionLoaded(auctionId);
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+
                     if (liveAuctionEntity == null) {
-                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("The specified auction does not exist: " + auctionId)));
+                    // null sau ensureLiveAuctionLoaded = auction FINISHED/CANCELED hoặc không tồn tại
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("Auction is not active: " + auctionId)));
                     }
+                    
+                    // Double-check trạng thái RAM — phòng closeAuction() chạy đúng lúc này
+                    if (liveAuctionEntity.getStatus().isEnded()) {
+                        return JsonUtils.toJson(ClientMessage.request("SUBSCRIBE_ERROR", ApiResponse.error("Auction has just ended: " + auctionId)));}
 
                     String userId = clientHandler.getUserId();
                     if (!ChangeManager.getInstance().hasObserver(liveAuctionEntity, userId)) {
@@ -201,15 +207,20 @@ public class MessageHandler {
                 }
                 case "UNSUBSCRIBE_AUCTION": {
                     String auctionId = JsonUtils.toJson(clientMessage.getData()).replace("\"", "").trim();
+                    if (auctionId == null || auctionId.isBlank()) return null;
+
                     Auction liveAuctionEntity = AuctionRegistry.getInstance().getLiveAuction(auctionId);
                     if (liveAuctionEntity != null) {
                         ChangeManager.getInstance()
                                 .detachByClientId(liveAuctionEntity, clientHandler.getUserId())
                                 .forEach(o -> {
-                                    if (o instanceof ClientObserver co) co.shutdown();
+                                    if (o instanceof ClientObserver co) co.shutdown(); // tránh trường hợp client đã unsub nhưng vẫn nhận đc update do chưa kịp detach xong (đang trong quá trình detach mà có update đến thì sẽ bị lỗi)
                                 });
-                        logger.log(Level.INFO, "ClientHandler for userId: " + clientHandler.getUserId()
-                                + " unsubscribed from auctionId: " + auctionId);
+                        int remaining = ChangeManager.getInstance().observerCount(liveAuctionEntity);
+                        boolean evicted = AuctionRegistry.getInstance().removeIfNoObservers(auctionId, remaining);
+                        logger.log(Level.INFO, "userId: " + clientHandler.getUserId()
+                                + " unsubscribed from auctionId: " + auctionId
+                                + (evicted ? " — Registry entry evicted (no observers left)." : "."));
                     }
                     return null;
                 }
@@ -235,6 +246,11 @@ public class MessageHandler {
                 case "GET_BIDDED_AUCTIONS": {
                     return JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS_RESPONSE",
                         JsonUtils.fromJson(queryController.getBiddedAuctionsList(clientHandler.getUserId()), ApiResponse.class)));
+                }
+
+                case "GET_WON_ITEMS": {
+                    return JsonUtils.toJson(ClientMessage.request("GET_WON_ITEMS_RESPONSE",
+                        JsonUtils.fromJson(queryController.getWonItemsList(clientHandler.getUserId()), ApiResponse.class)));
                 }
 
                 case "CHECK_FOLLOWING": {
