@@ -352,8 +352,11 @@ public class AuctionService {
         }
  
         try {
-            // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
-            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, finalPrice);
+            BidTransaction lastBid = auction.getLastBidTransaction();
+            long lockToRelease = (lastBid != null) ? lastBid.getLockedBalance() : finalPrice;
+
+            // Trừ finalPrice khỏi account, trừ lockToRelease khỏi locked
+            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, lockToRelease);
             if (!winnerSettled) {
                 logger.log(Level.WARNING,
                         "settleWinnerBalance: no rows affected — locked insufficient? "
