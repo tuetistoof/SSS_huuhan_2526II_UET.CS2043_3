@@ -9,6 +9,7 @@ import java.util.Objects;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.request.AutoBidRequest;
+import com.ssscloud.auction.common.payload.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
@@ -161,6 +162,8 @@ public class BiddingRoomController implements MessageListener {
 
     private long maxBid = 0;
     private long increment = 0;
+    private long lastSeenVersion = 0;
+    private boolean snapshotSyncInProgress = false;
 
     private AuctionDTO currentAuction;
     private List<String> itemUrls;
@@ -243,6 +246,8 @@ public class BiddingRoomController implements MessageListener {
 
     public void setAuction(AuctionDTO auction) {
         this.currentAuction = auction;
+        this.lastSeenVersion = auction != null ? auction.getVersion() : 0;
+        this.snapshotSyncInProgress = false;
         itemUrls = auction.getItemDTO().getImageUrls();
 
         boolean isActive = auction.getStatus() == AuctionStatus.OPEN
@@ -251,6 +256,7 @@ public class BiddingRoomController implements MessageListener {
         boolean isCancelled = auction.getStatus() == AuctionStatus.CANCELED;
 
         Platform.runLater(() -> {
+            bidHistory.clear();
             populateUI();
             setUpItemImage(itemUrls);
             loadBidHistoryAsync(auction.getBidDto());
@@ -695,6 +701,8 @@ public class BiddingRoomController implements MessageListener {
         if (bid.getAuctionId() != null && currentAuction.getId() != null
                 && !bid.getAuctionId().equals(currentAuction.getId()))
             return;
+        if (!acceptIncomingVersion(bid.getVersion()))
+            return;
 
         String prevLeader = getCurrentLeader();
         long prevPrice = getCurrentPrice();
@@ -726,7 +734,8 @@ public class BiddingRoomController implements MessageListener {
         if (lblMinHint != null)
             lblMinHint.setText("Min: " + String.format("%,d ₫", newPrice + currentAuction.getMinIncrement()));
 
-        if (bid.getAntiSnipingEndTime() != null && bid.getAntiSnipingEndTime().isAfter(currentAuction.getEndTime())) {
+        if (bid.getAntiSnipingEndTime() != null
+                && (currentAuction.getEndTime() == null || bid.getAntiSnipingEndTime().isAfter(currentAuction.getEndTime()))) {
             currentAuction.setEndTime(bid.getAntiSnipingEndTime());
             timer.extendTo(bid.getAntiSnipingEndTime());
             DateTimeFormatter dtFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -751,7 +760,16 @@ public class BiddingRoomController implements MessageListener {
 
     private void handleAuctionEnded(JsonObject root) {
         JsonObject data = root.has("data") ? root.get("data").getAsJsonObject() : new JsonObject();
-        String winner = data.has("winner") ? data.get("winner").getAsString() : "Unknown";
+        long incomingVersion = data.has("version") ? data.get("version").getAsLong() : 0;
+        if (incomingVersion > 0 && incomingVersion <= lastSeenVersion)
+            return;
+        if (incomingVersion > 0) {
+            lastSeenVersion = incomingVersion;
+            if (currentAuction != null)
+                currentAuction.setVersion(incomingVersion);
+        }
+        String winner = data.has("winnerName") ? data.get("winnerName").getAsString()
+                : data.has("winner") ? data.get("winner").getAsString() : "Unknown";
         long finalPrice = data.has("finalPrice") ? data.get("finalPrice").getAsLong() : 0;
         timer.stop();
         btnPlaceBid.setDisable(true);
@@ -831,6 +849,60 @@ public class BiddingRoomController implements MessageListener {
 
     private BidDTO findHighestBid() {
         return bidHistory.stream().max(Comparator.comparingLong(BidDTO::getBidAmount)).orElse(null);
+    }
+
+    private boolean acceptIncomingVersion(long incomingVersion) {
+        if (incomingVersion <= 0)
+            return true;
+        if (incomingVersion <= lastSeenVersion)
+            return false;
+        if (lastSeenVersion > 0 && incomingVersion > lastSeenVersion + 1) {
+            requestSnapshotResync(incomingVersion);
+            return false;
+        }
+        lastSeenVersion = incomingVersion;
+        currentAuction.setVersion(incomingVersion);
+        return true;
+    }
+
+    private void requestSnapshotResync(long incomingVersion) {
+        if (snapshotSyncInProgress || currentAuction == null || currentAuction.getId() == null)
+            return;
+        snapshotSyncInProgress = true;
+        String json = JsonUtils.toJson(ClientMessage.request("GET_AUCTION_DETAILS",
+                new GetAuctionDetailsRequest(currentAuction.getId())));
+        dispatcher.request(json, raw -> {
+            AuctionDTO snapshot = ServerResponse.unwrap(raw, "GET_AUCTION_DETAILS_RESPONSE", AuctionDTO.class);
+            if (snapshot != null && Objects.equals(snapshot.getId(), currentAuction.getId())) {
+                applySnapshot(snapshot);
+            } else {
+                showBanner("Auction state changed. Please reopen this room.", 4);
+            }
+            snapshotSyncInProgress = false;
+        }, () -> {
+            snapshotSyncInProgress = false;
+            showBanner("Could not sync latest auction state.", 4);
+        });
+    }
+
+    private void applySnapshot(AuctionDTO snapshot) {
+        currentAuction = snapshot;
+        lastSeenVersion = Math.max(snapshot.getVersion(), lastSeenVersion);
+        bidHistory.clear();
+        loadBidHistoryAsync(snapshot.getBidDto());
+        populateUI();
+        if (snapshot.getEndTime() != null)
+            timer.extendTo(snapshot.getEndTime());
+        if (chartManager.isReady() && panelChart.isVisible())
+            chartManager.rebuild(bidHistory, currentAuction);
+        boolean isActive = snapshot.getStatus() == AuctionStatus.OPEN
+                || snapshot.getStatus() == AuctionStatus.RUNNING;
+        if (isActive) {
+            resetPlaceBidButton();
+        } else {
+            timer.stop();
+            disableAllBidUI(snapshot.getStatus() == AuctionStatus.CANCELED);
+        }
     }
 
     private boolean containsBid(List<BidDTO> bids, BidDTO target) {

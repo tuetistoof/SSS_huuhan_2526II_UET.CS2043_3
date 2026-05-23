@@ -60,7 +60,7 @@ public class ClientObserver implements Observer {
 
             if (auction.getStatus() == AuctionStatus.FINISHED) {
                 // Snapshot payload on worker thread before submitting
-                Map<String, Object> payload = auction.buildAuctionEndedPayload(auction);
+                Map<String, Object> payload = auction.buildAuctionEndedPayload();
                 notifyExecutor.submit(() -> push("AUCTION_ENDED", payload));
             } else {
                 // Snapshot DTO on worker thread before submitting

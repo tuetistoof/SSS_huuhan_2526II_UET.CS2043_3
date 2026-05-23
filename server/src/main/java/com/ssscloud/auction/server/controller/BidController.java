@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.exception.ControllerException;
 import com.ssscloud.auction.common.exception.ErrorCode;
+import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.payload.request.AutoBidRequest;
 import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
@@ -17,6 +18,7 @@ import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 public class BidController {
     private static final Logger logger = Logger.getLogger(BidController.class.getName());
@@ -40,7 +42,7 @@ public class BidController {
             PlaceBidRequest placeBidRequest = JsonUtils.fromJson(jsonPayload, PlaceBidRequest.class);
 
             validatePlaceBidRequest(placeBidRequest);
-
+            
             bidService.placeBid(placeBidRequest, bidderId, bidderUsername);
             return JsonUtils.toJson(ApiResponse.success(null, "Bid has been placed successfully."));
         } catch (ControllerException controllerException) {
@@ -74,8 +76,12 @@ public class BidController {
             logger.log(Level.INFO, "Retrieving bid history for the specified auction.");
             String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim();
             validateBidHistoryRequest(jsonPayload);
-
-            List<BidTransaction> transactionList = bidTransactionDAO.findByAuctionId(jsonPayload);
+            Auction auction = AuctionRegistry.getInstance().get(jsonPayload);
+            List<BidTransaction> transactionList;
+            if (auction == null)
+                transactionList = bidTransactionDAO.findByAuctionId(jsonPayload);
+            else
+                transactionList = auction.getBidTransaction();
             List<BidDTO> bidHistoryList = transactionList.stream().map(transaction -> {
                 BidDTO bidDto = new BidDTO();
                 bidDto.setAuctionId(transaction.getAuctionId());
@@ -128,7 +134,8 @@ public class BidController {
             if (placeBidRequest.getBidAmount() <= 0) {
                 throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The bid amount must be a positive value greater than zero.");
             }
-            if (!auctionDAO.findByAuctionId(placeBidRequest.getAuctionId()).getStatus().isActive()) {
+            Auction auction = AuctionRegistry.getInstance().retrieveAndValidateAuction(placeBidRequest.getAuctionId());
+            if (!auction.getStatus().isActive()) {
                 throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active. Bids can only be placed on active auctions.");
             }
         } catch (Exception e) {
@@ -145,9 +152,9 @@ public class BidController {
             if (autoBidRequest.getAuctionId() == null || autoBidRequest.getAuctionId().isBlank()) {
                 throw new ControllerException(ErrorCode.MISSING_AUCTION_ID, "The auctionId is required for auto-bid registration.");
             }
-            // Chỉ query DB sau khi đã chắc chắn auctionId không null
-            if (!auctionDAO.findByAuctionId(autoBidRequest.getAuctionId()).getStatus().isActive()) {
-                throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active.");
+            Auction auction = AuctionRegistry.getInstance().retrieveAndValidateAuction(autoBidRequest.getAuctionId());
+            if (!auction.getStatus().isActive()) {
+                throw new ControllerException(ErrorCode.INVALID_AUCTION_ID, "The specified auction is not active. Bids can only be placed on active auctions.");
             }
             if (autoBidRequest.getMaxBid() <= 0) {
                 throw new ControllerException(ErrorCode.INVALID_BID_AMOUNT, "The maximum bid threshold must be greater than zero.");

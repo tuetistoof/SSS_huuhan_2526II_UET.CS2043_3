@@ -29,9 +29,7 @@ public class AntiSnipingService {
             LocalDateTime updatedEndTime = calculateExtendedEndTime(auctionConfig);
             if (updatedEndTime != null) {
                 auctionConfig.setEndTime(updatedEndTime);
-                logger.log(Level.INFO, "Anti-sniping triggered for auction: " + auctionConfig.getName() + 
-                                       ". Duration extended by " + auctionConfig.getExtendSecond() + 
-                                       "s. Updated conclusion time: " + updatedEndTime);
+                logExtension(auctionConfig, updatedEndTime);
                 return updatedEndTime;
             }
             return null;
@@ -39,6 +37,15 @@ public class AntiSnipingService {
             logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AntiSnipingService.processAntiSniping: " + exception.getMessage(), exception);
             throw exception;
         }
+    }
+
+    public static void logExtension(AuctionConfig auctionConfig, LocalDateTime updatedEndTime) {
+        if (auctionConfig == null || updatedEndTime == null) {
+            return;
+        }
+        logger.log(Level.INFO, "Anti-sniping triggered for auction: " + auctionConfig.getName()
+                + ". Duration extended by " + auctionConfig.getExtendSecond()
+                + "s. Updated conclusion time: " + updatedEndTime);
     }
 
     public static LocalDateTime calculateExtendedEndTime(AuctionConfig auctionConfig) throws Exception {
