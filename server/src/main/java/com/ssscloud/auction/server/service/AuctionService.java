@@ -15,7 +15,6 @@ import com.ssscloud.auction.common.observer.ChangeManager;
 import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
-import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -31,7 +30,6 @@ import com.ssscloud.auction.server.util.SessionRegistry;
 import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -113,7 +111,7 @@ public class AuctionService {
             UserDTO sellerDto = userService.getByUserId(sellerId);
             ItemDTO itemDto = ItemDTOFactory.toDto(item);
             
-            return toAuctionDto(auction, sellerDto, itemDto);
+            return auction.toAuctionDto(sellerDto, itemDto);
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
@@ -127,10 +125,7 @@ public class AuctionService {
             logger.log(Level.INFO, "Retrieving auction details for auctionId: " + auctionId);
             validateAuctionId(auctionId);
             
-            Auction auction = auctionDAO.findByAuctionId(auctionId);
-            if (auction == null) {
-                throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Resource not found: The auction with ID " + auctionId + " does not exist.");
-            }
+            Auction auction = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
     
             UserDTO sellerDto = userService.getByUserId(auction.getSellerId());
             ItemDTO itemDto = itemService.getItemById(auction.getItemId());
@@ -139,7 +134,7 @@ public class AuctionService {
                 throw new ServiceException(ErrorCode.ITEM_NOT_FOUND, "Data integrity error: The item associated with auction " + auctionId + " was not found.");
             }
     
-            return toAuctionDto(auction, sellerDto, itemDto);
+            return auction.toAuctionDto(sellerDto, itemDto);
         } catch (ServiceException serviceException) {
             throw serviceException;
         } catch (Exception exception) {
@@ -340,20 +335,25 @@ public class AuctionService {
     }
 
     private void settleAuctionBalances(Auction auction) {
-        String winnerId   = auction.getHighestBidderId();
+        BidTransaction lastBid = auction.getLastBidTransaction();
         String sellerId   = auction.getSellerId();
-        long   finalPrice = auction.getCurrentPrice();
+        
         String auctionId  = auction.getAuctionConfig().getId();
  
-        if (winnerId == null || finalPrice <= 0) {
+        if (lastBid == null) {
             logger.log(Level.INFO,
                     "No bids placed for auctionId: {0} — skipping balance settlement.", auctionId);
             return;
         }
+
+        long lockToRelease = lastBid.getLockedBalance();
+        long finalPrice = lastBid.getBidAmount();
+        String winnerId = lastBid.getBidderId();
  
         try {
-            // Atomic: account_balance -= finalPrice, locked_balance -= finalPrice
-            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, finalPrice);
+ 
+            // Trừ finalPrice khỏi account, trừ lockToRelease khỏi locked
+            boolean winnerSettled = userDAO.settleWinnerBalance(winnerId, finalPrice, lockToRelease);
             if (!winnerSettled) {
                 logger.log(Level.WARNING,
                         "settleWinnerBalance: no rows affected — locked insufficient? "
@@ -361,7 +361,6 @@ public class AuctionService {
                         new Object[]{winnerId, finalPrice});
             }
  
-            // Query lại DB sau settle để lấy giá trị chính xác
             User winnerUser = userDAO.findById(winnerId);
             if (winnerUser instanceof Bidder bidder) {
                 long newBalance  = bidder.getAccountBalance();
@@ -386,12 +385,10 @@ public class AuctionService {
         } catch (Exception e) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Failed to settle winner balance. "
-                            + "auctionId=" + auctionId + ", winnerId=" + winnerId
-                            + ", finalPrice=" + finalPrice, e);
+                            + "auctionId=" + auctionId, e);
         }
  
         try {
-            // Atomic: account_balance += finalPrice, pending_balance -= finalPrice
             boolean sellerSettled = userDAO.settleSellerBalance(sellerId, finalPrice);
             if (!sellerSettled) {
                 logger.log(Level.WARNING,
@@ -400,13 +397,10 @@ public class AuctionService {
                         new Object[]{sellerId, finalPrice});
             }
  
-            // Query lại DB sau settle để lấy giá trị chính xác
             User sellerUser = userDAO.findById(sellerId);
             if (sellerUser instanceof Seller seller) {
                 long newBalance  = seller.getAccountBalance();
-                long newPending  = seller.getPendingBalance(); // = 0 sau settle thành công
- 
-                // Sync session
+                long newPending  = seller.getPendingBalance();
                 SessionRegistry.getInstance().setUnsettledBalance(sellerId, newPending);
  
                 pushBalanceUpdate(sellerId, newBalance);
@@ -462,52 +456,6 @@ public class AuctionService {
         }
     }
     // --- PRIVATE HELPERS ---
-
-    private AuctionDTO toAuctionDto(Auction auction, UserDTO sellerDto, ItemDTO itemDto) {
-        AuctionDTO auctionDto = new AuctionDTO();
-
-        auctionDto.setId(auction.getAuctionConfig().getId());
-        auctionDto.setName(auction.getAuctionConfig().getName());
-        auctionDto.setStartPrice(auction.getAuctionConfig().getStartPrice());
-        auctionDto.setMinIncrement(auction.getAuctionConfig().getMinIncrement());
-        auctionDto.setStartTime(auction.getAuctionConfig().getStartTime());
-        auctionDto.setEndTime(auction.getAuctionConfig().getEndTime());
-        auctionDto.setStatus(auction.getStatus());
-
-        List <BidTransaction> bidTransactions = auction.getBidTransaction();
-        List <BidDTO> bidDto = new ArrayList<>();
-        if (bidTransactions != null && !bidTransactions.isEmpty())
-            for (BidTransaction bidTransaction : bidTransactions) {
-                try {
-                    bidDto.add(toBidDto(bidTransaction));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        auctionDto.setBidDto(bidDto);
-        auctionDto.setSellerDTO(sellerDto);
-        auctionDto.setItemDTO(itemDto);
-        return auctionDto;
-    }
-
-    public BidDTO toBidDto(BidTransaction bidTransaction) throws Exception {
-        try {
-            BidDTO bidDto = new BidDTO();
-            bidDto.setAuctionId(bidTransaction.getAuctionId());
-            bidDto.setBidderId(bidTransaction.getBidderId());
-            bidDto.setBidderUsername(bidTransaction.getBidderUsername());
-            bidDto.setBidAmount(bidTransaction.getBidAmount());
-            bidDto.setLockedBalance(bidTransaction.getLockedBalance());
-            bidDto.setBidTime(bidTransaction.getBidTime());
-            bidDto.setBidType(bidTransaction.getType().name());
-            return bidDto;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.toBidDto: " + exception.getMessage(),
-                    exception);
-            throw exception;
-        }
-    }
 
     private void validateCreateAuctionRequest(CreateAuctionRequest request, String sellerId) throws ServiceException {
         if (request == null) {

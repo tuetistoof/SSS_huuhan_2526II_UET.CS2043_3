@@ -14,6 +14,7 @@ public class BidDTO implements Serializable {
     private LocalDateTime bidTime;
     private LocalDateTime antiSnipingEndTime; // Thời gian kết thúc mới sau khi đặt giá (nếu có gia hạn)
     private String bidType; 
+    private long version;
 
     public BidDTO() {}
 
@@ -51,6 +52,14 @@ public class BidDTO implements Serializable {
     }
     public void setAntiSnipingEndTime(LocalDateTime antiSnipingEndTime) {
         this.antiSnipingEndTime = antiSnipingEndTime;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
     
     @Override

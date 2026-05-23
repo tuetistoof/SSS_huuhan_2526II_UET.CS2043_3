@@ -1,6 +1,5 @@
 package com.ssscloud.auction.server.service;
 
-import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -18,12 +17,11 @@ import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.auction.Auction;
 import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.observer.ChangeManager;
-import com.ssscloud.auction.common.payload.ClientMessage;
-import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.controller.NotificationController;
 import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
 /**
@@ -34,7 +32,7 @@ import com.ssscloud.auction.server.util.SessionRegistry;
 public class ConcurrentBidManager {
     private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); // Logging Standards: Declared first
 
-    private static volatile ConcurrentBidManager instance = null;
+    private static  ConcurrentBidManager instance = null;
 
     private UserDAO userDAO;
     private BidTransactionDAO bidTransactionDAO; // Dependency Injection: Short name for DAO
@@ -102,14 +100,27 @@ public class ConcurrentBidManager {
     }
 
     public void submitBid(Auction auctionEntity, String bidderId, String bidderUsername,
-                          long bidAmount, long lockedAmount, BidType bidType) throws Exception {
+                           long bidAmount, long lockedAmount, BidType bidType) throws Exception {
+        String auctionId = null;
         try {
-            String auctionId = auctionEntity.getAuctionConfig().getId();
+            if (auctionEntity == null || auctionEntity.getAuctionConfig() == null) {
+                throw new ServiceException(ErrorCode.INVALID_AUCTION_ID, "Auction is not loaded in memory.");
+            }
+
+            auctionId = auctionEntity.getAuctionConfig().getId();
+            AuctionRegistry auctionRegistry = AuctionRegistry.getInstance();
+            if (auctionRegistry != null
+                    && auctionEntity.getStatus() != null
+                    && auctionEntity.getStatus().isActive()
+                    && !auctionEntity.isExpired()) {
+                auctionRegistry.registerIfAbsent(auctionEntity);
+            }
+
             ensureWorkerRunning(auctionId);
             bidTaskQueues.get(auctionId).offer(new BidTask(
-                    auctionEntity, bidderId, bidderUsername, bidAmount, lockedAmount, bidType));
+                    auctionId, bidderId, bidderUsername, bidAmount, lockedAmount, bidType));
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error while submitting bid for auctionId: " + auctionEntity.getAuctionConfig().getId(), exception);
+            logger.log(Level.SEVERE, "Unexpected error while submitting bid for auctionId: " + auctionId, exception);
             throw exception;
         }
     }
@@ -209,20 +220,14 @@ public class ConcurrentBidManager {
     }
 
     private void processTask(BidTask task) throws Exception {
-        Auction auctionEntity = task.auction;
-        String auctionId = auctionEntity.getAuctionConfig().getId();
+        String auctionId = task.auctionId;
  
-        // Cờ theo dõi: bid đã được commit vào auction object chưa?
-        // - false (default): task.bidderId chưa là winner → cần unlock nếu có lỗi
-        // - true: task.bidderId đã là highestBidder → KHÔNG unlock (tiền sẽ settle sau)
         boolean bidCommitted = false;
  
         try {
+            Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
+
             if (!auctionEntity.getStatus().isActive()) {
-                // Auction đã kết thúc/cancel — BidService đã unlock trong catch của submitBid().
-                // Trường hợp này xảy ra khi cancel chạy SAU submitBid() nhưng TRƯỚC processTask().
-                // cancelAuction.refundWinner() sẽ unlock theo highestBidder hiện tại, không phải task này.
-                // → Cần unlock task.bidderId ở đây vì đây là bid bị hủy bỏ, không phải winner.
                 logger.log(Level.WARNING,
                     "processTask: auction not active, unlocking bid for bidderId={0}, auctionId={1}",
                     new Object[]{task.bidderId, auctionId});
@@ -235,8 +240,8 @@ public class ConcurrentBidManager {
             long currentAuctionPrice = lastBidTransaction != null
                     ? lastBidTransaction.getBidAmount()
                     : auctionEntity.getAuctionConfig().getStartPrice();
- 
-            if (task.bidAmount > currentAuctionPrice) {
+            
+            if (validateBidAmount (task.bidAmount, auctionEntity)) {
                 // --- Nhánh BID THẮNG ---
  
                 // Bước 1: Unlock bidder CŨ (nếu có)
@@ -257,7 +262,11 @@ public class ConcurrentBidManager {
                         auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, task.lockedAmount, LocalDateTime.now(), task.bidType);
  
-                auctionEntity.placeBid(bidTransaction); // ← sau dòng này, task.bidderId là winner
+                boolean markRunning = auctionEntity.getStatus() == AuctionStatus.OPEN;
+                LocalDateTime updatedEndTime =
+                        AntiSnipingService.calculateExtendedEndTime(auctionEntity.getAuctionConfig());
+
+                auctionEntity.commitBid(bidTransaction, markRunning, updatedEndTime); // ← publish snapshot một lần
  
                 // FIX: Đánh dấu bid đã commit — từ đây KHÔNG unlock task.bidderId nếu có lỗi
                 bidCommitted = true;
@@ -272,13 +281,12 @@ public class ConcurrentBidManager {
                     }
                 }
  
-                if (auctionEntity.getStatus() == AuctionStatus.OPEN) {
-                    auctionEntity.setStatus(AuctionStatus.RUNNING);
+                if (markRunning) {
                     auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
                 }
  
-                LocalDateTime updatedEndTime = AntiSnipingService.processAntiSniping(auctionEntity.getAuctionConfig());
                 if (updatedEndTime != null && auctionDAO != null) {
+                    AntiSnipingService.logExtension(auctionEntity.getAuctionConfig(), updatedEndTime);
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
                 ChangeManager.getInstance().notify(auctionEntity);
@@ -330,17 +338,22 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
-
+    private boolean validateBidAmount (long bidAmount, Auction auction)
+    {
+        if (auction.getLastBidTransaction() == null)
+            return bidAmount >= auction.getCurrentPrice();
+        else return bidAmount >= auction.getCurrentPrice() + auction.getAuctionConfig().getMinIncrement();
+    }
     private static class BidTask {
-        final Auction auction;
+        final String auctionId;
         final String bidderId;
         final String bidderUsername;
         final long bidAmount;
         final long lockedAmount;
         final BidType bidType;
 
-        BidTask(Auction auction, String bidderId, String bidderUsername, long bidAmount, long lockedAmount, BidType bidType) {
-            this.auction = auction;
+        BidTask(String auctionId, String bidderId, String bidderUsername, long bidAmount, long lockedAmount, BidType bidType) {
+            this.auctionId = auctionId;
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
             this.bidAmount = bidAmount;

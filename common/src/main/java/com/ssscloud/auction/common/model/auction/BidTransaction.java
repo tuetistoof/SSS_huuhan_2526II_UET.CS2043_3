@@ -23,6 +23,17 @@ public class BidTransaction{
         this.type = type;
     }
 
+    public BidTransaction(BidTransaction source) {
+        this(
+                source.auctionId,
+                source.bidderId,
+                source.bidderUsername,
+                source.bidAmount,
+                source.lockedBalance,
+                source.bidTime,
+                source.type);
+    }
+
     // No-arg constructor cho Gson
     public BidTransaction() {
     }

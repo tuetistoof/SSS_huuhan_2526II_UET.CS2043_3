@@ -45,15 +45,14 @@ public class BidService {
 
             validatePlaceBidRequest(placeBidRequest, bidderId);
 
-            Auction auction = AuctionRegistry.getInstance().get(placeBidRequest.getAuctionId());
-            if (auction == null || auction.getStatus().isEnded() || auction.isExpired()
-                    || !auction.getStatus().isActive()) {
-                auction = retrieveAndValidateAuction(placeBidRequest.getAuctionId());
-            }
+            Auction auction = AuctionRegistry.getInstance().retrieveAndValidateAuction(placeBidRequest.getAuctionId());
             validatePlaceBidTerms(auction, placeBidRequest, bidderId);
             User bidder = userDAO.findById(bidderId);
-            validatePlaceBidderAccount(bidder, placeBidRequest.getBidAmount());
-            userDAO.lockBidderBalance(bidderId, placeBidRequest.getBidAmount());
+            validateBidderAccount(bidder, placeBidRequest.getBidAmount());
+            if (!userDAO.lockBidderBalance(bidderId, placeBidRequest.getBidAmount())) {
+                throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
+                        "Insufficient available balance to lock this bid.");
+            }
             SessionRegistry.getInstance().addUnsettledBalance(bidderId, placeBidRequest.getBidAmount());
             try {
                 ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername,
@@ -103,7 +102,7 @@ public class BidService {
 
         if (lastBid == null) {
             // Chưa có bid — chỉ cần >= startPrice
-            if (bidAmount <= auction.getAuctionConfig().getStartPrice()) {
+            if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
                 throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
                         "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
             }
@@ -116,7 +115,7 @@ public class BidService {
         }
     }
 
-    private void validatePlaceBidderAccount(User bidder, long bidAmountValue) throws ServiceException, Exception {
+    private void validateBidderAccount(User bidder, long bidAmountValue) throws ServiceException, Exception {
         try {
             if (!(bidder instanceof Bidder bidderAccount)) {
                 throw new ServiceException(ErrorCode.NOT_BIDDER, "Only users with the 'Bidder' role are authorized to place bids.");
@@ -132,44 +131,4 @@ public class BidService {
         }
     }
 
-    /**
-     * Retrieves an auction from Registry first (cache strategy), then from DAO if
-     * not found.
-     * Performs initial validation on auction state.
-     * 
-     * @param auctionId The ID of the auction to retrieve.
-     * @return The validated Auction entity.
-     * @throws ServiceException if the auction is not found or has already
-     *                          concluded.
-     */
-    private Auction retrieveAndValidateAuction(String auctionId) throws ServiceException, Exception {
-        try {
-            // Step 1: Check Registry first (cache strategy)
-            Auction auction = AuctionRegistry.getInstance().get(auctionId);
-            if (auction == null) {
-                // Step 2: If not in Registry, query from DAO
-                auction = auctionDAO.findByAuctionId(auctionId);
-                if (auction == null) {
-                    throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
-                            "Auction not found with identifier: " + auctionId);
-                }
-                // Step 3: Validate auction state
-                if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
-                    throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction has already concluded.");
-                }
-                // Step 4: Register into Registry
-                AuctionRegistry.getInstance().registerIfAbsent(auction);
-                auction = AuctionRegistry.getInstance().get(auctionId);
-            }
-            return auction;
-        } catch (ServiceException serviceException) {
-            logger.log(Level.WARNING, "Service exception during auction retrieval for auctionId: " + auctionId,
-                    serviceException);
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE,
-                    "Unexpected error during auction retrieval and validation for auctionId: " + auctionId, exception);
-            throw exception;
-        }
-    }
 }

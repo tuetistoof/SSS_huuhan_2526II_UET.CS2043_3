@@ -65,18 +65,12 @@ public class AutoBidService {
             logger.log(Level.INFO, "Initiating auto-bid registration for auctionId: " + autoBidRequest.getAuctionId()
                     + " for bidderId: " + bidderId);
 
-            Auction auctionEntity = retrieveAndValidateAuction(autoBidRequest.getAuctionId());
-            if (auctionEntity.getStatus().isEnded() || auctionEntity.isExpired()
-                    || !auctionEntity.getStatus().isActive()) {
-                throw new ServiceException(ErrorCode.AUCTION_CLOSED,
-                        "Cannot register auto-bid: The auction has already concluded.");
-            }
-
+            Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(autoBidRequest.getAuctionId());
             validateAutoBidTerms(auctionEntity, autoBidRequest, bidderId);
 
             User bidder = userDAO.findById(bidderId);
             validateBidderAccount(bidder, autoBidRequest.getMaxBid());
-
+            
             if (cancelledAuctionIds.contains(autoBidRequest.getAuctionId())) {
                 throw new ServiceException(ErrorCode.AUCTION_CLOSED,
                         "Cannot register auto-bid: The auction has been cancelled.");
@@ -160,7 +154,10 @@ public class AutoBidService {
 
             List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
             if (calculatedBidAmount > currentAuctionPrice) {
-                userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
+                if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
+                    throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
+                            "Insufficient available balance to lock this bid.");
+                }
                 SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, winningEntry.maxBid);
 
                 try {
@@ -319,7 +316,7 @@ public class AutoBidService {
 
         if (lastBid == null) {
             // Chưa có bid — chỉ cần >= startPrice
-            if (bidAmount <= auction.getAuctionConfig().getStartPrice()) {
+            if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
                 throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
                         "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
             }
@@ -332,48 +329,18 @@ public class AutoBidService {
         }
     }
 
-    private void validateBidderAccount(User bidder, long maxBidAmount) throws ServiceException {
-        if (!(bidder instanceof Bidder bidderAccount)) {
-            throw new ServiceException(ErrorCode.NOT_BIDDER,
-                    "Only users with the 'Bidder' role are authorized to place bids.");
-        }
-        if (bidderAccount.getAvailableBalance() < maxBidAmount) {
-            throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
-                    "The account balance is insufficient to place this bid.");
-        }
-    }
-
-    private Auction retrieveAndValidateAuction(String auctionId) throws ServiceException, Exception {
+    private void validateBidderAccount(User bidder, long maxBidAmount) throws ServiceException, Exception {
         try {
-            // Step 1: Check Registry first (cache strategy)
-            Auction auction = AuctionRegistry.getInstance().get(auctionId);
-            if (auction == null || auction.getStatus().isEnded() || auction.isExpired()
-                    || !auction.getStatus().isActive()) {
-                // Step 2: If not in Registry, query from DAO
-                auction = auctionDAO.findByAuctionId(auctionId);
-                if (auction == null) {
-                    throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
-                            "Data integrity error: Auction not found for identifier: " + auctionId);
-                }
-                // Step 3: Validate auction state
-                if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
-                    throw new ServiceException(ErrorCode.AUCTION_CLOSED,
-                            "Operation rejected: This auction has already concluded.");
-                }
-                // Step 4: Register into Registry to ensure we use the shared instance
-                AuctionRegistry.getInstance().registerIfAbsent(auction);
-                auction = AuctionRegistry.getInstance().get(auctionId);
+            if (!(bidder instanceof Bidder bidderAccount)) {
+                throw new ServiceException(ErrorCode.NOT_BIDDER, "Only users with the 'Bidder' role are authorized to place bids.");
             }
-            return auction;
+            if (bidderAccount.getAvailableBalance() < maxBidAmount) {
+                throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE, "The account balance is insufficient to place this bid.");
+            }
         } catch (ServiceException serviceException) {
-            // Rethrow business exceptions as-is
             throw serviceException;
         } catch (Exception exception) {
-            // Final safety net for system-level failures
-            logger.log(Level.SEVERE,
-                    "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.retrieveAndValidateAuction for auctionId: "
-                            + auctionId,
-                    exception);
+            logger.log(Level.SEVERE, "Unexpected error during bidder account validation", exception);
             throw exception;
         }
     }

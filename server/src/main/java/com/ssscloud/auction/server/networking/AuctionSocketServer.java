@@ -38,6 +38,7 @@ import com.ssscloud.auction.server.service.ConcurrentBidManager;
 import com.ssscloud.auction.server.service.ItemService;
 import com.ssscloud.auction.server.service.NotificationService;
 import com.ssscloud.auction.server.service.UserService;
+import com.ssscloud.auction.server.util.AuctionRegistry;
 
 /**
  * AuctionSocketServer is the primary entry point for the auction system backend.
@@ -98,7 +99,7 @@ public class AuctionSocketServer {
         QueryController queryController             = new QueryController(queryDAO);
         AdminController adminController             = new AdminController(adminService); // [ADMIN]
 
-        
+        AuctionRegistry.initialize(auctionDAO);        
         ConcurrentBidManager.initialize(userDAO, bidDAO, autoBidService, auctionDAO, notificationController);
 
         MessageHandler messageHandler = new MessageHandler(
