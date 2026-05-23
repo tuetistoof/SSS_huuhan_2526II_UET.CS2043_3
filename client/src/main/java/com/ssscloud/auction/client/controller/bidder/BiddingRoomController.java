@@ -11,7 +11,6 @@ import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.request.AutoBidRequest;
 import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
-import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -127,6 +126,8 @@ public class BiddingRoomController implements MessageListener {
     private Label lblTimer;
     @FXML
     private Label lblOutbid;
+    @FXML
+    private Label lblAutoBidMinPrice;
 
     @FXML
     private ListView<BidDTO> listViewBidHistory;
@@ -159,9 +160,6 @@ public class BiddingRoomController implements MessageListener {
     private boolean isAutoBidding = false;
     private long autoBidMaxBid = 0;
 
-    private long maxBid = 0;
-    private long increment = 0;
-
     private AuctionDTO currentAuction;
     private List<String> itemUrls;
     private int currentImageIndex = 0;
@@ -173,6 +171,9 @@ public class BiddingRoomController implements MessageListener {
             : null;
 
     private Runnable onSuccessCallback;
+
+    // Guard: phòng đã bị admin cancel — dùng để nuốt BID_ERROR bay về sau
+    private volatile boolean roomCanceled = false;
 
     public void setOnSuccessCallback(Runnable cb) {
         this.onSuccessCallback = cb;
@@ -385,10 +386,29 @@ public class BiddingRoomController implements MessageListener {
                 formAuto.setManaged(true);
                 formManual.setVisible(false);
                 formManual.setManaged(false);
-                if (maxBid > 0)
-                    txtMaxBid.setText(String.valueOf(maxBid));
+
+                if (autoBidMaxBid > 0) {
+                    txtMaxBid.setText(String.valueOf(autoBidMaxBid));
+                } else {
+                    txtMaxBid.setText("Active (Hidden)");
+                }
+
+                if (currentAuction.getBidDto() != null && !currentAuction.getBidDto().isEmpty()) {
+                    BidDTO latest = findHighestBid();
+                    if (latest != null && lblAutoBidMinPrice != null) {
+                        lblAutoBidMinPrice.setText("Min: " + String.format("%,d ₫",
+                                latest.getBidAmount() + currentAuction.getMinIncrement()));
+                    }
+                }
+                
                 btnTabAuto.getStyleClass().setAll("br-tab-active");
                 btnTabManual.getStyleClass().setAll("br-tab");
+                
+                // Vô hiệu hóa các nút bên Manual
+                btnTabManual.setDisable(true);
+                btnPlaceBid.setDisable(true);
+                txtManualBid.setDisable(true);
+                
                 txtMaxBid.setDisable(true);
                 btnAutoToggle.setText("Cancel Auto Bid");
                 btnAutoToggle.setDisable(false);
@@ -401,8 +421,15 @@ public class BiddingRoomController implements MessageListener {
                 formAuto.setManaged(false);
                 formManual.setVisible(true);
                 formManual.setManaged(true);
-                btnTabAuto.getStyleClass().setAll("br-tab-active");
-                btnTabManual.getStyleClass().setAll("br-tab");
+                
+                btnTabAuto.getStyleClass().setAll("br-tab");
+                btnTabManual.getStyleClass().setAll("br-tab-active");
+                
+                // Mở khóa lại các nút bên Manual
+                btnTabManual.setDisable(false);
+                btnPlaceBid.setDisable(false);
+                txtManualBid.setDisable(false);
+                
                 txtMaxBid.setDisable(false);
                 txtMaxBid.clear();
                 btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
@@ -460,6 +487,11 @@ public class BiddingRoomController implements MessageListener {
 
     @FXML
     private void handlePlaceBid(ActionEvent event) {
+        if (isAutoBidding) {
+            showError("Cannot place manual bids while Auto Bid is running.");
+            return;
+        }
+        
         String amountText = txtManualBid.getText().trim();
         if (amountText.isEmpty()) {
             showError("Please enter your bid amount");
@@ -519,6 +551,11 @@ public class BiddingRoomController implements MessageListener {
 
     @FXML
     void handleSwitchToManual(ActionEvent event) {
+        if (isAutoBidding) {
+            showError("Auto Bid is currently active. Please cancel it to switch to Manual Bid.");
+            return;
+        }
+
         formAuto.setVisible(false);
         formAuto.setManaged(false);
         formManual.setVisible(true);
@@ -626,11 +663,11 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
-        long maxBid, increment;
+        long maxBid;
         try {
             maxBid = Long.parseLong(txtMaxBid.getText().trim());
         } catch (NumberFormatException e) {
-            showError("Invalid max bid or increment.");
+            showError("Invalid max bid.");
             return;
         }
         if (maxBid <= getCurrentPrice()) {
@@ -734,11 +771,15 @@ public class BiddingRoomController implements MessageListener {
                 infoEndTime.setText(bid.getAntiSnipingEndTime().format(dtFmt));
         }
         if (chartManager.isReady() && panelChart.isVisible())
-            chartManager.append(bid.getBidAmount());
+            chartManager.append(bid);
         resetPlaceBidButton();
     }
 
     private void handleBidError(JsonObject root) {
+        // Nuốt lỗi nếu phòng đã bị cancel: bid đang fly khi cancel đến, server reject là đúng
+        // Không show error popup, không resetPlaceBidButton (nút vẫn disabled)
+        if (roomCanceled) return;
+
         String message = "Bid failed.";
         if (root.has("data") && root.get("data").isJsonObject()) {
             JsonObject data = root.get("data").getAsJsonObject();
@@ -783,19 +824,44 @@ public class BiddingRoomController implements MessageListener {
 
     private void handleAuctionCanceled(JsonObject root) {
         JsonObject data = root.has("data") ? root.get("data").getAsJsonObject() : new JsonObject();
-        String reason = data.has("reason") ? data.get("reason").getAsString() : "No reason";
+        String reason = data.has("reason") ? data.get("reason").getAsString() : "No reason provided";
         String auctionName = data.has("auctionName") ? data.get("auctionName").getAsString() : "";
-        timer.stop();
-        if (lblOutbid != null) {
-            lblOutbid.setText("\"" + auctionName + "\" was canceled: " + reason);
-            lblOutbid.setVisible(true);
-            lblOutbid.setManaged(true);
+        roomCanceled = true;
+
+        if (timer != null) timer.stop();
+        if (isAutoBidding) {
+            isAutoBidding = false;
+            autoBidMaxBid = 0;
         }
-        new Timeline(new KeyFrame(javafx.util.Duration.seconds(3),
-                e -> {
-                    if (onSuccessCallback != null)
-                        onSuccessCallback.run();
-                })).play();
+
+        btnPlaceBid.setDisable(true);
+        btnAutoToggle.setDisable(true);
+        txtManualBid.setDisable(true);
+        if (txtMaxBid != null) txtMaxBid.setDisable(true);
+        if (btnFollow != null) btnFollow.setDisable(true);
+
+        if (isFollowing && currentAuction != null) {
+            isFollowing = false; // reset ngay để không gọi 2 lần
+            socket.send(JsonUtils.toJson(ClientMessage.request("UNFOLLOW_AUCTION", currentAuction.getId())));
+        }
+
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Auction Canceled");
+        alert.setHeaderText("\"" + auctionName + "\" has been canceled by Admin");
+        alert.setContentText("Reason: " + reason + "\n\nYou will be redirected to the dashboard automatically.");
+        alert.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+
+        alert.setOnHidden(e -> {
+            cleanup();
+            if (onSuccessCallback != null) onSuccessCallback.run();
+        });
+
+        Timeline autoKick = new Timeline(new KeyFrame(javafx.util.Duration.seconds(5), e -> {
+            if (alert.isShowing()) alert.close();
+        }));
+        autoKick.play();
+
+        alert.show(); // show() không blocking; setOnHidden xử lý cleanup + navigate
     }
 
     // ------------------- Bid history helpers -------------------
@@ -869,7 +935,9 @@ public class BiddingRoomController implements MessageListener {
     }
 
     private void resetPlaceBidButton() {
-        btnPlaceBid.setDisable(false);
+        if (!isAutoBidding) {
+            btnPlaceBid.setDisable(false);
+        }
         btnPlaceBid.setText("Place Bid");
     }
 

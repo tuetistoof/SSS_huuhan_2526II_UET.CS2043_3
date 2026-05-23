@@ -284,7 +284,11 @@ public class MainLayoutController implements MessageListener {
 
     private void cleanupCurrentController() {
         if (currentController == null) return;
-        else if      (currentController instanceof BiddingRoomController  c) c.cleanup();
+        else if (currentController instanceof BiddingRoomController        c) c.cleanup();
+        else if (currentController instanceof BiddedAuctionsListController c) c.cleanup();
+        else if (currentController instanceof WatchlistController          c) c.cleanup();
+        else if (currentController instanceof ItemsWonController           c) c.cleanup();
+        else if (currentController instanceof BidderDashboardController    c) c.cleanup();
         currentController = null;
     }
  
@@ -351,6 +355,7 @@ public class MainLayoutController implements MessageListener {
         ViewLoader.LoadResult<BiddedAuctionsListController> r = ViewLoader.load("bidded-auction-list.fxml");
         r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
+        currentController = r.controller();
     }
 
     @FXML
@@ -457,6 +462,7 @@ public class MainLayoutController implements MessageListener {
         ViewLoader.LoadResult<WatchlistController> r = ViewLoader.load("watchlist.fxml");
         r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
+        currentController = r.controller();
     }
 
     @FXML void handleNavWonItems(MouseEvent event) {
@@ -465,6 +471,7 @@ public class MainLayoutController implements MessageListener {
         ViewLoader.LoadResult<ItemsWonController> r = ViewLoader.load("won-items.fxml");
         r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
         contentArea.getChildren().add(r.root());
+        currentController = r.controller();
     }
 
     @FXML void handleSearching(MouseEvent event) {}

@@ -9,7 +9,6 @@ import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.payload.request.AutoBidRequest;
 import com.ssscloud.auction.common.payload.request.PlaceBidRequest;
-import com.ssscloud.auction.common.payload.response.DTO.AutoBidStatusDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;

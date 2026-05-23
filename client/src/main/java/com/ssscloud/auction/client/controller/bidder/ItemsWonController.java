@@ -5,11 +5,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.MessageListener;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -30,7 +35,7 @@ import javafx.scene.layout.VBox;
  *  - Mỗi row load từ won-item-row.fxml, điều khiển bởi ItemsWonRowController
  *  - Callback onOpenAuction truyền ra ngoài (MainLayout) để mở BiddingRoom nếu cần
  */
-public class ItemsWonController {
+public class ItemsWonController implements MessageListener {
 
     // ── FXML refs ──────────────────────────────────────────────────────────────
     @FXML private VBox        listContainer;
@@ -45,6 +50,7 @@ public class ItemsWonController {
 
     // ── State ──────────────────────────────────────────────────────────────────
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
+    private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
     private List<BidderDisplayDTO> masterList = new ArrayList<>();
     private String activeFilter = null;
@@ -54,6 +60,7 @@ public class ItemsWonController {
     @FXML
     public void initialize() {
         setActiveFilter(aFilterAll, null);
+        socket.addListener(this);   // thêm — sau setActiveFilter, trước loadWonItems
         loadWonItems();
     }
 
@@ -161,5 +168,24 @@ public class ItemsWonController {
             btn.getStyleClass().remove("wi-filter-btn-selected");
         }
         activeBtn.getStyleClass().add("wi-filter-btn-selected");
+    }
+
+    public void cleanup() {
+        socket.removeListener(this);
+    }
+
+    @Override
+    public void onMessageReceived(String json) {
+        try {
+            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            String action = root.has("action") ? root.get("action").getAsString() : "";
+            // ItemsWon chỉ quan tâm AUCTION_CANCELED —
+            // admin cancel auction đã FINISHED thì item biến mất khỏi won list
+            if ("AUCTION_CANCELED".equals(action)) {
+                Platform.runLater(this::loadWonItems);
+            }
+        } catch (Exception e) {
+            System.err.println("[ItemsWon] onMessageReceived error: " + e.getMessage());
+        }
     }
 }

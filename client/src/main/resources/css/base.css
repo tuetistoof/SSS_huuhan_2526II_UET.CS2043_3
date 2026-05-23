@@ -129,14 +129,29 @@
 .badge-running  { 
     -fx-background-color: -cloud-success-bg-alt; 
     -fx-text-fill: -cloud-success-text-alt; 
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
 }
 .badge-open     { 
     -fx-background-color: -cloud-info-bg-alt;    
     -fx-text-fill: -cloud-info-text-alt; 
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
 }
 .badge-finished { 
     -fx-background-color: -cloud-danger-bg;      
     -fx-text-fill: -cloud-danger-text; 
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
 }
 
 .badge-canceled {
