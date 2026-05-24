@@ -544,7 +544,6 @@ public class CancelAuctionRaceConditionTest {
      *     long unlockAmount = previousWinner.lockAmount;  // NPE
      */
     private Auction resetAuctionToBidderOld() throws Exception {
-        // Dọn registry và manager state
         System.out.println("[HELPER] Resetting auction to BIDDER_OLD state...");
         AuctionRegistry.getInstance().remove(AUCTION_ID);
         ConcurrentBidManager.resetInstance();
@@ -561,18 +560,16 @@ public class CancelAuctionRaceConditionTest {
         );
         Auction freshAuction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, ITEM_ID);
         AuctionRegistry.getInstance().registerIfAbsent(freshAuction);
-        System.out.println("[HELPER] Fresh auction created with status: " + freshAuction.getStatus());
 
-        // Submit bid BIDDER_OLD và đợi worker xử lý xong
-        // → previousWinnerBidtask[AUCTION_ID] = BidTask(BIDDER_OLD, OLD_BID, lockAmount=OLD_BID)
         CountDownLatch oldBidProcessed = new CountDownLatch(1);
+
+        // FIX: chặn tại saveBidTransaction thay vì updatePendingBalance
+        // saveBidTransaction xảy ra SAU commitBid() → highestBidder đã được set
         doAnswer(inv -> {
-            String seller = inv.getArgument(0);
-            long delta = inv.getArgument(1);
-            System.out.println("[HELPER] updatePendingBalance called for OLD_BID setup: seller=" + seller + ", delta=" + delta);
+            System.out.println("[HELPER] saveBidTransaction called — OLD_BID committed");
             oldBidProcessed.countDown();
             return true;
-        }).when(userDAO).updatePendingBalance(eq(SELLER_ID), anyLong());
+        }).when(bidTransactionDAO).saveBidTransaction(any(BidTransaction.class));
 
         System.out.println("[HELPER] Submitting OLD_BID = " + OLD_BID);
         ConcurrentBidManager.getInstance().submitBid(
@@ -582,14 +579,13 @@ public class CancelAuctionRaceConditionTest {
 
         boolean processed = oldBidProcessed.await(5, TimeUnit.SECONDS);
         System.out.println("[HELPER] Setup bid processed: " + processed);
-        assertTrue(processed,
-            "Setup: bid BIDDER_OLD phải được xử lý trong 5 giây");
+        assertTrue(processed, "Setup: bid BIDDER_OLD phải được xử lý trong 5 giây");
 
-        // Reset mock sau khi setup xong để không ảnh hưởng verify trong test thực
         reset(userDAO);
         when(userDAO.unlockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.updatePendingBalance(anyString(), anyLong())).thenReturn(true);
 
+        // Bây giờ commitBid() đã chắc chắn xong → getHighestBidderId() không còn null
         assertEquals(BIDDER_OLD, freshAuction.getHighestBidderId(),
             "Setup: BIDDER_OLD phải là highestBidder sau helper");
         assertEquals(OLD_BID, freshAuction.getCurrentPrice(),
