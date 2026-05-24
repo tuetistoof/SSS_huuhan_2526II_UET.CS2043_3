@@ -186,7 +186,9 @@ public class AdminDashboardController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); setText(null); return; }
+                if (emptyCellOrNoItem(empty, getTableRow())) { 
+                    setGraphic(null); setText(null); return; 
+                }
                 AuctionStatus status = getTableRow().getItem().getStatus();
                 btnCancel.setDisable(status != AuctionStatus.OPEN && status != AuctionStatus.RUNNING);
                 setPadding(Insets.EMPTY);
@@ -228,9 +230,13 @@ public class AdminDashboardController {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); return; }
+                if (emptyCellOrNoItem(empty, getTableRow())) { 
+                    setGraphic(null); return; 
+                }
                 UserRole role = getTableRow().getItem().getRole();
-                if (role == null) { setText("-"); setGraphic(null); return; }
+                if (role == null) { 
+                    setText("-"); setGraphic(null); return; 
+                }
                 badge.setText(role.name());
                 String badgeStyle = switch (role) {
                     case SELLER -> "badge-seller";

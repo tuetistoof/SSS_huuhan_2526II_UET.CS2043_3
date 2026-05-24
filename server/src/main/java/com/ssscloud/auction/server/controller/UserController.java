@@ -11,8 +11,6 @@ import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.payload.request.LoginRequest;
 import com.ssscloud.auction.common.payload.request.RegisterRequest;
-import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
-import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;

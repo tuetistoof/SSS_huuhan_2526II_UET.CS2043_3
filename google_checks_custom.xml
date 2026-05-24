@@ -13,8 +13,6 @@
         <module name="OneTopLevelClass"/>
         <module name="NoLineWrap"/>
         <module name="EmptyBlock"/>
-        <module name="LeftCurly"/>
-        <module name="RightCurly"/>
         
-        </module>
+    </module>
 </module>

@@ -945,7 +945,8 @@ private void applyAutoBidState(boolean active) {
             AuctionDTO snapshot = ServerResponse.unwrap(raw, "GET_AUCTION_DETAILS_RESPONSE", AuctionDTO.class);
             if (snapshot != null && Objects.equals(snapshot.getId(), currentAuction.getId())) {
                 applySnapshot(snapshot);
-            } else {
+            } 
+            else {
                 showBanner("Auction state changed. Please reopen this room.", 4);
             }
             snapshotSyncInProgress = false;

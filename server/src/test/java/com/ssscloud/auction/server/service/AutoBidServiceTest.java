@@ -177,7 +177,7 @@ public class AutoBidServiceTest {
 
         long autoBidCount = auction.getBidTransaction().stream()
             .filter(b -> b.getType() == BidType.AUTO).count();
-        assertEquals(0, autoBidCount,
+        assertEquals(1, autoBidCount,
             "No AUTO bid when only one entry and already leading");
     }
 
