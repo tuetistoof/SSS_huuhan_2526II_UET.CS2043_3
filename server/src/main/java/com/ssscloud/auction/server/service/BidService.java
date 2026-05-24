@@ -48,7 +48,7 @@ public class BidService {
             Auction auction = AuctionRegistry.getInstance().retrieveAndValidateAuction(placeBidRequest.getAuctionId());
             validatePlaceBidTerms(auction, placeBidRequest, bidderId);
             User bidder = userDAO.findById(bidderId);
-            validateBidderAccount(bidder, placeBidRequest.getBidAmount());
+            validateBidderAccount(bidder, placeBidRequest.getBidAmount(), auction);
             if (!userDAO.lockBidderBalance(bidderId, placeBidRequest.getBidAmount())) {
                 throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
                         "Insufficient available balance to lock this bid.");
@@ -115,19 +115,27 @@ public class BidService {
         }
     }
 
-    private void validateBidderAccount(User bidder, long bidAmountValue) throws ServiceException, Exception {
-        try {
-            if (!(bidder instanceof Bidder bidderAccount)) {
-                throw new ServiceException(ErrorCode.NOT_BIDDER, "Only users with the 'Bidder' role are authorized to place bids.");
-            }
-            if (bidderAccount.getAvailableBalance() < bidAmountValue) {
-                throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE, "The account balance is insufficient to place this bid.");
-            }
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error during bidder account validation", exception);
-            throw exception;
+
+    private void validateBidderAccount(User bidder, long bidAmount, Auction auction)
+        throws ServiceException {
+        if (!(bidder instanceof Bidder bidderAccount)) {
+            throw new ServiceException(ErrorCode.NOT_BIDDER, "...");
+        }
+
+        // Kiểm tra A có đang là highest bidder không
+        BidTransaction lastBid = auction.getLastBidTransaction();
+        long alreadyLocked = 0;
+        if (lastBid != null && lastBid.getBidderId().equals(bidderAccount.getId())) {
+            // A đang giữ bid cũ — khi thắng bid mới, bid cũ sẽ được unlock
+            // Chỉ cần đủ tiền cho phần chênh lệch
+            alreadyLocked = lastBid.getLockedBalance();
+        }
+
+        long netRequired = bidAmount - alreadyLocked;
+        if (bidderAccount.getAvailableBalance() < netRequired) {
+            throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
+                "Insufficient balance. Need: " + netRequired
+                + ", available: " + bidderAccount.getAvailableBalance());
         }
     }
 
