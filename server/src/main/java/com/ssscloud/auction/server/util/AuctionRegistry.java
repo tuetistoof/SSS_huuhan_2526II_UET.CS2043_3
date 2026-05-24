@@ -1,5 +1,7 @@
 package com.ssscloud.auction.server.util;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,7 +98,7 @@ public class AuctionRegistry {
             Auction auction = this.get(auctionId);
             
             if (auction == null || auction.getStatus().isEnded() || auction.isExpired()
-                    || !auction.getStatus().isActive()) {
+                    || !auction.getStatus().isActive() || auction.getAuctionConfig().getEndTime().isBefore(LocalDateTime.now())) {
                 
                 // Bước 2: Nếu không thấy hoặc không hợp lệ, truy vấn từ cơ sở dữ liệu (DAO)
                 // (Hết lỗi nhờ chuyển sang hàm non-static)
@@ -105,10 +107,10 @@ public class AuctionRegistry {
                     throw new Exception();
                 }
                 
-                if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive()) {
+                if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive() 
+                    || auction.getAuctionConfig().getEndTime().isBefore(LocalDateTime.now())) {
                     throw new Exception();
                 }
-                
                 this.registerIfAbsent(auction);
                 auction = this.get(auctionId);
             }
