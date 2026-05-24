@@ -1,11 +1,10 @@
 package com.ssscloud.auction.common.enums;
 
-
 public enum BidType {
-    MANUAL,
-    AUTO;
+  MANUAL,
+  AUTO;
 
-    public boolean isAutoBid() {
-        return this == AUTO;
-    }
+  public boolean isAutoBid() {
+    return this == AUTO;
+  }
 }

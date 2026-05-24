@@ -33,7 +33,7 @@ public class UserServiceTest {
     // --- Login Tests ---
 
     @Test
-    void testLoginSuccess() throws Exception{
+    void testLoginSuccess() throws Exception {
         Bidder bidder = new Bidder("Nguyễn Khánh Phong", "Kphong", "123456@", "Kphong@gmail.com", UserRole.BIDDER);
         when(userDAO.findByUsername("Kphong")).thenReturn(bidder);
 
@@ -50,7 +50,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testLoginIncorrectPassword() throws Exception{
+    void testLoginIncorrectPassword() throws Exception {
         Bidder bidder = new Bidder("Nguyễn Khánh Phong", "Kphong", "123456@", "Kphong@gmail.com", UserRole.BIDDER);
         when(userDAO.findByUsername("Kphong")).thenReturn(bidder);
 
@@ -59,7 +59,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testLoginUserNotFound() throws Exception{
+    void testLoginUserNotFound() throws Exception {
         when(userDAO.findByUsername("NonExistentUser")).thenReturn(null);
 
         LoginRequest loginRequest = new LoginRequest("NonExistentUser", "anyPassword");
@@ -69,7 +69,7 @@ public class UserServiceTest {
     // --- Register Tests ---
 
     @Test
-    void testRegisterSuccess() throws Exception{
+    void testRegisterSuccess() throws Exception {
         when(userDAO.findByUsername("newUser")).thenReturn(null);
         when(userDAO.findByEmail("newuser@gmail.com")).thenReturn(null);
         when(userDAO.saveBidder(any(Bidder.class))).thenReturn(true);
@@ -87,7 +87,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegisterExistedUsername() throws Exception{
+    void testRegisterExistedUsername() throws Exception {
         Bidder existingBidder = new Bidder("Existing User", "existingUser", "password123", "existinguser@gmail.com", UserRole.BIDDER);
         when(userDAO.findByUsername("existingUser")).thenReturn(existingBidder);
 
@@ -96,7 +96,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void testRegisterExistedEmail() throws Exception{
+    void testRegisterExistedEmail() throws Exception {
         Seller existingSeller = new Seller("Existing User", "existingUser", "password123", "existinguser@gmail.com", UserRole.SELLER);
         when(userDAO.findByEmail("existinguser@gmail.com")).thenReturn(existingSeller);
         when(userDAO.findByUsername("newUser")).thenReturn(null);

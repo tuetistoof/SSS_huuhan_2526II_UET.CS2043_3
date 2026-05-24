@@ -3,49 +3,88 @@ package com.ssscloud.auction.common.payload.response.DTO;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * DTO để trả về thông tin item
- */
+/** DTO để trả về thông tin item */
 public class ItemDTO implements Serializable {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    private String id;
-    private String name;
-    private String sellerId;
-    private String creator;
-    private String description;
-    private String itemType;
-    private List<String> imageUrls;
+  private String id;
+  private String name;
+  private String sellerId;
+  private String creator;
+  private String description;
+  private String itemType;
+  private List<String> imageUrls;
 
-    public ItemDTO() {}
+  public ItemDTO() {}
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+  public String getId() {
+    return id;
+  }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+  public String getName() {
+    return name;
+  }
 
-    public String getItemType() { return itemType; }
-    public void setItemType(String itemType) { this.itemType = itemType; }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public String getCreator() { return creator; }
-    public void setCreator(String creator) { this.creator = creator; }
+  public String getDescription() {
+    return description;
+  }
 
-    public String getSellerId() { return sellerId; }
-    public void setSellerId(String sellerId) { this.sellerId = sellerId; }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public List<String> getImageUrls() { return imageUrls; }
-    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls; }
+  public String getItemType() {
+    return itemType;
+  }
 
-    @Override
-    public String toString() {
-        return "ItemDTO{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", itemType='" + itemType + '\'' +
-                '}';
-    }
+  public void setItemType(String itemType) {
+    this.itemType = itemType;
+  }
+
+  public String getCreator() {
+    return creator;
+  }
+
+  public void setCreator(String creator) {
+    this.creator = creator;
+  }
+
+  public String getSellerId() {
+    return sellerId;
+  }
+
+  public void setSellerId(String sellerId) {
+    this.sellerId = sellerId;
+  }
+
+  public List<String> getImageUrls() {
+    return imageUrls;
+  }
+
+  public void setImageUrls(List<String> imageUrls) {
+    this.imageUrls = imageUrls;
+  }
+
+  @Override
+  public String toString() {
+    return "ItemDTO{"
+        + "id='"
+        + id
+        + '\''
+        + ", name='"
+        + name
+        + '\''
+        + ", itemType='"
+        + itemType
+        + '\''
+        + '}';
+  }
 }

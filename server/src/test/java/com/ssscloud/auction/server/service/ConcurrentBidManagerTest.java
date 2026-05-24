@@ -3,6 +3,7 @@ package com.ssscloud.auction.server.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -73,7 +74,7 @@ public class ConcurrentBidManagerTest {
         AuctionDAO auctionDAO         = mock(AuctionDAO.class);
         notificationController        = mock(NotificationController.class);
 
-        doNothing().when(notificationController).notifyWatchers(anyString(), anyString());
+        doNothing().when(notificationController).notifyWatchers(any(Auction.class), anyString());
         when(userDAO.lockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.unlockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.updatePendingBalance(anyString(), anyLong())).thenReturn(true);

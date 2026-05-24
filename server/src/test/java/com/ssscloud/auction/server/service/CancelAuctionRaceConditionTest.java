@@ -1,8 +1,21 @@
 package com.ssscloud.auction.server.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.atLeastOnce;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
@@ -98,7 +111,7 @@ public class CancelAuctionRaceConditionTest {
         notificationController = mock(NotificationController.class);
         adminDAO               = mock(AdminDAO.class);
 
-        doNothing().when(notificationController).notifyWatchers(anyString(), anyString());
+        doNothing().when(notificationController).notifyWatchers(any(Auction.class), anyString());
         when(userDAO.unlockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.updatePendingBalance(anyString(), anyLong())).thenReturn(true);
 

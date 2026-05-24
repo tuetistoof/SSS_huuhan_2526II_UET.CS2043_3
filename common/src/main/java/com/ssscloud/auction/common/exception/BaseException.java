@@ -1,36 +1,36 @@
 package com.ssscloud.auction.common.exception;
 
 /**
- * Base exception class for the auction system.
- * All custom exceptions extend this class to provide consistent error handling
- * with standardized error codes and messages.
+ * Base exception class for the auction system. All custom exceptions extend this class to provide
+ * consistent error handling with standardized error codes and messages.
  */
 public class BaseException extends RuntimeException {
-    
-    private final String errorCode;
-    private Throwable cause;
-    /**
-     * Constructs an Exceptions with the specified error code and message.
-     * 
-     * @param errorCode standardized error code for identifying the error type
-     * @param message detailed error message for debugging and logging
-     */
-    public BaseException(String errorCode, String message) {
-        super(message);
-        this.errorCode = errorCode;
-    }
 
-    public BaseException(String errorCode, String message, Throwable cause) {
-        super(message, cause);
-        this.errorCode = errorCode;
-    }
+  private final String errorCode;
+  private Throwable cause;
 
-    /**
-     * Returns the standardized error code for this exception.
-     * 
-     * @return the error code as a String
-     */
-    public String getErrorCode() {
-        return errorCode;
-    }
+  /**
+   * Constructs an Exceptions with the specified error code and message.
+   *
+   * @param errorCode standardized error code for identifying the error type
+   * @param message detailed error message for debugging and logging
+   */
+  public BaseException(String errorCode, String message) {
+    super(message);
+    this.errorCode = errorCode;
+  }
+
+  public BaseException(String errorCode, String message, Throwable cause) {
+    super(message, cause);
+    this.errorCode = errorCode;
+  }
+
+  /**
+   * Returns the standardized error code for this exception.
+   *
+   * @return the error code as a String
+   */
+  public String getErrorCode() {
+    return errorCode;
+  }
 }

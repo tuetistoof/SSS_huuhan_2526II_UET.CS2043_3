@@ -1,8 +1,14 @@
 package com.ssscloud.auction.server.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -63,22 +69,18 @@ public class AutoBidServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // FIX: mock tất cả DAO trước khi truyền vào initialize()
-        // Bug trước: userDAO = null khi truyền vào ConcurrentBidManager.initialize()
         BidTransactionDAO  bidTransactionDAO = mock(BidTransactionDAO.class);
         AutoBidService     autoBidMock       = mock(AutoBidService.class);
         auctionDAO                           = mock(AuctionDAO.class);
-        userDAO                              = mock(UserDAO.class);  // ← mock trước
+        userDAO                              = mock(UserDAO.class);
         NotificationController notifCtrl     = mock(NotificationController.class);
 
-        doNothing().when(notifCtrl).notifyWatchers(anyString(), anyString());
+        doNothing().when(notifCtrl).notifyWatchers(any(Auction.class), anyString());
 
-        // Reset singleton ConcurrentBidManager để test độc lập
         ConcurrentBidManager.initialize(userDAO, bidTransactionDAO, autoBidMock, auctionDAO, notifCtrl);
 
         autoBidService = new AutoBidService(auctionDAO, userDAO);
 
-        // Auction mặc định: RUNNING, chưa có bid nào
         AuctionConfig config = new AuctionConfig(
             AUCTION_ID, "Test Auction",
             START_PRICE, MIN_INC,
@@ -109,8 +111,7 @@ public class AutoBidServiceTest {
 
     @Test
     void testTrigger_finishedAuction_skipped() throws Exception {
-        // WHY: auction FINISHED không được trigger thêm bất kỳ auto-bid nào,
-        // dù vẫn còn entry trong registry
+        // WHY: auction FINISHED không được trigger thêm bất kỳ auto-bid nào
         AuctionConfig config = new AuctionConfig(
             "finished-auction", "Finished",
             START_PRICE, MIN_INC,
@@ -137,7 +138,7 @@ public class AutoBidServiceTest {
         // WHY: bidder-A là entry duy nhất VÀ đang là highest bidder →
         // otherCompetitors rỗng → không có ai để cạnh tranh → return
         BidTransaction existingBid = new BidTransaction(
-            AUCTION_ID, "bidder-A", "Alice", 35_000L, 35_000L,LocalDateTime.now(), BidType.MANUAL
+            AUCTION_ID, "bidder-A", "Alice", 35_000L, 35_000L, LocalDateTime.now(), BidType.MANUAL
         );
         auction.placeBid(existingBid);
 
@@ -146,10 +147,8 @@ public class AutoBidServiceTest {
 
         autoBidService.register(buildRequest(AUCTION_ID, 100_000L, 5_000L), "bidder-A", "Alice");
 
-        // Đợi worker thread drain queue
         Thread.sleep(300);
 
-        // A là highest bidder duy nhất → không có bid AUTO mới nào được submit
         long autoBidCount = auction.getBidTransaction().stream()
             .filter(b -> b.getType() == BidType.AUTO).count();
         assertEquals(0, autoBidCount,
@@ -163,7 +162,6 @@ public class AutoBidServiceTest {
     @Test
     void testTrigger_higherMaxBid_wins() throws Exception {
         // WHY: A(max=500k) vs B(max=800k) → B phải thắng và được submitBid
-        // Nếu logic chọn winner bị sai, A có thể thắng dù maxBid thấp hơn
         stubBidderWithBalance("bidder-A", 999_999L);
         stubBidderWithBalance("bidder-B", 999_999L);
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
@@ -182,8 +180,6 @@ public class AutoBidServiceTest {
     @Test
     void testTrigger_tieBreak_earlierRegistration_wins() throws Exception {
         // WHY: A và B có cùng maxBid → người đăng ký TRƯỚC (registeredAt nhỏ hơn) thắng
-        // Đây là tie-break rule được document trong CONTEXT.md §4.4
-        // Nếu tie-break bị đảo ngược, người đến sau sẽ "cướp" thắng lợi
         stubBidderWithBalance("bidder-A", 999_999L);
         stubBidderWithBalance("bidder-B", 999_999L);
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
@@ -203,7 +199,6 @@ public class AutoBidServiceTest {
     @Test
     void testTrigger_losingEntries_areRemovedFromRegistry() throws Exception {
         // WHY: sau khi trigger, entry thua phải bị xóa khỏi registrationsMap.
-        // Nếu không xóa, các lần trigger sau sẽ tính sai secondHighest và notify lại bidder thua
         stubBidderWithBalance("bidder-A", 999_999L);
         stubBidderWithBalance("bidder-B", 999_999L);
         stubBidderWithBalance("bidder-C", 999_999L);
@@ -226,10 +221,8 @@ public class AutoBidServiceTest {
 
     @Test
     void testTrigger_calculatedBid_isSecondHighestPlusIncrement() throws Exception {
-        // WHY: công thức tính giá là min(secondHighest + winnerIncrement, winnerMaxBid)
-        // A(max=500k, inc=50k), B(max=800k, inc=50k)
+        // WHY: A(max=500k, inc=50k), B(max=800k, inc=50k)
         // secondHighest = 500k → calculated = min(500k+50k, 800k) = 550k
-        // FIX: dùng polling thay vì Thread.sleep() cố định để tránh flaky
         stubBidderWithBalance("bidder-A", 999_999L);
         stubBidderWithBalance("bidder-B", 999_999L);
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
@@ -237,7 +230,6 @@ public class AutoBidServiceTest {
         autoBidService.register(buildRequest(AUCTION_ID, 500_000L, 50_000L), "bidder-A", "Alice");
         autoBidService.register(buildRequest(AUCTION_ID, 800_000L, 50_000L), "bidder-B", "Bob");
 
-        // Polling: chờ đến khi giá thay đổi hoặc timeout
         waitForPrice(550_000L);
 
         assertEquals(550_000L, auction.getCurrentPrice(),
@@ -246,10 +238,8 @@ public class AutoBidServiceTest {
 
     @Test
     void testTrigger_calculatedBid_cappedAtMaxBid() throws Exception {
-        // WHY: nếu secondHighest + increment > maxBid, giá phải bị cap tại maxBid
-        // A(max=500k, inc=50k), B(max=520k, inc=50k)
-        // calculated = min(500k+50k=550k, 520k) → phải là 520k chứ không phải 550k
-        // FIX: dùng polling thay vì Thread.sleep() cố định để tránh flaky
+        // WHY: A(max=500k, inc=50k), B(max=520k, inc=50k)
+        // calculated = min(500k+50k=550k, 520k) → phải là 520k
         stubBidderWithBalance("bidder-A", 999_999L);
         stubBidderWithBalance("bidder-B", 999_999L);
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
@@ -266,10 +256,8 @@ public class AutoBidServiceTest {
     @Test
     void testTrigger_calculatedBid_notExceedCurrentPrice_skipped() throws Exception {
         // WHY: nếu calculatedBid <= currentPrice, không được submit bid
-        // Setup: bidder-B max=100k, nhưng currentPrice đã là 100k từ bid thủ công
-        // → calculated = min(0+10k, 100k) = 10k ≤ 100k → skip
         BidTransaction existingBid = new BidTransaction(
-            AUCTION_ID, "bidder-A", "Alice", 100_000L, 100_000L,LocalDateTime.now(), BidType.MANUAL
+            AUCTION_ID, "bidder-A", "Alice", 100_000L, 100_000L, LocalDateTime.now(), BidType.MANUAL
         );
         auction.placeBid(existingBid);
 
@@ -293,8 +281,6 @@ public class AutoBidServiceTest {
     @Test
     void testRegister_nullRequest_throwsServiceException() {
         // WHY: null request phải throw ServiceException(AUTO_BID_VALIDATION_ERROR)
-        // FIX: production code đã được fix để validate null trước khi log —
-        // test này bây giờ expect đúng ServiceException thay vì NPE
         ServiceException ex = assertThrows(ServiceException.class,
             () -> autoBidService.register(null, "bidder-A", "Alice"));
         assertEquals(ErrorCode.AUTO_BID_VALIDATION_ERROR, ex.getErrorCode());
@@ -302,7 +288,7 @@ public class AutoBidServiceTest {
 
     @Test
     void testRegister_sellerBidsOwnAuction_throwsServiceException() throws Exception {
-        // WHY: seller không được tự đấu giá phiên của mình — business rule cốt lõi
+        // WHY: seller không được tự đấu giá phiên của mình
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
         stubBidderWithBalance(SELLER_ID, 999_999L);
 
@@ -313,7 +299,7 @@ public class AutoBidServiceTest {
 
     @Test
     void testRegister_incrementBelowAuctionMinIncrement_throwsServiceException() throws Exception {
-        // WHY: increment phải >= auction's minIncrement (1000L) — tránh spam bid lẻ
+        // WHY: increment phải >= auction's minIncrement (1000L)
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
         stubBidderWithBalance("bidder-A", 999_999L);
 
@@ -325,7 +311,6 @@ public class AutoBidServiceTest {
     @Test
     void testRegister_incrementExceedsMaxBid_throwsServiceException() {
         // WHY: increment > maxBid là vô nghĩa về mặt logic
-        // Validation này phải bắt trước khi chạm đến auction lookup
         ServiceException ex = assertThrows(ServiceException.class,
             () -> autoBidService.register(buildRequest(AUCTION_ID, 10_000L, 20_000L), "bidder-A", "Alice"));
         assertEquals(ErrorCode.AUTO_BID_INVALID_RANGE, ex.getErrorCode());
@@ -334,14 +319,12 @@ public class AutoBidServiceTest {
     @Test
     void testRegister_replacesExistingEntry_forSameBidder() throws Exception {
         // WHY: bidder đăng ký lại phải replace entry cũ, không duplicate
-        // Nếu không replace, registrationsMap sẽ có 2 entry cùng bidder → winner selection sai
         stubBidderWithBalance("bidder-A", 999_999L);
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
 
         autoBidService.register(buildRequest(AUCTION_ID, 100_000L, 5_000L), "bidder-A", "Alice");
         autoBidService.register(buildRequest(AUCTION_ID, 200_000L, 5_000L), "bidder-A", "Alice");
 
-        // Assert registrationsMap sync — không cần chờ worker
         List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(AUCTION_ID);
         assertEquals(1, entries.size(),
             "Re-registration must replace, not duplicate the existing entry");
@@ -355,8 +338,8 @@ public class AutoBidServiceTest {
 
     @Test
     void testAutoBidCount_incrementsAfterSuccessfulTrigger() throws Exception {
-        // WHY: bidCount được dùng để thống kê và giới hạn auto-bid chain.
-        // Nếu không tăng, hệ thống mất khả năng tracking frequency
+        // WHY: Verify winner's AUTO bid appears in auction's bid history after trigger.
+        // AutoBidService locks maxBid and submits calculatedBid → worker places BidType.AUTO.
         stubBidderWithBalance("bidder-A", 999_999L);
         stubBidderWithBalance("bidder-B", 999_999L);
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
@@ -364,16 +347,18 @@ public class AutoBidServiceTest {
         autoBidService.register(buildRequest(AUCTION_ID, 300_000L, 10_000L), "bidder-A", "Alice");
         autoBidService.register(buildRequest(AUCTION_ID, 500_000L, 10_000L), "bidder-B", "Bob");
 
-        // Chờ worker xử lý
+        // Wait for worker to process and place AUTO bid
         waitForPrice(START_PRICE + 1);
 
-        int count = autoBidService.getAutoBidCount(AUCTION_ID, "bidder-B");
-        assertEquals(1, count,
-            "Winner's auto-bid count must be incremented after trigger");
+        long autoBidCount = auction.getBidTransaction().stream()
+            .filter(b -> b.getType() == BidType.AUTO && b.getBidderId().equals("bidder-B"))
+            .count();
+        assertEquals(1, autoBidCount,
+            "Winner's AUTO bid transaction must appear in auction history after trigger");
     }
 
     @Test
-    void testClearRegistrations_removesAllEntriesAndBidCounts() throws Exception {
+    void testClearRegistrations_removesAllEntries() throws Exception {
         // WHY: clearRegistrations() được gọi khi auction FINISHED.
         // Nếu không xóa sạch, state rác sẽ tồn tại và ảnh hưởng các lần test/restart
         stubBidderWithBalance("bidder-A", 999_999L);
@@ -385,17 +370,27 @@ public class AutoBidServiceTest {
         List<AutoBidService.AutoBidEntry> remaining = autoBidService.getRegistrations(AUCTION_ID);
         assertTrue(remaining.isEmpty(),
             "All entries must be removed after clearRegistrations");
-        assertEquals(0, autoBidService.getAutoBidCount(AUCTION_ID, "bidder-A"),
-            "Bid count must be reset to 0 after clearRegistrations");
+    }
+
+    @Test
+    void testClearRegistrations_preventsNewRegistration() throws Exception {
+        // WHY: sau khi clearRegistrations(), cancelledAuctionIds chứa auctionId.
+        // Mọi lần gọi register() sau đó phải bị reject với AUCTION_CLOSED.
+        stubBidderWithBalance("bidder-A", 999_999L);
+        when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(auction);
+
+        autoBidService.clearRegistrations(AUCTION_ID);
+
+        // Subsequent registration must be rejected
+        assertThrows(ServiceException.class,
+            () -> autoBidService.register(buildRequest(AUCTION_ID, 100_000L, 5_000L), "bidder-A", "Alice"),
+            "register() after clearRegistrations() must throw AUCTION_CLOSED");
     }
 
     // =========================================================================
     // Helpers
     // =========================================================================
 
-    /**
-     * Tạo AutoBidRequest với các tham số cơ bản.
-     */
     private AutoBidRequest buildRequest(String auctionId, long maxBid, long increment) {
         AutoBidRequest req = new AutoBidRequest();
         req.setAuctionId(auctionId);
@@ -404,9 +399,6 @@ public class AutoBidServiceTest {
         return req;
     }
 
-    /**
-     * Stub UserDAO để trả về Bidder với số dư đủ để đăng ký auto-bid.
-     */
     private void stubBidderWithBalance(String bidderId, long balance) throws Exception {
         Bidder bidder = new Bidder("Test User", bidderId, "pass", bidderId + "@test.com",
             UserRole.BIDDER, balance);
@@ -416,7 +408,6 @@ public class AutoBidServiceTest {
     /**
      * Polling: chờ đến khi giá auction đạt expectedPrice hoặc timeout.
      * WHY: tránh flaky test do Thread.sleep() cố định không đủ trên máy chậm.
-     * Nếu timeout mà giá vẫn chưa đạt, test vẫn tiếp tục và assertion sau sẽ fail rõ ràng.
      */
     private void waitForPrice(long expectedPrice) throws InterruptedException {
         long deadline = System.currentTimeMillis() + WORKER_TIMEOUT_MS;

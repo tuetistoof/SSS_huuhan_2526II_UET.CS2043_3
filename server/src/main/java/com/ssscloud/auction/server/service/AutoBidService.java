@@ -155,8 +155,7 @@ public class AutoBidService {
             long calculatedBidAmount = 0;
             if (lastBidTransaction == null && secondHighestBidAmount == -1){
                 calculatedBidAmount = currentAuctionPrice;
-            }
-            else{
+            } else{
                 long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
                 calculatedBidAmount = Math.min(basePrice + winningEntry.increment, winningEntry.maxBid);
             }
@@ -179,8 +178,7 @@ public class AutoBidService {
                         entriesToRemoveList.add(entry);
                     }
                 }
-            }
-            else{
+            } else{
                 entriesToRemoveList.addAll(autoBidEntriesList);
             }
             autoBidEntriesList.removeAll(entriesToRemoveList);

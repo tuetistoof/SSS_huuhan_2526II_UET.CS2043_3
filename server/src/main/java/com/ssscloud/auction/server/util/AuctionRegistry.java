@@ -9,7 +9,9 @@ import com.ssscloud.auction.common.model.auction.Auction;
 public class AuctionRegistry {
     private static final AuctionRegistry instance = new AuctionRegistry();
     private AuctionRegistry() {}
-    public static AuctionRegistry getInstance() { return instance; }
+    public static AuctionRegistry getInstance() { 
+        return instance; 
+    }
 
     private final Map<String, Auction> activeAuctions = new ConcurrentHashMap<>();
 
