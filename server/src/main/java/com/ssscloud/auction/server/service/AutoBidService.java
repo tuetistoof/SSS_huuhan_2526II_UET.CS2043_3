@@ -173,7 +173,7 @@ public class AutoBidService {
                 // Lọc ra các competitor (không phải người đang giữ giá cao nhất trên auction)
                 List<AutoBidEntry> otherCompetitorsList = new ArrayList<>();
                 for (AutoBidEntry entry : entriesSnapshotList) {
-                    if (!entry.bidderId.equals(highestBidderId) && !(entry.maxBid == highestBidderLock)) {
+                    if (!entry.bidderId.equals(highestBidderId) || !(entry.maxBid == highestBidderLock)) {
                         otherCompetitorsList.add(entry);
                     }
                 }

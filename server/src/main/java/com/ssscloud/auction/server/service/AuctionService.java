@@ -140,27 +140,42 @@ public class AuctionService {
     }
 
     public AuctionDTO getAuctionById(String auctionId) throws ServiceException, Exception {
-        try {
-            logger.log(Level.INFO, "Retrieving auction details for auctionId: " + auctionId);
-            validateAuctionId(auctionId);
-            
-            Auction auction = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
-    
-            UserDTO sellerDto = userService.getByUserId(auction.getSellerId());
-            ItemDTO itemDto = itemService.getItemById(auction.getItemId());
-            
-            if (itemDto == null) {
-                throw new ServiceException(ErrorCode.ITEM_NOT_FOUND, "Data integrity error: The item associated with auction " + auctionId + " was not found.");
-            }
-    
-            return auction.toAuctionDto(sellerDto, itemDto);
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getAuctionById: " + exception.getMessage(), exception);
-            throw exception;
+    try {
+        logger.log(Level.INFO, "Retrieving auction details for auctionId: " + auctionId);
+        validateAuctionId(auctionId);
+
+        // Thử lấy từ registry trước (nếu đang live)
+        AuctionRegistry registry = AuctionRegistry.getInstance();
+        Auction auction = (registry != null) ? registry.get(auctionId) : null;
+
+        // Nếu không có trong registry (auction đã ended/won), query DB
+        if (auction == null) {
+            auction = auctionDAO.findByAuctionId(auctionId);
         }
+
+        if (auction == null) {
+            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
+                    "Auction not found: " + auctionId);
+        }
+
+        UserDTO sellerDto = userService.getByUserId(auction.getSellerId());
+        ItemDTO itemDto = itemService.getItemById(auction.getItemId());
+
+        if (itemDto == null) {
+            throw new ServiceException(ErrorCode.ITEM_NOT_FOUND,
+                    "Item not found for auction: " + auctionId);
+        }
+
+        return auction.toAuctionDto(sellerDto, itemDto);
+    } catch (ServiceException serviceException) {
+        throw serviceException;
+    } catch (Exception exception) {
+        logger.log(Level.SEVERE,
+                "[SYSTEM_FAILURE] Unexpected system error in AuctionService.getAuctionById: "
+                        + exception.getMessage(), exception);
+        throw exception;
     }
+}
 
 
     public void scheduleClose(Auction auction) throws Exception {
