@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -17,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.auction.Auction;
@@ -46,6 +49,12 @@ public class BidServiceTest {
         auctionDAO = Mockito.mock(AuctionDAO.class);
         userDAO = Mockito.mock(UserDAO.class);
         bidService = new BidService(auctionDAO, userDAO);
+
+        when(userDAO.lockBidderBalance(any(), anyLong())).thenReturn(true);
+        when(userDAO.unlockBidderBalance(any(), anyLong())).thenReturn(true);
+        when(userDAO.updatePendingBalance(any(), anyLong())).thenReturn(true);
+
+        AuctionRegistry.initialize(auctionDAO);
 
         // Initialize ConcurrentBidManager singleton với mock DAO để các test
         // gọi đến submitBid() không bị NPE (singleton chưa được khởi tạo)
@@ -78,6 +87,9 @@ public class BidServiceTest {
 
     @AfterEach
     void tearDown() {
+        try {
+            ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
+        } catch (Exception ignored) {}
         ConcurrentBidManager.resetInstance();
         AuctionRegistry.getInstance().remove(AUCTION_ID);
     }
@@ -169,6 +181,12 @@ public class BidServiceTest {
     void testBidAmountIncrementTooLow() throws Exception {
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(mockAuction);
         when(userDAO.findById("bidder123")).thenReturn(mockBidder);
+
+        // Place a baseline bid first
+        mockAuction.placeBid(new BidTransaction(
+            AUCTION_ID, "bidder-pre", "pre",
+            30000L, 30000L, LocalDateTime.now(), BidType.MANUAL
+        ));
 
         // startPrice=30000, minIncrement=1000 → cần >= 31000, gửi 30500 → fail
         PlaceBidRequest placeBidRequest = new PlaceBidRequest(AUCTION_ID, 30500L);

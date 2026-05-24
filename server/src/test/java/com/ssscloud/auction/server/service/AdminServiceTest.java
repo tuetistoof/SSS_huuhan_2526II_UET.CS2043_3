@@ -87,11 +87,13 @@ public class AdminServiceTest {
     private Auction        auction;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         adminDAO       = mock(AdminDAO.class);
         auctionDAO     = mock(AuctionDAO.class);
         autoBidService = mock(AutoBidService.class);
         userDAO        = mock(UserDAO.class);
+
+        AuctionRegistry.initialize(auctionDAO);
 
         adminService = new AdminService(adminDAO, auctionDAO, autoBidService, userDAO);
 
@@ -114,6 +116,9 @@ public class AdminServiceTest {
 
     @AfterEach
     void tearDown() {
+        try {
+            ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
+        } catch (Exception ignored) {}
         AuctionRegistry.getInstance().remove(AUCTION_ID);
         ConcurrentBidManager.resetInstance();
     }
@@ -204,13 +209,13 @@ public class AdminServiceTest {
     }
 
     @Test
-    void testCancelAuction_auctionNotInRegistry_throwsServiceException() {
+    void testCancelAuction_auctionNotInRegistry_throwsServiceException() throws Exception {
         // WHY: auction không tồn tại trong AuctionRegistry = đã kết thúc hoặc không hợp lệ
         ServiceException ex = assertThrows(ServiceException.class,
             () -> adminService.cancelAuction("non-existent-id", REASON));
 
         assertEquals(ErrorCode.AUCTION_NOT_FOUND, ex.getErrorCode());
-        verifyNoInteractions(auctionDAO);
+        verify(auctionDAO).findByAuctionId("non-existent-id");
     }
 
     @Test

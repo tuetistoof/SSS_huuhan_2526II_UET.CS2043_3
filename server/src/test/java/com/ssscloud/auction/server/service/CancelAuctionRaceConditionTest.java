@@ -111,6 +111,8 @@ public class CancelAuctionRaceConditionTest {
         notificationController = mock(NotificationController.class);
         adminDAO               = mock(AdminDAO.class);
 
+        AuctionRegistry.initialize(auctionDAO);
+
         doNothing().when(notificationController).notifyWatchers(any(Auction.class), anyString());
         when(userDAO.unlockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.updatePendingBalance(anyString(), anyLong())).thenReturn(true);
@@ -134,6 +136,9 @@ public class CancelAuctionRaceConditionTest {
 
     @AfterEach
     void tearDown() {
+        try {
+            ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
+        } catch (Exception ignored) {}
         AuctionRegistry.getInstance().remove(AUCTION_ID);
         ConcurrentBidManager.resetInstance();
     }

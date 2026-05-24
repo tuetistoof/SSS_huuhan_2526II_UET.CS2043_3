@@ -74,6 +74,8 @@ public class ConcurrentBidManagerTest {
         AuctionDAO auctionDAO         = mock(AuctionDAO.class);
         notificationController        = mock(NotificationController.class);
 
+        AuctionRegistry.initialize(auctionDAO);
+
         doNothing().when(notificationController).notifyWatchers(any(Auction.class), anyString());
         when(userDAO.lockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.unlockBidderBalance(anyString(), anyLong())).thenReturn(true);
@@ -97,6 +99,10 @@ public class ConcurrentBidManagerTest {
 
     @AfterEach
     void tearDown() {
+        try {
+            ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
+            ConcurrentBidManager.getInstance().shutdown(AUCTION2_ID);
+        } catch (Exception ignored) {}
         ConcurrentBidManager.resetInstance();
         AuctionRegistry.getInstance().remove(AUCTION_ID);
         AuctionRegistry.getInstance().remove(AUCTION2_ID);
