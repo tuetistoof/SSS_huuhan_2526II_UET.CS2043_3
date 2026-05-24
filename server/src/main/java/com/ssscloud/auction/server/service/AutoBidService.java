@@ -157,6 +157,7 @@ public class AutoBidService {
             String auctionId = auctionEntity.getAuctionConfig().getId();
             long increment = auctionEntity.getAuctionConfig().getMinIncrement();
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
+            boolean isFirstBid = (lastBidTransaction == null);
             long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()
                     : lastBidTransaction.getBidAmount();
             String highestBidderId = lastBidTransaction == null ? null : lastBidTransaction.getBidderId();
@@ -196,14 +197,14 @@ public class AutoBidService {
                     }
                 }
                 long calculatedBidAmount = 0;
-                if (lastBidTransaction == null && secondHighestBidAmount == -1){
+                if (isFirstBid && entriesSnapshotList.size() <= 1){
                     calculatedBidAmount = currentAuctionPrice;
                 }
                 else{
                     long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
                     calculatedBidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
                 }
-                if (calculatedBidAmount > currentAuctionPrice) {
+                if (calculatedBidAmount >= currentAuctionPrice) {
                     // --- Thử lock balance cho winner ---
                     if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
                         // Balance không đủ → loại winner này, thử candidate tiếp
