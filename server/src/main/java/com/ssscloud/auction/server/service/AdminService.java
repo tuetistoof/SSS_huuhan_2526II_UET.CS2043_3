@@ -25,28 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * AdminService handles business logic for admin operations: viewing all auctions, retrieving
- * dashboard metrics, and canceling auctions.
- *
- * <p>--- CHANGES vs previous async version ---
- *
- * <p>Bug A fix: cancelAuction() bây giờ gọi doCancel() ĐỒNG BỘ (synchronous), thay vì schedule
- * async sau 10s. Tests trong AdminServiceTest Group 4-6 verify side effects ngay sau khi
- * cancelAuction() return — điều này chỉ đúng khi doCancel() chạy inline.
- *
- * <p>Graceful countdown (broadcast + chờ) được giữ lại, nhưng chạy blocking trước khi doCancel().
- * Client vẫn nhận được AUCTION_CANCEL_COUNTDOWN.
- *
- * <p>Bug C fix: thêm Set<String> cancelInProgress để guard double-cancel. cancelAuction() dùng
- * cancelInProgress.add() (atomic) làm mutex — nếu một admin đã initiate cancel cho auction X, lần
- * gọi thứ 2 với cùng X sẽ throw ServiceException(AUCTION_CLOSED) ngay lập tức thay vì chạy qua
- * softClose() + doCancel() lần 2.
- *
- * <p>NOTE: broadcastCancelCountdown vẫn giữ nguyên interface (dùng countdownSeconds=0 vì countdown
- * block đã bị bỏ). Nếu muốn khôi phục countdown hiển thị trên client thì đổi giá trị này và thêm
- * Thread.sleep() loop tương ứng.
- */
 public class AdminService {
 
   private static final Logger logger = Logger.getLogger(AdminService.class.getName());
@@ -56,18 +34,7 @@ public class AdminService {
   private final AutoBidService autoBidService;
   private final UserDAO userDAO;
 
-  /**
-   * FIX Bug C: Set các auctionId đang trong quá trình cancel.
-   *
-   * <p>Mục đích: ngăn admin bấm Cancel lần 2 trong khi lần 1 đang chạy. - cancelAuction() gọi
-   * cancelInProgress.add(auctionId) trước khi làm bất cứ điều gì. - Nếu add() trả false (id đã có)
-   * → throw AUCTION_CLOSED ngay. - finally block luôn remove(auctionId) để giải phóng slot khi
-   * cancel xong (dù thành công hay fail).
-   *
-   * <p>Tại sao không dùng synchronized(auction) thay thế? Vì synchronized(auction) chỉ guard đoạn
-   * check isActive() — nó được release ngay sau khi check, trước khi softClose() chạy. Trong khoảng
-   * đó thread thứ 2 có thể vào và pass guard. cancelInProgress cover toàn bộ flow.
-   */
+
   private final Set<String> cancelInProgress = ConcurrentHashMap.newKeySet();
 
   public AdminService(
@@ -78,9 +45,6 @@ public class AdminService {
     this.userDAO = userDAO;
   }
 
-  // =========================================================================
-  // PUBLIC METHODS
-  // =========================================================================
 
   public List<AdminDisplayDTO> getAuctions(AuctionStatus filter)
       throws ServiceException, Exception {
@@ -131,68 +95,75 @@ public class AdminService {
   /**
    * Hủy một auction đang chạy.
    *
-   * <p>Flow (synchronous — FIX Bug A): 1. Validate auctionId + tồn tại trong registry 2. FIX Bug C:
-   * guard cancelInProgress — reject ngay nếu đang cancel 3. Synchronized check isActive() — reject
-   * nếu đã terminated 4. softClose() + broadcast AUCTION_CANCEL_COUNTDOWN ngay lập tức 5.
-   * doCancel() chạy đồng bộ trên cùng thread — đảm bảo side effects (DB update, registry remove,
+   * 1. Validate auctionId + tồn tại trong registry hoặc database 
+   * 2. 
+   * guard cancelInProgress — reject ngay nếu đang cancel 
+   * 3. Synchronized check isActive() — reject nếu đã terminated 
+   * 4. softClose() + broadcast AUCTION_CANCEL_COUNTDOWN ngay lập tức 
+   * 5. doCancel() chạy đồng bộ trên cùng thread — đảm bảo side effects (DB update, registry remove,
    * refund) hoàn tất trước khi method return.
    *
-   * <p>Method này BLOCKING — caller (NetworkRouter) sẽ return response tới client chỉ sau khi toàn
-   * bộ cancel hoàn tất. Client nhận "success" = cancel đã xong thật.
-   *
-   * @throws ServiceException nếu auctionId không hợp lệ / auction không tồn tại / auction đã kết
-   *     thúc / đang cancel
-   */
+  **/
+
   public void cancelAuction(String auctionId, String reason) throws ServiceException, Exception {
     logger.log(
         Level.INFO,
         "Admin initiating cancel for auctionId: {0}, reason: {1}",
         new Object[] {auctionId, reason});
-
-    // --- Validate input ---
+ 
     if (auctionId == null || auctionId.isBlank()) {
       throw new ServiceException(
           ErrorCode.INVALID_AUCTION_ID, "The auction identifier is required.");
     }
-
-    Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
-    if (auction == null) {
-      throw new ServiceException(
-          ErrorCode.AUCTION_NOT_FOUND, "Auction not found or already ended: " + auctionId);
-    }
-
-    // --- FIX Bug C: atomic guard — chỉ 1 cancel được chạy tại 1 thời điểm ---
-    // cancelInProgress.add() trả false nếu auctionId đã có trong set → reject
-    if (!cancelInProgress.add(auctionId)) {
+ 
+    
+    Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId); //thử lấy từ Registry trước, nếu không db
+    if (!cancelInProgress.add(auctionId)) {  //chỉ 1 auction cancel 1 thời điểm
       throw new ServiceException(
           ErrorCode.AUCTION_CLOSED, "Auction cancellation is already in progress: " + auctionId);
     }
-
+ 
     try {
-      // --- Guard: auction phải còn active ---
-      // Synchronized với doCancel() của scheduleClose() để tránh race
-      synchronized (auction) {
-        if (!auction.getStatus().isActive()) {
-          throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction is already ended.");
+      if (auction != null) { //đang có trong ram
+        synchronized (auction) {
+          if (!auction.getStatus().isActive()) {
+            throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction is already ended.");
+          }
         }
+        ConcurrentBidManager.getInstance().softClose(auctionId);
+        autoBidService.clearRegistrations(auctionId);
+        broadcastCancelCountdown(auction, reason, 0);
+        doCancel(auctionId, reason);
+ 
+      } else {
+        //cancel thẳng qua DB
+        Auction dbAuction = auctionDAO.findByAuctionId(auctionId);
+        if (dbAuction == null) {
+          throw new ServiceException(
+              ErrorCode.AUCTION_NOT_FOUND, "Auction not found: " + auctionId);
+        }
+        if (!dbAuction.getStatus().isActive()) {
+          throw new ServiceException(
+              ErrorCode.AUCTION_CLOSED, "Auction is already ended: " + auctionId);
+        }
+ 
+        // Không có RAM object → update DB trực tiếp
+        auctionDAO.updateStatus(auctionId, AuctionStatus.CANCELED);
+        autoBidService.clearRegistrations(auctionId);
+ 
+        if (dbAuction.getLastBidTransaction() != null) {
+          long lockAmount = dbAuction.getLastBidTransaction().getLockedBalance();
+          refundWinner(dbAuction, lockAmount);
+        }
+ 
+        logger.log(Level.INFO,
+            "Auction cancelled via DB-only path (not in registry): {0}", auctionId);
       }
-
-      // --- softClose ngay: chặn bid/autobid mới ---
-      ConcurrentBidManager.getInstance().softClose(auctionId);
-      autoBidService.clearRegistrations(auctionId);
-
-      // --- Broadcast cho client biết auction sắp bị hủy ---
-      // countdownSeconds=0: "đang hủy ngay" — không có countdown delay
-      broadcastCancelCountdown(auction, reason, 0);
-      // --- FIX Bug A: doCancel() chạy ĐỒNG BỘ ---
-      // Test có thể verify side effects ngay sau khi cancelAuction() return
-      doCancel(auctionId, reason);
-
+ 
     } finally {
-      // Luôn remove khỏi in-progress set — dù thành công hay exception
       cancelInProgress.remove(auctionId);
     }
-
+ 
     logger.log(Level.INFO, "Auction successfully cancelled: {0}", auctionId);
   }
 
@@ -200,16 +171,7 @@ public class AdminService {
   // PRIVATE METHODS
   // =========================================================================
 
-  /**
-   * Thực hiện cancel: đổi status RAM → shutdown worker → update DB → refund → cleanup.
-   *
-   * <p>Được gọi ĐỒNG BỘ từ cancelAuction(). Không bao giờ được schedule async vì tests verify side
-   * effects ngay sau cancelAuction() return.
-   *
-   * <p>Race condition với scheduleClose(): Nếu scheduleClose() chạy đồng thời (auction kết thúc tự
-   * nhiên trong lúc admin đang cancel), synchronized(auction) + check isActive() đảm bảo chỉ 1
-   * trong 2 được set status terminal. Bên thua sẽ thấy isActive()==false và return sớm.
-   */
+  
   private void doCancel(String auctionId, String reason) throws ServiceException, Exception {
     logger.log(Level.INFO, "doCancel executing for auctionId: {0}", auctionId);
 
@@ -294,10 +256,7 @@ public class AdminService {
     logger.log(Level.INFO, "doCancel completed for auctionId: {0}", auctionId);
   }
 
-  /**
-   * Broadcast AUCTION_CANCEL_COUNTDOWN tới tất cả user đang trong phòng đấu giá. countdownSeconds=0
-   * nghĩa là "hủy ngay lập tức / đang xử lý".
-   */
+
   private void broadcastCancelCountdown(Auction auction, String reason, int countdownSeconds) {
     String auctionId = auction.getAuctionConfig().getId();
     String auctionName = auction.getAuctionConfig().getName();
@@ -335,10 +294,7 @@ public class AdminService {
         new Object[] {auctionId, countdownSeconds});
   }
 
-  /**
-   * Dọn dẹp tài nguyên sau khi DB đã commit CANCELED. Mỗi bước được try/catch riêng — lỗi ở 1 bước
-   * không chặn các bước còn lại.
-   */
+
   private void cleanupCanceledAuction(Auction auction, String auctionId, String reason) {
     try {
       AuctionRegistry.getInstance().remove(auctionId);
