@@ -66,7 +66,6 @@ public class ConcurrentBidManager {
                     instance.workerThreads.clear();
                     instance.bidTaskQueues.clear();
                     instance.closedAuctions.clear();
-                    instance = null;
                 }
             }
         }
