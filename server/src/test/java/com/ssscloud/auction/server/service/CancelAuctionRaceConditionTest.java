@@ -174,34 +174,28 @@ public class CancelAuctionRaceConditionTest {
     @Test
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
     void testA_cancelWhileWorkerBetweenLockAndPlaceBid_bidderNewMoneyMustBeUnlocked() throws Exception {
-        // ── Arrange ───────────────────────────────────────────────────────────
         System.out.println("[TEST A] Starting test: cancel while worker processing bid");
         auction = resetAuctionToBidderOld();
-        System.out.println("[TEST A] Setup: auction reset, highest bidder = " + auction.getHighestBidderId() + ", price = " + auction.getCurrentPrice());
-        
+        System.out.println("[TEST A] Setup: auction reset, highest bidder = "
+                + auction.getHighestBidderId() + ", price = " + auction.getCurrentPrice());
+
         CountDownLatch workerPausedLatch = new CountDownLatch(1);
         CountDownLatch workerResumeLatch = new CountDownLatch(1);
         CountDownLatch cancelDoneLatch   = new CountDownLatch(1);
 
-        // Set up basic mocks
         when(userDAO.unlockBidderBalance(anyString(), anyLong())).thenReturn(true);
         when(userDAO.updatePendingBalance(anyString(), anyLong())).thenReturn(true);
-        when(bidTransactionDAO.saveBidTransaction(any())).thenReturn(true);
 
-        // Override updatePendingBalance dengan doAnswer để thêm pause logic
+        // Chặn tại saveBidTransaction — tại thời điểm này commitBid() đã xong,
+        // BIDDER_NEW đã là highestBidder, nhưng worker chưa notify/return.
+        // Cancel chạy vào đây sẽ thấy highestBidder = BIDDER_NEW và refund cho NEW.
         doAnswer(inv -> {
-            String seller = inv.getArgument(0);
-            long delta = inv.getArgument(1);
             String threadName = Thread.currentThread().getName();
-            
-            System.out.println("[WORKER] updatePendingBalance called: seller=" + seller + ", delta=" + delta + ", thread=" + threadName);
-            
-            // Chỉ chặn khi đúng luồng worker đang xử lý NEW_BID (với khoảng chênh lệch giá là NEW_BID - OLD_BID)
-            if (SELLER_ID.equals(seller) && delta == (NEW_BID - OLD_BID) && 
-                threadName.startsWith("bid-worker")) {
-                
-                System.out.println("[WORKER] PAUSING at updatePendingBalance");
-                workerPausedLatch.countDown(); // Báo cho main thread biết đã tóm được worker
+            System.out.println("[WORKER] saveBidTransaction called, thread=" + threadName);
+
+            if (threadName.startsWith("bid-worker")) {
+                System.out.println("[WORKER] PAUSING at saveBidTransaction");
+                workerPausedLatch.countDown();
                 try {
                     boolean resumed = workerResumeLatch.await(5, TimeUnit.SECONDS);
                     System.out.println("[WORKER] RESUMED: " + resumed);
@@ -211,15 +205,14 @@ public class CancelAuctionRaceConditionTest {
                 }
             }
             return true;
-        }).when(userDAO).updatePendingBalance(anyString(), anyLong());
+        }).when(bidTransactionDAO).saveBidTransaction(any(BidTransaction.class));
 
         AtomicReference<Exception> cancelError = new AtomicReference<>();
 
-        // ── Act ───────────────────────────────────────────────────────────────
+        // ── Act ──────────────────────────────────────────────────────────────
         Thread submitThread = new Thread(() -> {
             try {
                 System.out.println("[SUBMIT] Submitting NEW_BID = " + NEW_BID);
-                // Submit NEW_BID vào hàng đợi với tham số lockAmount = NEW_BID
                 ConcurrentBidManager.getInstance().submitBid(
                         auction, BIDDER_NEW, "bidder_new_username", NEW_BID, NEW_BID, BidType.MANUAL
                 );
@@ -230,12 +223,16 @@ public class CancelAuctionRaceConditionTest {
         });
         submitThread.start();
 
-        // Chờ worker lấy task ra và bị mắc bẫy
+        // Chờ worker bị chặn tại saveBidTransaction (commitBid() đã xong)
         boolean paused = workerPausedLatch.await(5, TimeUnit.SECONDS);
         System.out.println("[MAIN] Worker paused: " + paused);
-        assertTrue(paused, "Worker phải chạy và bị chặn tại updatePendingBalance trong 5 giây");
-        
-        // Luồng Admin: gọi cancelAuction() trong lúc Worker đang kẹt
+        assertTrue(paused, "Worker phải bị chặn tại saveBidTransaction trong 5 giây");
+
+        // Tại đây BIDDER_NEW đã là highestBidder — cancel sẽ refund cho NEW, không phải OLD
+        assertEquals(BIDDER_NEW, auction.getHighestBidderId(),
+                "BIDDER_NEW phải là highestBidder sau commitBid()");
+        System.out.println("[MAIN] Verified: BIDDER_NEW is highest bidder");
+
         Thread cancelThread = new Thread(() -> {
             try {
                 System.out.println("[ADMIN] Starting cancel...");
@@ -250,35 +247,33 @@ public class CancelAuctionRaceConditionTest {
         }, "test-cancel-thread-A");
         cancelThread.start();
 
-        // 1. Cho luồng Admin chạy một chút để kịp gọi refundWinner() và kẹt chờ ở shutdown().join()
+        // Cho cancel chạy một chút (refundWinner + shutdown kẹt chờ join)
         System.out.println("[MAIN] Waiting 100ms for admin to start...");
-        Thread.sleep(100); 
+        Thread.sleep(100);
 
-        // 2. Thả Worker ra để nó hoàn tất (hoặc tự exit do bị interrupt)
+        // Resume worker để cancel không bị deadlock tại shutdown().join()
         System.out.println("[MAIN] Resuming worker...");
-        workerResumeLatch.countDown(); 
+        workerResumeLatch.countDown();
 
-        // 3. Chờ Admin cancel hoàn tất
         boolean cancelDone = cancelDoneLatch.await(7, TimeUnit.SECONDS);
         System.out.println("[MAIN] Cancel done: " + cancelDone);
         assertTrue(cancelDone, "cancelAuction() phải hoàn thành trong 7 giây");
-        
-        System.out.println("[MAIN] Waiting for threads to finish...");
+
         cancelThread.join(3000);
         submitThread.join(3000);
 
         // ── Assert ────────────────────────────────────────────────────────────
         System.out.println("[ASSERT] Final status: " + auction.getStatus());
-        assertNull(cancelError.get(), "cancelAuction() không được throw exception: " + cancelError.get());
-        assertEquals(AuctionStatus.CANCELED, auction.getStatus(), "Auction phải đổi sang trạng thái CANCELED");
+        assertNull(cancelError.get(),
+                "cancelAuction() không được throw exception: " + cancelError.get());
+        assertEquals(AuctionStatus.CANCELED, auction.getStatus(),
+                "Auction phải đổi sang trạng thái CANCELED");
 
-        // Admin sẽ hoàn tiền cho người thắng cũ là BIDDER_OLD (vì lúc Admin chạy, worker chưa kịp đổi highestBidder)
+        // BIDDER_OLD đã được unlock bởi processTask (bước unlock winner cũ trước commitBid)
         verify(userDAO, atLeastOnce()).unlockBidderBalance(eq(BIDDER_OLD), eq(OLD_BID));
 
-        // NẾU BÀI TEST BÁO ĐỎ (FAIL) Ở DÒNG DƯỚI ĐÂY -> CHÚC MỪNG BẠN ĐÃ BẮT ĐÚNG LỖI!
-        // Worker bị ngắt giữa chừng, task của NEW_BID bị rớt khỏi hàng đợi nhưng lockAmount đã bị khóa trước đó.
-        // Bắt buộc hệ thống của bạn (bên trong hàm shutdown hoặc processTask) phải có đoạn code "nhặt" 
-        // các task bị kẹt lại để trả tiền cho BIDDER_NEW.
+        // BIDDER_NEW phải được unlock bởi refundWinner() của cancelAuction
+        // vì tại thời điểm cancel chạy, BIDDER_NEW đã là highestBidder
         System.out.println("[ASSERT] Verifying BIDDER_NEW is unlocked...");
         verify(userDAO, atLeastOnce()).unlockBidderBalance(eq(BIDDER_NEW), eq(NEW_BID));
         System.out.println("[TEST A] PASSED!");
