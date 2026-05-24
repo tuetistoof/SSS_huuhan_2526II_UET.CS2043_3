@@ -13,15 +13,11 @@ public class AutoBidRequest implements Serializable{
         this.maxBid = maxBid;
     }
 
-  public AutoBidRequest(String auctionId, long maxBid, long increment) {
-    this.auctionId = auctionId;
-    this.maxBid = maxBid;
-    this.increment = increment;
-  }
+    public String getAuctionId() { return auctionId; }
+    public void setAuctionId(String auctionId) { this.auctionId = auctionId; }
 
-  public String getAuctionId() {
-    return auctionId;
-  }
+    public long getMaxBid() { return maxBid; }
+    public void setMaxBid(long maxBid) { this.maxBid = maxBid; }
 
     @Override
     public String toString() {

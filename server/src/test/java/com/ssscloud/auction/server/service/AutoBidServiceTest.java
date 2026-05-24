@@ -395,7 +395,6 @@ public class AutoBidServiceTest {
         AutoBidRequest req = new AutoBidRequest();
         req.setAuctionId(auctionId);
         req.setMaxBid(maxBid);
-        req.setIncrement(increment);
         return req;
     }
 
