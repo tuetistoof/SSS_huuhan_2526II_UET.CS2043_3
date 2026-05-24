@@ -15,401 +15,275 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Auction implements Subject {
 
-  private final AuctionConfig auctionConfig;
+    private final AuctionConfig auctionConfig;
+    private volatile AuctionStatus status; 
+    private final String sellerId;
+    private String itemId;
+    private List<BidTransaction> bidTransaction;
 
-  // volatile để đảm bảo visibility giữa các thread
-  private volatile AuctionStatus status;
+    // ĐÃ TỐI ƯU: Thay thế ReadWriteLock bằng ReentrantLock đơn giản, hiệu năng cao hơn
+    private final Lock mutationLock = new ReentrantLock(true); 
+    
+    private final AtomicLong snapshotVersion = new AtomicLong(0);
+    private final AtomicReference<AuctionSnapshot> snapshot = new AtomicReference<>();
 
-  private final String sellerId;
-  private String itemId;
+    // --- Constructors ---
 
-  private List<BidTransaction> bidTransaction;
-
-  // Lock riêng cho bidTransaction
-  private final ReadWriteLock bidLock = new ReentrantReadWriteLock();
-  private final ReadWriteLock auctionLock = new ReentrantReadWriteLock() {};
-
-  public ReadWriteLock getAuctionLock() {
-    return auctionLock;
-  }
-
-  public ReadWriteLock getBidLock() {
-    return bidLock;
-  }
-
-  public Auction() {
-    this.auctionConfig = null;
-    this.bidTransaction = new ArrayList<>();
-    this.sellerId = null;
-  }
-
-  public Auction(
-      AuctionConfig auctionConfig, AuctionStatus status, String sellerId, String itemId) {
-    this.auctionConfig = auctionConfig;
-    this.status = status;
-    this.sellerId = sellerId;
-    this.itemId = itemId;
-    this.bidTransaction = new ArrayList<>();
-  }
-
-  public Auction(
-      AuctionConfig auctionConfig,
-      AuctionStatus status,
-      String sellerId,
-      String itemId,
-      List<BidTransaction> bidTransaction) {
-    this.auctionConfig = auctionConfig;
-    this.status = status;
-    this.sellerId = sellerId;
-    this.itemId = itemId;
-
-    // Defensive copy
-    this.bidTransaction = new ArrayList<>(bidTransaction);
-  }
-
-  public void placeBid(BidTransaction bid) {
-    bidLock.writeLock().lock();
-
-    try {
-      this.bidTransaction.add(bid);
-    } finally {
-      bidLock.writeLock().unlock();
-    }
-  }
-
-  public void setBidTransaction(List<BidTransaction> bidTransaction) {
-    bidLock.writeLock().lock();
-
-    try {
-      this.bidTransaction = new ArrayList<>(bidTransaction);
-    } finally {
-      bidLock.writeLock().unlock();
-    }
-  }
-
-  public BidTransaction getLastBidTransaction() {
-    bidLock.readLock().lock();
-    try {
-      if (!bidTransaction.isEmpty()) {
-        return bidTransaction.getLast();
-      }
-      return null;
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public long getCurrentPrice() {
-    bidLock.readLock().lock();
-
-    try {
-      if (!bidTransaction.isEmpty()) {
-        return bidTransaction.getLast().getBidAmount();
-      }
-
-      return auctionConfig.getStartPrice();
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public String getHighestBidderId() {
-    bidLock.readLock().lock();
-
-    try {
-      if (!bidTransaction.isEmpty()) {
-        return bidTransaction.getLast().getBidderId();
-      }
-
-      return null;
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public String getHighestBidderName() {
-    bidLock.readLock().lock();
-
-    try {
-      if (!bidTransaction.isEmpty()) {
-        return bidTransaction.getLast().getBidderUsername();
-      }
-
-      return null;
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public LocalDateTime getBidTime() {
-    bidLock.readLock().lock();
-
-    try {
-      if (!bidTransaction.isEmpty()) {
-        return bidTransaction.getLast().getBidTime();
-      }
-
-      return null;
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public BidType getBidType() {
-    bidLock.readLock().lock();
-
-    try {
-      if (!bidTransaction.isEmpty()) {
-        return bidTransaction.getLast().getType();
-      }
-
-      return null;
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public List<BidTransaction> getBidTransaction() {
-    bidLock.readLock().lock();
-
-    try {
-      return new ArrayList<>(this.bidTransaction);
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public int getBidCount() {
-    bidLock.readLock().lock();
-
-    try {
-      return bidTransaction.size();
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public BidDTO toBidDtoForBidUpdate() {
-    bidLock.readLock().lock();
-
-    try {
-      BidTransaction bidTransaction = this.getLastBidTransaction();
-      if (bidTransaction == null) {
-        return null;
-      }
-
-      BidDTO bidDto = new BidDTO();
-      bidDto.setAuctionId(bidTransaction.getAuctionId());
-      bidDto.setBidderId(bidTransaction.getBidderId());
-      bidDto.setBidderUsername(bidTransaction.getBidderUsername());
-      bidDto.setBidAmount(bidTransaction.getBidAmount());
-      bidDto.setLockedBalance(bidTransaction.getLockedBalance());
-      bidDto.setBidTime(bidTransaction.getBidTime());
-      bidDto.setAntiSnipingEndTime(auctionConfig.getEndTime());
-      bidDto.setBidType(bidTransaction.getType().name());
-      return bidDto;
-    } finally {
-      bidLock.readLock().unlock();
-    }
-  }
-
-  public Map<String, Object> buildAuctionEndedPayload(Auction auction) {
-    auctionLock.readLock().lock();
-    try {
-      Map<String, Object> payload = new HashMap<>();
-      payload.put("auctionId", auction.getAuctionConfig().getId());
-      payload.put("auctionName", auction.getAuctionConfig().getName());
-      payload.put("finalPrice", auction.getCurrentPrice());
-      payload.put(
-          "winnerName",
-          auction.getHighestBidderName() != null
-              ? auction.getHighestBidderName()
-              : "No bids placed");
-      return payload;
-    } finally {
-      auctionLock.readLock().unlock();
-    }
-  }
-
-  public AuctionDTO toAuctionDto(Auction auction, UserDTO sellerDto, ItemDTO itemDto) {
-    AuctionDTO auctionDto = new AuctionDTO();
-
-    // 1. Đọc các thông tin cấu hình cơ bản (Sử dụng auctionLock)
-    auctionLock.readLock().lock();
-    try {
-      auctionDto.setId(this.auctionConfig.getId());
-      auctionDto.setName(this.auctionConfig.getName());
-      auctionDto.setStartPrice(this.auctionConfig.getStartPrice());
-      auctionDto.setMinIncrement(this.auctionConfig.getMinIncrement());
-      auctionDto.setStartTime(this.auctionConfig.getStartTime());
-      auctionDto.setEndTime(this.auctionConfig.getEndTime());
-      auctionDto.setStatus(this.status);
-    } finally {
-      auctionLock.readLock().unlock();
+    public Auction() {
+        this.auctionConfig  = null;
+        this.sellerId       = null;
+        this.bidTransaction = new ArrayList<>();
+        publishSnapshotWithoutLock();
     }
 
-    List<BidTransaction> snapshotBids;
-    bidLock.readLock().lock();
-    try {
-      snapshotBids = new ArrayList<>(this.bidTransaction);
-    } finally {
-      bidLock.readLock().unlock();
+    public Auction(AuctionConfig auctionConfig, AuctionStatus status, String sellerId, String itemId) {
+        this.auctionConfig  = auctionConfig;
+        this.status         = status;
+        this.sellerId       = sellerId;
+        this.itemId         = itemId;
+        this.bidTransaction = new ArrayList<>();
+        publishSnapshotWithoutLock();
     }
 
-    // 3. Ánh xạ danh sách giao dịch thầu sang danh sách BidDTO (Không giữ lock khi map)
-    List<BidDTO> bidDtoList = new ArrayList<>();
-    if (snapshotBids != null && !snapshotBids.isEmpty()) {
-      for (BidTransaction tx : snapshotBids) {
-        BidDTO bidDto = new BidDTO();
-        bidDto.setAuctionId(tx.getAuctionId());
-        bidDto.setBidderId(tx.getBidderId());
-        bidDto.setBidderUsername(tx.getBidderUsername());
-        bidDto.setBidAmount(tx.getBidAmount());
-        bidDto.setLockedBalance(tx.getLockedBalance());
-        bidDto.setBidTime(tx.getBidTime());
-        bidDto.setBidType(tx.getType().name());
-
-        // Anti-sniping end time tại thời điểm transaction này được tạo ra
-        bidDto.setAntiSnipingEndTime(auctionDto.getEndTime());
-
-        bidDtoList.add(bidDto);
-      }
+    public Auction(AuctionConfig auctionConfig, AuctionStatus status, String sellerId, String itemId, List<BidTransaction> bidTransaction) {
+        this.auctionConfig  = auctionConfig;
+        this.status         = status;
+        this.sellerId       = sellerId;
+        this.itemId         = itemId;
+        this.bidTransaction = copyTransactions(bidTransaction);
+        publishSnapshotWithoutLock();
     }
 
-    auctionDto.setBidDto(bidDtoList);
-    auctionDto.setSellerDTO(sellerDto);
-    auctionDto.setItemDTO(itemDto);
+    // --- Snapshot access ---
+    public AuctionSnapshot snapshot() { return snapshot.get(); }
 
-    return auctionDto;
-  }
+    // --- Getters (Không cần dùng lock vì đã có snapshot cô lập dữ liệu) ---
 
-  @Override
-  public String toString() {
-    bidLock.readLock().lock();
+    public AuctionConfig getAuctionConfig() { return auctionConfig; }
+    public String getSellerId()             { return sellerId; }
+    public String getItemId()               { return itemId; }
 
-    try {
-      long currentPrice =
-          bidTransaction.isEmpty()
-              ? auctionConfig.getStartPrice()
-              : bidTransaction.getLast().getBidAmount();
-
-      return "Auction{"
-          + "id="
-          + auctionConfig.getId()
-          + ", name='"
-          + auctionConfig.getName()
-          + '\''
-          + ", currentPrice="
-          + currentPrice
-          + ", status="
-          + status
-          + '}';
-    } finally {
-      bidLock.readLock().unlock();
+    public void setItemId(String itemId) {
+        mutationLock.lock(); // Đảm bảo ghi tuần tự
+        try {
+            this.itemId = itemId;
+            publishSnapshotWithoutLock();
+        } // Thay vì notify luôn ở đây, ta thường để luồng Service quyết định hoặc gọi ở cuối hàm
+        finally {
+            mutationLock.unlock();
+        }
     }
-  }
-
-  // =========================
-  // Status methods
-  // =========================
-
-  public void start() {
-    if (this.status == AuctionStatus.OPEN) {
-      this.status = AuctionStatus.RUNNING;
+    public AtomicReference<AuctionSnapshot> getSnapshot() {
+        return snapshot;
     }
-  }
-
-  public void finish() {
-    if (this.status == AuctionStatus.OPEN || this.status == AuctionStatus.RUNNING) {
-
-      this.status = AuctionStatus.FINISHED;
-    }
-  }
-
-  public void markPaid() {
-    if (this.status == AuctionStatus.FINISHED) {
-      this.status = AuctionStatus.PAID;
-    }
-  }
-
-  public void cancel() {
-    if (this.status.isActive()) {
-      this.status = AuctionStatus.CANCELED;
-    }
-  }
-
-  @Override
-  public void notifyObservers() {
-    ChangeManager.getInstance().notify(this);
-  }
-
-  public boolean isActive() {
-    return status.isActive();
-  }
-
-  public boolean isExpired() {
-    auctionLock.readLock().lock();
-
-    try {
-      return LocalDateTime.now().isAfter(auctionConfig.getEndTime());
-    } finally {
-      auctionLock.readLock().unlock();
-    }
-  }
-
-  // =========================
-  // Getters / Setters
-  // =========================
-
-  public AuctionConfig getAuctionConfig() {
-    return auctionConfig;
-  }
-
-  public String getSellerId() {
-    return sellerId;
-  }
-
-  public String getItemId() {
-    return itemId;
-  }
-
-  public void setItemId(String itemId) {
-    this.itemId = itemId;
-  }
-
-  public AuctionStatus getStatus() {
-    return status;
-  }
-
-  public void setStatus(AuctionStatus status) {
-    this.status = status;
-  }
-
-  // =========================
-  // equals / hashCode
-  // =========================
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+    public AuctionStatus getStatus() {
+        return status;
     }
 
-    Auction auction = (Auction) o;
+    public LocalDateTime getEndTime() {
+        return snapshot.get().getEndTime();
+    }
 
-    return Objects.equals(this.getAuctionConfig().getId(), auction.getAuctionConfig().getId());
-  }
+    public BidTransaction getLastBidTransaction() {
+        return snapshot.get().getLastBidTransaction(); 
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.getAuctionConfig().getId());
-  }
+    public long getCurrentPrice() {
+        BidTransaction last = snapshot.get().getLastBidTransaction();
+        return last != null ? last.getBidAmount()
+                            : (auctionConfig != null ? auctionConfig.getStartPrice() : 0L);
+    }
+
+    public String getHighestBidderId() {
+        BidTransaction last = snapshot.get().getLastBidTransaction();
+        return last != null ? last.getBidderId() : null;
+    }
+
+    public String getHighestBidderName() {
+        BidTransaction last = snapshot.get().getLastBidTransaction();
+        return last != null ? last.getBidderUsername() : null;
+    }
+
+    public LocalDateTime getBidTime() {
+        BidTransaction last = snapshot.get().getLastBidTransaction();
+        return last != null ? last.getBidTime() : null;
+    }
+
+    public BidType getBidType() {
+        BidTransaction last = snapshot.get().getLastBidTransaction();
+        return last != null ? last.getType() : null;
+    }
+
+    public List<BidTransaction> getBidTransaction() { return snapshot.get().getBidTransactions(); }
+    public int getBidCount()                        { return snapshot.get().getBidCount(); }
+
+    // --- Mutation (Chỉ ghi mới cần khóa mutationLock) ---
+
+    public void commitBid(BidTransaction bid, boolean markRunning, LocalDateTime newEndTime) {
+        Objects.requireNonNull(bid, "bid");
+        mutationLock.lock(); 
+        try {
+            this.bidTransaction.add(new BidTransaction(bid));
+            if (markRunning && this.status == AuctionStatus.OPEN) {
+                this.status = AuctionStatus.RUNNING;
+            }
+            if (newEndTime != null && this.auctionConfig != null) {
+                this.auctionConfig.setEndTime(newEndTime);
+            }
+            publishSnapshotWithoutLock();
+        } finally {
+            mutationLock.unlock();
+        }
+    }
+
+    public void placeBid(BidTransaction bid) {
+        commitBid(bid, false, null);
+    }
+
+    public void setBidTransaction(List<BidTransaction> bidTransaction) {
+        mutationLock.lock();
+        try {
+            this.bidTransaction = copyTransactions(bidTransaction);
+            publishSnapshotWithoutLock();
+        } finally {
+            mutationLock.unlock();
+        }
+    }
+
+    public void setStatus(AuctionStatus status) {
+        mutationLock.lock();
+        try {
+            this.status = status;
+            publishSnapshotWithoutLock();
+        } finally {
+            mutationLock.unlock();
+        }
+    }
+
+    public void start()    { if (status == AuctionStatus.OPEN)                                setStatus(AuctionStatus.RUNNING);  }
+    public void finish()   { if (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING) setStatus(AuctionStatus.FINISHED); }
+    public void markPaid() { if (status == AuctionStatus.FINISHED)                                setStatus(AuctionStatus.PAID);     }
+    public void cancel()   { if (status != null && status.isActive())                             setStatus(AuctionStatus.CANCELED); }
+
+    // --- State queries ---
+    public boolean isActive() { return status != null && status.isActive(); }
+    public boolean isExpired() {
+        LocalDateTime endTime = snapshot.get().getEndTime();
+        return endTime != null && LocalDateTime.now().isAfter(endTime);
+    }
+
+    // --- DTO builders ---
+    public BidDTO toBidDtoForBidUpdate() {
+        AuctionSnapshot s   = snapshot.get();
+        BidTransaction last = s.getLastBidTransaction();
+        if (last == null) return null;
+        BidDTO dto = toBidDto(last);
+        dto.setAntiSnipingEndTime(s.getEndTime());
+        dto.setVersion(s.getVersion());
+        return dto;
+    }
+
+    public Map<String, Object> buildAuctionEndedPayload() {
+        AuctionSnapshot s   = snapshot.get();
+        BidTransaction last = s.getLastBidTransaction();
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("auctionId",   auctionConfig != null ? auctionConfig.getId()   : null);
+        payload.put("auctionName", auctionConfig != null ? auctionConfig.getName() : null);
+        payload.put("finalPrice",  last != null ? last.getBidAmount()
+                                               : (auctionConfig != null ? auctionConfig.getStartPrice() : 0L));
+        payload.put("winnerName",  last != null ? last.getBidderUsername() : "No bids placed");
+        payload.put("version",     s.getVersion());
+        return payload;
+    }
+
+    public AuctionDTO toAuctionDto(UserDTO sellerDto, ItemDTO itemDto) {
+        AuctionSnapshot s   = snapshot.get();
+        AuctionDTO dto = new AuctionDTO();
+
+        if (auctionConfig != null) {
+            dto.setId(auctionConfig.getId());
+            dto.setName(auctionConfig.getName());
+            dto.setStartPrice(auctionConfig.getStartPrice());
+            dto.setMinIncrement(auctionConfig.getMinIncrement());
+            dto.setStartTime(auctionConfig.getStartTime());
+        }
+
+        dto.setEndTime(s.getEndTime());
+        dto.setStatus(s.getStatus());
+        dto.setVersion(s.getVersion());
+
+        List<BidDTO> bidDtoList = new ArrayList<>();
+        for (BidTransaction t : s.getBidTransactions()) {
+            BidDTO bidDto = toBidDto(t);
+            bidDto.setAntiSnipingEndTime(s.getEndTime());
+            bidDto.setVersion(s.getVersion());
+            bidDtoList.add(bidDto);
+        }
+        dto.setBidDto(bidDtoList);
+        dto.setSellerDTO(sellerDto);
+        dto.setItemDTO(itemDto);
+        return dto;
+    }
+
+    @Override
+    public String toString() {
+        AuctionSnapshot s   = snapshot.get();
+        BidTransaction last = s.getLastBidTransaction();
+        long price = last != null ? last.getBidAmount()
+                                  : (auctionConfig != null ? auctionConfig.getStartPrice() : 0L);
+        return "Auction{" + "id=" + (auctionConfig != null ? auctionConfig.getId() : null)
+                + ", name='" + (auctionConfig != null ? auctionConfig.getName() : null) + '\''
+                + ", currentPrice=" + price + ", status=" + s.getStatus() + ", version=" + s.getVersion() + '}';
+    }
+
+    @Override
+    public void notifyObservers() { ChangeManager.getInstance().notify(this); }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Auction other = (Auction) o;
+        String thisId  = auctionConfig != null ? auctionConfig.getId() : null;
+        String otherId = other.auctionConfig != null ? other.auctionConfig.getId() : null;
+        return Objects.equals(thisId, otherId);
+    }
+
+    @Override
+    public int hashCode() { return Objects.hash(auctionConfig != null ? auctionConfig.getId() : null); }
+
+    // --- Private helpers ---
+    private void publishSnapshotWithoutLock() {
+        snapshot.set(AuctionSnapshot.from(
+                auctionConfig != null ? auctionConfig.getEndTime() : null,
+                status,
+                bidTransaction,
+                snapshotVersion.incrementAndGet()));
+    }
+
+    private static List<BidTransaction> copyTransactions(List<BidTransaction> transactions) {
+        if (transactions == null) return new ArrayList<>();
+        List<BidTransaction> copy = new ArrayList<>(transactions.size());
+        for (BidTransaction t : transactions) copy.add(new BidTransaction(t));
+        return copy;
+    }
+
+    private static BidDTO toBidDto(BidTransaction t) {
+        BidDTO dto = new BidDTO();
+        dto.setAuctionId(t.getAuctionId());
+        dto.setBidderId(t.getBidderId());
+        dto.setBidderUsername(t.getBidderUsername());
+        dto.setBidAmount(t.getBidAmount());
+        dto.setLockedBalance(t.getLockedBalance());
+        dto.setBidTime(t.getBidTime());
+        dto.setBidType(t.getType() != null ? t.getType().name() : null);
+        return dto;
+    }
 }

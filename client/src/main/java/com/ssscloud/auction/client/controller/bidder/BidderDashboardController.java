@@ -10,8 +10,13 @@ import com.ssscloud.auction.common.payload.request.GetAuctionsRequest;
 import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.controller.shared.LoadingController;
+import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.MessageListener;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
 import com.ssscloud.auction.client.util.ServerResponse;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import javafx.application.Platform;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -22,7 +27,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 
-public class BidderDashboardController {
+public class BidderDashboardController implements MessageListener {
 
     @FXML private FlowPane auctionContainer;
     @FXML private Label lblPageTitle;
@@ -34,6 +39,7 @@ public class BidderDashboardController {
     @FXML private LoadingController loadingController;
 
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
+    private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
     private List<BidderDisplayDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
     private Consumer<BidderDisplayDTO> onOpenBidRoomHandler;
 
@@ -44,7 +50,44 @@ public class BidderDashboardController {
 
     @FXML
     public void initialize() {
+        socket.addListener(this);
         fetchActiveAuctions();
+    }
+
+    /** Gọi khi MainLayout clear content để tránh memory leak */
+    public void cleanup() {
+        socket.removeListener(this);
+    }
+
+    @Override
+    public void onMessageReceived(String json) {
+        try {
+            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            String action = root.has("action") ? root.get("action").getAsString() : "";
+            if ("AUCTION_CANCELED".equals(action)) {
+                // Lấy auctionId từ push và xóa card tương ứng khỏi list + UI
+                if (root.has("data") && root.get("data").isJsonObject()) {
+                    String canceledId = root.get("data").getAsJsonObject()
+                            .has("auctionId") ? root.get("data").getAsJsonObject()
+                            .get("auctionId").getAsString() : null;
+                    if (canceledId != null) {
+                        final String id = canceledId;
+                        Platform.runLater(() -> removeCanceledCard(id));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[BidderDashboard] onMessageReceived error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Xóa auction card bị cancel khỏi list và re-render.
+     * Không cần re-fetch server — loại bỏ ngay trên RAM.
+     */
+    private void removeCanceledCard(String auctionId) {
+        allAuctionsDisplayInfo.removeIf(dto -> auctionId.equals(dto.getId()));
+        applyFilters();
     }
     public void fetchActiveAuctions() {
         String json = JsonUtils.toJson(ClientMessage.request("GET_ACTIVE_AUCTIONS", new GetAuctionsRequest()));

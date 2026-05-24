@@ -9,13 +9,14 @@ public class AuctionDTO implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  private String id;
-  private String name;
-  private long startPrice;
-  private long minIncrement;
-  private LocalDateTime startTime;
-  private LocalDateTime endTime;
-  private AuctionStatus status;
+    private String id;
+    private String name;
+    private long startPrice;
+    private long minIncrement;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private AuctionStatus status;
+    private long version;
 
   private UserDTO sellerDTO;
   private ItemDTO itemDTO;
@@ -36,9 +37,20 @@ public class AuctionDTO implements Serializable {
     this.name = name;
   }
 
-  public String getName() {
-    return name;
-  }
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
+    public ItemDTO getItemDTO() {
+        return itemDTO;
+    }
+    public void setItemDTO(ItemDTO itemDTO) {
+        this.itemDTO = itemDTO;
+    }
 
   public long getStartPrice() {
     return startPrice;
@@ -56,82 +68,16 @@ public class AuctionDTO implements Serializable {
     this.startTime = startTime;
   }
 
-  public LocalDateTime getEndTime() {
-    return endTime;
-  }
-
-  public void setEndTime(LocalDateTime endTime) {
-    this.endTime = endTime;
-  }
-
-  public void setStatus(AuctionStatus status) {
-    this.status = status;
-  }
-
-  public AuctionStatus getStatus() {
-    return status;
-  }
-
-  public ItemDTO getItemDTO() {
-    return itemDTO;
-  }
-
-  public void setItemDTO(ItemDTO itemDTO) {
-    this.itemDTO = itemDTO;
-  }
-
-  public long getMinIncrement() {
-    return minIncrement;
-  }
-
-  public void setMinIncrement(long minIncrement) {
-    this.minIncrement = minIncrement;
-  }
-
-  public List<BidDTO> getBidDto() {
-    return bidDto;
-  }
-
-  public void setBidDto(List<BidDTO> bidDto) {
-    this.bidDto = bidDto;
-  }
-
-  public UserDTO getSellerDTO() {
-    return sellerDTO;
-  }
-
-  public void setSellerDTO(UserDTO sellerDTO) {
-    this.sellerDTO = sellerDTO;
-  }
-
-  public BidDTO getLastBidDTO() {
-    return bidDto.getLast();
-  }
-
-  public long getCurrentPrice() {
-    if (bidDto.isEmpty()) return startPrice;
-    else return bidDto.getLast().getBidAmount();
-  }
-
-  @Override
-  public String toString() {
-    return "AuctionDTO{"
-        + "id='"
-        + id
-        + '\''
-        + ", name='"
-        + name
-        + '\''
-        + ", startPrice="
-        + startPrice
-        + ", minIncrement="
-        + minIncrement
-        + ", status="
-        + status
-        + ", startTime="
-        + startTime
-        + ", endTime="
-        + endTime
-        + '}';
-  }
+    @Override
+    public String toString() {
+        return "AuctionDTO{" +
+            "id='"                + id                + '\'' +
+            ", name='"            + name              + '\'' +
+            ", startPrice="       + startPrice        +
+            ", minIncrement="     + minIncrement      +
+            ", status="           + status            +
+            ", startTime="        + startTime         +
+            ", endTime="          + endTime           +
+            '}';
+    }
 }

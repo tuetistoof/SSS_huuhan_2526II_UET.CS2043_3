@@ -243,9 +243,8 @@ public class MainLayoutController implements MessageListener {
 
     private void navigateToAuction(String auctionId) {
         if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
-        BidderDisplayDTO dummy = new BidderDisplayDTO();
-        dummy.setId(auctionId);
-        loadBiddingRoomAsBidder(dummy);
+        // Từ notification không có tab nguồn rõ ràng → back về Dashboard
+        loadBiddingRoomGeneral(auctionId, false, () -> handleNavDashboard(null));
     }
 
     // --- Role-based UI visibility ---
@@ -284,7 +283,11 @@ public class MainLayoutController implements MessageListener {
 
     private void cleanupCurrentController() {
         if (currentController == null) return;
-        else if      (currentController instanceof BiddingRoomController  c) c.cleanup();
+        else if (currentController instanceof BiddingRoomController        c) c.cleanup();
+        else if (currentController instanceof BiddedAuctionsListController c) c.cleanup();
+        else if (currentController instanceof WatchlistController          c) c.cleanup();
+        else if (currentController instanceof ItemsWonController           c) c.cleanup();
+        else if (currentController instanceof BidderDashboardController    c) c.cleanup();
         currentController = null;
     }
  
@@ -349,8 +352,10 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navActiveBids);
         clearContent();
         ViewLoader.LoadResult<BiddedAuctionsListController> r = ViewLoader.load("bidded-auction-list.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
+        r.controller().setOnOpenAuction(dto ->
+            loadBiddingRoomGeneral(dto.getId(), false, () -> handleNavActiveBids(null)));
         contentArea.getChildren().add(r.root());
+        currentController = r.controller();
     }
 
     @FXML
@@ -425,17 +430,17 @@ public class MainLayoutController implements MessageListener {
 
     public void loadBiddingRoomAsBidder(BidderDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
-        loadBiddingRoomGeneral(basicInfo.getId(), false);
+        loadBiddingRoomGeneral(basicInfo.getId(), false, () -> handleNavDashboard(null));
     }
 
     public void loadBiddingRoomAsSeller(SellerDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
-        loadBiddingRoomGeneral(basicInfo.getId(), true);
+        loadBiddingRoomGeneral(basicInfo.getId(), true, () -> handleNavDashboard(null));
     }
 
     public void loadBiddingRoomAsAdmin(AdminDisplayDTO basicInfo) {
         if (basicInfo == null) { handleNavDashboard(null); return; }
-        loadBiddingRoomGeneral(basicInfo.getAuctionId(), true);
+        loadBiddingRoomGeneral(basicInfo.getAuctionId(), true, () -> handleNavDashboard(null));
     }
 
     @FXML void handleNavUserInfo(MouseEvent event) { System.out.println("Đã click vào khu vực User Info!"); }
@@ -455,16 +460,20 @@ public class MainLayoutController implements MessageListener {
         updateActiveStyle(navWatchlist);
         clearContent();
         ViewLoader.LoadResult<WatchlistController> r = ViewLoader.load("watchlist.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
+        r.controller().setOnOpenAuction(dto ->
+            loadBiddingRoomGeneral(dto.getId(), false, () -> handleNavWatchlist(null)));
         contentArea.getChildren().add(r.root());
+        currentController = r.controller();
     }
 
     @FXML void handleNavWonItems(MouseEvent event) {
         updateActiveStyle(navWonItems);
         clearContent();
         ViewLoader.LoadResult<ItemsWonController> r = ViewLoader.load("won-items.fxml");
-        r.controller().setOnOpenAuction(this::loadBiddingRoomAsBidder);
+        r.controller().setOnOpenAuction(dto ->
+            loadBiddingRoomGeneral(dto.getId(), false, () -> handleNavWonItems(null)));
         contentArea.getChildren().add(r.root());
+        currentController = r.controller();
     }
 
     @FXML void handleSearching(MouseEvent event) {}
@@ -502,7 +511,7 @@ public class MainLayoutController implements MessageListener {
         isSidebarExpanded = !isSidebarExpanded;
     }
 
-    public void loadBiddingRoomGeneral(String auctionId, boolean isViewOnly) {
+    public void loadBiddingRoomGeneral(String auctionId, boolean isViewOnly, Runnable backAction) {
         if (loading != null && loadingController != null) {
                 loading.setVisible(true);
                 loadingController.playAnimation();
@@ -525,7 +534,7 @@ public class MainLayoutController implements MessageListener {
                 clearContent();
                 ViewLoader.LoadResult<BiddingRoomController> r = ViewLoader.load("bidding-room.fxml");
                 r.controller().setAuction(auction);
-                r.controller().setOnSuccessCallback(() -> handleNavDashboard(null));
+                r.controller().setOnSuccessCallback(backAction != null ? backAction : () -> handleNavDashboard(null));
                 if (isViewOnly) r.controller().enableSellerViewMode();
                 currentController = r.controller();
                 contentArea.getChildren().add(r.root());

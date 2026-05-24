@@ -5,6 +5,12 @@ import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.common.payload.ClientMessage;
 import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
+import com.ssscloud.auction.client.networking.AuctionClientSocket;
+import com.ssscloud.auction.client.networking.MessageListener;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -17,13 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class WatchlistController {
+public class WatchlistController implements MessageListener {
     @FXML private VBox listContainer;
     @FXML private VBox emptyState;
     @FXML private ScrollPane scrollPane;
     @FXML private Label lblTotalCount;
 
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
+    private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
     private Consumer<BidderDisplayDTO> onOpenAuction;
 
     public void setOnOpenAuction(Consumer<BidderDisplayDTO> onOpenAuction) {
@@ -32,9 +39,9 @@ public class WatchlistController {
 
     @FXML
     public void initialize() {
+        socket.addListener(this);   // thêm
         loadWatchlist();
     }
-
     public void loadWatchlist() {
     String json = JsonUtils.toJson(ClientMessage.request("GET_WATCHLIST", null));
 
@@ -75,6 +82,28 @@ public class WatchlistController {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    public void cleanup() {
+        socket.removeListener(this);
+    }
+
+    @Override
+    public void onMessageReceived(String json) {
+        try {
+            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+            String action = root.has("action") ? root.get("action").getAsString() : "";
+            switch (action) {
+                case "BID_UPDATE" -> {
+                    Platform.runLater(this::loadWatchlist);
+                }
+                case "AUCTION_ENDED", "AUCTION_CANCELED" -> {
+                    Platform.runLater(this::loadWatchlist);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[Watchlist] onMessageReceived error: " + e.getMessage());
         }
     }
 }

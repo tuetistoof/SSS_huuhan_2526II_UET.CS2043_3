@@ -8,10 +8,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,6 +17,7 @@ import com.ssscloud.auction.common.payload.response.DTO.NotificationDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.auction.Auction;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.server.dao.NotificationDAO;
 import com.ssscloud.auction.server.dao.QueryDAO;
@@ -89,9 +86,9 @@ public class NotificationService {
      
             String auctionId = auction.getAuctionConfig().getId(); // Internal Logic: [Entity]Id
             String auctionName = auction.getAuctionConfig().getName();
-            long finalPrice = auction.getCurrentPrice();
-            String winnerName = auction.getHighestBidderName() != null
-                                 ? auction.getHighestBidderName() : "No bids placed";
+            BidTransaction lastBid = auction.getLastBidTransaction();
+            long finalPrice = lastBid == null ? auction.getAuctionConfig().getStartPrice() : lastBid.getBidAmount();
+            String winnerName = lastBid == null ? null : lastBid.getBidderUsername();
      
             List<String> watcherIdList = queryDAO.findUserIdsByAuction(auctionId); // DTOs: List suffix
      
