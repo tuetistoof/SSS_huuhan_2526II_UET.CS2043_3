@@ -424,7 +424,7 @@ public class QueryDAO extends BaseDAO{
             "                         WHERE b2.auction_id = b1.auction_id) " +
             ") AS last_bid ON last_bid.auction_id = a.id " +
             "WHERE w.user_id = ?" +
-            "  AND a.status = 'RUNNING'";
+            "  AND a.status IN ('RUNNING', 'FINISHED')";
 
         Connection connection = null;
         PreparedStatement preparedStatement = null;
