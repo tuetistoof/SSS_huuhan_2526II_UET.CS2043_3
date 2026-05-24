@@ -89,7 +89,7 @@ public class AutoBidService {
             Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(autoBidRequest.getAuctionId());
             validateAutoBidTerms(auctionEntity, autoBidRequest, bidderId);
             User bidder = userDAO.findById(bidderId);
-            validateBidderAccount(bidder, autoBidRequest.getMaxBid());
+            validateBidderAccount(bidder, autoBidRequest.getMaxBid(), auctionEntity);
             if (cancelledAuctionIds.contains(autoBidRequest.getAuctionId())) {
                 throw new ServiceException(ErrorCode.AUCTION_CLOSED,
                         "Cannot register auto-bid: The auction has been cancelled.");
@@ -173,7 +173,7 @@ public class AutoBidService {
                 // Lọc ra các competitor (không phải người đang giữ giá cao nhất trên auction)
                 List<AutoBidEntry> otherCompetitorsList = new ArrayList<>();
                 for (AutoBidEntry entry : entriesSnapshotList) {
-                    if (!entry.bidderId.equals(highestBidderId) && !(entry.maxBid == highestBidderLock)) {
+                    if (!entry.bidderId.equals(highestBidderId) || !(entry.maxBid == highestBidderLock)) {
                         otherCompetitorsList.add(entry);
                     }
                 }
@@ -196,16 +196,16 @@ public class AutoBidService {
                         secondHighestBidAmount = entry.maxBid;
                     }
                 }
-                long calculatedBidAmount = 0;
+                long bidAmount = 0;
                 if (isFirstBid && entriesSnapshotList.size() <= 1){
-                    calculatedBidAmount = currentAuctionPrice;
+                    bidAmount = currentAuctionPrice;
                 }
                 else{
                     long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
-                    calculatedBidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
+                    bidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
                 }
-                if (calculatedBidAmount >= currentAuctionPrice) {
-                    // --- Thử lock balance cho winner ---
+                if (bidAmount >= currentAuctionPrice) {
+                    
                     if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
                         // Balance không đủ → loại winner này, thử candidate tiếp
                         logger.log(Level.WARNING,
@@ -220,7 +220,7 @@ public class AutoBidService {
                     try {
                         ConcurrentBidManager.getInstance().submitBid(
                                 auctionEntity, winningEntry.bidderId, winningEntry.bidderUsername,
-                                calculatedBidAmount, winningEntry.maxBid, BidType.AUTO);
+                                bidAmount, winningEntry.maxBid, BidType.AUTO);
                         // Tăng đếm số lượt AutoBid thành công cho Winner
                         bidCounts.computeIfAbsent(auctionId, k -> new ConcurrentHashMap<>())
                                  .merge(winningEntry.bidderId, 1, Integer::sum);
@@ -469,19 +469,26 @@ public class AutoBidService {
             }
         }
     }
-    private void validateBidderAccount(User bidder, long maxBidAmount) throws ServiceException, Exception {
-        try {
-            if (!(bidder instanceof Bidder bidderAccount)) {
-                throw new ServiceException(ErrorCode.NOT_BIDDER, "Only users with the 'Bidder' role are authorized to place bids.");
-            }
-            if (bidderAccount.getAvailableBalance() < maxBidAmount) {
-                throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE, "The account balance is insufficient to place this bid.");
-            }
-        } catch (ServiceException serviceException) {
-            throw serviceException;
-        } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Unexpected error during bidder account validation", exception);
-            throw exception;
+    private void validateBidderAccount(User bidder, long bidAmount, Auction auction)
+        throws ServiceException {
+        if (!(bidder instanceof Bidder bidderAccount)) {
+            throw new ServiceException(ErrorCode.NOT_BIDDER, "...");
+        }
+
+        // Kiểm tra A có đang là highest bidder không
+        BidTransaction lastBid = auction.getLastBidTransaction();
+        long alreadyLocked = 0;
+        if (lastBid != null && lastBid.getBidderId().equals(bidderAccount.getId())) {
+            // A đang giữ bid cũ — khi thắng bid mới, bid cũ sẽ được unlock
+            // Chỉ cần đủ tiền cho phần chênh lệch
+            alreadyLocked = lastBid.getLockedBalance();
+        }
+
+        long netRequired = bidAmount - alreadyLocked;
+        if (bidderAccount.getAvailableBalance() < netRequired) {
+            throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
+                "Insufficient balance. Need: " + netRequired
+                + ", available: " + bidderAccount.getAvailableBalance());
         }
     }
     /**

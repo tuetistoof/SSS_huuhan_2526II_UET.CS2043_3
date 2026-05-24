@@ -394,7 +394,7 @@ public class UserDAO extends BaseDAO {
 
     public boolean lockBidderBalance(String userId, long amount) throws DAOException, Exception {
         String sql = "UPDATE bidder SET locked_balance = locked_balance + ? " +
-                    "WHERE id = ? AND (account_balance - locked_balance) >= ?";
+                    "WHERE id = ?";
         Connection        connection = null;
         PreparedStatement preparedStatement = null;
 
@@ -403,7 +403,6 @@ public class UserDAO extends BaseDAO {
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setLong(1, amount);
             preparedStatement.setString(2, userId);
-            preparedStatement.setLong(3, amount);
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
                 logger.log(Level.INFO, "Balance lock: {0} locked for userId: {1}", new Object[]{amount, userId});
@@ -422,7 +421,7 @@ public class UserDAO extends BaseDAO {
 
     public boolean unlockBidderBalance(String userId, long amount) throws DAOException, Exception {
         String sql = "UPDATE bidder SET locked_balance = locked_balance - ? " +
-                    "WHERE id = ? AND locked_balance >= ?";
+                    "WHERE id = ?";
         Connection        connection = null;
         PreparedStatement preparedStatement = null;
 
@@ -431,7 +430,6 @@ public class UserDAO extends BaseDAO {
             preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setLong(1, amount);
             preparedStatement.setString(2, userId);
-            preparedStatement.setLong(3, amount);
             int rowsAffected = preparedStatement.executeUpdate();
             if (rowsAffected > 0) {
                 logger.log(Level.INFO, "Balance unlock: {0} unlocked for userId: {1}", new Object[]{amount, userId});
