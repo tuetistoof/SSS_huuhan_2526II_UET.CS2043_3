@@ -417,7 +417,7 @@ public class BiddingRoomController implements MessageListener {
         final long finalNewMax = newMax;
         // CHANGE_AUTO_BID = upsert trên server (register() removeIf cũ + add mới)
         // 1 bước duy nhất, không cần cancel trước
-        String json = JsonUtils.toJson(ClientMessage.request("CHANGE_AUTO_BID",
+        String json = JsonUtils.toJson(ClientMessage.request("AUTO_BID",
                 new AutoBidRequest(currentAuction.getId(), finalNewMax)));
 
         dispatcher.request(json, raw -> {
