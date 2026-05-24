@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -40,13 +41,25 @@ import java.util.logging.Logger;
 /**
  * AuctionService manages the business logic for auction lifecycle operations.
  *
- * The createAuction execution flow:
- * 1. ItemFactory.create(request, sellerId) -> Item (Art/Vehicle/Electronic)
- * 2. ItemDAO.save*(item) -> Persist item and subtype records
- * 3. Construct AuctionConfig and initialize Auction with OPEN status
- * 4. AuctionDAO.saveAuction(auction) -> Persist auction record
- * 5. scheduleClose(auction) -> Initialize scheduler to transition OPEN to FINISHED status
- * 6. Return AuctionDTO.
+ * scheduleClose pipeline:
+ *   pool1 (ScheduledThreadPool) — tác vụ nhanh, không block:
+ *     1. Đọc endTime từ RAM (không query DB)
+ *     2. Reschedule nếu endTime đã bị anti-sniping extend
+ *     3. Atomic status transition RAM → FINISHED
+ *     4. softClose() — chặn bid mới
+ *     5. ChangeManager.notify() — push snapshot xuống client ngay lập tức
+ *     6. Submit IoTask sang pool2
+ *
+ *   pool2 (FixedThreadPool) — tác vụ I/O nặng:
+ *     1. auctionDAO.updateStatus(FINISHED)
+ *     2. AuctionRegistry.remove()
+ *     3. ConcurrentBidManager.shutdown()
+ *     4. autoBidService.clearRegistrations()
+ *     5. settleAuctionBalances()
+ *     6. notificationService.notifyAuctionEnded()
+ *
+ * Anti-sniping: không giới hạn lần — reschedule chỉ check RAM, không tốn DB round-trip.
+ * endTime mới được ghi vào DB bởi ConcurrentBidManager (processTask), không phải ở đây.
  */
 public class AuctionService {
     private static final Logger logger = Logger.getLogger(AuctionService.class.getName()); // Logging Standards: Declared first
@@ -59,6 +72,11 @@ public class AuctionService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private final NotificationService notificationService;
     private final AutoBidService autoBidService;
+
+    private final ScheduledExecutorService pool1 = Executors.newScheduledThreadPool(2);
+    private final ExecutorService pool2 = Executors.newFixedThreadPool(4);
+     
+    
 
     // Sửa constructor
     public AuctionService(AuctionDAO auctionDAO, QueryDAO queryDAO, UserDAO userDAO, UserService userService,
@@ -104,6 +122,7 @@ public class AuctionService {
                 logger.log(Level.SEVERE, "Critical failure: Unable to persist auction record for name: " + auctionConfig.getName());
                 throw new ServiceException(ErrorCode.AUCTION_CREATION_FAILED, "Failed to persist the auction to the database: " + auctionConfig.getName());
             }
+            scheduleClose(auctionConfig.getId(), auctionConfig.getEndTime());
         
 
             logger.log(Level.INFO, "Auction successfully created and registered with ID: {0}", auctionConfig.getId());
@@ -149,7 +168,7 @@ public class AuctionService {
                 auction.getAuctionConfig().getId(),
                 auction.getAuctionConfig().getEndTime());
     }
-
+    //pool 1: tác vụ nhanh, không block — chỉ schedule lại nếu endTime đã bị anti-sniping extend
     public void scheduleClose(String auctionId, LocalDateTime endTime) {
         if (endTime == null) {
             logger.log(Level.WARNING,
@@ -162,22 +181,45 @@ public class AuctionService {
             delayMilliseconds = 0;
         }
 
-        scheduler.schedule(() -> {
+        pool1.schedule(() -> {
             try {
-                AuctionScheduleInfo scheduleInfo = queryDAO.findActiveScheduleInfoById(auctionId);
-                if (scheduleInfo == null) {
+                // Lấy live auction từ Registry — không query DB
+                Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+                if (auction == null) {
                     logger.log(Level.INFO,
-                            "scheduleClose skipped - auction is no longer active: " + auctionId);
+                            "[Pool1] scheduleClose skipped — auction not in registry: " + auctionId);
                     return;
                 }
 
-                LocalDateTime latestEndTime = scheduleInfo.getEndTime();
-                if (latestEndTime != null && LocalDateTime.now().isBefore(latestEndTime)) {
+                // Anti-sniping: check endTime mới nhất từ RAM
+                // ConcurrentBidManager.processTask() đã update auctionConfig.endTime khi extend
+                LocalDateTime latestEndTime = auction.getAuctionConfig().getEndTime();
+                if (LocalDateTime.now().isBefore(latestEndTime)) {
+                    // endTime đã bị extend — reschedule, không làm gì thêm
+                    logger.log(Level.INFO,
+                            "[Pool1] Anti-sniping extended — rescheduling auctionId: " + auctionId
+                                    + " to " + latestEndTime);
                     scheduleClose(auctionId, latestEndTime);
                     return;
                 }
+                //1. Atomic status transition RAM → FINISHED
+                synchronized (auction) {
+                    if (!auction.getStatus().isActive()) {
+                        logger.log(Level.INFO,
+                                "[Pool1] scheduleClose skipped — already terminal: " + auctionId);
+                        return;
+                    }
+                    auction.finish(); 
+                }
+                //2. softClose() — chặn bid mới, vẫn giữ auction trong registry để push snapshot về client
+                ConcurrentBidManager.getInstance().softClose(auctionId);
+                ChangeManager.getInstance().notify(auction); //3. ChangeManager.notify() — push snapshot xuống client ngay lập tức
+                logger.log(Level.INFO, "[Pool1] Snapshot notified, submitting IO tasks for auctionId: " + auctionId);
 
-                closeAuctionById(auctionId);
+                final Auction snapshot = auction;
+                pool2.execute(() -> runCloseIo(auctionId, snapshot)); //4. Submit IoTask sang pool2
+                
+
             } catch (ServiceException serviceException) {
                 logger.log(Level.WARNING,
                         "Business logic error in scheduled auction closure for auctionId: " + auctionId,
@@ -189,6 +231,32 @@ public class AuctionService {
                         exception);
             }
         }, delayMilliseconds, TimeUnit.MILLISECONDS);
+    }
+
+    private void runCloseIo(String auctionId, Auction auction){
+        try {
+            boolean updated = auctionDAO.updateStatus(auctionId, AuctionStatus.FINISHED);
+            if (!updated) {
+                // Admin cancel hoặc safety-net đã close trước — bỏ qua
+                logger.log(Level.INFO,
+                        "[Pool2] DB update skipped — already terminal in DB: " + auctionId);
+                return;
+            }
+            // Bước 2: Cleanup in-memory state
+            AuctionRegistry.getInstance().remove(auctionId);
+            autoBidService.clearRegistrations(auctionId);
+
+            ConcurrentBidManager.getInstance().shutdown(auctionId); // Đảm bảo không có task nào đang chạy hoặc sẽ chạy cho auction này nữa
+            settleAuctionBalances(auction); 
+            notificationService.notifyAuctionEnded(auction); 
+            logger.log(Level.INFO, "[Pool2] Auction fully closed: " + auctionId);
+
+        } catch (Exception e) {
+            logger.log(Level.SEVERE,
+                    "[Pool2] runCloseIo failed for auctionId: " + auctionId, e);
+
+
+        }
     }
     
 
@@ -258,18 +326,50 @@ public class AuctionService {
     }
     
     public void startAuctionCloser() {
-        scheduler.scheduleAtFixedRate(() -> {
+        pool1.scheduleAtFixedRate(() -> {
             try {
-                List<AuctionScheduleInfo> overdueScheduleInfoList =
-                        queryDAO.findOverdueScheduleInfos(LocalDateTime.now());
+                List<AuctionScheduleInfo> overdueList = queryDAO.findOverdueScheduleInfos(LocalDateTime.now());
 
-                for (AuctionScheduleInfo scheduleInfo : overdueScheduleInfoList) {
+                for (AuctionScheduleInfo scheduleInfo : overdueList) {
                     String auctionId = scheduleInfo.getAuctionId();
-                    if (closeAuctionById(auctionId)) {
-                        logger.log(Level.INFO,
-                                "[AuctionCloser] Safety-net finalized auctionId: " + auctionId);
+                    Auction auction = AuctionRegistry.getInstance().getLiveAuction(auctionId);
+
+                    if (auction != null) {
+                        // Auction còn trong registry chạy full pipeline giống scheduleClose
+                        synchronized (auction) {
+                            if (!auction.getStatus().isActive()) continue;
+                            auction.finish();
+                        }
+                        ConcurrentBidManager.getInstance().softClose(auctionId);
+                        ChangeManager.getInstance().notify(auction);
+ 
+                        final Auction snapshot = auction;
+                        pool2.execute(() -> runCloseIo(auctionId, snapshot));
+ 
+                    } else {
+                        // Auction không có trong RAM (không ai subscribe) →
+                        // chỉ cần update DB và settle, không cần notify RAM
+                        pool2.execute(() -> {
+                            try {
+                                boolean updated = auctionDAO.updateStatus(
+                                        auctionId, AuctionStatus.FINISHED);
+                                if (!updated) return;
+ 
+                                Auction loaded = auctionDAO.findByAuctionId(auctionId);
+                                if (loaded != null) {
+                                    settleAuctionBalances(loaded);
+                                    notificationService.notifyAuctionEnded(loaded);
+                                }
+                                logger.log(Level.INFO,
+                                        "[Safety-net] Closed offline auctionId: " + auctionId);
+                            } catch (Exception e) {
+                                logger.log(Level.SEVERE,
+                                        "[Safety-net] Failed to close auctionId: " + auctionId, e);
+                            }
+                        });
                     }
                 }
+                
             } catch (Exception exception) {
                 logger.log(Level.SEVERE,
                         "[AuctionCloser] Maintenance task encountered a scheduled check failure.",
@@ -281,15 +381,31 @@ public class AuctionService {
     //Cleanup
 
     public void shutdownScheduler() {
-        scheduler.shutdown();
+        logger.info("[Shutdown] Stopping pool1 (scheduler)...");
+        pool1.shutdown();
         try {
-            if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
+            if (!pool1.awaitTermination(10, TimeUnit.SECONDS)) {
+                pool1.shutdownNow();
+                logger.warning("[Shutdown] pool1 did not terminate cleanly.");
             }
-        } catch (InterruptedException interruptedException) {
-            scheduler.shutdownNow();
+        } catch (InterruptedException e) {
+            pool1.shutdownNow();
             Thread.currentThread().interrupt();
         }
+ 
+        logger.info("[Shutdown] Draining pool2 (IO worker)...");
+        pool2.shutdown();
+        try {
+            if (!pool2.awaitTermination(15, TimeUnit.SECONDS)) {
+                pool2.shutdownNow();
+                logger.warning("[Shutdown] pool2 did not terminate cleanly.");
+            }
+        } catch (InterruptedException e) {
+            pool2.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+ 
+        logger.info("[Shutdown] AuctionService pools stopped.");
     }
 
 
