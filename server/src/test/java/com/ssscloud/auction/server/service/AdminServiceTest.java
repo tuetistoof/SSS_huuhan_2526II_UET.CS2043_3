@@ -53,57 +53,58 @@ import com.ssscloud.auction.server.util.AuctionRegistry;
  * hoặc cancel mà không dọn sạch state (registry, auto-bid) gây data rác.
  *
  * Strategy: mock AdminDAO, AuctionDAO, AutoBidService để tránh DB.
- * Verify kết quả qua AuctionRegistry in-memory và verify các mock được gọi đúng.
+ * Verify kết quả qua AuctionRegistry in-memory và verify các mock được gọi
+ * đúng.
  *
  * --- CHANGES vs trước ---
  *
  * FIX Bug A: Các test Group 4-6 trước đây fail vì chúng verify side effects
- *   (auctionDAO.updateStatus, registry remove, status CANCELED) ngay sau khi
- *   cancelAuction() return — trong khi doCancel() chạy async sau 10 giây.
+ * (auctionDAO.updateStatus, registry remove, status CANCELED) ngay sau khi
+ * cancelAuction() return — trong khi doCancel() chạy async sau 10 giây.
  *
- *   Với AdminService mới (doCancel() chạy đồng bộ), không cần await/latch nữa.
- *   Tất cả verify chạy trực tiếp sau cancelAuction() và sẽ pass đúng.
+ * Với AdminService mới (doCancel() chạy đồng bộ), không cần await/latch nữa.
+ * Tất cả verify chạy trực tiếp sau cancelAuction() và sẽ pass đúng.
  *
- *   Các test Group 4-6 đã ĐƯỢC XÓA CountDownLatch và awaitCancelCompletion() helper.
+ * Các test Group 4-6 đã ĐƯỢC XÓA CountDownLatch và awaitCancelCompletion()
+ * helper.
  *
  * FIX Bug C: Thêm Group 9 — double-cancel test:
- *   Verify rằng gọi cancelAuction() lần 2 trong khi lần 1 đang chạy sẽ throw
- *   ServiceException(AUCTION_CLOSED) thay vì schedule thêm 1 doCancel().
- *   Test này dùng mock để simulate doCancel() blocking đủ lâu để thread 2 vào.
+ * Verify rằng gọi cancelAuction() lần 2 trong khi lần 1 đang chạy sẽ throw
+ * ServiceException(AUCTION_CLOSED) thay vì schedule thêm 1 doCancel().
+ * Test này dùng mock để simulate doCancel() blocking đủ lâu để thread 2 vào.
  */
 public class AdminServiceTest {
 
     private static final String AUCTION_ID = "admin-test-auction-001";
-    private static final String SELLER_ID  = "seller-001";
-    private static final String REASON     = "Test cancel reason";
-    private static final String BIDDER_ID  = "bidder-001";
+    private static final String SELLER_ID = "seller-001";
+    private static final String REASON = "Test cancel reason";
+    private static final String BIDDER_ID = "bidder-001";
     private static final String BIDDER2_ID = "bidder-002";
 
-    private AdminDAO       adminDAO;
-    private AuctionDAO     auctionDAO;
+    private AdminDAO adminDAO;
+    private AuctionDAO auctionDAO;
     private AutoBidService autoBidService;
-    private UserDAO        userDAO;
-    private AdminService   adminService;
-    private Auction        auction;
+    private UserDAO userDAO;
+    private AdminService adminService;
+    private Auction auction;
 
     @BeforeEach
     void setUp() throws Exception {
-        adminDAO       = mock(AdminDAO.class);
-        auctionDAO     = mock(AuctionDAO.class);
+        adminDAO = mock(AdminDAO.class);
+        auctionDAO = mock(AuctionDAO.class);
         autoBidService = mock(AutoBidService.class);
-        userDAO        = mock(UserDAO.class);
+        userDAO = mock(UserDAO.class);
 
         AuctionRegistry.initialize(auctionDAO);
 
         adminService = new AdminService(adminDAO, auctionDAO, autoBidService, userDAO);
 
         AuctionConfig config = new AuctionConfig(
-            AUCTION_ID, "Test Auction",
-            30_000L, 1_000L,
-            LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(2),
-            36
-        );
+                AUCTION_ID, "Test Auction",
+                30_000L, 1_000L,
+                LocalDateTime.now().minusHours(1),
+                LocalDateTime.now().plusHours(2),
+                36);
         auction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, "item-001");
         AuctionRegistry.getInstance().registerIfAbsent(auction);
 
@@ -118,7 +119,8 @@ public class AdminServiceTest {
     void tearDown() {
         try {
             ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         AuctionRegistry.getInstance().remove(AUCTION_ID);
         ConcurrentBidManager.resetInstance();
     }
@@ -131,9 +133,8 @@ public class AdminServiceTest {
     void testGetAuctions_noFilter_returnsAll() throws Exception {
         // WHY: filter == null phải trả toàn bộ auction, không bị giới hạn status
         List<AdminDisplayDTO> mockList = List.of(
-            new AdminDisplayDTO(AUCTION_ID, "Test", "seller", 30_000L, AuctionStatus.RUNNING,
-                LocalDateTime.now().plusHours(2))
-        );
+                new AdminDisplayDTO(AUCTION_ID, "Test", "seller", 30_000L, AuctionStatus.RUNNING,
+                        LocalDateTime.now().plusHours(2)));
         when(adminDAO.findAllAuctions(null)).thenReturn(mockList);
 
         List<AdminDisplayDTO> result = adminService.getAuctions(null);
@@ -172,7 +173,7 @@ public class AdminServiceTest {
 
         AdminMetrics result = adminService.getMetrics();
 
-        assertEquals(5,  result.getRunningCount());
+        assertEquals(5, result.getRunningCount());
         assertEquals(12, result.getEndedCount());
         assertEquals(30, result.getTotalUsers());
     }
@@ -193,7 +194,7 @@ public class AdminServiceTest {
     void testCancelAuction_nullAuctionId_throwsServiceException() {
         // WHY: auctionId null phải fail ngay tại validation, không chạm DB
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction(null, REASON));
+                () -> adminService.cancelAuction(null, REASON));
 
         assertEquals(ErrorCode.INVALID_AUCTION_ID, ex.getErrorCode());
         verifyNoInteractions(auctionDAO);
@@ -203,16 +204,17 @@ public class AdminServiceTest {
     void testCancelAuction_blankAuctionId_throwsServiceException() {
         // WHY: auctionId blank (khoảng trắng) cũng phải bị reject
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction("   ", REASON));
+                () -> adminService.cancelAuction("   ", REASON));
 
         assertEquals(ErrorCode.INVALID_AUCTION_ID, ex.getErrorCode());
     }
 
     @Test
     void testCancelAuction_auctionNotInRegistry_throwsServiceException() throws Exception {
-        // WHY: auction không tồn tại trong AuctionRegistry = đã kết thúc hoặc không hợp lệ
+        // WHY: auction không tồn tại trong AuctionRegistry = đã kết thúc hoặc không hợp
+        // lệ
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction("non-existent-id", REASON));
+                () -> adminService.cancelAuction("non-existent-id", REASON));
 
         assertEquals(ErrorCode.AUCTION_NOT_FOUND, ex.getErrorCode());
         verify(auctionDAO).findByAuctionId("non-existent-id");
@@ -222,17 +224,16 @@ public class AdminServiceTest {
     void testCancelAuction_alreadyFinished_throwsServiceException() throws Exception {
         // WHY: auction đã FINISHED không được cancel — status isActive() == false
         AuctionConfig config = new AuctionConfig(
-            "finished-001", "Finished Auction",
-            30_000L, 1_000L,
-            LocalDateTime.now().minusHours(3),
-            LocalDateTime.now().minusHours(1),
-            36
-        );
+                "finished-001", "Finished Auction",
+                30_000L, 1_000L,
+                LocalDateTime.now().minusHours(3),
+                LocalDateTime.now().minusHours(1),
+                36);
         Auction finishedAuction = new Auction(config, AuctionStatus.FINISHED, SELLER_ID, "item-002");
         AuctionRegistry.getInstance().registerIfAbsent(finishedAuction);
 
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction("finished-001", REASON));
+                () -> adminService.cancelAuction("finished-001", REASON));
 
         assertEquals(ErrorCode.AUCTION_CLOSED, ex.getErrorCode());
         verifyNoInteractions(auctionDAO);
@@ -266,7 +267,7 @@ public class AdminServiceTest {
 
         // FIX: verify ngay — không cần latch
         assertNull(AuctionRegistry.getInstance().getLiveAuction(AUCTION_ID),
-            "Auction must be removed from AuctionRegistry after cancel");
+                "Auction must be removed from AuctionRegistry after cancel");
     }
 
     @Test
@@ -274,8 +275,8 @@ public class AdminServiceTest {
         // WHY: auto-bid entry phải được dọn — nếu không AutoBidService có thể
         // trigger bid trên auction đã CANCELED.
         // Note: clearRegistrations() được gọi 2 lần:
-        //   1. Trong cancelAuction() trước khi doCancel() — softClose phase
-        //   2. Trong cleanupCanceledAuction() sau DB update — cleanup phase
+        // 1. Trong cancelAuction() trước khi doCancel() — softClose phase
+        // 2. Trong cleanupCanceledAuction() sau DB update — cleanup phase
         // atLeastOnce() đảm bảo bước cleanup chạy
         adminService.cancelAuction(AUCTION_ID, REASON);
 
@@ -285,12 +286,13 @@ public class AdminServiceTest {
     @Test
     void testCancelAuction_success_updatesAuctionStatusInMemory() throws Exception {
         // WHY: object Auction in-memory phải có status CANCELED ngay lập tức —
-        // tránh race condition nếu có thread khác đọc status trước khi xóa khỏi registry
+        // tránh race condition nếu có thread khác đọc status trước khi xóa khỏi
+        // registry
         adminService.cancelAuction(AUCTION_ID, REASON);
 
         // FIX: verify ngay — không cần latch
         assertEquals(AuctionStatus.CANCELED, auction.getStatus(),
-            "Auction in-memory status must be CANCELED after cancelAuction()");
+                "Auction in-memory status must be CANCELED after cancelAuction()");
     }
 
     @Test
@@ -304,19 +306,19 @@ public class AdminServiceTest {
     void testCancelAuction_dbUpdateFails_throwsException() throws Exception {
         // WHY: nếu DB lỗi khi updateStatus, phải throw và không tiếp tục các bước sau
         doThrow(new RuntimeException("DB error"))
-            .when(auctionDAO).updateStatus(any(), any());
+                .when(auctionDAO).updateStatus(any(), any());
 
         assertThrows(Exception.class,
-            () -> adminService.cancelAuction(AUCTION_ID, REASON));
+                () -> adminService.cancelAuction(AUCTION_ID, REASON));
 
         // FIX: kiểm tra ngay sau throw — không cần await
         // Registry phải còn auction vì cancel chưa hoàn tất
         assertNotNull(AuctionRegistry.getInstance().getLiveAuction(AUCTION_ID),
-            "Auction must remain in registry if DB update fails");
+                "Auction must remain in registry if DB update fails");
 
         // Status in-memory không được thay đổi vì doCancel() đã rollback
         assertEquals(AuctionStatus.RUNNING, auction.getStatus(),
-            "Auction status must remain RUNNING if DB update fails");
+                "Auction status must remain RUNNING if DB update fails");
     }
 
     @Test
@@ -324,12 +326,11 @@ public class AdminServiceTest {
         // WHY: auction ở trạng thái OPEN (chưa có bid nào) cũng phải cancel được —
         // isActive() = true với cả OPEN
         AuctionConfig config = new AuctionConfig(
-            "open-001", "Open Auction",
-            20_000L, 500L,
-            LocalDateTime.now().plusMinutes(5),
-            LocalDateTime.now().plusHours(1),
-            30
-        );
+                "open-001", "Open Auction",
+                20_000L, 500L,
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusHours(1),
+                30);
         Auction openAuction = new Auction(config, AuctionStatus.OPEN, SELLER_ID, "item-003");
         AuctionRegistry.getInstance().registerIfAbsent(openAuction);
 
@@ -337,9 +338,9 @@ public class AdminServiceTest {
 
         // FIX: verify ngay — không cần latch
         assertEquals(AuctionStatus.CANCELED, openAuction.getStatus(),
-            "OPEN auction must be CANCELED after cancelAuction()");
+                "OPEN auction must be CANCELED after cancelAuction()");
         assertNull(AuctionRegistry.getInstance().getLiveAuction("open-001"),
-            "OPEN auction must be removed from registry after cancel");
+                "OPEN auction must be removed from registry after cancel");
 
         AuctionRegistry.getInstance().remove("open-001"); // cleanup nếu test fail trước đó
     }
@@ -350,7 +351,8 @@ public class AdminServiceTest {
 
     @Test
     void testCancelAuction_withAutoBid_refundsLockAmountNotCurrentPrice() throws Exception {
-        // Simulate auto-bid: lockAmount = maxBid = 200_000, nhưng calculatedBid = 130_000
+        // Simulate auto-bid: lockAmount = maxBid = 200_000, nhưng calculatedBid =
+        // 130_000
         long maxBid = 200_000L;
         long calculatedBid = 130_000L;
 
@@ -362,9 +364,8 @@ public class AdminServiceTest {
         });
 
         ConcurrentBidManager.getInstance().submitBid(
-            auction, BIDDER_ID, "bidder-user",
-            calculatedBid, maxBid, BidType.AUTO
-        );
+                auction, BIDDER_ID, "bidder-user",
+                calculatedBid, maxBid, BidType.AUTO);
 
         assertTrue(bidProcessed.await(3, TimeUnit.SECONDS));
 
@@ -384,9 +385,8 @@ public class AdminServiceTest {
     void testCancelAuction_withActiveBid_revertsSellerPendingBalance() throws Exception {
         // WHY: khi cancel, seller phải bị trừ lại pending balance bằng winningBid.
         auction.placeBid(new BidTransaction(
-            AUCTION_ID, BIDDER_ID, "bidder-user",
-            50_000L, 50_000L, LocalDateTime.now().minusMinutes(10), BidType.MANUAL
-        ));
+                AUCTION_ID, BIDDER_ID, "bidder-user",
+                50_000L, 50_000L, LocalDateTime.now().minusMinutes(10), BidType.MANUAL));
 
         // FIX: không cần latch — verify ngay
         adminService.cancelAuction(AUCTION_ID, REASON);
@@ -396,7 +396,8 @@ public class AdminServiceTest {
 
     @Test
     void testCancelAuction_noBids_doesNotCallUnlock() throws Exception {
-        // WHY: auction chưa có bid → winnerId = null → refundWinner() phải skip hoàn toàn.
+        // WHY: auction chưa có bid → winnerId = null → refundWinner() phải skip hoàn
+        // toàn.
         adminService.cancelAuction(AUCTION_ID, REASON);
 
         verify(userDAO, never()).unlockBidderBalance(any(), anyLong());
@@ -406,8 +407,10 @@ public class AdminServiceTest {
     @Test
     void testCancelAuction_withMultipleBids_refundsOnlyCurrentWinner() throws Exception {
         // WHY: refundWinner chỉ hoàn tiền cho winner hiện tại (highest bidder).
-        auction.placeBid(new BidTransaction(AUCTION_ID, BIDDER_ID,  "bidder1", 50_000L, 50_000L, LocalDateTime.now(), BidType.MANUAL));
-        auction.placeBid(new BidTransaction(AUCTION_ID, BIDDER2_ID, "bidder2", 55_000L, 55_000L, LocalDateTime.now(), BidType.MANUAL));
+        auction.placeBid(new BidTransaction(AUCTION_ID, BIDDER_ID, "bidder1", 50_000L, 50_000L, LocalDateTime.now(),
+                BidType.MANUAL));
+        auction.placeBid(new BidTransaction(AUCTION_ID, BIDDER2_ID, "bidder2", 55_000L, 55_000L, LocalDateTime.now(),
+                BidType.MANUAL));
 
         // FIX: không cần latch
         adminService.cancelAuction(AUCTION_ID, REASON);
@@ -429,18 +432,17 @@ public class AdminServiceTest {
         adminService.cancelAuction(AUCTION_ID, REASON);
 
         AuctionConfig config = new AuctionConfig(
-            AUCTION_ID, "Test Auction",
-            30_000L, 1_000L,
-            LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(2),
-            36
-        );
+                AUCTION_ID, "Test Auction",
+                30_000L, 1_000L,
+                LocalDateTime.now().minusHours(1),
+                LocalDateTime.now().plusHours(2),
+                36);
         Auction sameIdAuction = new Auction(config, AuctionStatus.RUNNING, SELLER_ID, "item-001");
 
         assertThrows(Exception.class,
-            () -> ConcurrentBidManager.getInstance()
-                    .submitBid(sameIdAuction, BIDDER_ID, "bidder-user", 40_000L, 40_000L, BidType.MANUAL),
-            "submitBid sau cancel/shutdown phải throw — closedAuctions guard phải active");
+                () -> ConcurrentBidManager.getInstance()
+                        .submitBid(sameIdAuction, BIDDER_ID, "bidder-user", 40_000L, 40_000L, BidType.MANUAL),
+                "submitBid sau cancel/shutdown phải throw — closedAuctions guard phải active");
     }
 
     // =========================================================================
@@ -451,16 +453,15 @@ public class AdminServiceTest {
     void testCancelAuction_alreadyCanceled_throwsServiceException() throws Exception {
         // WHY: cancel auction đã CANCELED phải bị reject — tránh double-refund
         AuctionConfig config = new AuctionConfig(
-            "canceled-001", "Canceled Auction",
-            30_000L, 1_000L,
-            LocalDateTime.now().minusHours(2),
-            LocalDateTime.now().minusHours(1),
-            36
-        );
+                "canceled-001", "Canceled Auction",
+                30_000L, 1_000L,
+                LocalDateTime.now().minusHours(2),
+                LocalDateTime.now().minusHours(1),
+                36);
         Auction canceledAuction = new Auction(config, AuctionStatus.CANCELED, SELLER_ID, "item-004");
         AuctionRegistry.getInstance().registerIfAbsent(canceledAuction);
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction("canceled-001", REASON));
+                () -> adminService.cancelAuction("canceled-001", REASON));
 
         assertEquals(ErrorCode.AUCTION_CLOSED, ex.getErrorCode());
         AuctionRegistry.getInstance().remove("canceled-001");
@@ -470,17 +471,16 @@ public class AdminServiceTest {
     void testCancelAuction_paidAuction_throwsServiceException() throws Exception {
         // WHY: auction đã PAID không thể cancel — tiền đã chuyển, không có gì để refund
         AuctionConfig config = new AuctionConfig(
-            "paid-001", "Paid Auction",
-            30_000L, 1_000L,
-            LocalDateTime.now().minusHours(3),
-            LocalDateTime.now().minusHours(2),
-            36
-        );
+                "paid-001", "Paid Auction",
+                30_000L, 1_000L,
+                LocalDateTime.now().minusHours(3),
+                LocalDateTime.now().minusHours(2),
+                36);
         Auction paidAuction = new Auction(config, AuctionStatus.PAID, SELLER_ID, "item-005");
         AuctionRegistry.getInstance().registerIfAbsent(paidAuction);
 
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction("paid-001", REASON));
+                () -> adminService.cancelAuction("paid-001", REASON));
 
         assertEquals(ErrorCode.AUCTION_CLOSED, ex.getErrorCode());
         verifyNoInteractions(auctionDAO);
@@ -503,15 +503,14 @@ public class AdminServiceTest {
         // WHY: nếu DB lỗi khi refundWinner, phải throw — không được nuốt exception
         // vì tiền bidder chưa được hoàn
         auction.placeBid(new BidTransaction(
-            AUCTION_ID, BIDDER_ID, "bidder-user",
-            50_000L, 50_000L, LocalDateTime.now().minusMinutes(5), BidType.MANUAL
-        ));
+                AUCTION_ID, BIDDER_ID, "bidder-user",
+                50_000L, 50_000L, LocalDateTime.now().minusMinutes(5), BidType.MANUAL));
 
         doThrow(new RuntimeException("DB error"))
-            .when(userDAO).unlockBidderBalance(anyString(), anyLong());
+                .when(userDAO).unlockBidderBalance(anyString(), anyLong());
 
         assertThrows(Exception.class,
-            () -> adminService.cancelAuction(AUCTION_ID, REASON));
+                () -> adminService.cancelAuction(AUCTION_ID, REASON));
     }
 
     // =========================================================================
@@ -530,11 +529,11 @@ public class AdminServiceTest {
     @Test
     void testCancelAuction_doubleCancel_secondCallThrows() throws Exception {
         // Latch để điều phối: lần 1 block ở updateStatus, lần 2 chạy và bị reject
-        CountDownLatch firstCancelStarted  = new CountDownLatch(1);
-        CountDownLatch secondCancelTested  = new CountDownLatch(1);
+        CountDownLatch firstCancelStarted = new CountDownLatch(1);
+        CountDownLatch secondCancelTested = new CountDownLatch(1);
 
         doAnswer(inv -> {
-            firstCancelStarted.countDown();         // báo lần 1 đã vào updateStatus
+            firstCancelStarted.countDown(); // báo lần 1 đã vào updateStatus
             secondCancelTested.await(3, TimeUnit.SECONDS); // đợi lần 2 được test xong
             return null;
         }).when(auctionDAO).updateStatus(eq(AUCTION_ID), eq(AuctionStatus.CANCELED));
@@ -543,21 +542,23 @@ public class AdminServiceTest {
         Thread cancelThread1 = new Thread(() -> {
             try {
                 adminService.cancelAuction(AUCTION_ID, REASON);
-            } catch (Exception ignored) { /* lần 1 có thể throw sau khi thread 2 signal */ }
+            } catch (Exception ignored) {
+                /* lần 1 có thể throw sau khi thread 2 signal */ }
         });
         cancelThread1.start();
 
         // Đợi lần 1 vào updateStatus (đã qua guard và đang trong doCancel)
         assertTrue(firstCancelStarted.await(3, TimeUnit.SECONDS),
-            "Thread 1 must reach updateStatus within 3s");
+                "Thread 1 must reach updateStatus within 3s");
 
-        // Thread chính: thử cancel lần 2 — phải throw ngay vì cancelInProgress đã chứa auctionId
+        // Thread chính: thử cancel lần 2 — phải throw ngay vì cancelInProgress đã chứa
+        // auctionId
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction(AUCTION_ID, REASON),
-            "Second cancel call must throw immediately while first is in progress");
+                () -> adminService.cancelAuction(AUCTION_ID, REASON),
+                "Second cancel call must throw immediately while first is in progress");
 
         assertEquals(ErrorCode.AUCTION_CLOSED, ex.getErrorCode(),
-            "Second cancel must fail with AUCTION_CLOSED");
+                "Second cancel must fail with AUCTION_CLOSED");
 
         // verify: auctionDAO.updateStatus chỉ được gọi đúng 1 lần (không double-cancel)
         // Lúc này lần 1 vẫn block — chưa gọi lần nào hoàn tất, nhưng đang gọi
@@ -577,9 +578,9 @@ public class AdminServiceTest {
         adminService.cancelAuction(AUCTION_ID, REASON);
 
         ServiceException ex = assertThrows(ServiceException.class,
-            () -> adminService.cancelAuction(AUCTION_ID, REASON));
+                () -> adminService.cancelAuction(AUCTION_ID, REASON));
 
         assertEquals(ErrorCode.AUCTION_NOT_FOUND, ex.getErrorCode(),
-            "After successful cancel, auction no longer in registry — must throw NOT_FOUND");
+                "After successful cancel, auction no longer in registry — must throw NOT_FOUND");
     }
 }

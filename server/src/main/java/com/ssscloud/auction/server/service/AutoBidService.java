@@ -1,4 +1,5 @@
 package com.ssscloud.auction.server.service;
+
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.exception.ErrorCode;
@@ -25,31 +26,32 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 /**
  * AutoBidService manages the automated bidding logic for auction participants.
  * It maintains registrations and bid frequencies per auction room.
  *
  * CONCURRENCY MODEL (Per-Auction Worker Thread):
  * ┌─────────────────────────────────────────────────────────────────────┐
- * │  Auction A:  autobid-worker-AuctionA  ←  triggerQueue-AuctionA     │
- * │  Auction B:  autobid-worker-AuctionB  ←  triggerQueue-AuctionB     │
- * │  Auction C:  autobid-worker-AuctionC  ←  triggerQueue-AuctionC     │
- * │  ...                                                               │
- * │  Mỗi auction có 1 THREAD RIÊNG + 1 QUEUE RIÊNG.                   │
- * │  Các auction xử lí SONG SONG, không nghẽn cổ chai.                │
- * │  Trong cùng 1 auction, trigger xử lí TUẦN TỰ (1 thread duy nhất).│
+ * │ Auction A: autobid-worker-AuctionA ← triggerQueue-AuctionA │
+ * │ Auction B: autobid-worker-AuctionB ← triggerQueue-AuctionB │
+ * │ Auction C: autobid-worker-AuctionC ← triggerQueue-AuctionC │
+ * │ ... │
+ * │ Mỗi auction có 1 THREAD RIÊNG + 1 QUEUE RIÊNG. │
+ * │ Các auction xử lí SONG SONG, không nghẽn cổ chai. │
+ * │ Trong cùng 1 auction, trigger xử lí TUẦN TỰ (1 thread duy nhất).│
  * └─────────────────────────────────────────────────────────────────────┘
  *
  * Flow:
  * 1. register() / processTask() gọi tryTrigger()
- *    → Đẩy tín hiệu vào triggerQueue của auction đó → return NGAY (non-blocking)
+ * → Đẩy tín hiệu vào triggerQueue của auction đó → return NGAY (non-blocking)
  * 2. Worker thread (autobid-worker-XXX) nhận tín hiệu từ queue
- *    → Gộp nhiều tín hiệu thành 1 lần xử lí (drain queue)
- *    → Lấy trạng thái auction MỚI NHẤT từ AuctionRegistry
- *    → Chạy trigger() để tìm winner và submit bid
+ * → Gộp nhiều tín hiệu thành 1 lần xử lí (drain queue)
+ * → Lấy trạng thái auction MỚI NHẤT từ AuctionRegistry
+ * → Chạy trigger() để tìm winner và submit bid
  * 3. Nếu submit thất bại → loại winner, thử candidate tiếp (retry loop)
  * 4. Nếu submit thành công → ConcurrentBidManager worker xử lí bid
- *    → Worker gọi lại tryTrigger() → tín hiệu mới vào queue → lặp lại
+ * → Worker gọi lại tryTrigger() → tín hiệu mới vào queue → lặp lại
  * 5. Khi không còn candidate → worker chờ (block) cho đến khi có AutoBid mới
  */
 public class AutoBidService {
@@ -57,15 +59,16 @@ public class AutoBidService {
                                                                                            // Declared first
     // --- ATTRIBUTES ---
     private final Map<String, List<AutoBidEntry>> registrationsMap = new ConcurrentHashMap<>();
-    
+
     private final Set<String> cancelledAuctionIds = ConcurrentHashMap.newKeySet();
     private final Map<String, Map<String, Integer>> bidCounts = new ConcurrentHashMap<>();
-  
+
     private final Map<String, BlockingQueue<String>> triggerQueues = new ConcurrentHashMap<>();
     private final Map<String, Thread> autoBidWorkers = new ConcurrentHashMap<>();
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
     private final SessionRegistry sessionRegistry = SessionRegistry.getInstance();
+
     // --- CONSTRUCTOR ---
     public AutoBidService(AuctionDAO auctionDAO, UserDAO userDAO) {
         this.auctionDAO = auctionDAO;
@@ -85,8 +88,9 @@ public class AutoBidService {
         try {
             validateAutoBidRequest(autoBidRequest, bidderId, bidderUsername);
             logger.log(Level.INFO, "Initiating auto-bid registration for auctionId: " + autoBidRequest.getAuctionId()
-                     + " for bidderId: " + bidderId);
-            Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(autoBidRequest.getAuctionId());
+                    + " for bidderId: " + bidderId);
+            Auction auctionEntity = AuctionRegistry.getInstance()
+                    .retrieveAndValidateAuction(autoBidRequest.getAuctionId());
             validateAutoBidTerms(auctionEntity, autoBidRequest, bidderId);
             User bidder = userDAO.findById(bidderId);
             validateBidderAccount(bidder, autoBidRequest.getMaxBid(), auctionEntity);
@@ -98,7 +102,7 @@ public class AutoBidService {
                     autoBidRequest.getAuctionId(), key -> new CopyOnWriteArrayList<>());
             autoBidEntriesList.removeIf(entry -> entry.bidderId.equals(bidderId));
             autoBidEntriesList.add(new AutoBidEntry(bidderId, bidderUsername, autoBidRequest.getMaxBid()));
-   
+
             tryTrigger(auctionEntity);
         } catch (ServiceException serviceException) {
             throw serviceException;
@@ -109,6 +113,7 @@ public class AutoBidService {
             throw exception;
         }
     }
+
     /**
      * Non-blocking: đẩy tín hiệu trigger vào queue của auction.
      *
@@ -128,9 +133,11 @@ public class AutoBidService {
         }
         String auctionId = auctionEntity.getAuctionConfig().getId();
         ensureAutoBidWorkerRunning(auctionId);
-        // Đẩy tín hiệu vào queue — nội dung không quan trọng, chỉ là "có việc cần xử lí"
+        // Đẩy tín hiệu vào queue — nội dung không quan trọng, chỉ là "có việc cần xử
+        // lí"
         triggerQueues.get(auctionId).offer(auctionId);
     }
+
     /**
      * Core trigger logic — xử lí auto-bid matching cho 1 auction.
      *
@@ -141,11 +148,12 @@ public class AutoBidService {
      * 1. Lấy snapshot entries → tìm winner (maxBid cao nhất) → tính giá proxy
      * 2. Thử lock balance winner → submit bid vào ConcurrentBidManager queue
      * 3. Nếu lock balance thất bại hoặc submit thất bại:
-     *    → loại winner đó khỏi registrationsMap
-     *    → quay lại bước 1 thử candidate tiếp (retry loop)
+     * → loại winner đó khỏi registrationsMap
+     * → quay lại bước 1 thử candidate tiếp (retry loop)
      * 4. Nếu submit thành công:
-     *    → loại tất cả thua cuộc, giữ winner
-     *    → return (ConcurrentBidManager worker sẽ gọi lại tryTrigger sau khi xử lí bid)
+     * → loại tất cả thua cuộc, giữ winner
+     * → return (ConcurrentBidManager worker sẽ gọi lại tryTrigger sau khi xử lí
+     * bid)
      * 5. Nếu không còn candidate nào thỏa mãn → dừng
      */
     public void trigger(Auction auctionEntity) throws Exception {
@@ -197,21 +205,20 @@ public class AutoBidService {
                     }
                 }
                 long bidAmount = 0;
-                if (isFirstBid && entriesSnapshotList.size() <= 1){
+                if (isFirstBid && entriesSnapshotList.size() <= 1) {
                     bidAmount = currentAuctionPrice;
-                }
-                else{
+                } else {
                     long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
                     bidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
                 }
                 if (bidAmount >= currentAuctionPrice) {
-                    
+
                     if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
                         // Balance không đủ → loại winner này, thử candidate tiếp
                         logger.log(Level.WARNING,
                                 "Balance lock failed for bidderId: " + winningEntry.bidderId
-                                + " in auctionId: " + auctionId
-                                + ". Removing and retrying next candidate.");
+                                        + " in auctionId: " + auctionId
+                                        + ". Removing and retrying next candidate.");
                         autoBidEntriesList.remove(winningEntry);
                         notifyAutoBidStopped(winningEntry.bidderId);
                         continue; // ← RETRY: quay lại đầu vòng lặp thử candidate tiếp
@@ -223,15 +230,15 @@ public class AutoBidService {
                                 bidAmount, winningEntry.maxBid, BidType.AUTO);
                         // Tăng đếm số lượt AutoBid thành công cho Winner
                         bidCounts.computeIfAbsent(auctionId, k -> new ConcurrentHashMap<>())
-                                 .merge(winningEntry.bidderId, 1, Integer::sum);
+                                .merge(winningEntry.bidderId, 1, Integer::sum);
                     } catch (Exception submitException) {
                         // Submit thất bại → rollback balance, loại winner, thử candidate tiếp
                         userDAO.unlockBidderBalance(winningEntry.bidderId, winningEntry.maxBid);
                         SessionRegistry.getInstance().addUnsettledBalance(winningEntry.bidderId, -winningEntry.maxBid);
                         logger.log(Level.WARNING,
                                 "Bid submission failed for bidderId: " + winningEntry.bidderId
-                                + " in auctionId: " + auctionId
-                                + ". Removing and retrying next candidate.",
+                                        + " in auctionId: " + auctionId
+                                        + ". Removing and retrying next candidate.",
                                 submitException);
                         autoBidEntriesList.remove(winningEntry);
                         notifyAutoBidStopped(winningEntry.bidderId);
@@ -252,9 +259,9 @@ public class AutoBidService {
                     // ConcurrentBidManager worker sẽ xử lí bid, sau đó gọi lại tryTrigger()
                     // → tín hiệu mới vào queue → worker thread AutoBid thức dậy xử lí tiếp.
                     return;
-                }
-                else {
-                    // Không có bid hợp lệ (giá tính được <= giá hiện tại) → loại các entry trong snapshot
+                } else {
+                    // Không có bid hợp lệ (giá tính được <= giá hiện tại) → loại các entry trong
+                    // snapshot
                     List<AutoBidEntry> toRemove = new ArrayList<>(entriesSnapshotList);
                     autoBidEntriesList.removeAll(toRemove);
                     toRemove.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
@@ -269,6 +276,7 @@ public class AutoBidService {
             throw exception;
         }
     }
+
     /**
      * Retrieve all auto-bid registrations for a specific auction.
      */
@@ -284,6 +292,7 @@ public class AutoBidService {
             throw exception;
         }
     }
+
     /**
      * Clear all auto-bid registrations for a specific auction.
      * Đánh dấu auctionId vào cancelledAuctionIds TRƯỚC khi remove khỏi map,
@@ -303,7 +312,8 @@ public class AutoBidService {
                 worker.interrupt();
                 try {
                     worker.join(2000);
-                } catch (InterruptedException ignored) {}
+                } catch (InterruptedException ignored) {
+                }
             }
             triggerQueues.remove(auctionId);
             logger.log(Level.INFO, "Auto-bid registrations and worker cleared for auctionId: " + auctionId);
@@ -315,6 +325,7 @@ public class AutoBidService {
             throw exception;
         }
     }
+
     public boolean removeRegistration(String auctionId, String bidderId) throws Exception {
         try {
             List<AutoBidEntry> entries = registrationsMap.get(auctionId);
@@ -322,7 +333,8 @@ public class AutoBidService {
             if (entries != null) {
                 boolean isRemoved = entries.removeIf(entry -> entry.bidderId.equals(bidderId));
                 if (isRemoved) {
-                    logger.log(Level.INFO, "Auto-bid registration removed for bidderId: " + bidderId + " in auctionId: " + auctionId);
+                    logger.log(Level.INFO,
+                            "Auto-bid registration removed for bidderId: " + bidderId + " in auctionId: " + auctionId);
                 } else {
                     logger.log(Level.INFO, "BidderId: " + bidderId + " not found in auctionId: " + auctionId);
                 }
@@ -332,10 +344,13 @@ public class AutoBidService {
             logger.log(Level.INFO, "No auto-bid entries found for auctionId: " + auctionId);
             return false;
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "[SYSTEM_FAILURE] Unexpected error in AutoBidService.removeRegistration for bidderId: " + bidderId, exception);
+            logger.log(Level.SEVERE,
+                    "[SYSTEM_FAILURE] Unexpected error in AutoBidService.removeRegistration for bidderId: " + bidderId,
+                    exception);
             throw exception;
         }
     }
+
     // --- PRIVATE METHODS ---
     /**
      * Khởi tạo worker thread cho auction nếu chưa có.
@@ -354,6 +369,7 @@ public class AutoBidService {
             return worker;
         });
     }
+
     /**
      * Vòng lặp chính của worker thread cho mỗi auction.
      * Giống hệt runWorker() trong ConcurrentBidManager.
@@ -367,7 +383,8 @@ public class AutoBidService {
     private void runAutoBidWorker(String auctionId) {
         try {
             BlockingQueue<String> queue = triggerQueues.get(auctionId);
-            if (queue == null) return;
+            if (queue == null)
+                return;
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     // Block cho đến khi có tín hiệu trigger
@@ -398,6 +415,7 @@ public class AutoBidService {
                     "Unexpected error in AutoBid worker thread for auctionId: " + auctionId, exception);
         }
     }
+
     /**
      * Notify a bidder that their auto-bid has been stopped.
      */
@@ -420,6 +438,7 @@ public class AutoBidService {
             }
         }
     }
+
     private void validateAutoBidRequest(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername)
             throws ServiceException {
         if (autoBidRequest == null) {
@@ -442,6 +461,7 @@ public class AutoBidService {
                     "The maximum auto-bid amount must be greater than zero.");
         }
     }
+
     private void validateAutoBidTerms(Auction auction, AutoBidRequest autoBidRequest, String bidderId)
             throws ServiceException {
         if (auction == null) {
@@ -469,8 +489,9 @@ public class AutoBidService {
             }
         }
     }
+
     private void validateBidderAccount(User bidder, long bidAmount, Auction auction)
-        throws ServiceException {
+            throws ServiceException {
         if (!(bidder instanceof Bidder bidderAccount)) {
             throw new ServiceException(ErrorCode.NOT_BIDDER, "...");
         }
@@ -487,10 +508,11 @@ public class AutoBidService {
         long netRequired = bidAmount - alreadyLocked;
         if (bidderAccount.getAvailableBalance() < netRequired) {
             throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
-                "Insufficient balance. Need: " + netRequired
-                + ", available: " + bidderAccount.getAvailableBalance());
+                    "Insufficient balance. Need: " + netRequired
+                            + ", available: " + bidderAccount.getAvailableBalance());
         }
     }
+
     /**
      * Represents a single auto-bid entry for an auction.
      * Stores bidder information, bid limits, and registration timestamp.
@@ -500,12 +522,14 @@ public class AutoBidService {
         public final String bidderUsername;
         public final long maxBid;
         public final LocalDateTime registeredAt;
+
         public AutoBidEntry(String bidderId, String bidderUsername, long maxBid) {
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
             this.maxBid = maxBid;
             this.registeredAt = LocalDateTime.now();
         }
+
         public String getBidderId() {
             return bidderId;
         }
