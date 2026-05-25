@@ -39,7 +39,7 @@
                     <artifactId>maven-checkstyle-plugin</artifactId>
                     <version>3.6.0</version>
                     <configuration>
-						<configLocation>google_checks_custom.xml</configLocation>
+						<configLocation>${maven.multiModuleProjectDirectory}/google_checks_custom.xml</configLocation>
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
@@ -52,24 +52,7 @@
                     </dependencies>
                 </plugin>
 
-                <plugin>
-					<groupId>com.diffplug.spotless</groupId>
-					<artifactId>spotless-maven-plugin</artifactId>
-					<version>2.44.3</version> 
-					<configuration>
-						<java>
-							<includes>
-								<include>src/main/java/**/*.java</include>
-								<include>src/test/java/**/*.java</include>
-							</includes>
-							<googleJavaFormat>
-								<version>1.24.0</version>
-								<style>GOOGLE</style>
-							</googleJavaFormat>
-							<removeUnusedImports/>
-						</java>
-					</configuration>
-				</plugin>
+
             </plugins>
         </pluginManagement>
     </build>
