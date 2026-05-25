@@ -27,4 +27,3 @@ public class AutoBidRequest implements Serializable{
                 '}';
     }
 }
-

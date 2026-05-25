@@ -84,8 +84,12 @@ public class AuctionDTO implements Serializable {
     }
 
 
-    public long getMinIncrement(){return minIncrement;}
-    public void setMinIncrement(long minIncrement) {this.minIncrement = minIncrement;}
+    public long getMinIncrement(){ 
+      return minIncrement;
+    }
+    public void setMinIncrement(long minIncrement) {
+      this.minIncrement = minIncrement;
+    }
 
     public List<BidDTO> getBidDto() {
         return bidDto;

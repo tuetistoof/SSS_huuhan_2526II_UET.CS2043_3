@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 public class BidDTO implements Serializable {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
     private String auctionId;
     private String bidderId;
@@ -16,7 +16,7 @@ public class BidDTO implements Serializable {
     private String bidType; 
     private long version;
 
-    public BidDTO() {}
+  public BidDTO() {}
 
     public String getAuctionId() { return auctionId; }
     public void setAuctionId(String auctionId) { this.auctionId = auctionId; }

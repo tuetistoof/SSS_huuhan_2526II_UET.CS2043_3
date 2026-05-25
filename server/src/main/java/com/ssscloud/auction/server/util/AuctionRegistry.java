@@ -1,6 +1,5 @@
 package com.ssscloud.auction.server.util;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
@@ -104,12 +103,12 @@ public class AuctionRegistry {
                 // (Hết lỗi nhờ chuyển sang hàm non-static)
                 auction = auctionDAO.findByAuctionId(auctionId);
                 if (auction == null) {
-                    throw new Exception();
+                    throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND, "Auction not found");
                 }
                 
                 if (auction.getStatus().isEnded() || auction.isExpired() || !auction.getStatus().isActive() 
                     || auction.getAuctionConfig().getEndTime().isBefore(LocalDateTime.now())) {
-                    throw new Exception();
+                    throw new ServiceException(ErrorCode.AUCTION_CLOSED, "Auction is closed");
                 }
                 this.registerIfAbsent(auction);
                 auction = this.get(auctionId);

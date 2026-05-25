@@ -16,11 +16,17 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import javafx.stage.Modality;
+import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
 // Cần thêm check xem đúng định dạng gmail hay ko
@@ -267,7 +273,7 @@ public class SignUpController {
             "9. CHANGES\n" +
             "We may update these Terms at any time. Continued use after changes constitutes acceptance.\n\n" +
             "By checking the box, you confirm you have read, understood, and agree to these Terms.";
-            
+
         TextArea ta = new TextArea(termsText);
         ta.setWrapText(true);
         ta.setEditable(false);

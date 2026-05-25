@@ -7,58 +7,58 @@ import org.junit.jupiter.api.Test;
 
 public class BidValidatorTest {
 
-    // --- isPositiveBid ---
+  // --- isPositiveBid ---
 
-    @Test
-    void testIsPositiveBidWithPositiveAmount() {
-        assertTrue(BidValidator.isPositiveBid(1000L));
-    }
+  @Test
+  void testIsPositiveBidWithPositiveAmount() {
+    assertTrue(BidValidator.isPositiveBid(1000L));
+  }
 
-    @Test
-    void testIsPositiveBidWithZero() {
-        assertFalse(BidValidator.isPositiveBid(0L));
-    }
+  @Test
+  void testIsPositiveBidWithZero() {
+    assertFalse(BidValidator.isPositiveBid(0L));
+  }
 
-    @Test
-    void testIsPositiveBidWithNegativeAmount() {
-        assertFalse(BidValidator.isPositiveBid(-5L));
-    }
+  @Test
+  void testIsPositiveBidWithNegativeAmount() {
+    assertFalse(BidValidator.isPositiveBid(-5L));
+  }
 
-    // --- isValidBid ---
+  // --- isValidBid ---
 
-    @Test
-    void testIsValidBidWhenAmountMeetsMinIncrement() {
-        // 1100 >= 1000 + 100 → valid
-        assertTrue(BidValidator.isValidBid(1100, 1000, 100));
-    }
+  @Test
+  void testIsValidBidWhenAmountMeetsMinIncrement() {
+    // 1100 >= 1000 + 100 → valid
+    assertTrue(BidValidator.isValidBid(1100, 1000, 100));
+  }
 
-    @Test
-    void testIsValidBidWhenAmountBelowMinIncrement() {
-        // 1099 < 1000 + 100 → invalid
-        assertFalse(BidValidator.isValidBid(1099, 1000, 100));
-    }
+  @Test
+  void testIsValidBidWhenAmountBelowMinIncrement() {
+    // 1099 < 1000 + 100 → invalid
+    assertFalse(BidValidator.isValidBid(1099, 1000, 100));
+  }
 
-    @Test
-    void testIsValidBidWhenAmountExceedsMinIncrement() {
-        // 1300 >= 1000 + 100 → valid
-        assertTrue(BidValidator.isValidBid(1300, 1000, 100));
-    }
+  @Test
+  void testIsValidBidWhenAmountExceedsMinIncrement() {
+    // 1300 >= 1000 + 100 → valid
+    assertTrue(BidValidator.isValidBid(1300, 1000, 100));
+  }
 
-    // --- isWithinLimit ---
+  // --- isWithinLimit ---
 
-    @Test
-    void testIsWithinLimitWhenBelowLimit() {
-        assertTrue(BidValidator.isWithinLimit(500, 1000));
-    }
+  @Test
+  void testIsWithinLimitWhenBelowLimit() {
+    assertTrue(BidValidator.isWithinLimit(500, 1000));
+  }
 
-    @Test
-    void testIsWithinLimitWhenExceedsLimit() {
-        assertFalse(BidValidator.isWithinLimit(1500, 1000));
-    }
+  @Test
+  void testIsWithinLimitWhenExceedsLimit() {
+    assertFalse(BidValidator.isWithinLimit(1500, 1000));
+  }
 
-    @Test
-    void testIsWithinLimitWhenEqualToLimit() {
-        // uses strict < not <=, so equal is NOT within limit
-        assertFalse(BidValidator.isWithinLimit(1000, 1000));
-    }
+  @Test
+  void testIsWithinLimitWhenEqualToLimit() {
+    // uses strict < not <=, so equal is NOT within limit
+    assertFalse(BidValidator.isWithinLimit(1000, 1000));
+  }
 }

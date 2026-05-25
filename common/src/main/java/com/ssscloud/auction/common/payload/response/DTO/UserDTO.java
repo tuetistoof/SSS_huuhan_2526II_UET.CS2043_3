@@ -1,86 +1,97 @@
 package com.ssscloud.auction.common.payload.response.DTO;
 
+import com.ssscloud.auction.common.enums.UserRole;
 import java.io.Serializable;
 
-import com.ssscloud.auction.common.enums.UserRole;
-
 public class UserDTO implements Serializable {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    private String id;
-    private String username;
-    private String email;
-    private UserRole role;
-    private long accountBalance;
-    private long unsettledBalance;
-    public UserDTO() {
-    }
+  private String id;
+  private String username;
+  private String email;
+  private UserRole role;
+  private long accountBalance;
+  private long unsettledBalance;
 
-    public UserDTO(String id, String username, String email, UserRole role, long accountBalance, long unsettledBalance) {
-        this.id = id;
-        this.username = username;
-        this.email = email;
-        this.role = role;
-        this.accountBalance = accountBalance;
-        this.unsettledBalance = unsettledBalance;
-    
-    }
+  public UserDTO() {}
 
-    public String getId() {
-        return id;
-    }
+  public UserDTO(
+      String id,
+      String username,
+      String email,
+      UserRole role,
+      long accountBalance,
+      long unsettledBalance) {
+    this.id = id;
+    this.username = username;
+    this.email = email;
+    this.role = role;
+    this.accountBalance = accountBalance;
+    this.unsettledBalance = unsettledBalance;
+  }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+  public String getId() {
+    return id;
+  }
 
-    public String getUsername() {
-        return username;
-    }
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+  public String getUsername() {
+    return username;
+  }
 
-    public String getEmail() {
-        return email;
-    }
+  public void setUsername(String username) {
+    this.username = username;
+  }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public UserRole getRole() {
-        return role;
-    }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
+  public UserRole getRole() {
+    return role;
+  }
 
-    public long getAccountBalance() {
-        return accountBalance;
-    }
+  public void setRole(UserRole role) {
+    this.role = role;
+  }
 
-    public void setAccountBalance(long accountBalance) {
-        this.accountBalance = accountBalance;
-    }
-    public long getUnsettledBalance() {
-        return unsettledBalance;
-    }
-    public void setUnsettledBalance(long unsettledBalance) {
-        this.unsettledBalance = unsettledBalance;
-    }
+  public long getAccountBalance() {
+    return accountBalance;
+  }
 
+  public void setAccountBalance(long accountBalance) {
+    this.accountBalance = accountBalance;
+  }
 
-    @Override
-    public String toString() {
-        return "UserDTO{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", role=" + role +
-                ", accountBalance=" + accountBalance +
-                ", unsettledBalance=" + unsettledBalance +
-                '}';
-    }
+  public long getUnsettledBalance() {
+    return unsettledBalance;
+  }
+
+  public void setUnsettledBalance(long unsettledBalance) {
+    this.unsettledBalance = unsettledBalance;
+  }
+
+  @Override
+  public String toString() {
+    return "UserDTO{"
+        + "id="
+        + id
+        + ", username='"
+        + username
+        + '\''
+        + ", role="
+        + role
+        + ", accountBalance="
+        + accountBalance
+        + ", unsettledBalance="
+        + unsettledBalance
+        + '}';
+  }
 }

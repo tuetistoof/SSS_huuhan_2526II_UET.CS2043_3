@@ -110,13 +110,23 @@ public class AdminDashboardController {
         loadUsers();
     }
 
-    @FXML void switchToAuctions(ActionEvent event) { switchPanel(panelAuctions, panelUsers, tabAuction, tabUser); }
-    @FXML void switchToUsers(ActionEvent event)    { switchPanel(panelUsers, panelAuctions, tabUser, tabAuction); }
+    @FXML void switchToAuctions(ActionEvent event) { 
+        switchPanel(panelAuctions, panelUsers, tabAuction, tabUser); 
+    }
+    @FXML void switchToUsers(ActionEvent event)    { 
+        switchPanel(panelUsers, panelAuctions, tabUser, tabAuction); 
+    }
 
 
-    @FXML void filterAuctionAll(ActionEvent event)     { applyAuctionFilter(dto -> true, aFilterAll); }
-    @FXML void filterAuctionRunning(ActionEvent event) { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.RUNNING, aFilterRunning); }
-    @FXML void filterAuctionOpen(ActionEvent event)    { applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.OPEN, aFilterOpen); }
+    @FXML void filterAuctionAll(ActionEvent event)     { 
+        applyAuctionFilter(dto -> true, aFilterAll); 
+    }
+    @FXML void filterAuctionRunning(ActionEvent event) { 
+        applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.RUNNING, aFilterRunning); 
+    }
+    @FXML void filterAuctionOpen(ActionEvent event)    { 
+        applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.OPEN, aFilterOpen); 
+    }
     @FXML void filterAuctionDone(ActionEvent e) {
         applyAuctionFilter(dto -> dto.getStatus() == AuctionStatus.FINISHED
                                 || dto.getStatus() == AuctionStatus.CANCELED
@@ -125,9 +135,15 @@ public class AdminDashboardController {
     }
 
 
-    @FXML void filterUserAll(ActionEvent event)     { applyUserFilter(null, uFilterAll); }
-    @FXML void filterUserSeller(ActionEvent event)  { applyUserFilter(UserRole.SELLER, uFilterSeller); }
-    @FXML void filterUserBidder(ActionEvent event)  { applyUserFilter(UserRole.BIDDER, uFilterBidder); }
+    @FXML void filterUserAll(ActionEvent event)     { 
+        applyUserFilter(null, uFilterAll); 
+    }
+    @FXML void filterUserSeller(ActionEvent event)  { 
+        applyUserFilter(UserRole.SELLER, uFilterSeller); 
+    }
+    @FXML void filterUserBidder(ActionEvent event)  { 
+        applyUserFilter(UserRole.BIDDER, uFilterBidder); 
+    }
 
     private void setupAuctionTable() {
         aColName.setCellValueFactory(c   -> new SimpleStringProperty(c.getValue().getAuctionName()));
@@ -145,7 +161,9 @@ public class AdminDashboardController {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); return; }
+                if (emptyCellOrNoItem(empty, getTableRow())) { 
+                    setGraphic(null); return; 
+                }
                 AuctionStatus st = getTableRow().getItem().getStatus();
                 badge.setText(auctionStatusLabel(st));
                 badge.getStyleClass().setAll(auctionBadgeStyle(st));
@@ -170,7 +188,9 @@ public class AdminDashboardController {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); setText(null); return; }
+                if (emptyCellOrNoItem(empty, getTableRow())) { 
+                    setGraphic(null); setText(null); return; 
+                }
                 AuctionStatus status = getTableRow().getItem().getStatus();
                 btnCancel.setDisable(status != AuctionStatus.OPEN && status != AuctionStatus.RUNNING);
                 setPadding(Insets.EMPTY);
@@ -212,9 +232,13 @@ public class AdminDashboardController {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (emptyCellOrNoItem(empty, getTableRow())) { setGraphic(null); return; }
+                if (emptyCellOrNoItem(empty, getTableRow())) { 
+                    setGraphic(null); return; 
+                }
                 UserRole role = getTableRow().getItem().getRole();
-                if (role == null) { setText("-"); setGraphic(null); return; }
+                if (role == null) { 
+                    setText("-"); setGraphic(null); return; 
+                }
                 badge.setText(role.name());
                 String badgeStyle = switch (role) {
                     case SELLER -> "badge-seller";

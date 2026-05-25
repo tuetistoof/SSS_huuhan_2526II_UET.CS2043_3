@@ -56,7 +56,9 @@ public class BiddedAuctionsListRowController {
         setRowImage(finalImageURL);
     }
 
-    public void setOnViewRoom(Runnable callback) { this.onViewRoom = callback; }
+    public void setOnViewRoom(Runnable callback) { 
+        this.onViewRoom = callback; 
+    }
     
     @FXML
     private void handleEnter() {

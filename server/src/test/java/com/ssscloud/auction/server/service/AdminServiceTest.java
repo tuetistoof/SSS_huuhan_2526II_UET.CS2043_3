@@ -1,8 +1,26 @@
 package com.ssscloud.auction.server.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -69,11 +87,13 @@ public class AdminServiceTest {
     private Auction        auction;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         adminDAO       = mock(AdminDAO.class);
         auctionDAO     = mock(AuctionDAO.class);
         autoBidService = mock(AutoBidService.class);
         userDAO        = mock(UserDAO.class);
+
+        AuctionRegistry.initialize(auctionDAO);
 
         adminService = new AdminService(adminDAO, auctionDAO, autoBidService, userDAO);
 
@@ -96,6 +116,9 @@ public class AdminServiceTest {
 
     @AfterEach
     void tearDown() {
+        try {
+            ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
+        } catch (Exception ignored) {}
         AuctionRegistry.getInstance().remove(AUCTION_ID);
         ConcurrentBidManager.resetInstance();
     }
@@ -186,13 +209,13 @@ public class AdminServiceTest {
     }
 
     @Test
-    void testCancelAuction_auctionNotInRegistry_throwsServiceException() {
+    void testCancelAuction_auctionNotInRegistry_throwsServiceException() throws Exception {
         // WHY: auction không tồn tại trong AuctionRegistry = đã kết thúc hoặc không hợp lệ
         ServiceException ex = assertThrows(ServiceException.class,
             () -> adminService.cancelAuction("non-existent-id", REASON));
 
         assertEquals(ErrorCode.AUCTION_NOT_FOUND, ex.getErrorCode());
-        verifyNoInteractions(auctionDAO);
+        verify(auctionDAO).findByAuctionId("non-existent-id");
     }
 
     @Test

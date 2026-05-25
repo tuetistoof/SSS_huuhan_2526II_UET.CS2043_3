@@ -4,80 +4,91 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Item extends Entity {
-    // tinh theo gia viet nam nen de la long
-    private String sellerId;
-    private String creator;
-    private String description;
-    private String type;
-    private List<String> imageUrl = new ArrayList<>();
-    public Item() {
-    } // dùng trong factory
+  // tinh theo gia viet nam nen de la long
+  private String sellerId;
+  private String creator;
+  private String description;
+  private String type;
+  private List<String> imageUrl = new ArrayList<>();
 
-    public Item(String name, String sellerID, String creator, String description, String type, List<String> imageUrl) {
-        super(name);
-        this.sellerId = sellerID;
-        this.creator = creator;
-        this.description = description;
-        this.type = type;
-        this.imageUrl = imageUrl;
-    }
+  public Item() {} // dùng trong factory
 
-    public Item(String id, String name, String sellerID, String creator, String description, String type, List<String> imageUrl) {
-        super(id, name);
-        this.sellerId = sellerID;
-        this.creator = creator;
-        this.description = description;
-        this.type = type;
-        this.imageUrl = imageUrl;
-    }
+  public Item(
+      String name,
+      String sellerID,
+      String creator,
+      String description,
+      String type,
+      List<String> imageUrl) {
+    super(name);
+    this.sellerId = sellerID;
+    this.creator = creator;
+    this.description = description;
+    this.type = type;
+    this.imageUrl = imageUrl;
+  }
 
+  public Item(
+      String id,
+      String name,
+      String sellerID,
+      String creator,
+      String description,
+      String type,
+      List<String> imageUrl) {
+    super(id, name);
+    this.sellerId = sellerID;
+    this.creator = creator;
+    this.description = description;
+    this.type = type;
+    this.imageUrl = imageUrl;
+  }
 
-    // them anh xoa anh
-    public void addImage(String url) {
-        imageUrl.add(url);
-    }
+  // them anh xoa anh
+  public void addImage(String url) {
+    imageUrl.add(url);
+  }
 
-    public void delImage(String url) {
-        if (imageUrl.remove(url))
-            System.out.println("xoa thanh cong");
-        else
-            System.out.println("khong co anh");
-    }
+  public void delImage(String url) {
+    if (imageUrl.remove(url)) System.out.println("xoa thanh cong");
+    else System.out.println("khong co anh");
+  }
 
-    // getter setter
-    // khong thay doi duoc nguoi ban
-    public void setSellerId(String sellerId) {
-        this.sellerId = sellerId;
-    }
-    public String getSellerId() {
-        return sellerId;
-    }
+  // getter setter
+  // khong thay doi duoc nguoi ban
+  public void setSellerId(String sellerId) {
+    this.sellerId = sellerId;
+  }
 
-    public String getCreator() {
-        return creator;
-    }
+  public String getSellerId() {
+    return sellerId;
+  }
 
-    public void setCreator(String creator) {
-        this.creator = creator;
-    }
+  public String getCreator() {
+    return creator;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public void setCreator(String creator) {
+    this.creator = creator;
+  }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-    public String getType() {
-        return type;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public List<String> getImageUrl() {
-        return imageUrl;
-    }
+  public void setType(String type) {
+    this.type = type;
+  }
 
+  public String getType() {
+    return type;
+  }
+
+  public List<String> getImageUrl() {
+    return imageUrl;
+  }
 }

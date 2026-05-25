@@ -238,8 +238,10 @@ public class AutoBidService {
                         continue; // ← RETRY: quay lại đầu vòng lặp thử candidate tiếp
                     }
                     // --- Submit thành công → loại tất cả thua cuộc, giữ winner ---
+                    // Dùng entriesSnapshotList (không phải autoBidEntriesList) để tránh xóa
+                    // nhầm các entry mới đăng ký đồng thời trong quá trình trigger này
                     List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
-                    for (AutoBidEntry entry : autoBidEntriesList) {
+                    for (AutoBidEntry entry : entriesSnapshotList) {
                         if (!entry.bidderId.equals(winningEntry.bidderId)) {
                             entriesToRemoveList.add(entry);
                         }
@@ -251,9 +253,9 @@ public class AutoBidService {
                     // → tín hiệu mới vào queue → worker thread AutoBid thức dậy xử lí tiếp.
                     return;
                 }
-                else{
-                    // Không có bid hợp lệ (giá tính được <= giá hiện tại) → loại tất cả
-                    List<AutoBidEntry> toRemove = new ArrayList<>(autoBidEntriesList);
+                else {
+                    // Không có bid hợp lệ (giá tính được <= giá hiện tại) → loại các entry trong snapshot
+                    List<AutoBidEntry> toRemove = new ArrayList<>(entriesSnapshotList);
                     autoBidEntriesList.removeAll(toRemove);
                     toRemove.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
                     return;
@@ -299,6 +301,9 @@ public class AutoBidService {
             Thread worker = autoBidWorkers.remove(auctionId);
             if (worker != null) {
                 worker.interrupt();
+                try {
+                    worker.join(2000);
+                } catch (InterruptedException ignored) {}
             }
             triggerQueues.remove(auctionId);
             logger.log(Level.INFO, "Auto-bid registrations and worker cleared for auctionId: " + auctionId);

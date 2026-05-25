@@ -3,6 +3,8 @@ package com.ssscloud.auction.server.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -16,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
+import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.enums.UserRole;
+import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.auction.Auction;
@@ -46,12 +50,18 @@ public class BidServiceTest {
         userDAO = Mockito.mock(UserDAO.class);
         bidService = new BidService(auctionDAO, userDAO);
 
+        when(userDAO.lockBidderBalance(any(), anyLong())).thenReturn(true);
+        when(userDAO.unlockBidderBalance(any(), anyLong())).thenReturn(true);
+        when(userDAO.updatePendingBalance(any(), anyLong())).thenReturn(true);
+
+        AuctionRegistry.initialize(auctionDAO);
+
         // Initialize ConcurrentBidManager singleton với mock DAO để các test
         // gọi đến submitBid() không bị NPE (singleton chưa được khởi tạo)
         BidTransactionDAO bidTransactionDAO = mock(BidTransactionDAO.class);
         AutoBidService autoBidService = mock(AutoBidService.class);
         NotificationController notifController = mock(NotificationController.class);
-        doNothing().when(notifController).notifyWatchers(anyString(), anyString());
+        doNothing().when(notifController).notifyWatchers(any(Auction.class), anyString());
         ConcurrentBidManager.initialize(userDAO, bidTransactionDAO, autoBidService, auctionDAO, notifController);
 
         AuctionConfig config = new AuctionConfig(
@@ -77,6 +87,9 @@ public class BidServiceTest {
 
     @AfterEach
     void tearDown() {
+        try {
+            ConcurrentBidManager.getInstance().shutdown(AUCTION_ID);
+        } catch (Exception ignored) {}
         ConcurrentBidManager.resetInstance();
         AuctionRegistry.getInstance().remove(AUCTION_ID);
     }
@@ -169,25 +182,27 @@ public class BidServiceTest {
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(mockAuction);
         when(userDAO.findById("bidder123")).thenReturn(mockBidder);
 
+        // Place a baseline bid first
+        mockAuction.placeBid(new BidTransaction(
+            AUCTION_ID, "bidder-pre", "pre",
+            30000L, 30000L, LocalDateTime.now(), BidType.MANUAL
+        ));
+
         // startPrice=30000, minIncrement=1000 → cần >= 31000, gửi 30500 → fail
         PlaceBidRequest placeBidRequest = new PlaceBidRequest(AUCTION_ID, 30500L);
         assertThrows(ServiceException.class, () ->
             bidService.placeBid(placeBidRequest, "bidder123", "Kphong"));
     }
 
-    // --- 2 test mới ---
-
     @Test
     void testFinishedAuction_rejectsBid() throws Exception {
         // WHY: auction ở trạng thái FINISHED (isEnded() == true) phải bị reject ngay
         // tại retrieveAndValidateAuction() với AUCTION_CLOSED.
-        // Nếu không check status, bidder có thể đặt giá sau khi phiên đã kết thúc
-        // và làm hỏng state của hệ thống.
         AuctionConfig config = new AuctionConfig(
             "finished-auction", "Finished Auction",
             30000L, 1000L,
             LocalDateTime.now().minusHours(2),
-            LocalDateTime.now().minusHours(1), // endTime đã qua
+            LocalDateTime.now().minusHours(1),
             30
         );
         Auction finishedAuction = new Auction(config, AuctionStatus.FINISHED, "seller123", "item123");
@@ -206,9 +221,6 @@ public class BidServiceTest {
         // WHY: validatePlaceBidTerms() dùng điều kiện strict less than:
         //   bidAmount - currentPrice < minIncrement → reject
         // Suy ra: bidAmount == currentPrice + minIncrement phải được CHẤP NHẬN.
-        // Test này đảm bảo boundary không bị off-by-one — nếu ai đó vô tình đổi
-        // điều kiện thành <= thì đúng boundary sẽ bị reject sai.
-        //
         // Setup: startPrice=30000, minIncrement=1000, không có bid trước
         // → currentPrice = 30000, bid hợp lệ tối thiểu = 30000 + 1000 = 31000
         when(auctionDAO.findByAuctionId(AUCTION_ID)).thenReturn(mockAuction);
