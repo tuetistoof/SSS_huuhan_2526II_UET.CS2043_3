@@ -1,51 +1,82 @@
-@import "tokens.css";
-@import "base.css";
-
-/* ==========================================================
-   component-auction-card.css — CloudBid Universal Product Card
-   Covers: Main card outer shell, interactive hover/pressed micro-states,
-           image fitting box, title typography, and description text.
-   ========================================================== */
-
+/* ----- 1. LIGHT MODE ----- */
 
 .main-card {
-    -fx-background-color: -cloud-surface;
-    -fx-font-family: Segoe UI, Arial, sans-serif;
-    
-    -fx-background-radius: 15px;
-    -fx-border-radius: 15px;
-    
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 20, 0, 0, 10);
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8px;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 4);
+    -fx-cursor: hand;
 }
 
 .main-card:hover {
-    -fx-cursor: hand;
-    
-    -fx-scale-x: 1.02;
-    -fx-scale-y: 1.02;
-    
-    -fx-effect: dropshadow(three-pass-box, rgba(247, 86, 103, 0.35), 12, 0, 0, 4);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 15, 0, 0, 6);
+    -fx-translate-y: -2px;
 }
 
-.main-card:pressed {
-    -fx-scale-x: 0.99;
-    -fx-scale-y: 0.99;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 6, 0, 0, 2); 
+.card-image-container {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 8px 8px 0 0;
 }
 
-
-.auction-image {
-    -fx-fit-width: 200;
-    -fx-fit-height: 150;
-}
-.auction-title {
-    -fx-font-size: 22px; 
+.card-item-name {
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
-    -fx-text-fill: -cloud-text-heading; 
-    -fx-padding: 10 15 5 15;
+    -fx-text-fill: #1A1A1E;
 }
 
-.auction-description {
-    -fx-font-size: 18px; 
-    -fx-text-fill: -cloud-text-secondary; 
+.card-current-price {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-primary;
+}
+
+.card-end-time {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #E65100;
+}
+
+.card-seller-name {
+    -fx-font-size: 16px;
+    -fx-text-fill: #6B7280;
+}
+
+.main-card .hbox .label {
+    -fx-font-size: 16px;
+}
+.card-icon-seller {
+    -fx-text-fill: #9CA3AF;
+}
+
+/* ----- 2. DARK MODE ----- */
+
+.theme-dark .main-card {
+    -fx-background-color: #25252A;
+    -fx-border-color: #3D3D45;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 4);
+}
+.theme-dark .main-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 15, 0, 0, 6);
+}
+
+.theme-dark .card-image-container {
+    -fx-background-color: #1A1A1E;
+}
+
+.theme-dark .card-item-name {
+    -fx-text-fill: #FFFFFF;
+}
+
+.theme-dark .card-end-time {
+    -fx-text-fill: #FF9800;
+}
+
+.theme-dark .card-icon-seller {
+    -fx-text-fill: #7A7A85;
+}
+
+.theme-dark .card-seller-name {
+    -fx-text-fill: #A1A1AA;
 }

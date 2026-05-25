@@ -30,31 +30,46 @@ public class DepositCardController {
     void handleConfirm(ActionEvent event) {
         lblError.setVisible(false);
         lblError.setManaged(false);
-        String amountTxt = txtDepositValue.getText();
-        int amount = Integer.parseInt(amountTxt.trim());
-        if (amount < 5000) {
+        String amountTxt = txtDepositValue.getText().trim();
+
+        int amount = 0;
+        try {
+            amount = Integer.parseInt(amountTxt);
+        } catch (NumberFormatException e) {
+            lblError.setText("Please enter a valid number!");
             lblError.setVisible(true);
             lblError.setManaged(true);
+            return;
+        }
+
+        if (amount < 5000) {
             lblError.setText("Invalid amount! Minimum deposit is 5,000");
+            lblError.setVisible(true);
+            lblError.setManaged(true);
+            return;
         } 
 
         String json = JsonUtils.toJson(ClientMessage.request("DEPOSIT", amount));
         dispatcher.request(json, raw -> {
             Double newBalance = ServerResponse.unwrap(raw, "DEPOSIT_RESPONSE", Double.class);
             if (newBalance != null && mainLayoutController != null) {
-                mainLayoutController.updateBalance(newBalance.longValue());
+                // JavaFX cần chạy UI update trên luồng chính (Platform.runLater) nếu dispatcher là luồng khác
+                javafx.application.Platform.runLater(() -> {
+                    mainLayoutController.updateBalance(newBalance.longValue());
+                });
             }
         }, () -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Unsuccess");
-            alert.setHeaderText(null);
-            alert.setContentText("Deposit unsuccessfully! Please try again!");
-            alert.showAndWait();
+            javafx.application.Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Unsuccess");
+                alert.setHeaderText(null);
+                alert.setContentText("Deposit unsuccessfully! Please try again!");
+                alert.showAndWait();
+            });
         });
 
         Stage stage = (Stage) lblError.getScene().getWindow();
         stage.close();
-        
     }
 
 

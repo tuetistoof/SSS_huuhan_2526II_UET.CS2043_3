@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -81,18 +80,6 @@
                                                 <Label fx:id="lblAccountBalance" styleClass="metric-value-dash" text="00.000đ" />
                                                 <Label styleClass="metric-label" text="Account balance" />
                                                 <Label styleClass="metric-sub" text="Available" />
-                                            </children>
-                                        </VBox>
-      
-                                                    <!-- Số tài khoản ngân hàng -->
-                                        <VBox alignment="TOP_LEFT" spacing="2" styleClass="metric-card" HBox.hgrow="ALWAYS">
-                                            <padding>
-                                    <Insets bottom="10" left="12" right="12" top="10" />
-                                 </padding>
-                                            <children>
-                                                <Label fx:id="lblBankAccount" styleClass="metric-value-bank" text="—" />
-                                                <Label styleClass="metric-label" text="Bank number" />
-                                                <Hyperlink onAction="#changeBankAccount" styleClass="metric-action-link" text="Change your bank account" />
                                             </children>
                                         </VBox>
       

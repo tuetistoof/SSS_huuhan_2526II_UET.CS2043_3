@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox prefWidth="280" spacing="0" styleClass="bal-popup-root" stylesheets="@../css/component-balance-popup.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/25" fx:controller="com.ssscloud.auction.client.controller.shared.BalancePopupController">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" styleClass="bal-popup-header">
+        <Label styleClass="bal-popup-title" text="Balance" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="lblTotalAmount" styleClass="bal-popup-total-value" text="0 ₫" />
+    </HBox>
+
+    <Separator styleClass="bal-popup-sep" />
+
+    <!-- Account Balance row -->
+    <HBox alignment="CENTER_LEFT" styleClass="bal-popup-row">
+        <Label styleClass="bal-row-dot bal-dot-total" text="●" />
+        <VBox spacing="1" HBox.hgrow="ALWAYS">
+            <Label styleClass="bal-row-label" text="Total Balance" />
+        </VBox>
+        <Label fx:id="lblBalanceValue" styleClass="bal-row-value" text="0 ₫" />
+    </HBox>
+
+    <!-- Locked / Pending row -->
+    <HBox alignment="CENTER_LEFT" styleClass="bal-popup-row">
+        <Label styleClass="bal-row-dot bal-dot-locked" text="●" />
+        <VBox spacing="1" HBox.hgrow="ALWAYS">
+            <Label fx:id="lblLockLabel" styleClass="bal-row-label" text="Locked" />
+        </VBox>
+        <Label fx:id="lblLockValue" styleClass="bal-row-value bal-row-value-locked" text="0 ₫" />
+    </HBox>
+
+    <!-- Available row -->
+    <HBox alignment="CENTER_LEFT" styleClass="bal-popup-row bal-popup-row-available" />
+   <HBox alignment="CENTER_LEFT" layoutX="11.0" layoutY="102.0" styleClass="bal-popup-row">
+      <children>
+           <Label styleClass="bal-row-dot bal-dot-available" text="●" />
+           <VBox spacing="1" HBox.hgrow="ALWAYS">
+               <Label styleClass="bal-row-label" text="Available" />
+               <Label styleClass="bal-row-sub" text="Ready to use" />
+           </VBox>
+           <Label fx:id="lblAvailableValue" styleClass="bal-row-value bal-row-value-available" text="0 ₫" />
+      </children>
+   </HBox>
+
+    <Separator styleClass="bal-popup-sep" />
+
+    <!-- Footer hint -->
+    <HBox alignment="CENTER" styleClass="bal-popup-footer">
+        <Label styleClass="bal-footer-hint" text="Tap Deposit to add funds" />
+    </HBox>
+
+</VBox>

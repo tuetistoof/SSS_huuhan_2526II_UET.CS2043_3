@@ -8,6 +8,8 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -22,7 +24,23 @@
    <children>
       <HBox alignment="CENTER" minHeight="-Infinity" minWidth="-Infinity" styleClass="main-card">
          <children>
-            <Pane prefWidth="400.0" styleClass="cloud-side" HBox.hgrow="ALWAYS" />
+            <Pane prefWidth="400.0" styleClass="cloud-side" HBox.hgrow="ALWAYS">
+               <children>
+                  <HBox alignment="CENTER" layoutX="25.0" layoutY="59.0" spacing="10.0">
+                     <children>
+                        <ImageView fitHeight="82.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../images/Asset%202.png" />
+                           </image>
+                        </ImageView>
+                        <Label style="-fx-font-family: 'Gabriola', serif;" text="CLOUDBID" textFill="#a40000">
+                           <font>
+                              <Font name="Arial" size="64.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </HBox>
+               </children></Pane>
             <VBox alignment="CENTER" prefWidth="600.0" spacing="10.0" styleClass="form-white-side" HBox.hgrow="ALWAYS">
                <children>
                   <Label alignment="CENTER" contentDisplay="CENTER" text="Create your Account" textAlignment="CENTER" wrapText="true">
@@ -69,23 +87,34 @@
                    </GridPane>
                   <VBox alignment="CENTER" spacing="4.0">
                      <children>
-                        <HBox alignment="BOTTOM_LEFT" maxWidth="450.0">
+                        <HBox alignment="BOTTOM_LEFT" maxWidth="450.0" prefWidth="450.0">
                            <children>
                               <Label fx:id="lblBankAccount" alignment="CENTER" styleClass="signup-form-txt-font" text="Bank Account:" />
                            </children>
                         </HBox>
-                        <TextField fx:id="txtBankAccount" maxWidth="450.0" styleClass="input-field" />
+                        <TextField fx:id="txtBankAccount" maxWidth="450.0" prefWidth="450.0" styleClass="input-field" />
                      </children>
                   </VBox>
-                  <HBox alignment="CENTER">
+                 
+                  <HBox alignment="CENTER" maxWidth="450.0" prefWidth="450.0">
                      <children>
-                           <ComboBox fx:id="cbRoles" maxWidth="1.7976931348623157E308" onAction="#handleRoleChange" promptText="Role" styleClass="combo-box" />
-                        <Region prefWidth="270.0" />
-                           <CheckBox fx:id="chkPassword" mnemonicParsing="false" text="Show password" />
+                        <ComboBox fx:id="cbRoles" onAction="#handleRoleChange" promptText="Role" styleClass="combo-box" HBox.hgrow="ALWAYS" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <CheckBox fx:id="chkPassword" mnemonicParsing="false" text="Show password" />
                      </children>
                   </HBox>
+
+                  <HBox alignment="CENTER_LEFT" maxWidth="450.0" prefWidth="450.0" spacing="4.0">
+                     <children>
+                        <CheckBox fx:id="chkTerms" styleClass="terms-check" />
+                        <Label styleClass="terms-label" text="I have read and agree to the" />
+                        <Hyperlink fx:id="linkTerms" onAction="#handleOpenTerms" styleClass="link-terms" text="Terms &amp; Conditions" />
+                     </children>
+                  </HBox>
+
                   <Label fx:id="lblError" alignment="CENTER" contentDisplay="CENTER" maxWidth="450.0" textFill="#dc493a" />
-                  <Button fx:id="btnSignUp" mnemonicParsing="false" onAction="#handleSignUp" styleClass="btn" text="Sign Up" />
+                  <Button fx:id="btnSignUp" maxWidth="450.0" mnemonicParsing="false" onAction="#handleSignUp" prefWidth="450.0" styleClass="btn" text="Sign Up" />
+                  
                   <HBox alignment="CENTER" spacing="5.0">
                      <children>
                         <Label text="Already have one?" />

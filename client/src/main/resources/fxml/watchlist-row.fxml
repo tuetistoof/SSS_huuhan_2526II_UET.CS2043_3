@@ -39,8 +39,8 @@
         <!-- Actions -->
         <VBox alignment="CENTER" spacing="8">
             <children>
-                <Button fx:id="btnEnter" onAction="#handleEnter" prefWidth="80.0" styleClass="wl-btn-enter" text="View Room" />
-                <Button fx:id="btnUnfollow" onAction="#handleUnfollow" prefWidth="80.0" styleClass="wl-btn-unfollow" text="Unfollow" />
+                <Button fx:id="btnEnter" onAction="#handleEnter" prefWidth="150.0" styleClass="wl-btn-enter" text="View Room" />
+                <Button fx:id="btnUnfollow" onAction="#handleUnfollow" prefWidth="150.0" styleClass="wl-btn-unfollow" text="Unfollow" />
             </children>
         </VBox>
 

@@ -14,6 +14,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <ScrollPane fitToWidth="true" styleClass="br-scroll" stylesheets="@../css/screen-bidding-room.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.bidder.BiddingRoomController">
   <content>
@@ -123,6 +124,7 @@
             <VBox fx:id="formAuto" managed="false" spacing="8" visible="false">
               <Label styleClass="br-form-title" text="Auto Bidding" />
               <TextField fx:id="txtMaxBid" promptText="Maximum Bid (₫)" styleClass="br-input" />
+              <TextField fx:id="txtNewMaxBid" layoutX="10.0" layoutY="41.0" managed="false" promptText="New maximum bid amount (₫)" styleClass="br-input" visible="false" />
               <Label fx:id="lblAutoBidMinPrice" styleClass="br-hint" text="Automatically places bids incrementally up to your maximum price" wrapText="true" />
                      <StackPane>
                         <children>
@@ -130,7 +132,12 @@
                            <Button fx:id="btnChangeMaxBidToggle" layoutX="10.0" layoutY="10.0" maxWidth="Infinity" onAction="#handleChangeAutoBidMax" styleClass="br-btn-secondary" text="Start Auto Bid" />
                         </children>
                      </StackPane>
-              <TextField fx:id="txtNewMaxBid" layoutX="10.0" layoutY="41.0" managed="false" promptText="New maximum bid amount (₫)" styleClass="br-input" visible="false" />
+                     <Region prefHeight="10.0" />
+                     <Label fx:id="lblHowToAutoBid" maxWidth="440.0" prefWidth="440.0" text="Label" wrapText="true">
+                        <font>
+                           <Font size="14.0" />
+                        </font>
+                     </Label>
             </VBox>
           </StackPane>
         </VBox>
@@ -160,10 +167,10 @@
 
           <!-- Panel: Biểu đồ giá -->
           <VBox fx:id="panelChart" managed="false" spacing="8" visible="false">
-            <Label styleClass="br-form-title" text="Diễn biến giá theo thời gian" />
+            <Label styleClass="br-form-title" text="Diễn biến giá theo lượt bid" />
             <LineChart fx:id="priceLineChart" animated="true" createSymbols="false" legendVisible="false" styleClass="br-chart">
               <xAxis>
-                <NumberAxis fx:id="chartXAxis" forceZeroInRange="false" label="Thời gian" />
+                <NumberAxis fx:id="chartXAxis" forceZeroInRange="false" label="Lượt Bid" />
               </xAxis>
               <yAxis>
                 <NumberAxis fx:id="chartYAxis" forceZeroInRange="false" label="Giá (₫)" />
@@ -182,7 +189,7 @@
               <Label fx:id="infoSeller" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">
-              <Label styleClass="br-info-key" text="Item Type:" HBox.hgrow="ALWAYS" />
+              <Label styleClass="br-info-key" text="Item Type: " HBox.hgrow="ALWAYS" />
               <Label fx:id="infoItemType" styleClass="br-info-val" text="—" />
             </HBox>
             <HBox styleClass="br-info-row">

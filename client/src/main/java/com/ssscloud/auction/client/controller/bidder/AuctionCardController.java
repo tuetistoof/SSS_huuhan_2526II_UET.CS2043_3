@@ -75,13 +75,11 @@ public class AuctionCardController {
 
         if (days > 0) {
             lblEndTime.setStyle("-fx-text-fill: #888888;");
-            return "Còn " + days + " ngày " + hours + " giờ";
+            return "Còn " + days;
         } else if (hours > 0) {
-            // Dưới 1 ngày -> set màu cam ở đây
             lblEndTime.setStyle("-fx-text-fill: orange;"); 
-            return "Còn " + hours + " giờ " + minutes + " phút";
+            return "Còn " + hours + " giờ ";
         } else {
-            // Dưới 1 giờ -> Set màu đỏ
             lblEndTime.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
             return "Sắp kết thúc (" + minutes + " phút)";
         }

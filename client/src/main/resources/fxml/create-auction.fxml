@@ -6,6 +6,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
@@ -14,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<StackPane prefHeight="700.0" prefWidth="1000.0" styleClass="wizard-shell" stylesheets="@../css/screen-create-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.seller.CreateAuctionController">
+<StackPane prefHeight="700.0" prefWidth="1000.0" stylesheets="@../css/screen-create-auction.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ssscloud.auction.client.controller.seller.CreateAuctionController">
     <children>
         
         <HBox maxHeight="750.0" maxWidth="950.0" styleClass="wizard-shell">
@@ -27,7 +28,7 @@
                     <children>
                         <Label style="-fx-font-size: 22px;" styleClass="wizard-nav-title" text="Create new auction" />
                         
-                        <HBox fx:id="step1Indicator" alignment="CENTER_LEFT" spacing="12.0" styleClass="step-row">
+                        <HBox fx:id="step1Indicator" alignment="CENTER_LEFT" onMouseClicked="#handleNavStep" spacing="12.0" styleClass="step-row">
                             <children>
                                 <StackPane>
                                     <Label fx:id="lblNum1" styleClass="step-num" text="1" />
@@ -41,7 +42,7 @@
                             </children>
                         </HBox>
                         
-                        <HBox fx:id="step2Indicator" alignment="CENTER_LEFT" spacing="12.0" styleClass="step-row">
+                        <HBox fx:id="step2Indicator" alignment="CENTER_LEFT" onMouseClicked="#handleNavStep" spacing="12.0" styleClass="step-row">
                             <children>
                                 <StackPane>
                                     <Label fx:id="lblNum2" styleClass="step-num" text="2" />
@@ -55,7 +56,7 @@
                             </children>
                         </HBox>
                         
-                        <HBox fx:id="step3Indicator" alignment="CENTER_LEFT" spacing="12.0" styleClass="step-row">
+                        <HBox fx:id="step3Indicator" alignment="CENTER_LEFT" onMouseClicked="#handleNavStep" spacing="12.0" styleClass="step-row">
                             <children>
                                 <StackPane>
                                     <Label fx:id="lblNum3" styleClass="step-num" text="3" />
@@ -117,94 +118,97 @@
                                         </VBox>
                                     </children>
                                 </VBox>
-      
-                                <VBox fx:id="step2Form" spacing="15.0" visible="false">
+                        <ScrollPane fx:id="step2Form" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+                           <content>
+                                    <VBox spacing="15.0" >
+                                        <children>
+                                            <Label styleClass="wizard-nav-title" text="Item Info" />
+                                            <HBox spacing="15.0">
+                                                <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                    <Label text="Item type:">
+                                            <font>
+                                            <Font size="14.0" />
+                                            </font>
+                                        </Label>
+                                                    <ComboBox fx:id="cmbItemType" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
+                                                </VBox>
+                                                <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                    <Label text="Item name:">
+                                            <font>
+                                            <Font size="14.0" />
+                                            </font>
+                                        </Label>
+                                                    <TextField fx:id="txtItemName" prefHeight="40.0" styleClass="wizard-input" />
+                                                </VBox>
+                                            </HBox>
+                                            
+                                                <HBox spacing="15.0">
+                                                <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                    <Label text="Creator:">
+                                            <font>
+                                            <Font size="14.0" />
+                                            </font>
+                                        </Label>
+                                                    <TextField fx:id="txtCreator" prefHeight="40.0" styleClass="wizard-input" />
+                                                </VBox>
+                                                <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                                    <Label text="Manufacturing date (optional):">
+                                            <font>
+                                            <Font size="14.0" />
+                                            </font>
+                                        </Label>
+                                                    <DatePicker fx:id="dpManufacturingDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
+                                                </VBox>
+                                            </HBox>
+        
+                                            <HBox spacing="20.0">
+                                                <VBox fx:id="sectionArt">
+                                                    <CheckBox fx:id="chkCertificate" text="Has Certificate" />
+                                                </VBox>
+                                                <VBox fx:id="sectionVehicleElectronic" spacing="10.0">
+                                                    <CheckBox fx:id="chkIsRepaired" text="Has been repaired" />
+                                                    <VBox spacing="5.0">
+                                                        <Label text="Warranty period (months):">
+                                            <font>
+                                                <Font size="14.0" />
+                                            </font>
+                                            </Label>
+                                                        <TextField fx:id="txtWarrantyPeriod" prefHeight="40.0" styleClass="wizard-input" />
+                                                    </VBox>
+                                                    <VBox spacing="5.0">
+                                                        <Label text="Purchase date:">
+                                            <font>
+                                                <Font size="14.0" />
+                                            </font>
+                                            </Label>
+                                                        <DatePicker fx:id="dpPurchaseDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
+                                                    </VBox>
+                                                </VBox>
+                                            </HBox>
+                                <VBox spacing="10.0" styleClass="image-url-container">
                                     <children>
-                                        <Label styleClass="wizard-nav-title" text="Item Info" />
-                                        <HBox spacing="15.0">
-                                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                <Label text="Item type:">
-                                       <font>
-                                          <Font size="14.0" />
-                                       </font>
-                                    </Label>
-                                                <ComboBox fx:id="cmbItemType" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
-                                            </VBox>
-                                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                <Label text="Item name:">
-                                       <font>
-                                          <Font size="14.0" />
-                                       </font>
-                                    </Label>
-                                                <TextField fx:id="txtItemName" prefHeight="40.0" styleClass="wizard-input" />
-                                            </VBox>
-                                        </HBox>
-                                        
-                                              <HBox spacing="15.0">
-                                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                <Label text="Creator:">
-                                       <font>
-                                          <Font size="14.0" />
-                                       </font>
-                                    </Label>
-                                                <TextField fx:id="txtCreator" prefHeight="40.0" styleClass="wizard-input" />
-                                            </VBox>
-                                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
-                                                <Label text="Manufacturing date (optional):">
-                                       <font>
-                                          <Font size="14.0" />
-                                       </font>
-                                    </Label>
-                                                <DatePicker fx:id="dpManufacturingDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
-                                            </VBox>
-                                        </HBox>
-      
-                                        <HBox spacing="20.0">
-                                            <VBox fx:id="sectionArt">
-                                                <CheckBox fx:id="chkCertificate" text="Has Certificate" />
-                                            </VBox>
-                                            <VBox fx:id="sectionVehicleElectronic" spacing="10.0">
-                                                <CheckBox fx:id="chkIsRepaired" text="Has been repaired" />
-                                                <VBox spacing="5.0">
-                                                    <Label text="Warranty period (months):">
-                                          <font>
-                                             <Font size="14.0" />
-                                          </font>
-                                       </Label>
-                                                    <TextField fx:id="txtWarrantyPeriod" prefHeight="40.0" styleClass="wizard-input" />
-                                                </VBox>
-                                                <VBox spacing="5.0">
-                                                    <Label text="Purchase date:">
-                                          <font>
-                                             <Font size="14.0" />
-                                          </font>
-                                       </Label>
-                                                    <DatePicker fx:id="dpPurchaseDate" maxWidth="Infinity" prefHeight="40.0" styleClass="wizard-input" />
-                                                </VBox>
-                                            </VBox>
-                                        </HBox>
-                              <VBox spacing="10.0" styleClass="image-url-container">
-                                 <children>
-                                    <Label fx:id="lblImageUrls" text="Image URLs (Max 5 images)" />
-                                    <TextField fx:id="txtUrl1" promptText="Primary Image URL (Required)" styleClass="url-input-field" />
-                                    <TextField fx:id="txtUrl2" layoutX="10.0" layoutY="28.0" promptText="Image URL 2 (Optional)" styleClass="url-input-field" />
-                                    <TextField fx:id="txtUrl3" layoutX="10.0" layoutY="53.0" promptText="Image URL 3 (Optional)" styleClass="url-input-field" />
-                                    <TextField fx:id="txtUrl4" layoutX="10.0" layoutY="79.0" promptText="Image URL 4 (Optional)" styleClass="url-input-field" />
-                                    <TextField fx:id="txtUrl5" layoutX="10.0" layoutY="104.0" promptText="Image URL 5 (Optional" styleClass="url-input-field" />
-                                    <Label layoutX="10.0" layoutY="10.0" styleClass="noti-label" text="* Note: The primary image will be used as the thumbnail on the Dashboard" />
-                                 </children>
-                              </VBox>
-      
-                                        <VBox spacing="5.0" VBox.vgrow="ALWAYS">
-                                            <Label text="Description:">
-                                    <font>
-                                       <Font size="14.0" />
-                                    </font>
-                                 </Label>
-                                            <TextArea fx:id="txtDescription" prefHeight="80.0" styleClass="wizard-input" />
-                                        </VBox>
+                                        <Label fx:id="lblImageUrls" text="Image URLs (Max 5 images)" />
+                                        <TextField fx:id="txtUrl1" promptText="Primary Image URL (Required)" styleClass="url-input-field" />
+                                        <TextField fx:id="txtUrl2" layoutX="10.0" layoutY="28.0" promptText="Image URL 2 (Optional)" styleClass="url-input-field" />
+                                        <TextField fx:id="txtUrl3" layoutX="10.0" layoutY="53.0" promptText="Image URL 3 (Optional)" styleClass="url-input-field" />
+                                        <TextField fx:id="txtUrl4" layoutX="10.0" layoutY="79.0" promptText="Image URL 4 (Optional)" styleClass="url-input-field" />
+                                        <TextField fx:id="txtUrl5" layoutX="10.0" layoutY="104.0" promptText="Image URL 5 (Optional" styleClass="url-input-field" />
+                                        <Label layoutX="10.0" layoutY="10.0" styleClass="noti-label" text="* Note: The primary image will be used as the thumbnail on the Dashboard" />
                                     </children>
                                 </VBox>
+        
+                                            <VBox spacing="5.0" VBox.vgrow="ALWAYS">
+                                                <Label text="Description:">
+                                        <font>
+                                            <Font size="14.0" />
+                                        </font>
+                                    </Label>
+                                                <TextArea fx:id="txtDescription" styleClass="wizard-input" wrapText="true" />
+                                            </VBox>
+                                        </children>
+                                    </VBox>
+                           </content>
+                        </ScrollPane>
       
                                 <VBox fx:id="step3Form" spacing="15.0" visible="false">
                                     <children>
@@ -234,7 +238,7 @@
                         </StackPane>
                         
                               <Region VBox.vgrow="ALWAYS" />
-                        <Label fx:id="lblError" styleClass="error-label" >
+                        <Label fx:id="lblError" styleClass="error-label">
                      <font>
                         <Font size="14.0" />
                      </font>

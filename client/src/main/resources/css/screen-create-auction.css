@@ -8,6 +8,14 @@
            and Wizard Context Action Buttons.
    ========================================================== */
 
+.label {
+    -fx-text-fill: #1A1A1E;
+}
+
+.theme-dark .label {
+    -fx-text-fill: -cloud-text-primary;
+}
+
 /* =========================================================
    WIZARD OUTER SHELL (Khung ngoài bao bọc biểu mẫu)
    ========================================================= */
@@ -17,7 +25,7 @@
     -fx-border-color: -cloud-border;
     -fx-border-width: 0.5;
     -fx-border-radius: 12px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 2);
 }
 
 .auction-card-title {
@@ -240,16 +248,19 @@
     -fx-padding: 6 10 6 10;
 }
 
-.step-row > .stack-pane {
-    -fx-min-width: 26;
-    -fx-max-width: 26;
-    -fx-min-height: 26;
-    -fx-max-height: 26;
+/* Step circle — dùng cả > .stack-pane lẫn .stack-pane để cover mọi trường hợp FXML */
+.step-row > .stack-pane,
+.step-row .stack-pane {
+    -fx-min-width: 28;
+    -fx-max-width: 28;
+    -fx-min-height: 28;
+    -fx-max-height: 28;
     -fx-background-radius: 50%;
     -fx-alignment: center;
     -fx-background-color: transparent;
     -fx-border-color: -cloud-border-strong;
     -fx-border-width: 1.5;
+    -fx-border-radius: 50%;
 }
 
 .step-num {
@@ -260,6 +271,7 @@
 
 .step-label {
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-secondary;
 }
 
@@ -268,17 +280,54 @@
     -fx-text-fill: -cloud-text-muted;
 }
 
-.step-row-active > .stack-pane {
+/* Active step — class được gán bằng Java (updateStepIndicators) */
+.step-row-active > .stack-pane,
+.step-row-active .stack-pane {
     -fx-background-color: -cloud-primary;
     -fx-border-color: -cloud-primary;
 }
 
 .step-row-active .step-num {
-    -fx-text-fill: -cloud-surface;
+    -fx-text-fill: white;
 }
 
 .step-row-active .step-label {
     -fx-font-weight: bold;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* Inactive step hover */
+.step-row:hover > .stack-pane,
+.step-row:hover .stack-pane {
+    -fx-border-color: -cloud-primary;
+}
+
+/* ── DARK MODE — step indicator ── */
+.theme-dark .step-row > .stack-pane,
+.theme-dark .step-row .stack-pane {
+    -fx-border-color: -cloud-border-mid;
+    -fx-background-color: transparent;
+}
+
+.theme-dark .step-num {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .step-label {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .step-row-active > .stack-pane,
+.theme-dark .step-row-active .stack-pane {
+    -fx-background-color: -cloud-primary;
+    -fx-border-color: -cloud-primary;
+}
+
+.theme-dark .step-row-active .step-num {
+    -fx-text-fill: white;
+}
+
+.theme-dark .step-row-active .step-label {
     -fx-text-fill: -cloud-text-primary;
 }
 
@@ -291,11 +340,30 @@
     -fx-padding: 8 10 8 10;
     -fx-font-size: 13px;
     -fx-text-fill: -cloud-text-primary;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
 }
 
 .wizard-input:focused {
     -fx-border-color: -cloud-primary;
     -fx-effect: dropshadow(three-pass-box, rgba(212,83,126,0.15), 4, 0, 0, 0);
+}
+
+/* TextArea inner content — dùng token thay vì hardcode hex */
+.text-area.wizard-input .content {
+    -fx-background-color: -cloud-surface;
+}
+
+.text-area.wizard-input .viewport {
+    -fx-background-color: transparent;
+}
+
+.text-area.wizard-input {
+    -fx-background-color: transparent;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.text-area.wizard-input:focused .content {
+    -fx-background-color: -cloud-surface;
 }
 
 .image-url-container {
@@ -316,6 +384,7 @@
     -fx-padding: 7 10 7 10;
     -fx-font-size: 11px;
     -fx-text-fill: -cloud-text-primary;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
 }
 
 .url-input-field:focused {
@@ -325,4 +394,96 @@
 .noti-label {
     -fx-font-size: 10px;
     -fx-text-fill: -cloud-text-muted;
+}
+
+/* ==========================================================
+   DARK MODE OVERRIDES — screen-create-auction
+   Ghi đè các giá trị trong .theme-dark context
+   ========================================================== */
+
+/* TextField, TextArea, ComboBox, DatePicker: nền đen chữ trắng */
+.theme-dark .wizard-input,
+.theme-dark .url-input-field {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-border-mid;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+
+.theme-dark .wizard-input:focused,
+.theme-dark .url-input-field:focused {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-primary;
+}
+
+/* TextArea inner content node */
+.theme-dark .text-area.wizard-input .content {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+.theme-dark .text-area.wizard-input:focused .content {
+    -fx-background-color: -cloud-surface;
+}
+
+/* ComboBox popup list */
+.theme-dark .combo-box-popup .list-view {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border-mid;
+}
+
+.theme-dark .combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.theme-dark .combo-box-popup .list-cell:hover {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+/* DatePicker text field */
+.theme-dark .date-picker .text-field {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+
+/* Wizard shell và sidebar */
+.theme-dark .wizard-shell {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+}
+
+.theme-dark .wizard-nav {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: transparent -cloud-border transparent transparent;
+}
+
+.theme-dark .wizard-content {
+    -fx-background-color: -cloud-surface;
+}
+
+.theme-dark .wizard-subsection {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border;
+}
+
+.theme-dark .image-url-container {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border;
+}
+
+/* Cancel/Secondary button */
+.theme-dark .btn-wizard-secondary {
+    -fx-border-color: -cloud-border-strong;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .btn-wizard-secondary:hover {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-text-secondary;
+}
+
+.theme-dark .combo-box.wizard-input > .list-cell {
+    -fx-text-fill: -cloud-text-primary;
 }

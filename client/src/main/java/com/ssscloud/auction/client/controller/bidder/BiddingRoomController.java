@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import javafx.util.Duration;
 
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.payload.ClientMessage;
@@ -25,6 +26,7 @@ import com.ssscloud.auction.client.util.AuctionCountdownTimer;
 import com.ssscloud.auction.client.util.PriceChartManager;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
+import com.ssscloud.auction.client.util.ThemeManager;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -39,6 +41,7 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -50,7 +53,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.control.DialogPane;
 import javafx.stage.Window;
+import javafx.stage.Modality;
+
 
 public class BiddingRoomController implements MessageListener {
 
@@ -84,6 +90,7 @@ public class BiddingRoomController implements MessageListener {
     @FXML private Label infoStartPrice;
     @FXML private Label infoStartTime;
     @FXML private Label infoDescription;
+    @FXML private Label lblHowToAutoBid;
 
     @FXML private Label lblAuctionName;
     @FXML private Label lblBidCount;
@@ -115,6 +122,14 @@ public class BiddingRoomController implements MessageListener {
     // =================================================================================
     private AuctionCountdownTimer timer;
     private PriceChartManager chartManager;
+
+    private String txt = """
+            Auto Bid: allows you to set a maximum bid  ammount, and the system will automatically place bids on your behalf to keep you in the lead, up to your specified maximum. It's a convenient way to stay competitive without having to monitor the auction constantly.
+
+            Update Max Bid: allows you to change your maximum bid during the auction and place a new bid when activated.
+
+            Those features can not be canceled once activated until the auction ends or your max bid is exceeded by others.
+            """;
 
     private boolean isFollowing = false;
     private boolean isAutoBidding = false;
@@ -163,6 +178,37 @@ public class BiddingRoomController implements MessageListener {
                 || auction.getStatus() == AuctionStatus.RUNNING;
         boolean isFinished = auction.getStatus() == AuctionStatus.FINISHED;
         boolean isCancelled = auction.getStatus() == AuctionStatus.CANCELED;
+
+        if (isCancelled && currentUser != null && "BIDDER".equals(currentUser.getRole().toString())) {
+            Platform.runLater(() -> {
+                roomCanceled = true;
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Auction Canceled");
+                alert.setHeaderText("\"" + auction.getName() + "\" has been canceled by Admin");
+                alert.setContentText("This auction is no longer available.\nYou will be redirected to the dashboard automatically.");
+                alert.initModality(Modality.APPLICATION_MODAL);
+
+                DialogPane dialogPane = alert.getDialogPane();
+                dialogPane.getStylesheets().add(getClass().getResource("/css/base.css").toExternalForm());
+                dialogPane.getStylesheets().add(getClass().getResource("/css/tokens-dark.css").toExternalForm());
+
+                if (ThemeManager.getSavedTheme() == ThemeManager.Theme.DARK) {
+                    dialogPane.getStyleClass().add("theme-dark");
+                }
+
+                alert.setOnHidden(e -> {
+                    cleanup();
+                    if (onSuccessCallback != null) onSuccessCallback.run();
+                });
+
+                Timeline autoKick = new Timeline(new KeyFrame(Duration.seconds(5), e -> {
+                    if (alert.isShowing()) alert.close();
+                }));
+                autoKick.play();
+                alert.show();
+            });
+            return;
+        }
 
         Platform.runLater(() -> {
             bidHistory.clear();
@@ -282,8 +328,37 @@ public class BiddingRoomController implements MessageListener {
         formManual.setManaged(false);
         formAuto.setVisible(true);
         formAuto.setManaged(true);
-        btnChangeMaxBidToggle.setVisible(false);
-        btnChangeMaxBidToggle.setManaged(false);
+        lblHowToAutoBid.setVisible(true);
+        lblHowToAutoBid.setText(txt);
+
+        if (isAutoBidding) {
+            if (btnChangeMaxBidToggle != null) {
+                btnChangeMaxBidToggle.setVisible(true);
+                btnChangeMaxBidToggle.setManaged(true);
+            }
+            if (txtNewMaxBid != null) {
+                txtNewMaxBid.setVisible(true);
+                txtNewMaxBid.setManaged(true);
+            }
+            if (btnAutoToggle != null) {
+                btnAutoToggle.setVisible(false);
+                btnAutoToggle.setManaged(false);
+            }
+        } else {
+            if (btnChangeMaxBidToggle != null) {
+                btnChangeMaxBidToggle.setVisible(false);
+                btnChangeMaxBidToggle.setManaged(false);
+            }
+            if (txtNewMaxBid != null) {
+                txtNewMaxBid.setVisible(false);
+                txtNewMaxBid.setManaged(false);
+            }
+            if (btnAutoToggle != null) {
+                btnAutoToggle.setVisible(true);
+                btnAutoToggle.setManaged(true);
+            }
+        }
+
         btnTabAuto.getStyleClass().setAll("br-tab-active");
         btnTabManual.getStyleClass().setAll("br-tab");
     }
@@ -597,7 +672,14 @@ public class BiddingRoomController implements MessageListener {
         alert.setTitle("Auction Canceled");
         alert.setHeaderText("\"" + auctionName + "\" has been canceled by Admin");
         alert.setContentText("Reason: " + reason + "\n\nYou will be redirected to the dashboard automatically.");
-        alert.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        alert.initModality(Modality.APPLICATION_MODAL);
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(getClass().getResource("/css/base.css").toExternalForm());
+        dialogPane.getStylesheets().add(getClass().getResource("/css/tokens-dark.css").toExternalForm());
+
+        if (ThemeManager.getSavedTheme() == ThemeManager.Theme.DARK) {
+            dialogPane.getStyleClass().add("theme-dark");
+        }
         alert.setOnHidden(e -> {
             cleanup();
             if (onSuccessCallback != null) onSuccessCallback.run();
@@ -673,13 +755,15 @@ private void applyAutoBidState(boolean active) {
                 formAuto.setManaged(true);
                 formManual.setVisible(false);
                 formManual.setManaged(false);
+                lblHowToAutoBid.setVisible(true);
+                lblHowToAutoBid.setText(txt);
 
                 // txtMaxBid: hiển thị max đang đặt (disabled để read-only)
                 if (autoBidMaxBid > 0) {
                     txtMaxBid.setText(String.format("%,d", autoBidMaxBid));
                 } else {
                     // Vào lại phòng — session mới, không còn biết max
-                    txtMaxBid.setPromptText("Active on server – enter new max to update");
+                    txtMaxBid.setPromptText("Active on server - enter new max to update");
                     txtMaxBid.clear();
                 }
                 txtMaxBid.setDisable(true);

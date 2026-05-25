@@ -26,6 +26,9 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.layout.StackPane;
+import javafx.scene.image.Image;
+import javafx.scene.layout.Pane;
 
 public class BidderDashboardController implements MessageListener {
 
@@ -37,10 +40,20 @@ public class BidderDashboardController implements MessageListener {
     @FXML private ToggleButton tabVehicles;
     @FXML private Parent loading; // Giao diện của khung loading
     @FXML private LoadingController loadingController;
+    @FXML private StackPane bannerContainer;
+    @FXML private Pane bannerPane;
+
+    private int currentBannerIndex = 0;
+    private final String[] bannerUrls = {
+        "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=1920&h=400&fit=crop", 
+        "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=1920&h=400&fit=crop", 
+        "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1920&h=400&fit=crop", 
+        "https://images.unsplash.com/photo-1583121274602-3e2820c69888?w=1920&h=400&fit=crop"  
+    };
 
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
-    private List<BidderDisplayDTO> allAuctionsDisplayInfo = new ArrayList<>(); // phá json ra để lấy
+    private List<BidderDisplayDTO> allAuctionsDisplayInfo = new ArrayList<>();
     private Consumer<BidderDisplayDTO> onOpenBidRoomHandler;
 
     public void setOnOpenBidRoom(Consumer<BidderDisplayDTO> handler) {
@@ -52,9 +65,12 @@ public class BidderDashboardController implements MessageListener {
     public void initialize() {
         socket.addListener(this);
         fetchActiveAuctions();
+        for (String url : bannerUrls) {
+            new Image(url, true);
+        }
+        loadBanner(0);
     }
 
-    /** Gọi khi MainLayout clear content để tránh memory leak */
     public void cleanup() {
         socket.removeListener(this);
     }
@@ -177,5 +193,24 @@ public class BidderDashboardController implements MessageListener {
                 e.printStackTrace();
             }
         }
+    }
+
+    @FXML
+    void handlePrevBanner(javafx.event.ActionEvent event) {
+        currentBannerIndex = (currentBannerIndex - 1 + bannerUrls.length) % bannerUrls.length;
+        loadBanner(currentBannerIndex);
+    }
+
+    @FXML
+    void handleNextBanner(javafx.event.ActionEvent event) {
+        currentBannerIndex = (currentBannerIndex + 1) % bannerUrls.length;
+        loadBanner(currentBannerIndex);
+    }
+
+    private void loadBanner(int index) {
+        String css = "-fx-background-image: url('" + bannerUrls[index] + "'); " +
+                    "-fx-background-size: cover; " +
+                    "-fx-background-position: center bottom;";
+        bannerPane.setStyle(css);
     }
 }

@@ -31,7 +31,7 @@
 
 /* ── Badge đếm tổng số Items Won ── */
 .wi-count-badge {
-    -fx-background-color: #FB6F92; /* Nền hồng pastel đậm hơn xíu để nổi chữ */
+    -fx-background-color: -cloud-primary;
     -fx-background-radius: 15px;
     -fx-min-width: 32px;
     -fx-min-height: 28px;
@@ -42,7 +42,7 @@
 .wi-count-text {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-text-fill: -cloud-surface;
+    -fx-text-fill: white;
 }
 
 /* =========================================================
@@ -297,4 +297,56 @@
     -fx-background-color: #FFE5EC;
     -fx-text-fill: #FB6F92;
     -fx-border-color: #FFC2D1;
+}
+
+/* ── Header card ── */
+.theme-dark .wi-header-card {
+    -fx-background-color: -cloud-rose-bg;
+    -fx-border-color: -cloud-rose-border;
+}
+
+/* ── Toolbar ── */
+.theme-dark .wi-toolbar {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+/* ── Filter buttons ── */
+.theme-dark .wi-filter-btn {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border-mid;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .wi-filter-btn:hover {
+    -fx-background-color: -cloud-rose-bg;
+    -fx-text-fill: -cloud-rose-dark;
+    -fx-border-color: -cloud-rose-border;
+}
+
+/* ── Thumbnail ── */
+.theme-dark .wi-thumb {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border-mid;
+}
+
+/* ── Type badge ── */
+.theme-dark .wi-badge-type {
+    -fx-background-color: -cloud-primary-pale;
+    -fx-text-fill: -cloud-primary;
+}
+
+/* ── Won badge ── */
+.theme-dark .wi-badge-won {
+    -fx-background-color: -cloud-rose-bg;
+    -fx-text-fill: -cloud-rose-dark;
+}
+
+/* ── Row typography ── */
+.theme-dark .wi-row-seller {
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.theme-dark .wi-row-date {
+    -fx-text-fill: -cloud-text-muted;
 }

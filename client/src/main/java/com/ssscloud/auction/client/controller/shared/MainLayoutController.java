@@ -48,6 +48,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -63,36 +65,53 @@ import java.io.IOException;
 public class MainLayoutController implements MessageListener {
 
     @FXML private StackPane contentArea;
-    
+
     @FXML private HBox hBoxLogo;
+
+    // Icon ImageViews — để swap light/dark
+    @FXML private javafx.scene.image.ImageView iconMenuBurger;
+    @FXML private javafx.scene.image.ImageView iconNotification;
+    @FXML private javafx.scene.image.ImageView iconHome;
+    @FXML private javafx.scene.image.ImageView iconActiveBids;
+    @FXML private javafx.scene.image.ImageView iconWatchlist;
+    @FXML private javafx.scene.image.ImageView iconWonItems;
+    @FXML private javafx.scene.image.ImageView iconNewAuction;
+    @FXML private javafx.scene.image.ImageView iconLogout;
 
     @FXML private Label lblSidebarTitleAB;
     @FXML private Label lblSidebarTitleDB;
     @FXML private Label lblSidebarTitleNAR;
     @FXML private Label lblSidebarTitleW;
     @FXML private Label lblSidebarTitleWI;
-    @FXML private Label lblAccountBalance;
-    @FXML private Label lblLockBalance;
     @FXML private Label lblAvailableBalance;
     @FXML private Label lblUsername;
     @FXML private Label lblOverview;
     @FXML private Label lblAuction;
 
+    private Label[] navLabels; 
+    private HBox[] navItems;
+
     @FXML private HBox navActiveBids;
     @FXML private HBox navDashboard;
     @FXML private HBox navNewAuctionRoom;
-    @FXML private Circle navUserInfo;
     @FXML private HBox navWatchlist;
     @FXML private HBox navWonItems;
     @FXML private Button btnLogOut;
 
     @FXML private Button btnToggleTheme;
+    @FXML private Button btnAvailableBalance;
 
     @FXML private Label lblBellBadge;
     @FXML private Button btnBell;
+    @FXML private Button btnDeposit;
+
     private NotificationController notificationController; 
     private Popup notifPopup;
     private Parent notifPopupRoot; // root đã load sẵn từ fxml, tái sử dụng cho mọi lần show/hide
+        
+    private BalancePopupController balancePopupController;
+    private Popup balancePopup;
+    private Parent balancePopupRoot;
 
     @FXML private VBox sidebar;
     @FXML private Parent loading; // Giao diện của khung loading
@@ -124,19 +143,44 @@ public class MainLayoutController implements MessageListener {
         currentBalance          = user.getAccountBalance();
         currentUnsettledBalance = user.getUnsettledBalance();
 
+        navLabels = new Label[]{
+            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleNAR, lblSidebarTitleW, lblSidebarTitleWI
+        };
+        
+        navItems = new HBox[]{
+            navDashboard, navActiveBids, navWatchlist, navWonItems, navNewAuctionRoom
+        };
+
         lblUsername.setText(user.getUsername());
-
-        // Fix: render each label with the correct value from login response
         renderBalanceLabels(currentBalance, currentUnsettledBalance);
-
         applyRole(user.getRole());
         initNotification();
+        initBalancePopup();
         handleNavDashboard(null);
         socket.addListener(this);
-        Platform.runLater(() ->
-            ThemeManager.apply(btnToggleTheme.getScene(), ThemeManager.Theme.DARK)
-        );
 
+        Platform.runLater(() -> {
+            ThemeManager.Theme saved = ThemeManager.getSavedTheme();
+            ThemeManager.apply(btnToggleTheme.getScene(), saved);
+            btnToggleTheme.setText(saved == ThemeManager.Theme.DARK ? "Light" : "Dark");
+            updateIcons(saved == ThemeManager.Theme.DARK);
+        });
+    }
+
+    private void updateIcons(boolean dark) {
+        String suffix = dark ? "-dark" : "";
+        setIcon(iconMenuBurger,  "/images/menu-burger"          + suffix + ".png");
+        setIcon(iconHome,        "/images/home"                 + suffix + ".png");
+        setIcon(iconActiveBids,  "/images/calendar-gavel-legal" + suffix + ".png");
+        setIcon(iconWatchlist,   "/images/clock"                + suffix + ".png");
+        setIcon(iconWonItems,    "/images/trophy"               + suffix + ".png");
+        setIcon(iconNewAuction,  "/images/add"                  + suffix + ".png");
+    }
+
+    private void setIcon(ImageView iv, String resourcePath) {
+        if (iv == null) return;
+        var url = getClass().getResource(resourcePath);
+        if (url != null) iv.setImage(new Image(url.toExternalForm()));
     }
 
     // --- Balance update API (called externally by DepositCardController, etc.) ---
@@ -155,21 +199,13 @@ public class MainLayoutController implements MessageListener {
     }
 
     private void renderBalanceLabels(long balance, long unsettled) {
-        lblAccountBalance.setText("Balance: " + formatter.format(balance));
-
         UserRole role = SessionManager.getInstance().getCurrentUser().getRole();
-        if (role == UserRole.BIDDER) {
-            long available = balance - unsettled;
-            lblLockBalance.setText("Locked: "    + formatter.format(unsettled));
-            lblAvailableBalance.setText("Available: " + formatter.format(available));
-        } else if (role == UserRole.SELLER) {
-            // For sellers: pending is money coming in, not deducted from balance.
-            lblLockBalance.setText("Pending: "   + formatter.format(unsettled));
-            lblAvailableBalance.setText("Balance: " + formatter.format(balance));
-        } else {
-            // ADMIN or fallback: show raw values without derived arithmetic
-            lblLockBalance.setText("Locked: "    + formatter.format(unsettled));
-            lblAvailableBalance.setText("Available: " + formatter.format(balance));
+        long available = (role == UserRole.SELLER) ? balance : balance - unsettled;
+        if (lblAvailableBalance != null) {
+            lblAvailableBalance.setText("Available: " + formatter.format(available) + " ₫");
+        }
+        if (balancePopupController != null) {
+            balancePopupController.update(role, balance, unsettled);
         }
     }
 
@@ -241,6 +277,18 @@ public class MainLayoutController implements MessageListener {
         }
     }
 
+    private void initBalancePopup() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/balance-popup.fxml"));
+            balancePopupRoot = loader.load();
+            balancePopupController = loader.getController();
+            balancePopupController.update(
+                user.getRole(), currentBalance, currentUnsettledBalance);
+        } catch (IOException e) {
+            System.err.println("[MainLayoutController] cannot load balance-popup.fxml: " + e.getMessage());
+        }
+    }
+
     private void navigateToAuction(String auctionId) {
         if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
         // Từ notification không có tab nguồn rõ ràng → back về Dashboard
@@ -250,31 +298,27 @@ public class MainLayoutController implements MessageListener {
     // --- Role-based UI visibility ---
 
     private void applyRole(UserRole role) {
+        btnDeposit.setVisible(false);       btnDeposit.setManaged(false);
         navWonItems.setVisible(false);      navWonItems.setManaged(false);
         navWatchlist.setVisible(false);     navWatchlist.setManaged(false);
         navNewAuctionRoom.setVisible(false); navNewAuctionRoom.setManaged(false);
         navActiveBids.setVisible(false);    navActiveBids.setManaged(false);
-        lblLockBalance.setVisible(false);   lblLockBalance.setManaged(false);
-        lblAvailableBalance.setVisible(false); lblAvailableBalance.setManaged(false);
+        if (btnAvailableBalance != null) { btnAvailableBalance.setVisible(false); btnAvailableBalance.setManaged(false); }
 
         switch (role) {
             case BIDDER -> {
-                lblAccountBalance.setVisible(true);  lblAccountBalance.setManaged(true);
-                lblLockBalance.setVisible(true);     lblLockBalance.setManaged(true);
-                lblAvailableBalance.setVisible(true); lblAvailableBalance.setManaged(true);
+                if (btnAvailableBalance != null) { btnAvailableBalance.setVisible(true); btnAvailableBalance.setManaged(true); }
+                btnDeposit.setVisible(true);       btnDeposit.setManaged(true);
                 navWatchlist.setVisible(true);       navWatchlist.setManaged(true);
                 navWonItems.setVisible(true);        navWonItems.setManaged(true);
                 navActiveBids.setVisible(true);      navActiveBids.setManaged(true);
             }
             case SELLER -> {
-                lblAccountBalance.setVisible(true);  lblAccountBalance.setManaged(true);
-                lblLockBalance.setVisible(true);     lblLockBalance.setManaged(true);
+                if (btnAvailableBalance != null) { btnAvailableBalance.setVisible(true); btnAvailableBalance.setManaged(true); }
                 navNewAuctionRoom.setVisible(true);  navNewAuctionRoom.setManaged(true);
             }
-
             case ADMIN -> {
-                lblAccountBalance.setVisible(false); lblAccountBalance.setManaged(false);
-                return;
+                // Admin has no balance display
             }
         }
     }
@@ -313,15 +357,61 @@ public class MainLayoutController implements MessageListener {
         double popupWidth = 340;
         notifPopup.show(bell.getScene().getWindow(), b.getMaxX() - popupWidth, b.getMaxY() + 6);
     }
+
+    @FXML
+    void handleAvailableBalance(ActionEvent event) {
+        if (balancePopupController == null || balancePopupRoot == null) return;
+
+        balancePopupController.update(user.getRole(), currentBalance, currentUnsettledBalance);
+
+        if (balancePopup != null && balancePopup.isShowing()) { balancePopup.hide(); return; }
+        if (balancePopup == null) {
+            balancePopup = new Popup();
+            balancePopup.setAutoHide(true);
+            balancePopup.setAutoFix(true);
+            balancePopup.getContent().add(balancePopupRoot);
+        }
+        Node src = (Node) event.getSource();
+        Bounds b = src.localToScreen(src.getBoundsInLocal());
+        double popupWidth = 280;
+        balancePopup.show(src.getScene().getWindow(), b.getMaxX() - popupWidth, b.getMaxY() + 6);
+    }
+
     @FXML
     private void handleToggleTheme() {
         ThemeManager.toggle(btnToggleTheme.getScene());
+        boolean dark = ThemeManager.isDark(btnToggleTheme.getScene());
+        btnToggleTheme.setText(dark ? "Light" : "Dark");
+        updateIcons(dark);
+        Platform.runLater(() -> {
+            if (!isSidebarExpanded) {
+                // Re-apply toàn bộ trạng thái collapsed
+                for (Label lbl : navLabels) {
+                    if (lbl != null) { lbl.setVisible(false); lbl.setManaged(false); }
+                }
+                if (lblOverview != null) { lblOverview.setVisible(false); lblOverview.setManaged(false); }
+                if (lblAuction  != null) { lblAuction.setVisible(false);  lblAuction.setManaged(false); }
 
-        if (ThemeManager.isDark(btnToggleTheme.getScene())) {
-            btnToggleTheme.setText("Light");
-        } else {
-            btnToggleTheme.setText("Dark");
-        }
+                for (HBox item : navItems) {
+                    if (item != null) {
+                        item.setAlignment(javafx.geometry.Pos.CENTER);
+                        item.setPadding(new javafx.geometry.Insets(12, 0, 12, 0));
+                    }
+                }
+                btnLogOut.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                btnLogOut.setAlignment(javafx.geometry.Pos.CENTER);
+                btnLogOut.setPadding(new javafx.geometry.Insets(12, 0, 12, 0));
+
+                sidebar.setPrefWidth(SIDEBAR_COLLAPSED_WIDTH);
+                sidebar.setMinWidth(SIDEBAR_COLLAPSED_WIDTH);
+                sidebar.setMaxWidth(SIDEBAR_COLLAPSED_WIDTH);
+            } else {
+                // Expanded — re-assert width phòng trường hợp CSS reset
+                sidebar.setPrefWidth(SIDEBAR_EXPANDED_WIDTH);
+                sidebar.setMinWidth(SIDEBAR_EXPANDED_WIDTH);
+                sidebar.setMaxWidth(SIDEBAR_EXPANDED_WIDTH);
+            }
+        });
     }
 
     @FXML
@@ -395,6 +485,7 @@ public class MainLayoutController implements MessageListener {
                 case SELLER -> {
                     SellerDashboardController ctrl = loader.getController();
                     ctrl.setOnOpenBidRoom(this::loadBiddingRoomAsSeller);
+                    ctrl.setOnCreateAuction(() -> handleNavNewAuctionRoom(null));
                     currentController = ctrl;
                 }
 
@@ -421,10 +512,18 @@ public class MainLayoutController implements MessageListener {
             clearContent();
             ViewLoader.LoadResult<BiddingRoomController> room = ViewLoader.load("bidding-room.fxml");
             room.controller().setAuction(newAuction);
+            room.controller().enableSellerViewMode();
             room.controller().setOnSuccessCallback(() -> handleNavDashboard(null));
+    
             currentController = room.controller();
             contentArea.getChildren().add(room.root());
         });
+
+
+        r.controller().setOnCancelCallback(() -> {
+            handleNavDashboard(null);
+        });
+
         contentArea.getChildren().add(r.root());
     }
 
@@ -442,8 +541,6 @@ public class MainLayoutController implements MessageListener {
         if (basicInfo == null) { handleNavDashboard(null); return; }
         loadBiddingRoomGeneral(basicInfo.getAuctionId(), true, () -> handleNavDashboard(null));
     }
-
-    @FXML void handleNavUserInfo(MouseEvent event) { System.out.println("Đã click vào khu vực User Info!"); }
 
     private void updateActiveStyle(HBox activeItem) {
         HBox[] allNavItems = { navDashboard, navActiveBids, navWatchlist, navWonItems, navNewAuctionRoom };
@@ -476,8 +573,6 @@ public class MainLayoutController implements MessageListener {
         currentController = r.controller();
     }
 
-    @FXML void handleSearching(MouseEvent event) {}
-
     @FXML
     void toggleSidebar(ActionEvent event) {
         Timeline timeline = new Timeline();
@@ -489,21 +584,50 @@ public class MainLayoutController implements MessageListener {
                 new KeyValue(sidebar.minWidthProperty(),  targetWidth),
                 new KeyValue(sidebar.maxWidthProperty(),  targetWidth)));
 
-        Label[] navLabels = {
-            lblSidebarTitleAB, lblSidebarTitleDB, lblSidebarTitleNAR, lblSidebarTitleW, lblSidebarTitleWI
-        };
-
         if (isSidebarExpanded) {
-            for (Label lbl : navLabels) { lbl.setVisible(false); lbl.setManaged(false); }
-            lblOverview.setText("");
-            lblAuction.setText("");
+            for (Label lbl : navLabels) { 
+                if (lbl != null) { lbl.setVisible(false); lbl.setManaged(false); }
+            }
+
+            if (lblOverview != null) { lblOverview.setVisible(false); lblOverview.setManaged(false); }
+            if (lblAuction != null)  { lblAuction.setVisible(false); lblAuction.setManaged(false); }
+            
+            for (HBox item : navItems) {
+                if (item != null) {
+                    item.setAlignment(javafx.geometry.Pos.CENTER);
+                    item.setPadding(new javafx.geometry.Insets(12, 0, 12, 0)); 
+                }
+            }
+            
             btnLogOut.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            btnLogOut.setAlignment(javafx.geometry.Pos.CENTER);
+            btnLogOut.setPadding(new javafx.geometry.Insets(12, 0, 12, 0));
+            
         } else {
             timeline.setOnFinished(e -> {
-                for (Label lbl : navLabels) { lbl.setVisible(true); lbl.setManaged(true); }
-                lblOverview.setText("OVERVIEW");
-                lblAuction.setText("AUCTION");
+                for (Label lbl : navLabels) { 
+                    if (lbl != null) { lbl.setVisible(true); lbl.setManaged(true); }
+                }
+
+                if (lblOverview != null) { 
+                    lblOverview.setVisible(true); lblOverview.setManaged(true); 
+                    lblOverview.setText("OVERVIEW"); 
+                }
+                if (lblAuction != null) { 
+                    lblAuction.setVisible(true); lblAuction.setManaged(true); 
+                    lblAuction.setText("AUCTION"); 
+                }
+
+                for (HBox item : navItems) {
+                    if (item != null) {
+                        item.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                        item.setPadding(new javafx.geometry.Insets(12, 20, 12, 20)); 
+                    }
+                }
+                
                 btnLogOut.setContentDisplay(ContentDisplay.LEFT);
+                btnLogOut.setAlignment(javafx.geometry.Pos.CENTER);
+                btnLogOut.setPadding(new javafx.geometry.Insets(12, 20, 12, 20));
             });
         }
 

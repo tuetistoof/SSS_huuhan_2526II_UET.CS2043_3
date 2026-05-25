@@ -11,9 +11,11 @@ import com.ssscloud.auction.common.util.JsonUtils;
  
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.input.MouseEvent;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,8 +27,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 
-//TO_DO: chưa làm handleCancel với chuyển màn
-//To_DO: start time chưa làm.
+// TO_DO: handleCancel and screen transition not yet implemented
 
 public class CreateAuctionController{
     @FXML private TextField        txtTitle;
@@ -41,7 +42,7 @@ public class CreateAuctionController{
     @FXML private HBox step2Indicator;
     @FXML private HBox step3Indicator;
     @FXML private VBox step1Form;
-    @FXML private VBox step2Form;
+    @FXML private ScrollPane step2Form;
     @FXML private VBox step3Form;
 
     @FXML private Label lblNum1;
@@ -50,7 +51,7 @@ public class CreateAuctionController{
 
     @FXML private TextField        txtItemName;
     @FXML private ComboBox<String> cmbItemType;          // ART / VEHICLE / ELECTRONIC
-    @FXML private TextField        txtCreator;           // tác giả / hãng sản xuất
+    @FXML private TextField        txtCreator;           // creator / manufacturer
     
     @FXML private TextField        txtUrl1;
     @FXML private TextField        txtUrl2;
@@ -58,7 +59,7 @@ public class CreateAuctionController{
     @FXML private TextField        txtUrl4;
     @FXML private TextField        txtUrl5;
 
-    @FXML private DatePicker       dpManufacturingDate;  // ngày sản xuất (tuỳ chọn)
+    @FXML private DatePicker       dpManufacturingDate;  // manufacturing date (optional)
  
     
     @FXML private VBox     sectionArt;
@@ -72,7 +73,7 @@ public class CreateAuctionController{
     @FXML private Label  lblError;
     @FXML private Button btnSubmit;
     @FXML private Button btnNext;
-    // @FXML private Button btnCancel;
+    @FXML private Button btnCancel;
     
     private int currentStep = 1;
 
@@ -80,9 +81,14 @@ public class CreateAuctionController{
     private final SessionManager      session = SessionManager.getInstance();
  
     private Consumer<AuctionDTO> onSuccessCallback;
+    private Runnable onCancelCallback;
  
     public void setOnSuccessCallback(Consumer<AuctionDTO> callback) {
         this.onSuccessCallback = callback;
+    }
+
+    public void setOnCancelCallback(Runnable callback) {
+        this.onCancelCallback = callback;
     }
 
     @FXML
@@ -92,16 +98,16 @@ public class CreateAuctionController{
         clearError();
         cbDuration.getItems().addAll( 0, 1, 3, 5, 7, 14, 30);
         cmbItemType.getItems().addAll(
-                "Nghệ thuật (Art)",
-                "Phương tiện (Vehicle)",
-                "Điện tử (Electronic)"
+                "Art",
+                "Vehicle",
+                "Electronic"
         );
 
-        cmbItemType.setPromptText("-- Chọn loại sản phẩm --");
+        cmbItemType.setPromptText("-- Select item type --");
  
         hideDynamicSections();
  
-        // dùng toItemType() để map tiếng Việt → key 
+        // Use toItemType() to map display string to key
         cmbItemType.valueProperty().addListener((obs, old, newVal) -> {
             hideDynamicSections();
             if (newVal == null) return;
@@ -110,10 +116,32 @@ public class CreateAuctionController{
                 case "VEHICLE", "ELECTRONIC" -> show(sectionVehicleElectronic);
             }
         });
-        txtEndTime.setPromptText("HH:mm  (vd: 18:30)");
-        txtStartingPrice.setPromptText("VD: 500000");
-        txtMinIncrement.setPromptText("VD: 50000 (tuỳ chọn)");
-        txtWarrantyPeriod.setPromptText("Số tháng, vd: 12");
+        txtEndTime.setPromptText("HH:mm  (e.g., 18:30)");
+        txtStartingPrice.setPromptText("e.g., 500000");
+        txtMinIncrement.setPromptText("e.g., 50000 (optional)");
+        txtWarrantyPeriod.setPromptText("Months, e.g., 12");
+    }
+
+    @FXML
+    public void handleNavStep(MouseEvent event) {
+        Object source = event.getSource();
+        if (source == step1Indicator) {
+            currentStep = 1;
+            updateWizard();
+        } else if (source == step2Indicator) {
+            if (currentStep == 1 && validateCurrentStep()) {
+                currentStep = 2;
+                updateWizard();
+            } else if (currentStep > 2) {
+                currentStep = 2;
+                updateWizard();
+            }
+        } else if (source == step3Indicator) {
+            if (currentStep == 2 && validateCurrentStep()) {
+                currentStep = 3;
+                updateWizard();
+            }
+        }
     }
 
     @FXML
@@ -129,7 +157,7 @@ public class CreateAuctionController{
     private void handleSubmit(){
         clearError();
        
-        //1.lấy thông tin
+        // 1. Get info
         String name = txtTitle.getText().trim();
         String priceStr = txtStartingPrice.getText().trim().replace(".", "").replace(",", "");
         String incrStr = txtMinIncrement.getText().trim().replace(".", "").replace(",", "");
@@ -137,61 +165,61 @@ public class CreateAuctionController{
         String typeStr = cmbItemType.getValue();
 
         if (dpStartDate.getValue() == null) {
-            showError("Vui lòng chọn ngày bắt đầu.");
+            showError("Please select a start date.");
             return;
         }
         LocalDate startDate = dpStartDate.getValue();
         if (cbDuration.getValue() == null) {
-            showError("Vui lòng chọn thời lượng phiên đấu giá.");
+            showError("Please select the auction duration.");
             return;
         }
         LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
         
-        //2.validate
+        // 2. Validate
         if (name.isEmpty()) {
-            showError("Tên phiên đấu giá không được để trống.");
+            showError("Auction name cannot be empty.");
             txtTitle.requestFocus();
             return;
         }
         if (priceStr.isEmpty()) {
-            showError("Giá khởi điểm không được để trống.");
+            showError("Starting price cannot be empty.");
             txtStartingPrice.requestFocus();
             return;
         }
         if (typeStr == null || typeStr.isEmpty()) {
-            showError("Vui lòng chọn loại sản phẩm.");
+            showError("Please select an item type.");
             cmbItemType.requestFocus();
             return;
         }
-        //ktra giá bắt đầu
+        // Check starting price
         long startPrice;
         try {
             startPrice = Long.parseLong(priceStr);
             if (startPrice <= 0) throw new NumberFormatException();
         } catch (NumberFormatException e) {
-            showError("Giá khởi điểm phải là số nguyên dương.");
+            showError("Starting price must be a positive integer.");
             txtStartingPrice.requestFocus();
             return;
         }
-        //ktra bước giá
+        // Check min increment
         long minIncrement = 0;
         if (!incrStr.isEmpty()) {
             try {
                 minIncrement = Long.parseLong(incrStr);
                 if (minIncrement < 0) throw new NumberFormatException();
             } catch (NumberFormatException e) {
-                showError("Bước giá tối thiểu phải là số không âm.");
+                showError("Minimum increment must be a non-negative number.");
                 txtMinIncrement.requestFocus();
                 return;
             }
         }
         
-        //ktra ngày giờ
+        // Check date & time
         LocalDateTime startTime;
         if (startDate.isEqual(LocalDate.now())) {
             startTime = LocalDateTime.now();
         } else if (startDate.isBefore(LocalDate.now())) {
-            showError("Ngày bắt đầu không được nằm trong quá khứ.");
+            showError("Start date cannot be in the past.");
             return;
         } else {
             startTime = startDate.atStartOfDay();
@@ -204,15 +232,15 @@ public class CreateAuctionController{
                     : LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("H:mm"));
             endTime = LocalDateTime.of(endDate, lt);
         } catch (Exception e) {
-            showError("Định dạng giờ không hợp lệ. Dùng HH:mm (vd: 18:30).");
+            showError("Invalid time format. Use HH:mm (e.g., 18:30).");
             txtEndTime.requestFocus();
             return;
         }
         if (endTime.isBefore(LocalDateTime.now().plusMinutes(5))) {
-            showError("Thời gian kết thúc phải cách hiện tại ít nhất 5 phút.");
+            showError("End time must be at least 5 minutes from now.");
             return;
         }
-        //set tam de demo
+        // Temp URLs for demo
         String urlIfNone = "https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg";
         List<String> urls = new ArrayList<>(Arrays.asList());
         TextField[] urlFields = {txtUrl1, txtUrl2, txtUrl3, txtUrl4, txtUrl5};
@@ -247,7 +275,8 @@ public class CreateAuctionController{
                         if (warrantyPeriod < 0) throw new NumberFormatException();
                         itemData.setWarrantyPeriod(warrantyPeriod);
                     } catch (NumberFormatException e) {
-                        showError("Thời gian bảo hành phải là số tháng không âm."); txtWarrantyPeriod.requestFocus(); 
+                        showError("Warranty period must be a non-negative number of months."); 
+                        txtWarrantyPeriod.requestFocus(); 
                         return;
                     }
                 }
@@ -255,11 +284,11 @@ public class CreateAuctionController{
         }
 
 
-        //3.Disable nút bấm để tránh bấm nhiều lần
+        // 3. Disable button to prevent multiple clicks
         btnSubmit.setDisable(true);
         btnSubmit.setText("Creating...");
 
-        //4.Tạo request DTO
+        // 4. Create request DTO
         CreateAuctionRequest reqDTO = new CreateAuctionRequest();
         reqDTO.setName(name);
         reqDTO.setStartPrice(startPrice);
@@ -283,34 +312,40 @@ public class CreateAuctionController{
         }, () -> {
             btnSubmit.setDisable(false);
             btnSubmit.setText("Create");
-            showError("No response from server");
+            showError("No response from server.");
         });
     }
 
     @FXML
     public void handleCancel(ActionEvent event) {
-        if (onSuccessCallback != null) {
-            onSuccessCallback.accept(null);  // null = user huỷ, không có auction
+        if (onCancelCallback != null) {
+            onCancelCallback.run();
         }
     }
 
-    //Helpers
+    // Helpers
     private String toItemType(String displayValue) {
         if (displayValue == null) return "";
-        if (displayValue.contains("Art"))        return "ART";
-        if (displayValue.contains("Vehicle")
-                || displayValue.contains("Phương tiện")) return "VEHICLE";
-        if (displayValue.contains("Electronic")
-                || displayValue.contains("Điện tử"))      return "ELECTRONIC";
+        if (displayValue.contains("Art")) return "ART";
+        if (displayValue.contains("Vehicle")) return "VEHICLE";
+        if (displayValue.contains("Electronic")) return "ELECTRONIC";
         return displayValue.toUpperCase().trim();
     }
-    private void show(VBox section) { section.setVisible(true);  section.setManaged(true); }
-    private void hide(VBox section) { section.setVisible(false); section.setManaged(false); }
+
+    private void show(Node section) { 
+        section.setVisible(true);  
+        section.setManaged(true); 
+    }
+    private void hide(Node section) { 
+        section.setVisible(false); 
+        section.setManaged(false); 
+    }
  
     private void hideDynamicSections() {
         hide(sectionArt);
         hide(sectionVehicleElectronic);
     }
+    
     private void showError(String message) {
         lblError.setText(message);
         lblError.setVisible(true);
@@ -329,10 +364,10 @@ public class CreateAuctionController{
         hide(step2Form);
         hide(step3Form);
 
-        // Gọi hàm thắp sáng cột bên trái
+        // Update left column indicators
         updateStepIndicators();
 
-        // Xử lý Form ở giữa và Nút bấm
+        // Handle middle form and buttons
         switch (currentStep) {
             case 1 -> {
                 show(step1Form);
@@ -356,17 +391,17 @@ public class CreateAuctionController{
     }
 
     private void updateStepIndicators() { 
-        // 1. Lột sạch class "step-row-active" để reset về màu xám
+        // 1. Remove "step-row-active" class to reset to gray
         if (step1Indicator != null) step1Indicator.getStyleClass().remove("step-row-active");
         if (step2Indicator != null) step2Indicator.getStyleClass().remove("step-row-active");
         if (step3Indicator != null) step3Indicator.getStyleClass().remove("step-row-active");
 
-        // 2. Reset lại số (phòng khi user ấn lùi bước)
+        // 2. Reset numbers (in case user goes back)
         if (lblNum1 != null) lblNum1.setText("1");
         if (lblNum2 != null) lblNum2.setText("2");
         if (lblNum3 != null) lblNum3.setText("3");
 
-        // 3. Áp dụng màu đỏ và đổi thành dấu tích (✓) cho các bước đã qua
+        // 3. Apply active style and checkmark (✓) to completed steps
         if (currentStep >= 1 && step1Indicator != null) {
             step1Indicator.getStyleClass().add("step-row-active");
             if (currentStep > 1 && lblNum1 != null) lblNum1.setText("✓");
@@ -377,37 +412,31 @@ public class CreateAuctionController{
         }
         if (currentStep >= 3 && step3Indicator != null) {
             step3Indicator.getStyleClass().add("step-row-active");
-            // Bước 3 là cuối cùng nên con số 3 giữ nguyên, không biến thành tích nữa
+            // Step 3 is the last, so keep the number 3, no checkmark
         }
     }
-
-    //ham nay dang loi vcl
-    // private void closeView() {
-    //     if (btnSubmit.getScene() != null && btnSubmit.getScene().getWindow() != null)
-    //         btnSubmit.getScene().getWindow().hide();
-    // }
 
     private boolean validateCurrentStep() {
         clearError();
         switch (currentStep) {
             case 1 -> {
                 if (txtTitle.getText().trim().isEmpty()) {
-                    showError("Tên phiên đấu giá không được để trống.");
+                    showError("Auction name cannot be empty.");
                     txtTitle.requestFocus();
                     return false;
                 }
                 if (dpStartDate.getValue() == null) {
-                    showError("Vui lòng chọn ngày bắt đầu.");
+                    showError("Please select a start date.");
                     return false;
                 }
                 if (cbDuration.getValue() == null) {
-                    showError("Vui lòng chọn thời lượng.");
+                    showError("Please select the auction duration.");
                     return false;
                 }
             }
             case 2 -> {
                 if (cmbItemType.getValue() == null) {
-                    showError("Vui lòng chọn loại sản phẩm.");
+                    showError("Please select an item type.");
                     return false;
                 }
             }
