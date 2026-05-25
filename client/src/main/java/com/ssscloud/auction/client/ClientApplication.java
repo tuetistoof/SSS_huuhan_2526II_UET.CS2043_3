@@ -1,5 +1,8 @@
 package com.ssscloud.auction.client; // Cấu trúc thư mục của sếp
 
+import java.io.InputStream;
+import java.util.Properties;
+
 import com.ssscloud.auction.client.networking.AuctionClientSocket;
 import com.ssscloud.auction.client.util.SceneManager;
 
@@ -14,8 +17,18 @@ public class ClientApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Trong method start(), trước khi show màn hình login
-        AuctionClientSocket.getInstance().connect("localhost", 5000);
+        // Đọc host/port từ client.properties thay vì hardcode "localhost"
+        // → mỗi máy chỉ cần sửa server.host trong file đó rồi build lại
+        Properties clientProps = new Properties();
+        try (InputStream is = getClass().getResourceAsStream("/client.properties")) {
+            if (is != null) {
+                clientProps.load(is);
+            }
+        }
+        String host = clientProps.getProperty("server.host", "localhost");
+        int port    = Integer.parseInt(clientProps.getProperty("server.port", "5000"));
+
+        AuctionClientSocket.getInstance().connect(host, port);
         SceneManager.loginScene = FXMLLoader.load(getClass().getResource("/fxml/login-signup.fxml"));
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
         

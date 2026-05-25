@@ -814,7 +814,6 @@ private void applyAutoBidState(boolean active) {
                 // FIX BUG 1: txtMaxBid là input field cố định, chỉ clear + enable, KHÔNG ẩn
                 txtMaxBid.setDisable(false);
                 txtMaxBid.clear();
-                txtMaxBid.setPromptText("");
 
                 // Ẩn ô update max
                 if (txtNewMaxBid != null) {
