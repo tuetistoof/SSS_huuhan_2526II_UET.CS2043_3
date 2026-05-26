@@ -66,13 +66,29 @@
     -cloud-danger-badge:     #F75667;
 }
 
-/* Các rule CSS bên dưới giữ nguyên không đổi */
-.root.theme-dark .text-field,
-.root.theme-dark .password-field,
-.root.theme-dark .text-area,
-.root.theme-dark .combo-box,
-.root.theme-dark .date-picker {
+/* ----------------------------------------------------------
+   GLOBAL — text selection highlight trong dark mode
+   JavaFX default highlight là xanh đậm → chữ đen → vô hình
+   ---------------------------------------------------------- */
+.theme-dark .text-field,
+.theme-dark .text-area,
+.theme-dark .password-field {
+    -fx-highlight-fill: -cloud-primary;
+    -fx-highlight-text-fill: white;
     -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+
+.theme-dark .combo-box,
+.theme-dark .date-picker {
+    -fx-prompt-text-fill: -cloud-text-placeholder;
+}
+
+/* Cũng cover các class wizard-input, br-input, input-field */
+.theme-dark .wizard-input,
+.theme-dark .br-input,
+.theme-dark .input-field {
+    -fx-highlight-fill: -cloud-primary;
+    -fx-highlight-text-fill: white;
 }
 
 .root.theme-dark .table-view,
@@ -114,20 +130,42 @@
 }
 
 /* ----------------------------------------------------------
-   layout-main.css — search bar, sidebar, table, metric, badge
+   layout-main.css — sidebar, topbar, table, metric, badge
    ---------------------------------------------------------- */
 
-/* search-bar bg: #f1f3f4 → surface-alt; text cần sáng */
-.theme-dark .search-bar {
-    -fx-background-color: -cloud-surface-alt;
-    -fx-text-fill: -cloud-text-primary;
-    -fx-prompt-text-fill: -cloud-text-placeholder;
-}
-.theme-dark .search-bar:focused {
+/* TOP BAR */
+.theme-dark .top-bar {
     -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
 }
 
-/* sidebar label: #444444 → primary text */
+.theme-dark .header-username {
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.theme-dark .header-balance-label,
+.theme-dark .header-balance-value {
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.theme-dark .circular-menu-btn {
+    -fx-background-color: -cloud-surface;
+}
+.theme-dark .circular-menu-btn:hover {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+.theme-dark .avatar-circle {
+    -fx-background-color: -cloud-border-strong;
+}
+
+/* SIDEBAR */
+.theme-dark .sidebar {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+}
+
+/* hardcode #444444 → dùng token */
 .theme-dark .sidebar-item .label {
     -fx-text-fill: -cloud-text-secondary;
 }
@@ -135,25 +173,55 @@
 .theme-dark .sidebar-item.active-nav .label {
     -fx-text-fill: -cloud-primary;
 }
+.theme-dark .sidebar-item:hover {
+    -fx-background-color: -cloud-primary-light;
+}
+.theme-dark .sidebar-item.active-nav {
+    -fx-background-color: -cloud-primary-light;
+    -fx-border-color: transparent transparent transparent -cloud-primary;
+}
 
-/* metric-card: bg #fffaf0 → surface */
+/* MAIN CONTENT + SCROLL */
+.theme-dark .main-root {
+    -fx-background-color: -cloud-bg;
+}
+.theme-dark .content-area {
+    -fx-background-color: -cloud-bg;
+}
+.theme-dark .main-scroll-pane {
+    -fx-background-color: -cloud-bg;
+    -fx-background: -cloud-bg;
+}
+.theme-dark .main-scroll-pane .scroll-bar:vertical {
+    -fx-background-color: -cloud-surface;
+}
+
+/* METRIC CARD: bg #fffaf0 → surface */
 .theme-dark .metric-card {
     -fx-background-color: -cloud-surface;
     -fx-border-color: -cloud-border;
+    -fx-border-width: 1;
+}
+.theme-dark .metric-card-value {
+    -fx-text-fill: -cloud-text-primary;
 }
 
-/* table column header bg: #fafafa → surface */
+/* TABLE */
 .theme-dark .table-view .column-header-background {
     -fx-background-color: -cloud-surface-alt;
 }
-
-/* table row cell: border #f5f5f5 + hover #fff7f8 */
+.theme-dark .table-view .column-header .label {
+    -fx-text-fill: -cloud-text-muted;
+}
 .theme-dark .table-view .table-row-cell {
     -fx-background-color: -cloud-surface;
     -fx-border-color: transparent transparent -cloud-border transparent;
 }
 .theme-dark .table-view .table-row-cell:hover {
     -fx-background-color: -cloud-surface-alt;
+}
+.theme-dark .table-view .table-row-cell:selected {
+    -fx-background-color: -cloud-primary-light;
 }
 .theme-dark .table-view .table-cell {
     -fx-text-fill: -cloud-text-primary;
@@ -162,11 +230,61 @@
 /* filter-tab inactive border: #dddddd → border token */
 .theme-dark .filter-tab {
     -fx-border-color: transparent transparent -cloud-border transparent;
+    -fx-text-fill: -cloud-text-muted;
 }
 
-/* badge-finished: bg #f5f5f5 + text #757575 */
+/* ----------------------------------------------------------
+   screen-bidding-room.css — header card & auction name
+   ---------------------------------------------------------- */
+
+/* br-header-card: rgba(233,30,99,0.12) quá trong → tối mờ.
+   Dùng nền solid rõ ràng hơn */
+.theme-dark .br-header-card {
+    -fx-background-color: #2D1B2E;
+    -fx-border-color: rgba(233, 30, 99, 0.35);
+}
+
+/* br-auction-name: -cloud-rose-deepest = #880E4F trên dark → gần đen.
+   Đổi sang trắng/hồng sáng */
+.theme-dark .br-auction-name {
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* br-timer cũng dùng rose-dark → tối trong dark */
+.theme-dark .br-timer {
+    -fx-text-fill: -cloud-rose;
+}
+
+/* br-section-label: rose-dark → brightened */
+.theme-dark .br-section-label {
+    -fx-text-fill: -cloud-rose;
+}
+
+/* br-price-big: rose-deeper → sáng hơn */
+.theme-dark .br-price-big {
+    -fx-text-fill: -cloud-primary;
+}
+
+/* br-price-sub */
+.theme-dark .br-price-sub {
+    -fx-text-fill: -cloud-rose-dark;
+}
+
+/* br-white-card: dùng surface thay vì kế thừa bg tối */
+.theme-dark .br-white-card {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+}
+
+/* badge-finished (ENDED): nền đỏ mờ + chữ đỏ sáng đủ contrast */
 .theme-dark .badge-finished {
-    -fx-background-color: -cloud-surface-alt;
+    -fx-background-color: rgba(247, 86, 103, 0.18);
+    -fx-text-fill: #FF8A80;
+}
+
+/* badge-canceled: nền xám rõ + chữ sáng đủ đọc */
+.theme-dark .badge-canceled {
+    -fx-background-color: rgba(255, 255, 255, 0.10);
     -fx-text-fill: -cloud-text-secondary;
 }
 
@@ -207,12 +325,13 @@
     -fx-border-color: -cloud-border-strong;
 }
 
-/* br-product-btn-change-image: #ffebf2 → dark rose tinted */
+/* br-product-btn-change-image: #ffebf2 / #ffbcd4 → dùng surface-alt sáng hơn trong dark */
 .theme-dark .br-product-btn-change-image {
-    -fx-background-color: -cloud-rose-bg;
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
 }
 .theme-dark .br-product-btn-change-image:hover {
-    -fx-background-color: -cloud-rose-light;
+    -fx-background-color: -cloud-border-mid;
 }
 
 /* br-stat-card border: #f0f0f0 → border token */
@@ -288,4 +407,176 @@
     -fx-background-color: -cloud-danger-bg;
     -fx-border-color: -cloud-danger-text-alt;
     -fx-text-fill: -cloud-danger-text;
+}
+
+/* ----------------------------------------------------------
+   base.css — badge-running trong dark mode
+   ---------------------------------------------------------- */
+
+/* badge-running (RUNNING): nền xanh lá mờ + chữ xanh sáng */
+.theme-dark .badge-running {
+    -fx-background-color: rgba(105, 240, 174, 0.18);
+    -fx-text-fill: -cloud-success-text;
+}
+
+/* badge-open: nền xanh dương mờ + chữ sáng */
+.theme-dark .badge-open {
+    -fx-background-color: rgba(79, 195, 247, 0.18);
+    -fx-text-fill: -cloud-info-text;
+}
+
+/* ----------------------------------------------------------
+   screen-seller-dashboard.css — auction-table trong dark
+   ---------------------------------------------------------- */
+
+.theme-dark .auction-table {
+    -fx-background-color: -cloud-surface;
+}
+
+.theme-dark .auction-table .column-header-background {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+.theme-dark .auction-table .column-header {
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+.theme-dark .auction-table .column-header .label {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .auction-table .filler {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+.theme-dark .auction-table .table-row-cell {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: transparent transparent -cloud-border transparent;
+}
+
+.theme-dark .auction-table .table-row-cell:hover {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+.theme-dark .auction-table .table-row-cell:selected {
+    -fx-background-color: -cloud-surface-alt;
+}
+
+.theme-dark .auction-table .table-cell {
+    -fx-text-fill: -cloud-text-primary;
+}
+/* ==========================================================
+   screen-bidded-auction / screen-watchlist / screen-won-items
+   Dark mode overrides
+   ========================================================== */
+
+/* ── Count badge: chữ trắng trên nền primary (hồng) ── */
+.theme-dark .bda-count-text,
+.theme-dark .wl-count-text,
+.theme-dark .wi-count-text {
+    -fx-text-fill: white;
+}
+
+/* ── Header card: rose-bg tối → solid rõ hơn ── */
+.theme-dark .bda-header-card,
+.theme-dark .wl-header-card {
+    -fx-background-color: #2D1B2E;
+    -fx-border-color: rgba(233, 30, 99, 0.35);
+}
+
+/* ── Page title & sub ── */
+.theme-dark .bda-page-title,
+.theme-dark .wl-page-title,
+.theme-dark .wi-page-title {
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.theme-dark .bda-page-sub,
+.theme-dark .wl-page-sub,
+.theme-dark .wi-page-sub {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* ── Row title (tên auction) ── */
+.theme-dark .bda-row-title,
+.theme-dark .wl-row-title,
+.theme-dark .wi-row-title {
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* ── Seller / date / timer-safe: xám → đủ nhìn ── */
+.theme-dark .bda-row-seller,
+.theme-dark .wl-row-seller,
+.theme-dark .wi-row-seller,
+.theme-dark .wi-row-date,
+.theme-dark .bda-row-timer-safe,
+.theme-dark .wl-row-timer-safe {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+/* ── Nút "View Room" / Enter: chữ trắng rõ trên nền hồng ── */
+.theme-dark .bda-btn-enter,
+.theme-dark .wl-btn-enter,
+.theme-dark .wi-btn-view {
+    -fx-text-fill: white;
+    -fx-effect: none;
+}
+
+/* ── Nút Unfollow/Remove outline: rõ hơn ── */
+.theme-dark .bda-btn-unfollow,
+.theme-dark .wl-btn-unfollow {
+    -fx-border-color: -cloud-border-mid;
+    -fx-text-fill: -cloud-text-secondary;
+    -fx-background-color: transparent;
+}
+
+.theme-dark .bda-btn-unfollow:hover,
+.theme-dark .wl-btn-unfollow:hover {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-text-fill: -cloud-text-primary;
+    -fx-border-color: -cloud-text-secondary;
+}
+
+/* ── Item row card ── */
+.theme-dark .bda-row,
+.theme-dark .wl-row,
+.theme-dark .wi-row {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border-mid;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.20), 8, 0, 0, 2);
+}
+
+.theme-dark .bda-row:hover,
+.theme-dark .wl-row:hover,
+.theme-dark .wi-row:hover {
+    -fx-border-color: -cloud-border-strong;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 12, 0, 0, 4);
+}
+
+/* ── Type badge ── */
+.theme-dark .bda-badge-type,
+.theme-dark .wl-badge-type,
+.theme-dark .wi-badge-type {
+    -fx-background-color: -cloud-primary-light;
+    -fx-text-fill: -cloud-primary;
+}
+
+/* ── wi filter buttons ── */
+.theme-dark .wi-filter-btn {
+    -fx-background-color: -cloud-surface-alt;
+    -fx-border-color: -cloud-border-mid;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .wi-filter-btn:hover {
+    -fx-background-color: -cloud-rose-bg;
+    -fx-text-fill: -cloud-rose-dark;
+    -fx-border-color: -cloud-rose-border;
+}
+
+.theme-dark .wi-filter-btn-selected {
+    -fx-background-color: -cloud-primary;
+    -fx-text-fill: white;
+    -fx-border-color: -cloud-primary;
 }

@@ -123,14 +123,14 @@
    PRODUCT IMAGE BUTTON
    ========================================= */
 .br-product-btn-change-image {
-    -fx-background-color: #ffebf2;
+    -fx-background-color: -cloud-rose-bg;
     -fx-border-color: transparent;
     -fx-border-radius: 8px;
     -fx-background-radius: 10;
     -fx-font-size: 24px;
 }
 .br-product-btn-change-image:hover {
-    -fx-background-color: #ffbcd4;
+    -fx-background-color: -cloud-rose-border;
     -fx-border-color: transparent;
     -fx-border-radius: 8px;
     -fx-background-radius: 10;

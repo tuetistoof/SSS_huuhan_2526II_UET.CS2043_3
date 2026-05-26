@@ -39,7 +39,7 @@
         <!-- Action -->
         <VBox alignment="CENTER">
             <children>
-                <Button fx:id="btnView" onAction="#handleViewDetails" prefWidth="90.0" styleClass="wi-btn-view" text="View Room" />
+                <Button fx:id="btnView" onAction="#handleViewDetails" prefWidth="150.0" styleClass="wi-btn-view" text="View Room" />
             </children>
         </VBox>
 

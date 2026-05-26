@@ -7,6 +7,66 @@
            icon wrapper bubbles, and structured typography.
    ========================================================== */
 
+/* ── Popup root container ── */
+.notif-popup-root {
+    -fx-background-color: -cloud-surface;
+    -fx-background-radius: 12;
+    -fx-border-color: -cloud-border;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 16, 0, 0, 5);
+}
+
+.notif-popup-header {
+    -fx-padding: 16 16 12 16;
+    -fx-spacing: 8;
+}
+
+.notif-popup-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-rose-deeper;
+}
+
+.notif-popup-badge {
+    -fx-background-color: -cloud-primary;
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+}
+
+.notif-popup-list {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-control-inner-background: transparent;
+    -fx-selection-bar: -cloud-surface-alt;
+}
+
+.notif-popup-footer {
+    -fx-padding: 10 16 10 16;
+    -fx-border-color: -cloud-border transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.notif-popup-mark-all-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: -cloud-primary;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -cloud-primary;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-padding: 5 12 5 12;
+}
+
+.notif-popup-mark-all-btn:hover {
+    -fx-background-color: -cloud-primary-light;
+}
+
 
 .notif-unread {
     -fx-background-color: -cloud-rose-light; 
@@ -59,4 +119,74 @@
 .notif-desc {
     -fx-font-size: 13px; 
     -fx-text-fill: -cloud-text-secondary; 
+}
+
+/* ==========================================================
+   DARK MODE
+   ========================================================== */
+
+.theme-dark .notif-unread {
+    -fx-background-color: -cloud-primary-light;
+}
+
+.theme-dark .notif-read {
+    -fx-background-color: -cloud-surface;
+}
+
+.theme-dark .notif-unread:hover,
+.theme-dark .notif-read:hover {
+    -fx-background-color: -cloud-primary-pale;
+}
+
+.theme-dark .notif-title {
+    -fx-text-fill: -cloud-rose-dark;
+}
+
+.theme-dark .notif-time {
+    -fx-text-fill: -cloud-text-muted;
+}
+
+.theme-dark .notif-desc {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .notif-icon-outbid {
+    -fx-background-color: -cloud-primary-light;
+}
+
+.theme-dark .notif-icon-ended {
+    -fx-background-color: -cloud-info-bg;
+}
+
+/* ── Dark mode popup container ── */
+.theme-dark .notif-popup-root {
+    -fx-background-color: -cloud-surface;
+    -fx-border-color: -cloud-border;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.40), 18, 0, 0, 7);
+}
+
+.theme-dark .notif-popup-title {
+    -fx-text-fill: -cloud-rose-dark;
+}
+
+.theme-dark .notif-popup-badge {
+    -fx-background-color: -cloud-primary;
+}
+
+.theme-dark .notif-popup-list {
+    -fx-control-inner-background: transparent;
+    -fx-selection-bar: -cloud-surface-alt;
+}
+
+.theme-dark .notif-popup-footer {
+    -fx-border-color: -cloud-border transparent transparent transparent;
+}
+
+.theme-dark .notif-popup-mark-all-btn {
+    -fx-border-color: -cloud-primary;
+    -fx-text-fill: -cloud-primary;
+}
+
+.theme-dark .notif-popup-mark-all-btn:hover {
+    -fx-background-color: -cloud-primary-light;
 }

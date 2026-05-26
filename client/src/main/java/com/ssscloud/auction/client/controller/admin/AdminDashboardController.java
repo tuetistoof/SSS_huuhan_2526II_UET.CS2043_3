@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 
 import com.google.gson.reflect.TypeToken;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
+import com.ssscloud.auction.client.util.ThemeManager;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.payload.ClientMessage;
@@ -34,6 +35,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -289,15 +291,24 @@ public class AdminDashboardController {
         taReason.setPrefWidth(360);
 
         Label lbl = new Label("Cancel reason (required):");
-        lbl.setStyle("-fx-font-size: 13px; -fx-padding: 0 0 6 0;");
+        lbl.setStyle("-fx-font-size: 13px; -fx-padding: 0 0 6 0; -fx-text-fill: -cloud-text-primary;");
+        
         VBox content = new VBox(6, lbl, taReason);
-        content.setPadding(new Insets(10, 0, 0, 0));
+        content.setPadding(new Insets(10, 10, 0, 10));
 
         Alert confirm = buildAlert(Alert.AlertType.CONFIRMATION,
             "Cancel Auction",
             "You are going to cancel: \"" + dto.getAuctionName() + "\"");
-        confirm.getDialogPane().setContent(content);
+        
+        DialogPane dialogPane = confirm.getDialogPane();
+        dialogPane.setContent(content);
         confirm.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+        dialogPane.getStylesheets().add(getClass().getResource("/css/base.css").toExternalForm());
+        dialogPane.getStylesheets().add(getClass().getResource("/css/tokens-dark.css").toExternalForm());
+
+        if (ThemeManager.getSavedTheme() == ThemeManager.Theme.DARK) {
+            dialogPane.getStyleClass().add("theme-dark");
+        }
 
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isEmpty() || result.get() != ButtonType.OK) return;

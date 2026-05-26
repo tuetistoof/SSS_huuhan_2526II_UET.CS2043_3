@@ -8,49 +8,23 @@
        fx:controller="com.ssscloud.auction.client.controller.shared.NotificationController"
        prefWidth="340"
        maxHeight="500"
-       style="-fx-background-color: #ffffff;
-             -fx-background-radius: 12;
-             -fx-border-color: #e0e0e0;
-             -fx-border-radius: 12;
-             -fx-border-width: 1;
-             -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 15, 0, 0, 5);">
+       styleClass="notif-popup-root">
 
-    <HBox alignment="CENTER_LEFT" style="-fx-padding: 16 16 12 16;">
-        <Label text="Notification"
-               style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #72243E;"/>
+    <HBox alignment="CENTER_LEFT" styleClass="notif-popup-header">
+        <Label text="Notification" styleClass="notif-popup-title"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="lblBadge"
                visible="false" managed="false"
-               style="-fx-background-color: #D4537E;
-                      -fx-background-radius: 10;
-                      -fx-text-fill: white;
-                      -fx-font-size: 11px;
-                      -fx-font-weight: bold;
-                      -fx-padding: 2 7 2 7;"/>
+               styleClass="notif-popup-badge"/>
     </HBox>
 
     <ListView fx:id="listNotifs"
               VBox.vgrow="ALWAYS"
-              style="-fx-background-color: transparent;
-                     -fx-background-insets: 0;
-                     -fx-padding: 0;
-                     -fx-control-inner-background: #ffffff;
-                     -fx-selection-bar: #f8f9fa;"/>
+              styleClass="notif-popup-list"/>
 
-    <HBox alignment="CENTER"
-          style="-fx-padding: 10 16 10 16;
-                 -fx-border-color: #f0f0f0 transparent transparent transparent;
-                 -fx-border-width: 1 0 0 0;">
+    <HBox alignment="CENTER" styleClass="notif-popup-footer">
         <Button text="Mark all as read"
                 onAction="#handleMarkAllRead"
-                style="-fx-background-color: transparent;
-                       -fx-border-color: #D4537E;
-                       -fx-border-width: 0.5;
-                       -fx-border-radius: 6;
-                       -fx-background-radius: 6;
-                       -fx-text-fill: #D4537E;
-                       -fx-font-size: 12px;
-                       -fx-cursor: hand;
-                       -fx-padding: 5 12 5 12;"/>
+                styleClass="notif-popup-mark-all-btn"/>
     </HBox>
 </VBox>

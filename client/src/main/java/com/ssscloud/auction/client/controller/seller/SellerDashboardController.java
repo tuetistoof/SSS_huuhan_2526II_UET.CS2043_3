@@ -5,7 +5,6 @@ import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.payload.ClientMessage;
-import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.util.JsonUtils;
@@ -15,11 +14,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
@@ -27,10 +23,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.HBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,7 +49,6 @@ public class SellerDashboardController {
     @FXML private Label lblRunningCount;   
     @FXML private Label lblFinishedCount; 
     @FXML private Label lblAccountBalance;
-    @FXML private Label lblBankAccount; 
 
     @FXML private ToggleButton tabAll;
     @FXML private ToggleButton tabRunning;
@@ -79,6 +71,7 @@ public class SellerDashboardController {
     private final FilteredList<SellerDisplayDTO>   filteredList = new FilteredList<>(masterList, p -> true);
 
     private Consumer<SellerDisplayDTO> onOpenBidRoom;
+    private Runnable onCreateAuction;
 
     @FXML
     public void initialize() {
@@ -184,7 +177,6 @@ public class SellerDashboardController {
         UserDTO user = session.getCurrentUser();
         if (user == null) return;
         lblAccountBalance.setText(String.format("%,d ₫", user.getAccountBalance()));
-        lblBankAccount.setText("—");
     }
 
     private void refreshMetrics(List<SellerDisplayDTO> items) {
@@ -238,31 +230,16 @@ public class SellerDashboardController {
     }
 
     @FXML
-    private void changeBankAccount() {
-
-    }
-
-    @FXML
     private void openCreateDialog() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/create-auction.fxml"));
-            Parent root = loader.load();
-
-            CreateAuctionController ctrl = loader.getController();
-            ctrl.setOnSuccessCallback((Consumer<AuctionDTO>) newAuction -> loadMyAuctions());
-
-            Stage modal = new Stage();
-            modal.setTitle("Create a new auction");
-            modal.initModality(Modality.APPLICATION_MODAL);
-            modal.initOwner(tblAuctions.getScene().getWindow());
-            modal.setScene(new Scene(root));
-            modal.showAndWait();
-
-        } catch (IOException e) {
-            System.err.println("[SellerDashboard] openCreateDialog error: " + e.getMessage());
+        if (onCreateAuction != null) {
+            onCreateAuction.run();
         }
     }
 
+
+    public void setOnCreateAuction(Runnable callback) {
+        this.onCreateAuction = callback;
+    }
 
     public void setOnOpenBidRoom(Consumer<SellerDisplayDTO> callback) {
         this.onOpenBidRoom = callback;

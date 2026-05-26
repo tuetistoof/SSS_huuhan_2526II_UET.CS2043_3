@@ -23,16 +23,16 @@
                <children>
                   <Pane styleClass="cloud-side" HBox.hgrow="ALWAYS">
                      <children>
-                        <HBox alignment="CENTER" layoutX="71.0" layoutY="62.0" spacing="10.0">
+                        <HBox alignment="CENTER" layoutX="29.0" layoutY="52.0" spacing="10.0">
                            <children>
                               <ImageView fitHeight="82.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
                                     <Image url="@../images/Asset%202.png" />
                                  </image>
                               </ImageView>
-                              <Label text="CLOUD">
+                              <Label style="-fx-font-family: 'Gabriola', serif;" text="CLOUDBID" textFill="#a40000">
                                  <font>
-                                    <Font size="48.0" />
+                                    <Font name="Arial" size="64.0" />
                                  </font>
                               </Label>
                            </children>

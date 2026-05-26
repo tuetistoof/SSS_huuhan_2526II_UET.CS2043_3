@@ -132,12 +132,29 @@ public class LoginSignupController {
     }
 
     @FXML
-    private void handleSignUp(ActionEvent event) {
-        clearLoginForm();
-        Scene currentScene = btnLogin.getScene();
-        currentScene.setRoot(SceneManager.registerScene);
-        Stage stage = (Stage) currentScene.getWindow();
-        stage.sizeToScene();
+    void handleSignUp(ActionEvent event) {
+        try {
+            Parent registerRoot = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
+            Scene currentScene = btnLogin.getScene();
+            if (currentScene != null) {
+                Stage stage = (Stage) currentScene.getWindow();
+                
+                double width = stage.getWidth();
+                double height = stage.getHeight();
+                boolean isMaximized = stage.isMaximized();
+
+                currentScene.setRoot(registerRoot);
+
+                if (isMaximized) {
+                    stage.setMaximized(true);
+                } else {
+                    stage.setWidth(width);
+                    stage.setHeight(height);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void clearErrorStyles() {
