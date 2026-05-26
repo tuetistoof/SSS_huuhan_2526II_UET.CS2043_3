@@ -1,4 +1,5 @@
 package com.ssscloud.auction.server.service;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
@@ -22,32 +23,42 @@ import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
+
 /**
  * ConcurrentBidManager handles asynchronous bid processing for active auctions.
- * It utilizes a per-auction queue and worker thread model to ensure thread safety 
+ * It utilizes a per-auction queue and worker thread model to ensure thread
+ * safety
  * and sequential consistency of bids within a single auction room.
  */
 public class ConcurrentBidManager {
-    private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); // Logging Standards: Declared first
-    private static  ConcurrentBidManager instance = null;
+    private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); // Logging Standards:
+                                                                                                 // Declared first
+    private static ConcurrentBidManager instance = null;
     private UserDAO userDAO;
     private BidTransactionDAO bidTransactionDAO; // Dependency Injection: Short name for DAO
     private AutoBidService autoBidService;
     private AuctionDAO auctionDAO;
     private NotificationController notificationController;
-    private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
+    private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic:
+                                                                                                 // Descriptive naming
     private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
-    private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions to prevent new bids
+    private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions
+                                                                              // to prevent new bids
     private final Set<String> drainingAuctions = ConcurrentHashMap.newKeySet();
-    private ConcurrentBidManager() {}
-    private ConcurrentBidManager(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController ) {
+
+    private ConcurrentBidManager() {
+    }
+
+    private ConcurrentBidManager(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService,
+            AuctionDAO auctionDAO, NotificationController notificationController) {
         this.userDAO = userDAO;
         this.bidTransactionDAO = bidTransactionDAO;
         this.autoBidService = autoBidService;
         this.auctionDAO = auctionDAO;
         this.notificationController = notificationController;
     } // Constructor section
-    // --- PUBLIC METHODS ---
+      // --- PUBLIC METHODS ---
+
     public static ConcurrentBidManager getInstance() {
         if (instance == null) {
             synchronized (ConcurrentBidManager.class) {
@@ -58,7 +69,8 @@ public class ConcurrentBidManager {
         }
         return instance;
     }
-    public static ConcurrentBidManager resetInstance(){
+
+    public static ConcurrentBidManager resetInstance() {
         if (instance != null) {
             synchronized (ConcurrentBidManager.class) {
                 if (instance != null) {
@@ -71,13 +83,18 @@ public class ConcurrentBidManager {
         }
         return instance;
     }
-    public static ConcurrentBidManager initialize(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
+
+    public static ConcurrentBidManager initialize(UserDAO userDAO, BidTransactionDAO bidTransactionDAO,
+            AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController)
+            throws Exception {
         try {
             synchronized (ConcurrentBidManager.class) {
                 if (instance == null) {
-                    instance = new ConcurrentBidManager(userDAO,bidTransactionDAO, autoBidService, auctionDAO, notificationController);
+                    instance = new ConcurrentBidManager(userDAO, bidTransactionDAO, autoBidService, auctionDAO,
+                            notificationController);
                 } else {
-                    instance.updateDependencies(userDAO, bidTransactionDAO, autoBidService, auctionDAO, notificationController);
+                    instance.updateDependencies(userDAO, bidTransactionDAO, autoBidService, auctionDAO,
+                            notificationController);
                 }
             }
             return instance;
@@ -86,8 +103,9 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
+
     public void submitBid(Auction auctionEntity, String bidderId, String bidderUsername,
-                           long bidAmount, long lockedAmount, BidType bidType) throws Exception {
+            long bidAmount, long lockedAmount, BidType bidType) throws Exception {
         String auctionId = null;
         try {
             if (auctionEntity == null || auctionEntity.getAuctionConfig() == null) {
@@ -109,7 +127,9 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
-    private void updateDependencies(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService, AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
+
+    private void updateDependencies(UserDAO userDAO, BidTransactionDAO bidTransactionDAO, AutoBidService autoBidService,
+            AuctionDAO auctionDAO, NotificationController notificationController) throws Exception {
         try {
             this.userDAO = userDAO;
             this.bidTransactionDAO = bidTransactionDAO;
@@ -121,23 +141,26 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
+
     public void shutdown(String auctionId) throws Exception {
-        drainingAuctions.add(auctionId);          
+        drainingAuctions.add(auctionId);
         Thread workerThread = workerThreads.remove(auctionId);
         if (workerThread != null) {
             workerThread.interrupt();
-            workerThread.join(5000);               
+            workerThread.join(5000);
         }
         // --- Sau join(), mới xóa ---
-        bidTaskQueues.remove(auctionId);           // --- Xóa queue (sau join) ---
-        drainingAuctions.remove(auctionId);        // --- Clear drain flag (sau join) ---
+        bidTaskQueues.remove(auctionId); // --- Xóa queue (sau join) ---
+        drainingAuctions.remove(auctionId); // --- Clear drain flag (sau join) ---
         closedAuctions.add(auctionId);
     }
+
     // --- PRIVATE METHODS ---
     private void ensureWorkerRunning(String auctionId) throws Exception {
         try {
             if (closedAuctions.contains(auctionId)) {
-                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST, "Cannot place bid: auction is closed for auctionId: " + auctionId);
+                throw new ServiceException(ErrorCode.INVALID_BID_REQUEST,
+                        "Cannot place bid: auction is closed for auctionId: " + auctionId);
             }
             bidTaskQueues.computeIfAbsent(auctionId, k -> new LinkedBlockingQueue<>());
             workerThreads.computeIfAbsent(auctionId, k -> {
@@ -153,17 +176,20 @@ public class ConcurrentBidManager {
             throw exception;
         }
     }
+
     public void softClose(String auctionId) {
-        closedAuctions.add(auctionId);    // chặn bid/autobid mới
-        drainingAuctions.add(auctionId);  // đánh dấu worker cần tự thoát khi queue rỗng
+        closedAuctions.add(auctionId); // chặn bid/autobid mới
+        drainingAuctions.add(auctionId); // đánh dấu worker cần tự thoát khi queue rỗng
         logger.log(Level.INFO,
-            "softClose: auction {0} marked closed — no new bids accepted. Worker draining.",
-            auctionId);
+                "softClose: auction {0} marked closed — no new bids accepted. Worker draining.",
+                auctionId);
     }
+
     private void runWorker(String auctionId) {
-            try {
+        try {
             BlockingQueue<BidTask> taskQueue = bidTaskQueues.get(auctionId);
-            if (taskQueue == null) return;
+            if (taskQueue == null)
+                return;
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     // Nếu đang drain: poll có timeout thay vì take() block mãi
@@ -173,7 +199,7 @@ public class ConcurrentBidManager {
                         if (task == null) {
                             // Queue rỗng + đang drain → worker tự thoát
                             logger.log(Level.INFO,
-                                "bid-worker-{0}: queue drained, exiting gracefully.", auctionId);
+                                    "bid-worker-{0}: queue drained, exiting gracefully.", auctionId);
                             break;
                         }
                     } else {
@@ -182,41 +208,43 @@ public class ConcurrentBidManager {
                     processTask(task);
                 } catch (InterruptedException e) {
                     logger.log(Level.INFO,
-                        "Execution interrupted for bid worker associated with auctionId: " + auctionId);
+                            "Execution interrupted for bid worker associated with auctionId: " + auctionId);
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception e) {
                     logger.log(Level.SEVERE,
-                        "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
+                            "Unexpected error while processing bid tasks for auctionId: " + auctionId, e);
                 }
             }
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
-                "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
+                    "Unexpected error in bid worker thread for auctionId: " + auctionId, exception);
         }
     }
+
     private void processTask(BidTask task) throws Exception {
         String auctionId = task.auctionId;
-  
+
         boolean bidCommitted = false;
         Auction auctionEntity = null;
-  
+
         try {
             auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
             if (!auctionEntity.getStatus().isActive()) {
                 logger.log(Level.WARNING,
-                    "processTask: auction not active, unlocking bid for bidderId={0}, auctionId={1}",
-                    new Object[]{task.bidderId, auctionId});
+                        "processTask: auction not active, unlocking bid for bidderId={0}, auctionId={1}",
+                        new Object[] { task.bidderId, auctionId });
                 userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
                 SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
                 return; // Không throw — đây là luồng bình thường khi auction bị cancel
             }
-  
+
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
             long currentAuctionPrice = lastBidTransaction != null
                     ? lastBidTransaction.getBidAmount()
                     : auctionEntity.getAuctionConfig().getStartPrice();
-            if (validateBidAmount (task.bidAmount, auctionEntity) && auctionEntity.getAuctionConfig().getEndTime().isAfter(LocalDateTime.now())) {
+            if (validateBidAmount(task.bidAmount, auctionEntity)
+                    && auctionEntity.getAuctionConfig().getEndTime().isAfter(LocalDateTime.now())) {
                 // --- Nhánh BID THẮNG ---
                 // Bước 1: Unlock bidder CŨ (nếu có)
                 String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
@@ -225,39 +253,42 @@ public class ConcurrentBidManager {
                     userDAO.unlockBidderBalance(previousBidderId, unlockAmount);
                     SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -unlockAmount);
                 }
-  
+
                 // Bước 2: Cập nhật pending balance seller
                 long delta = task.bidAmount - currentAuctionPrice;
                 userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
                 SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
-  
+
                 // Bước 3: Tạo và commit bid transaction
                 BidTransaction bidTransaction = new BidTransaction(
                         auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, task.lockedAmount, LocalDateTime.now(), task.bidType);
-  
+
                 boolean markRunning = auctionEntity.getStatus() == AuctionStatus.OPEN;
-                LocalDateTime updatedEndTime =
-                        AntiSnipingService.calculateExtendedEndTime(auctionEntity.getAuctionConfig());
-                auctionEntity.commitBid(bidTransaction, markRunning, updatedEndTime); // --- publish snapshot một lần ---
-  
+                LocalDateTime updatedEndTime = AntiSnipingService
+                        .calculateExtendedEndTime(auctionEntity.getAuctionConfig());
+                auctionEntity.commitBid(bidTransaction, markRunning, updatedEndTime); // --- publish snapshot một lần
+                                                                                      // ---
+
                 // FIX: Đánh dấu bid đã commit — từ đây KHÔNG unlock task.bidderId nếu có lỗi
                 bidCommitted = true;
-  
+
                 if (bidTransactionDAO != null) {
                     try {
                         bidTransactionDAO.saveBidTransaction(bidTransaction);
                     } catch (Exception e) {
                         // Chỉ log — không rollback vì in-memory state đã commit
                         logger.log(Level.SEVERE,
-                            "Database persistence failure: unable to save bid transaction for auctionId: " + auctionId, e);
+                                "Database persistence failure: unable to save bid transaction for auctionId: "
+                                        + auctionId,
+                                e);
                     }
                 }
-  
+
                 if (markRunning) {
                     auctionDAO.updateStatus(auctionId, AuctionStatus.RUNNING);
                 }
-  
+
                 if (updatedEndTime != null && auctionDAO != null) {
                     AntiSnipingService.logExtension(auctionEntity.getAuctionConfig(), updatedEndTime);
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
@@ -265,17 +296,17 @@ public class ConcurrentBidManager {
                 ChangeManager.getInstance().notify(auctionEntity);
                 notificationController.notifyWatchers(auctionEntity,
                         auctionEntity.getHighestBidderId());
-  
+
             } else {
                 // --- Nhánh BID THUA ---
                 // bidAmount <= currentPrice → reject và trả tiền ngay
                 logger.log(Level.INFO,
-                    "Bid task skipped: amount " + task.bidAmount
-                    + " is not higher than current price " + currentAuctionPrice);
+                        "Bid task skipped: amount " + task.bidAmount
+                                + " is not higher than current price " + currentAuctionPrice);
                 userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
                 SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
             }
-  
+
             if (autoBidService != null) {
                 try {
                     // ★ ĐỔI TỪ trigger SANG tryTrigger ★
@@ -284,41 +315,45 @@ public class ConcurrentBidManager {
                     logger.log(Level.WARNING, "Auto-bid trigger failed for auctionId: " + auctionId, e);
                 }
             }
-  
+
         } catch (Exception exception) {
             if (!bidCommitted) {
                 logger.log(Level.SEVERE,
-                    "[BALANCE_RECOVERY] processTask failed before commit — unlocking bidderId={0}, amount={1}, auctionId={2}. Cause: {3}",
-                    new Object[]{task.bidderId, task.lockedAmount, auctionId, exception.getMessage()});
+                        "[BALANCE_RECOVERY] processTask failed before commit — unlocking bidderId={0}, amount={1}, auctionId={2}. Cause: {3}",
+                        new Object[] { task.bidderId, task.lockedAmount, auctionId, exception.getMessage() });
                 try {
                     userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
                     SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
                 } catch (Exception unlockEx) {
                     // Unlock cũng fail — log CRITICAL để ops can thiệp thủ công
                     logger.log(Level.SEVERE,
-                        "[CRITICAL_BALANCE_LEAK] Failed to unlock balance for bidderId=" + task.bidderId
-                        + ", auctionId=" + auctionId
-                        + ". MANUAL CORRECTION REQUIRED. unlockError: " + unlockEx.getMessage(),
-                        unlockEx);
+                            "[CRITICAL_BALANCE_LEAK] Failed to unlock balance for bidderId=" + task.bidderId
+                                    + ", auctionId=" + auctionId
+                                    + ". MANUAL CORRECTION REQUIRED. unlockError: " + unlockEx.getMessage(),
+                            unlockEx);
                 }
                 // ★ XỬ LÝ LỖI CHO AUTOBID ★
-                // Nếu đây là luồng AutoBid và gặp lỗi khi chưa commit (ví dụ lỗi DB, lỗi balance, v.v.)
+                // Nếu đây là luồng AutoBid và gặp lỗi khi chưa commit (ví dụ lỗi DB, lỗi
+                // balance, v.v.)
                 // -> Loại bỏ bidder lỗi này khỏi registrationsMap để tránh lặp lỗi vô hạn
                 if (task.bidType == BidType.AUTO && autoBidService != null) {
                     try {
                         autoBidService.removeRegistration(auctionId, task.bidderId);
-                        logger.log(Level.INFO, "Removed failed autobid registration for bidderId: " + task.bidderId + " in auctionId: " + auctionId);
+                        logger.log(Level.INFO, "Removed failed autobid registration for bidderId: " + task.bidderId
+                                + " in auctionId: " + auctionId);
                     } catch (Exception removeEx) {
-                        logger.log(Level.SEVERE, "Failed to remove failed autobid registration for bidderId: " + task.bidderId, removeEx);
+                        logger.log(Level.SEVERE,
+                                "Failed to remove failed autobid registration for bidderId: " + task.bidderId,
+                                removeEx);
                     }
                 }
             } else {
                 logger.log(Level.SEVERE,
-                    "[CRITICAL] processTask failed AFTER bid commit for bidderId=" + task.bidderId
-                    + ", auctionId=" + auctionId
-                    + ". Balance NOT unlocked — will be handled by settle/cancel flow. Error: "
-                    + exception.getMessage(),
-                    exception);
+                        "[CRITICAL] processTask failed AFTER bid commit for bidderId=" + task.bidderId
+                                + ", auctionId=" + auctionId
+                                + ". Balance NOT unlocked — will be handled by settle/cancel flow. Error: "
+                                + exception.getMessage(),
+                        exception);
             }
             // ★ GỌI LẠI tryTrigger KHI THẤT BẠI ★
             // Để đảm bảo chuỗi AutoBid không bị dừng lại do 1 bidder bị lỗi
@@ -326,18 +361,22 @@ public class ConcurrentBidManager {
                 try {
                     autoBidService.tryTrigger(auctionEntity);
                 } catch (Exception triggerEx) {
-                    logger.log(Level.WARNING, "Auto-bid trigger retry failed after processTask exception for auctionId: " + auctionId, triggerEx);
+                    logger.log(Level.WARNING,
+                            "Auto-bid trigger retry failed after processTask exception for auctionId: " + auctionId,
+                            triggerEx);
                 }
             }
             throw exception;
         }
     }
-    private boolean validateBidAmount (long bidAmount, Auction auction)
-    {
+
+    private boolean validateBidAmount(long bidAmount, Auction auction) {
         if (auction.getLastBidTransaction() == null)
             return bidAmount >= auction.getCurrentPrice();
-        else return bidAmount >= auction.getCurrentPrice() + auction.getAuctionConfig().getMinIncrement();
+        else
+            return bidAmount >= auction.getCurrentPrice() + auction.getAuctionConfig().getMinIncrement();
     }
+
     private static class BidTask {
         final String auctionId;
         final String bidderId;
@@ -345,7 +384,9 @@ public class ConcurrentBidManager {
         final long bidAmount;
         final long lockedAmount;
         final BidType bidType;
-        BidTask(String auctionId, String bidderId, String bidderUsername, long bidAmount, long lockedAmount, BidType bidType) {
+
+        BidTask(String auctionId, String bidderId, String bidderUsername, long bidAmount, long lockedAmount,
+                BidType bidType) {
             this.auctionId = auctionId;
             this.bidderId = bidderId;
             this.bidderUsername = bidderUsername;
