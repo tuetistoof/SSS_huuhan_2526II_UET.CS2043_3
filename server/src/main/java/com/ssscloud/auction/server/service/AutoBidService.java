@@ -213,7 +213,7 @@ public class AutoBidService {
                     long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
                     bidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
                 }
-                if (bidAmount >= currentAuctionPrice) {
+                if (validateAutoBidSubmit(auctionEntity, bidAmount)) {
 
                     if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
                         // Balance không đủ → loại winner này, thử candidate tiếp
@@ -442,7 +442,7 @@ public class AutoBidService {
         }
     }
 
-    private void validateAutoBidRequest(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername)
+    private void validateAutoBidTerms(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername)
             throws ServiceException {
         if (autoBidRequest == null) {
             throw new ServiceException(ErrorCode.AUTO_BID_VALIDATION_ERROR,
@@ -465,7 +465,34 @@ public class AutoBidService {
         }
     }
 
-    private void validateAutoBidTerms(Auction auction, AutoBidRequest autoBidRequest, String bidderId)
+    private boolean validateAutoBidSubmit(Auction auction, long bidAmount)
+            throws ServiceException {
+        if (auction == null) {
+            throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
+                    "Resource not found: The specified auction does not exist.");
+        }
+        long minIncrement = auction.getAuctionConfig().getMinIncrement();
+        BidTransaction lastBid = auction.getLastBidTransaction();
+        if (lastBid == null) {
+            // Chưa có bid — chỉ cần >= startPrice
+            if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
+
+                logger.log(Level.INFO, "Auto-bid submission rejected: bidAmount " + bidAmount +
+                        "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
+                return false;
+            }
+        } else {
+            // Đã có bid — phải vượt currentPrice + minIncrement
+            if (bidAmount - auction.getCurrentPrice() < minIncrement) {
+                logger.log(Level.INFO, "Auto-bid submission rejected: bidAmount " + bidAmount +
+                        "The bid increment is lower than the required minimum of " + minIncrement);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void validateAutoBidRequest(Auction auction, AutoBidRequest autoBidRequest, String bidderId)
             throws ServiceException {
         if (auction == null) {
             throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
