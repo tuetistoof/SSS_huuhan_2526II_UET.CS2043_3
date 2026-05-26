@@ -1,6 +1,9 @@
 @import "tokens.css";
 @import "base.css";
 
+/* ==========================================================
+   POPUP ROOT & LAYOUT
+   ========================================================== */
 .notif-popup-root {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12;
@@ -40,7 +43,6 @@
 
 .notif-popup-list .list-cell {
     -fx-background-color: transparent;
-    -fx-text-fill: -cloud-text-primary;
 }
 
 .notif-popup-list .list-cell:filled:hover {
@@ -69,6 +71,9 @@
     -fx-background-color: -cloud-primary-light;
 }
 
+/* ==========================================================
+   CELL STATES (Unread / Read)
+   ========================================================== */
 .notif-unread {
     -fx-background-color: -cloud-rose-light; 
     -fx-background-radius: 8px;  
@@ -86,20 +91,32 @@
     -fx-background-color: -cloud-primary-pale; 
 }
 
+/* ==========================================================
+   ICONS (Fix hiển thị tàng hình)
+   ========================================================== */
 .notif-icon {
     -fx-background-radius: 18; 
     -fx-font-size: 16px; 
-    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-family: "Segoe UI Emoji", Segoe UI, Arial, sans-serif;
+    -fx-padding: 6 10 6 10;
+    -fx-alignment: center;
 }
 
 .notif-icon-outbid {
     -fx-background-color: -cloud-primary-light; 
+    /* Ép cứng màu icon để không bị mất hình */
+    -fx-text-fill: -cloud-primary !important; 
 }
 
 .notif-icon-ended {
     -fx-background-color: -cloud-info-bg;
+    /* Ép cứng màu icon xanh dương */
+    -fx-text-fill: -cloud-info-text !important;
 }
 
+/* ==========================================================
+   TYPOGRAPHY
+   ========================================================== */
 .notif-title {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -116,6 +133,9 @@
     -fx-text-fill: -cloud-text-primary;
 }
 
+/* ==========================================================
+   DARK MODE OVERRIDES
+   ========================================================== */
 .theme-dark .notif-unread {
     -fx-background-color: -cloud-primary-light;
 }
@@ -127,14 +147,6 @@
 .theme-dark .notif-unread:hover,
 .theme-dark .notif-read:hover {
     -fx-background-color: -cloud-primary-pale;
-}
-
-.theme-dark .notif-icon-outbid {
-    -fx-background-color: -cloud-primary-light;
-}
-
-.theme-dark .notif-icon-ended {
-    -fx-background-color: -cloud-info-bg;
 }
 
 .theme-dark .notif-popup-root {
@@ -169,6 +181,19 @@
     -fx-background-color: -cloud-primary-light;
 }
 
+/* Icons Dark Mode */
+.theme-dark .notif-icon-outbid {
+    -fx-background-color: -cloud-primary-light;
+    -fx-text-fill: -cloud-primary !important;
+}
+
+.theme-dark .notif-icon-ended {
+    -fx-background-color: -cloud-info-bg;
+    /* Token badge sáng hơn chút cho dễ nhìn trên nền tối */
+    -fx-text-fill: -cloud-info-badge !important; 
+}
+
+/* Typography Dark Mode */
 .theme-dark .notif-title {
     -fx-text-fill: -cloud-rose-dark;
 }
