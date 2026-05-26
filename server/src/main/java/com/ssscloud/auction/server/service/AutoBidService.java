@@ -170,6 +170,7 @@ public class AutoBidService {
                     : lastBidTransaction.getBidAmount();
             String highestBidderId = lastBidTransaction == null ? null : lastBidTransaction.getBidderId();
             long highestBidderLock = lastBidTransaction == null ? 0 : lastBidTransaction.getLockedBalance();
+            BidType lastBidType = lastBidTransaction == null ? null : lastBidTransaction.getType();
             while (true) {
                 List<AutoBidEntry> autoBidEntriesList = registrationsMap.get(auctionId);
                 if (autoBidEntriesList == null || autoBidEntriesList.isEmpty()) {
@@ -181,12 +182,13 @@ public class AutoBidService {
                 // Lọc ra các competitor (không phải người đang giữ giá cao nhất trên auction)
                 List<AutoBidEntry> otherCompetitorsList = new ArrayList<>();
                 for (AutoBidEntry entry : entriesSnapshotList) {
-                    if (!entry.bidderId.equals(highestBidderId) || !(entry.maxBid == highestBidderLock)) {
+                    if (!entry.bidderId.equals(highestBidderId) || !(entry.maxBid == highestBidderLock)
+                            || lastBidType != BidType.AUTO) {
                         otherCompetitorsList.add(entry);
                     }
                 }
                 if (otherCompetitorsList.isEmpty()) {
-                    return; // Người duy nhất đã là người giữ giá cao nhất → không cần bid
+                    return;
                 }
                 // Tìm winner: maxBid cao nhất, tie-break bằng registeredAt sớm nhất
                 AutoBidEntry winningEntry = entriesSnapshotList.get(0);
@@ -424,6 +426,7 @@ public class AutoBidService {
         if (writer != null) {
             try {
                 synchronized (writer) {
+                    logger.log(Level.INFO, ("stop autobid bidder: " + bidderId));
                     writer.println(JsonUtils.toJson(
                             ClientMessage.push("AUTO_BID_STOPPED",
                                     java.util.Map.of("message",
