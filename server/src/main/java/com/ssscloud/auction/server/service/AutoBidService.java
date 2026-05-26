@@ -213,7 +213,7 @@ public class AutoBidService {
                     long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
                     bidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
                 }
-                if (bidAmount >= currentAuctionPrice) {
+                if (bidAmount >= currentAuctionPrice + increment) {
 
                     if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
                         // Balance không đủ → loại winner này, thử candidate tiếp
