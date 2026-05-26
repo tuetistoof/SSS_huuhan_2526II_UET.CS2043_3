@@ -442,7 +442,7 @@ public class AutoBidService {
         }
     }
 
-    private void validateAutoBidTerms(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername)
+    private void validateAutoBidRequest(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername)
             throws ServiceException {
         if (autoBidRequest == null) {
             throw new ServiceException(ErrorCode.AUTO_BID_VALIDATION_ERROR,
@@ -492,7 +492,7 @@ public class AutoBidService {
         return true;
     }
 
-    private void validateAutoBidRequest(Auction auction, AutoBidRequest autoBidRequest, String bidderId)
+    private void validateAutoBidTerms(Auction auction, AutoBidRequest autoBidRequest, String bidderId)
             throws ServiceException {
         if (auction == null) {
             throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,

@@ -8,6 +8,15 @@
            and Wizard Context Action Buttons.
    ========================================================== */
 
+.check-box {
+    -fx-text-fill: #1A1A1E;
+    -fx-font-size: 13px;
+}
+
+.theme-dark .check-box {
+    -fx-text-fill: #FFFFFF;
+}
+
 .label {
     -fx-text-fill: #1A1A1E;
 }
@@ -251,20 +260,14 @@
 /* Step circle — dùng cả > .stack-pane lẫn .stack-pane để cover mọi trường hợp FXML */
 .step-row > .stack-pane,
 .step-row .stack-pane {
-    -fx-min-width: 28;
-    -fx-max-width: 28;
-    -fx-min-height: 28;
-    -fx-max-height: 28;
-    -fx-background-radius: 50%;
-    -fx-alignment: center;
+    -fx-min-width: 20;
+    -fx-alignment: center-left;
     -fx-background-color: transparent;
-    -fx-border-color: -cloud-border-strong;
-    -fx-border-width: 1.5;
-    -fx-border-radius: 50%;
+    -fx-border-color: transparent;
 }
 
 .step-num {
-    -fx-font-size: 13px;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-muted;
 }
@@ -283,52 +286,56 @@
 /* Active step — class được gán bằng Java (updateStepIndicators) */
 .step-row-active > .stack-pane,
 .step-row-active .stack-pane {
-    -fx-background-color: -cloud-primary;
-    -fx-border-color: -cloud-primary;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 .step-row-active .step-num {
-    -fx-text-fill: white;
+    -fx-text-fill: #1A1A1E;
 }
 
 .step-row-active .step-label {
     -fx-font-weight: bold;
-    -fx-text-fill: -cloud-text-primary;
+    -fx-text-fill: #1A1A1E;
 }
 
 /* Inactive step hover */
 .step-row:hover > .stack-pane,
 .step-row:hover .stack-pane {
-    -fx-border-color: -cloud-primary;
+    -fx-border-color: transparent;
 }
 
 /* ── DARK MODE — step indicator ── */
 .theme-dark .step-row > .stack-pane,
 .theme-dark .step-row .stack-pane {
-    -fx-border-color: -cloud-border-mid;
+    -fx-border-color: transparent;
     -fx-background-color: transparent;
 }
 
 .theme-dark .step-num {
-    -fx-text-fill: -cloud-text-secondary;
+    -fx-text-fill: #8A8A95;
 }
 
 .theme-dark .step-label {
-    -fx-text-fill: -cloud-text-secondary;
+    -fx-text-fill: #8A8A95;
+}
+
+.theme-dark .step-sublabel {
+    -fx-text-fill: #7A7A85;
 }
 
 .theme-dark .step-row-active > .stack-pane,
 .theme-dark .step-row-active .stack-pane {
-    -fx-background-color: -cloud-primary;
-    -fx-border-color: -cloud-primary;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
 .theme-dark .step-row-active .step-num {
-    -fx-text-fill: white;
+    -fx-text-fill: #FFFFFF;
 }
 
 .theme-dark .step-row-active .step-label {
-    -fx-text-fill: -cloud-text-primary;
+    -fx-text-fill: #FFFFFF;
 }
 
 .wizard-input {

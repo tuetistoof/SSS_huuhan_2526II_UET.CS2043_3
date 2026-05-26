@@ -293,14 +293,14 @@ public class BiddingRoomController implements MessageListener {
         }
 
         if (!hasBids()) {
-            if (amount <= currentAuction.getStartPrice()) {
-                showError("Bid amount must be higher than start price: "
+            if (amount < currentAuction.getStartPrice()) {
+                showError("Bid amount can not be lower than start price: "
                         + String.format("%,d ₫", currentAuction.getStartPrice()));
                 return;
             }
         } else {
             if (amount <= getCurrentPrice()) {
-                showError("Bid amount cannot be lower than current price");
+                showError("Bid amount must be higher than current price");
                 return;
             }
             if (amount < getCurrentPrice() + currentAuction.getMinIncrement()) {

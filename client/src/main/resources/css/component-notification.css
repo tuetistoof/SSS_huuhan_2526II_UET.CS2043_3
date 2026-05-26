@@ -1,13 +1,6 @@
 @import "tokens.css";
 @import "base.css";
 
-/* ==========================================================
-   component-notification.css — CloudBid Notification Center
-   Covers: Notification cell states (Read/Unread), interactive hovers,
-           icon wrapper bubbles, and structured typography.
-   ========================================================== */
-
-/* ── Popup root container ── */
 .notif-popup-root {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12;
@@ -25,7 +18,7 @@
 .notif-popup-title {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: -cloud-rose-deeper;
+    -fx-text-fill: -cloud-rose-dark;
 }
 
 .notif-popup-badge {
@@ -43,6 +36,15 @@
     -fx-padding: 0;
     -fx-control-inner-background: transparent;
     -fx-selection-bar: -cloud-surface-alt;
+}
+
+.notif-popup-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+.notif-popup-list .list-cell:filled:hover {
+    -fx-background-color: transparent;
 }
 
 .notif-popup-footer {
@@ -67,7 +69,6 @@
     -fx-background-color: -cloud-primary-light;
 }
 
-
 .notif-unread {
     -fx-background-color: -cloud-rose-light; 
     -fx-background-radius: 8px;  
@@ -85,45 +86,35 @@
     -fx-background-color: -cloud-primary-pale; 
 }
 
-
 .notif-icon {
     -fx-background-radius: 18; 
     -fx-font-size: 16px; 
     -fx-font-family: Segoe UI, Arial, sans-serif;
 }
 
-/* ── Loại 1: Thông báo Bị vượt giá (Outbid Notification Icon) ── */
 .notif-icon-outbid {
     -fx-background-color: -cloud-primary-light; 
 }
 
-/* ── Loại 2: Phiên đấu giá kết thúc (Auction Ended Notification Icon) ── */
 .notif-icon-ended {
     -fx-background-color: -cloud-info-bg;
 }
 
-/* =========================================================
-   TYPOGRAPHY ELEMENTS (Thành phần chữ cấu trúc)
-   ========================================================= */
-
 .notif-title {
-    -fx-font-size: 13px; 
-    -fx-text-fill: -cloud-rose-dark; 
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-rose-deeper;
 }
 
 .notif-time {
-    -fx-font-size: 11px; 
-    -fx-text-fill: -cloud-text-muted;
+    -fx-font-size: 11px;
+    -fx-text-fill: -cloud-text-secondary;
 }
 
 .notif-desc {
-    -fx-font-size: 13px; 
-    -fx-text-fill: -cloud-text-secondary; 
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-primary;
 }
-
-/* ==========================================================
-   DARK MODE
-   ========================================================== */
 
 .theme-dark .notif-unread {
     -fx-background-color: -cloud-primary-light;
@@ -138,18 +129,6 @@
     -fx-background-color: -cloud-primary-pale;
 }
 
-.theme-dark .notif-title {
-    -fx-text-fill: -cloud-rose-dark;
-}
-
-.theme-dark .notif-time {
-    -fx-text-fill: -cloud-text-muted;
-}
-
-.theme-dark .notif-desc {
-    -fx-text-fill: -cloud-text-secondary;
-}
-
 .theme-dark .notif-icon-outbid {
     -fx-background-color: -cloud-primary-light;
 }
@@ -158,7 +137,6 @@
     -fx-background-color: -cloud-info-bg;
 }
 
-/* ── Dark mode popup container ── */
 .theme-dark .notif-popup-root {
     -fx-background-color: -cloud-surface;
     -fx-border-color: -cloud-border;
@@ -189,4 +167,16 @@
 
 .theme-dark .notif-popup-mark-all-btn:hover {
     -fx-background-color: -cloud-primary-light;
+}
+
+.theme-dark .notif-title {
+    -fx-text-fill: -cloud-rose-dark;
+}
+
+.theme-dark .notif-time {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .notif-desc {
+    -fx-text-fill: -cloud-text-primary;
 }
