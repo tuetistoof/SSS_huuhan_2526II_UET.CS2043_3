@@ -252,7 +252,7 @@ public class ConcurrentBidManager {
                     SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -unlockAmount);
                 }
 
-                long delta = task.bidAmount - currentAuctionPrice;
+                long delta = previousBidderId != null ? task.bidAmount - currentAuctionPrice : task.bidAmount;
                 userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
                 SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
 
