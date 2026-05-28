@@ -124,7 +124,12 @@ public class AutoBidService {
      * 1. register() — sau khi thêm entry vào registrationsMap
      * 2. ConcurrentBidManager.processTask() — sau khi worker xử lí xong 1 bid
      */
-    public void tryTrigger(String auctionId) throws Exception {
+    public void tryTrigger(String auctionId) throws ServiceException, Exception {
+        if (auctionId == null || auctionId.isBlank()) {
+            logger.log(Level.WARNING, "AutoBid trigger failed: Missing or invalid auctionId.");
+            throw new ServiceException(ErrorCode.MISSING_AUCTION_ID,
+                    "Auto-bid trigger failed: The auction identifier is required.");
+        }
         Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
         if (auctionEntity == null || auctionEntity.getStatus().isEnded()
                 || auctionEntity.isExpired() || !auctionEntity.getStatus().isActive()) {
@@ -152,7 +157,12 @@ public class AutoBidService {
      * bid)
      * 5. Nếu không còn candidate nào thỏa mãn → dừng
      */
-    public void trigger(String auctionId) throws Exception {
+    public void trigger(String auctionId) throws ServiceException, Exception {
+        if (auctionId == null || auctionId.isBlank()) {
+            logger.log(Level.WARNING, "AutoBid trigger failed: Missing or invalid auctionId.");
+            throw new ServiceException(ErrorCode.MISSING_AUCTION_ID,
+                    "Auto-bid trigger failed: The auction identifier is required.");
+        }
         Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
         try {
             if (auctionEntity == null || auctionEntity.getStatus().isEnded() || auctionEntity.isExpired()
