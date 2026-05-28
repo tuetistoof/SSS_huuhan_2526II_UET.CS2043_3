@@ -86,12 +86,12 @@ public class AutoBidService {
     public void register(AutoBidRequest autoBidRequest, String bidderId, String bidderUsername)
             throws ServiceException, Exception {
         try {
-            validateAutoBidTerms(autoBidRequest, bidderId, bidderUsername);
+            validateAutoBidRequest(autoBidRequest, bidderId, bidderUsername);
             logger.log(Level.INFO, "Initiating auto-bid registration for auctionId: " + autoBidRequest.getAuctionId()
                     + " for bidderId: " + bidderId);
             Auction auctionEntity = AuctionRegistry.getInstance()
                     .retrieveAndValidateAuction(autoBidRequest.getAuctionId());
-            validateAutoBidRequest(auctionEntity, autoBidRequest, bidderId);
+            validateAutoBidTerms(auctionEntity, autoBidRequest, bidderId);
             User bidder = userDAO.findById(bidderId);
             validateBidderAccount(bidder, autoBidRequest.getMaxBid(), auctionEntity);
             if (cancelledAuctionIds.contains(autoBidRequest.getAuctionId())) {
