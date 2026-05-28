@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -232,6 +233,12 @@ public class CreateAuctionController{
             endTime = LocalDateTime.of(endDate, lt);
         } catch (Exception e) {
             showError("Invalid time format. Use HH:mm (e.g., 18:30).");
+            txtEndTime.requestFocus();
+            return;
+        }
+
+        if (Duration.between(startTime, endTime).toMinutes() < 5) {
+            showError("The auction duration must be at least 5 minutes.");
             txtEndTime.requestFocus();
             return;
         }
