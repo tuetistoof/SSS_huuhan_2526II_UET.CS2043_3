@@ -1,25 +1,11 @@
 @import "tokens.css";
 @import "base.css";
 
-/* ==========================================================
-   layout-main.css — Main Application Layout
-   Covers: root, top-bar, sidebar, content-area, scroll,
-           dashboard metrics, table, badges, auction cards,
-           shared utility sections.
-   Depends on: tokens.css, base.css
-   ========================================================== */
-
-/* =========================================
-   ROOT
-   ========================================= */
 .main-root {
     -fx-background-color: -cloud-bg;
     -fx-font-family: Segoe UI, Arial, sans-serif;
 }
 
-/* =========================================
-   TOP BAR
-   ========================================= */
 .top-bar {
     -fx-background-color: -cloud-surface;
     -fx-padding: 0 20 0 16;
@@ -94,7 +80,6 @@
     -fx-text-fill: -cloud-text-heading;
 }
 
-/* Balance clickable button — top-bar */
 .btn-balance {
     -fx-background-color: -cloud-primary-light;
     -fx-background-radius: 20;
@@ -117,7 +102,6 @@
     -fx-text-fill: -cloud-primary;
 }
 
-/* Dark mode — balance button */
 .theme-dark .btn-balance {
     -fx-background-color: -cloud-primary-light;
     -fx-border-color: -cloud-rose-border;
@@ -159,18 +143,11 @@
     -fx-translate-y: 6px;
 }
 
-/* =========================================
-   SIDEBAR
-   ========================================= */
 .sidebar {
     -fx-background-color: -cloud-surface;
     -fx-padding: 12 8 12 8;
     -fx-border-color: -cloud-border-strong;
     -fx-border-width: 0 1 0 0;
-    /* KHÔNG set -fx-min-width / -fx-max-width ở đây.
-       Width được quản lý hoàn toàn bằng Java (toggleSidebar + handleToggleTheme).
-       Nếu CSS hardcode min/max, JavaFX sẽ re-apply CSS khi toggle theme
-       và override lại giá trị Java đã set → sidebar bị bung ra. */
 }
 
 .sidebar-group-label {
@@ -230,9 +207,6 @@
     -fx-background-color: -cloud-primary-light;
 }
 
-/* =========================================
-   CONTENT AREA
-   ========================================= */
 .content-area {
     -fx-background-color: -cloud-bg;
     -fx-padding: 5;

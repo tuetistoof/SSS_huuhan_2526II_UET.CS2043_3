@@ -37,18 +37,16 @@ import javafx.scene.layout.VBox;
  */
 public class ItemsWonController implements MessageListener {
 
-    // ── FXML refs ──────────────────────────────────────────────────────────────
     @FXML private VBox        listContainer;
     @FXML private VBox        emptyState;
     @FXML private ScrollPane  scrollPane;
-    @FXML private Label       lblMetricRunning;   // hiển thị tổng số won items
+    @FXML private Label       lblMetricRunning;
 
     @FXML private Button      aFilterAll;
     @FXML private Button      aFilterArts;
     @FXML private Button      aFilterVehicles;
     @FXML private Button      aFilterElectronics;
 
-    // ── State ──────────────────────────────────────────────────────────────────
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
 
@@ -60,7 +58,7 @@ public class ItemsWonController implements MessageListener {
     @FXML
     public void initialize() {
         setActiveFilter(aFilterAll, null);
-        socket.addListener(this);   // thêm — sau setActiveFilter, trước loadWonItems
+        socket.addListener(this);
         loadWonItems();
     }
 
@@ -103,8 +101,6 @@ public class ItemsWonController implements MessageListener {
         renderUI(applyFilter(masterList));
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
-
     private void renderUI(List<BidderDisplayDTO> items) {
         Platform.runLater(() -> {
             listContainer.getChildren().clear();
@@ -144,9 +140,6 @@ public class ItemsWonController implements MessageListener {
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    /** Lọc danh sách theo itemType đang active. null = trả hết. */
     private List<BidderDisplayDTO> applyFilter(List<BidderDisplayDTO> source) {
         if (activeFilter == null) return source;
         List<BidderDisplayDTO> result = new ArrayList<>();
@@ -179,8 +172,6 @@ public class ItemsWonController implements MessageListener {
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             String action = root.has("action") ? root.get("action").getAsString() : "";
-            // ItemsWon chỉ quan tâm AUCTION_CANCELED —
-            // admin cancel auction đã FINISHED thì item biến mất khỏi won list
             if ("AUCTION_CANCELED".equals(action)) {
                 Platform.runLater(this::loadWonItems);
             }

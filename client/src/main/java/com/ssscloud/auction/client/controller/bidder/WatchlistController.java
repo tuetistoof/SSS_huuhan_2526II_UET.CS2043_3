@@ -39,7 +39,7 @@ public class WatchlistController implements MessageListener {
 
     @FXML
     public void initialize() {
-        socket.addListener(this);   // thêm
+        socket.addListener(this);
         loadWatchlist();
     }
     public void loadWatchlist() {
@@ -56,7 +56,7 @@ public class WatchlistController implements MessageListener {
         listContainer.getChildren().clear();
         lblTotalCount.setText(String.valueOf(auctions.size()));
 
-        if (auctions.isEmpty()) { // Hiện giao diện empty state
+        if (auctions.isEmpty()) {
             emptyState.setVisible(true);
             emptyState.setManaged(true);
             scrollPane.setVisible(false);

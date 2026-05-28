@@ -30,13 +30,13 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 public class NotificationController implements MessageListener {
-    @FXML private Label  lblBadge; // badge hiển thị số lượng thông báo chưa đọc
+    @FXML private Label  lblBadge;
     @FXML private ListView<NotifItem> listNotifs; 
 
     private final SocketDispatcher          dispatcher = SocketDispatcher.getInstance();
     private final AuctionClientSocket           socket  = AuctionClientSocket.getInstance();
     private final ObservableList<NotifItem>     notifs  = FXCollections.observableArrayList();
-    private Consumer<String> onNavigateToAuction; //callback về MainLayout để navigate vào BiddingRoom
+    private Consumer<String> onNavigateToAuction;
     private IntConsumer badgeListener; 
     private Runnable onClosePopup;
 
@@ -50,7 +50,7 @@ public class NotificationController implements MessageListener {
 
     public void init(Consumer<String> navigateCallback) {
         this.onNavigateToAuction = navigateCallback;
-        socket.addListener(this);   // add 1 lần, tồn tại xuyên suốt session
+        socket.addListener(this);
         setupList();
     }
     public void fetchPending() {
@@ -84,7 +84,7 @@ public class NotificationController implements MessageListener {
     }
 
     public void destroy() {
-        socket.removeListener(this); // chỉ gọi khi logout
+        socket.removeListener(this);
         notifs.clear();
     }
 
@@ -169,7 +169,7 @@ public class NotificationController implements MessageListener {
 
 
      public static class NotifItem {
-        private final String        type;       // OUTBID | ENDED
+        private final String        type;
         private final String        title;
         private final String        body;
         private final String        auctionId;
@@ -215,8 +215,6 @@ public class NotificationController implements MessageListener {
             timeLbl.getStyleClass().add("notif-time");
             HBox.setHgrow(spacer, Priority.ALWAYS);
             root.getChildren().addAll(iconLabel, textBox, spacer, timeLbl);
- 
-            // Click vào cell → navigate
             root.setOnMouseClicked(e -> {
                 NotifItem item = getItem();
                 if (item != null) onClickNotif(item);

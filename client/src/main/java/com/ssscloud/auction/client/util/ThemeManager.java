@@ -13,15 +13,12 @@ public final class ThemeManager {
     private static final String DARK_THEME_CLASS = "theme-dark";
     private static final String DARK_TOKENS_PATH = "/css/tokens-dark.css";
 
-    // Preferences key — lưu vào OS keychain / registry của máy người dùng
     private static final Preferences PREFS =
             Preferences.userNodeForPackage(ThemeManager.class);
     private static final String PREF_KEY = "appTheme";
     private static final String DEFAULT_THEME = Theme.LIGHT.name();
 
     private ThemeManager() {}
-
-    // ── Lưu & load preference ──────────────────────────────────────────────
 
     public static Theme getSavedTheme() {
         String saved = PREFS.get(PREF_KEY, DEFAULT_THEME);
@@ -35,8 +32,6 @@ public final class ThemeManager {
     public static void saveTheme(Theme theme) {
         PREFS.put(PREF_KEY, theme.name());
     }
-
-    // ── Apply ──────────────────────────────────────────────────────────────
 
     public static void apply(Scene scene, Theme theme) {
         if (scene == null || scene.getRoot() == null) return;
@@ -55,24 +50,18 @@ public final class ThemeManager {
         }
     }
 
-    // ── Toggle ─────────────────────────────────────────────────────────────
-
     public static void toggle(Scene scene) {
         if (scene == null || scene.getRoot() == null) return;
         Theme next = isDark(scene) ? Theme.LIGHT : Theme.DARK;
         apply(scene, next);
     }
 
-    // ── Query ──────────────────────────────────────────────────────────────
-
     public static boolean isDark(Scene scene) {
         return scene != null
                 && scene.getRoot() != null
                 && scene.getRoot().getStyleClass().contains(DARK_THEME_CLASS);
     }
-
-    // ── Internal ───────────────────────────────────────────────────────────
-
+    
     private static void ensureDarkTokensStylesheet(Scene scene) {
         URL url = ThemeManager.class.getResource(DARK_TOKENS_PATH);
         if (url == null)

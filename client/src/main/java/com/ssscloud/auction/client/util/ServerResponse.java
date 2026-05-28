@@ -27,7 +27,6 @@ public final class ServerResponse {
 
     private ServerResponse() {}
 
-    // Dạng 1: ApiResponse<T> — T là object đơn (DTO, Boolean, Long...)
     public static <T> T unwrap(String raw, String expectedAction, Class<T> dataClass) {
         String innerJson = extractApiResponseData(raw, expectedAction);
         if (innerJson == null) return null;
@@ -39,7 +38,6 @@ public final class ServerResponse {
         return JsonUtils.fromJsonGeneric(innerJson, dataType);
     }
 
-    // Dạng 2: ApiResponse<ListResponse<T>> — server bọc qua ListResponse
     public static <T> java.util.List<T> unwrapList(String raw, String expectedAction, Class<T> itemClass) {
         String innerJson = extractApiResponseData(raw, expectedAction);
         if (innerJson == null) return null;
@@ -51,7 +49,6 @@ public final class ServerResponse {
         return listResp.getData();
     }
 
-    // Dạng 3: ApiResponse<List<T>> — server để List trực tiếp, không bọc ListResponse
     public static <T> List<T> unwrapDirectList(String raw, String expectedAction, Class<T> itemClass) {
         String innerJson = extractApiResponseData(raw, expectedAction);
         if (innerJson == null) return null;
@@ -59,8 +56,6 @@ public final class ServerResponse {
         Type listType = TypeToken.getParameterized(java.util.List.class, itemClass).getType();
         return JsonUtils.fromJsonGeneric(innerJson, listType);
     }
-
-    // Tiện ích: isSuccess / errorMessage
 
     /**
      * Kiểm tra response có success không mà không cần lấy data.
@@ -96,8 +91,6 @@ public final class ServerResponse {
         } catch (Exception ignored) {}
         return "Unexpected error";
     }
-
-    // Private — bóc 2 lớp ngoài: ClientMessage → ApiResponse, trả JSON của data
 
     private static String extractApiResponseData(String raw, String expectedAction) {
         if (raw == null) return null;

@@ -54,7 +54,7 @@ public class BidSuccessToastController {
 
                 Popup popup = new Popup();
                 popup.getContent().add(toastNode);
-                controller.popup = popup; // Lưu tham chiếu để sau này có thể đóng
+                controller.popup = popup;
 
                 double x = owner.getX() + owner.getWidth() - 350;
                 double y = owner.getY() + 80;
@@ -62,7 +62,7 @@ public class BidSuccessToastController {
 
                 controller.animateIn();
                 controller.playSound();
-                Platform.runLater(controller::startAutoClose);//bắt đầu đếm ngược tự động đóng toast sau vài giây
+                Platform.runLater(controller::startAutoClose);
 
             } catch (IOException e) {
                 System.err.println("[BidSuccessToast] Không load được FXML: " + e.getMessage());
@@ -79,15 +79,14 @@ public class BidSuccessToastController {
 
     private void animateIn() {
         toastCard.setOpacity(0);
-        toastCard.setTranslateX(340); // Bắt đầu ở ngoài bên phải và trượt vào vị trí 0, đồng thời tăng dần độ mờ từ 0 đến 1
-
-        new Timeline(   //hoạt động dựa trên keyframe
+        toastCard.setTranslateX(340);
+        new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(toastCard.translateXProperty(), 340),
                 new KeyValue(toastCard.opacityProperty(), 0)),
             new KeyFrame(Duration.millis(220),
                 new KeyValue(toastCard.translateXProperty(), 0, Interpolator.EASE_OUT),
-                new KeyValue(toastCard.opacityProperty(), 1, Interpolator.EASE_OUT))    //EASE_OUT giúp hiệu ứng trượt vào mượt mà hơn, bắt đầu nhanh và kết thúc chậm dần
+                new KeyValue(toastCard.opacityProperty(), 1, Interpolator.EASE_OUT))
         ).play();
     }
 

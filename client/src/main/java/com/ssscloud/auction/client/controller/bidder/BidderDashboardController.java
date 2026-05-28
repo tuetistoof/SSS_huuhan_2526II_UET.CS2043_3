@@ -38,7 +38,7 @@ public class BidderDashboardController implements MessageListener {
     @FXML private ToggleButton tabArts;
     @FXML private ToggleButton tabElectronics;
     @FXML private ToggleButton tabVehicles;
-    @FXML private Parent loading; // Giao diện của khung loading
+    @FXML private Parent loading;
     @FXML private LoadingController loadingController;
     @FXML private StackPane bannerContainer;
     @FXML private Pane bannerPane;
@@ -120,7 +120,7 @@ public class BidderDashboardController implements MessageListener {
 
     public void initData(List<BidderDisplayDTO> dataFromServer) {
         this.allAuctionsDisplayInfo = dataFromServer;
-        handleTabSelection("ALL"); // Mặc định mở lên là hiện tất cả
+        handleTabSelection("ALL");
     }
 
     @FXML void filterAll(ActionEvent event) { handleTabSelection("ALL"); }
@@ -176,7 +176,6 @@ public class BidderDashboardController implements MessageListener {
     }
 
     public void loadAuctionsToDashboard(List<BidderDisplayDTO> auctionsFromDB) {
-        // Xóa sạch dữ liệu cũ trước khi nạp mới
         auctionContainer.getChildren().clear();
 
         for (BidderDisplayDTO auction : auctionsFromDB) {

@@ -33,16 +33,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-
-// TO_DO: handleCancel and screen transition not yet implemented
-
 public class CreateAuctionController{
     @FXML private TextField        txtTitle;
     @FXML private TextArea         txtDescription;
     @FXML private TextField        txtStartingPrice;
     @FXML private TextField        txtMinIncrement;
     @FXML private DatePicker       dpStartDate;
-    @FXML private TextField        txtEndTime;           // "HH:mm"
+    @FXML private TextField        txtEndTime;
 
     @FXML private ComboBox<Integer>cbDuration;
     @FXML private HBox step1Indicator;
@@ -57,8 +54,8 @@ public class CreateAuctionController{
     @FXML private Label lblNum3;
 
     @FXML private TextField        txtItemName;
-    @FXML private ComboBox<String> cmbItemType;          // ART / VEHICLE / ELECTRONIC
-    @FXML private TextField        txtCreator;           // creator / manufacturer
+    @FXML private ComboBox<String> cmbItemType;
+    @FXML private TextField        txtCreator;
     
     @FXML private TextField        txtUrl1;
     @FXML private TextField        txtUrl2;
@@ -66,9 +63,8 @@ public class CreateAuctionController{
     @FXML private TextField        txtUrl4;
     @FXML private TextField        txtUrl5;
 
-    @FXML private DatePicker       dpManufacturingDate;  // manufacturing date (optional)
+    @FXML private DatePicker       dpManufacturingDate;
  
-    
     @FXML private VBox     sectionArt;
     @FXML private CheckBox chkCertificate;
  
@@ -113,8 +109,7 @@ public class CreateAuctionController{
         cmbItemType.setPromptText("-- Select item type --");
  
         hideDynamicSections();
- 
-        // Use toItemType() to map display string to key
+
         cmbItemType.valueProperty().addListener((obs, old, newVal) -> {
             hideDynamicSections();
             if (newVal == null) return;
@@ -163,8 +158,7 @@ public class CreateAuctionController{
     @FXML 
     private void handleSubmit(){
         clearError();
-       
-        // 1. Get info
+
         String name = txtTitle.getText().trim();
         String priceStr = txtStartingPrice.getText().trim().replace(".", "").replace(",", "");
         String incrStr = txtMinIncrement.getText().trim().replace(".", "").replace(",", "");
@@ -182,7 +176,6 @@ public class CreateAuctionController{
         }
         LocalDate endDate = dpStartDate.getValue().plusDays(cbDuration.getValue());
         
-        // 2. Validate
         if (name.isEmpty()) {
             showError("Auction name cannot be empty.");
             txtTitle.requestFocus();
@@ -198,7 +191,7 @@ public class CreateAuctionController{
             cmbItemType.requestFocus();
             return;
         }
-        // Check starting price
+
         long startPrice;
         try {
             startPrice = Long.parseLong(priceStr);
@@ -208,7 +201,7 @@ public class CreateAuctionController{
             txtStartingPrice.requestFocus();
             return;
         }
-        // Check min increment
+
         long minIncrement = 0;
         if (!incrStr.isEmpty()) {
             try {
@@ -221,7 +214,6 @@ public class CreateAuctionController{
             }
         }
         
-        // Check date & time
         LocalDateTime startTime;
         if (startDate.isEqual(LocalDate.now())) {
             startTime = LocalDateTime.now();
@@ -243,11 +235,7 @@ public class CreateAuctionController{
             txtEndTime.requestFocus();
             return;
         }
-        // if (endTime.isBefore(LocalDateTime.now().plusMinutes(5))) {
-        //     showError("End time must be at least 5 minutes from now.");
-        //     return;
-        // }
-        // Temp URLs for demo
+
         String urlIfNone = "https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg";
         List<String> urls = new ArrayList<>(Arrays.asList());
         TextField[] urlFields = {txtUrl1, txtUrl2, txtUrl3, txtUrl4, txtUrl5};
@@ -290,12 +278,9 @@ public class CreateAuctionController{
             }
         }
 
-
-        // 3. Disable button to prevent multiple clicks
         btnSubmit.setDisable(true);
         btnSubmit.setText("Creating...");
 
-        // 4. Create request DTO
         CreateAuctionRequest reqDTO = new CreateAuctionRequest();
         reqDTO.setName(name);
         reqDTO.setStartPrice(startPrice);
@@ -371,10 +356,8 @@ public class CreateAuctionController{
         hide(step2Form);
         hide(step3Form);
 
-        // Update left column indicators
         updateStepIndicators();
 
-        // Handle middle form and buttons
         switch (currentStep) {
             case 1 -> {
                 show(step1Form);
@@ -398,17 +381,14 @@ public class CreateAuctionController{
     }
 
     private void updateStepIndicators() { 
-        // 1. Remove "step-row-active" class to reset to gray
         if (step1Indicator != null) step1Indicator.getStyleClass().remove("step-row-active");
         if (step2Indicator != null) step2Indicator.getStyleClass().remove("step-row-active");
         if (step3Indicator != null) step3Indicator.getStyleClass().remove("step-row-active");
 
-        // 2. Reset numbers (in case user goes back)
         if (lblNum1 != null) lblNum1.setText("1");
         if (lblNum2 != null) lblNum2.setText("2");
         if (lblNum3 != null) lblNum3.setText("3");
 
-        // 3. Apply active style and checkmark (✓) to completed steps
         if (currentStep >= 1 && step1Indicator != null) {
             step1Indicator.getStyleClass().add("step-row-active");
             if (currentStep > 1 && lblNum1 != null) lblNum1.setText("✓");
@@ -419,7 +399,6 @@ public class CreateAuctionController{
         }
         if (currentStep >= 3 && step3Indicator != null) {
             step3Indicator.getStyleClass().add("step-row-active");
-            // Step 3 is the last, so keep the number 3, no checkmark
         }
     }
 

@@ -1,4 +1,3 @@
-/* ── Focus ring ẩn toàn cục ── */
 @import "tokens.css";
 
 .button:focused,
@@ -9,10 +8,7 @@
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
-/* ==========================================================
-   BUTTONS
-   ========================================================== */
- 
+
 .btn-primary {
     -fx-background-color: -cloud-primary;
     -fx-text-fill: -cloud-surface;
@@ -68,10 +64,6 @@
     -fx-text-fill: -cloud-text-primary;
     -fx-border-color: -cloud-text-primary;
 }
-
-/* ==========================================================
-   INPUT FIELDS
-   ========================================================== */
  
 .input-field {
     -fx-background-color: -cloud-surface;
@@ -95,10 +87,6 @@
     -fx-border-width: 2;
     -fx-background-color: -cloud-danger-bg;
 }
-
-/* ==========================================================
-   SURFACE CARDS
-   ========================================================== */
  
 .surface-card {
     -fx-background-color: -cloud-surface;
@@ -114,10 +102,6 @@
     -fx-border-radius: 12px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
 }
-
-/* ==========================================================
-   STATUS BADGES — dùng chung mọi screen
-   ========================================================== */
  
 .badge {
     -fx-background-radius: 20;
@@ -172,10 +156,6 @@
     -fx-background-color: -cloud-primary-pale;   
     -fx-text-fill: -cloud-primary-deeper; 
 }
-
-/* ==========================================================
-   SCROLLBAR SLIM — áp lên ScrollPane qua styleClass
-   ========================================================== */
  
 .slim-scroll {
     -fx-background-color: transparent;
@@ -206,10 +186,6 @@
 .slim-scroll .scroll-bar .track { 
     -fx-background-color: transparent; 
 }
-
-/* ==========================================================
-   TABLE VIEW — shared style
-   ========================================================== */
  
 .data-table {
     -fx-background-color: -cloud-surface;
@@ -259,8 +235,7 @@
     -fx-font-size: 13px;
     -fx-text-fill: -cloud-text-light;
 }
- 
-/* ── Nút trong row table ── */
+
 .btn-table-action {
     -fx-background-color: -cloud-primary-dark;
     -fx-text-fill: -cloud-surface;
@@ -276,13 +251,9 @@
 }
 .btn-table-action:hover   { -fx-background-color: -cloud-primary-deeper; }
 .btn-table-action:pressed { -fx-scale-x: 0.96; -fx-scale-y: 0.96; }
-/* Chặn row selection đổi màu nút */
+
 .data-table .table-row-cell:selected .btn-table-action       { -fx-background-color: -cloud-primary-dark; }
 .data-table .table-row-cell:selected .btn-table-action:hover { -fx-background-color: -cloud-primary-deeper; }
- 
-/* ==========================================================
-   TYPOGRAPHY HELPERS
-   ========================================================== */
  
 .text-primary   { -fx-text-fill: -cloud-text-primary; }
 .text-secondary { -fx-text-fill: -cloud-text-secondary; }
@@ -315,21 +286,13 @@
     -fx-font-weight: bold;
 }
  
-/* ==========================================================
-   LOADING SPINNER
-   ========================================================== */
- 
 .loading-spinner {
     -fx-fill: transparent;
     -fx-stroke: -cloud-primary-dark;
     -fx-stroke-width: 4;
     -fx-stroke-line-cap: round;
 }
- 
-/* ==========================================================
-   NOTIFICATION BADGE (topbar bell)
-   ========================================================== */
- 
+
 .notification-badge {
     -fx-background-color: #ff3b30;
     -fx-text-fill: -cloud-surface;

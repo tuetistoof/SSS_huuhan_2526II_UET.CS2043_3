@@ -1,7 +1,6 @@
 @import "tokens.css";
 @import "base.css";
 
-/* ── Root container ── */
 .bal-popup-root {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12;
@@ -11,7 +10,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 16, 0, 0, 6);
 }
 
-/* ── Header ── */
 .bal-popup-header {
     -fx-padding: 14 16 12 16;
     -fx-spacing: 8;
@@ -30,14 +28,12 @@
     -fx-text-fill: -cloud-text-heading;
 }
 
-/* ── Separator ── */
 .bal-popup-sep {
     -fx-background-color: -cloud-border;
     -fx-padding: 0;
     -fx-pref-height: 1;
 }
 
-/* ── Rows ── */
 .bal-popup-row {
     -fx-padding: 10 16 10 16;
     -fx-spacing: 10;
@@ -49,7 +45,6 @@
     -fx-background-radius: 0;
 }
 
-/* Dot indicators */
 .bal-row-dot {
     -fx-font-size: 10px;
     -fx-min-width: 12px;

@@ -1,12 +1,6 @@
 @import "tokens.css";
 @import "base.css";
 
-/* ==========================================================
-   component-deposit-card.css — CloudBid Deposit Popover
-   Covers: Main dialog container, inner typography headers,
-           custom text field states, and contextual confirm buttons.
-   ========================================================== */
-
 .deposit-card {
     -fx-background-color: -cloud-surface;
     -fx-font-family: Segoe UI, Arial, sans-serif;
