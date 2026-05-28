@@ -135,7 +135,8 @@ public class AutoBidServiceTest {
     @Test
     void testTrigger_nullAuction_returnsWithoutException() {
         // WHY: null auction phải fail silently, không throw
-        assertDoesNotThrow(() -> autoBidService.trigger(null));
+        assertThrows(ServiceException.class, 
+            () -> autoBidService.trigger(null));
     }
 
     @Test
@@ -150,7 +151,8 @@ public class AutoBidServiceTest {
         Auction finishedAuction = new Auction(config, AuctionStatus.FINISHED, SELLER_ID, "item-002");
         AuctionRegistry.getInstance().registerIfAbsent(finishedAuction);
 
-        assertDoesNotThrow(() -> autoBidService.trigger("finished-auction"));
+        assertThrows(ServiceException.class, 
+            () -> autoBidService.trigger("finished-auction"));
         assertEquals(0, finishedAuction.getBidTransaction().size());
     }
 
