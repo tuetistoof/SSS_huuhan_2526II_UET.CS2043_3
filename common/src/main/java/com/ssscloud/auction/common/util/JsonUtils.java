@@ -2,6 +2,8 @@ package com.ssscloud.auction.common.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 
@@ -22,6 +24,10 @@ public final class JsonUtils {
               java.time.LocalDate.class,
               (com.google.gson.JsonDeserializer<java.time.LocalDate>)
                   (json, type, ctx) -> java.time.LocalDate.parse(json.getAsString()))
+          .registerTypeAdapter(Long.class, (JsonDeserializer<Long>) 
+                  (json, type, ctx) -> json.getAsJsonPrimitive().getAsLong())
+          .registerTypeAdapter(long.class, (JsonDeserializer<Long>)
+                  (json, type, ctx) -> json.getAsJsonPrimitive().getAsLong())
           .create();
 
   private JsonUtils() {}
