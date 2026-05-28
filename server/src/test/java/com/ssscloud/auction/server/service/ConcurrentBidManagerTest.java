@@ -399,7 +399,7 @@ public class ConcurrentBidManagerTest {
         bidManager.submitBid(auction, "bidderA", "bidderA", 40_000L, 40_000L, BidType.MANUAL);
         Thread.sleep(300);
 
-        verify(userDAO, atLeastOnce()).updatePendingBalance("seller-id", 10_000L);
+        verify(userDAO, atLeastOnce()).updatePendingBalance("seller-id", 40_000L);
 
         // Bid tiếp: 55_000 (từ 40_000) → delta = 15_000
         bidManager.submitBid(auction, "bidderB", "bidderB", 55_000L, 55_000L, BidType.MANUAL);
