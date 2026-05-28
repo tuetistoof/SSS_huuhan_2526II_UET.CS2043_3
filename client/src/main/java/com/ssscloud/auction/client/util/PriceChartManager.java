@@ -1,7 +1,6 @@
 package com.ssscloud.auction.client.util;
 
 import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -14,14 +13,6 @@ import java.util.List;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidDTO;
 
-/**
- * Tách chart logic ra khỏi BiddingRoomController.
- *
- * Dùng:
- * chartManager = new PriceChartManager(priceLineChart, chartXAxis, chartYAxis);
- * chartManager.rebuild(bidHistory, currentAuction); // gọi khi mở tab Chart
- * chartManager.append(bid);                         // gọi khi có BID_UPDATE realtime
- */
 public class PriceChartManager {
 
     private final LineChart<Number, Number> chart;
@@ -31,7 +22,6 @@ public class PriceChartManager {
     private XYChart.Series<Number, Number> series;
     private int bidSequence = 0;
 
-    // Popup dùng chung — chỉ có 1 cái tồn tại tại mỗi thời điểm
     private final Popup hoverPopup = new Popup();
     private final Label labelUsername = new Label();
     private final Label labelAmount  = new Label();
@@ -45,10 +35,6 @@ public class PriceChartManager {
         this.yAxis = yAxis;
         buildPopup();
     }
-
-    // ------------------------------------------------------------------ //
-    //  Public API                                                          //
-    // ------------------------------------------------------------------ //
 
     public void rebuild(List<BidDTO> bidHistory, AuctionDTO auction) {
         series = new XYChart.Series<>();
@@ -74,7 +60,6 @@ public class PriceChartManager {
         chart.setCreateSymbols(true);
     }
 
-    /** Thêm điểm mới realtime — nhận BidDTO để lấy username. */
     public void append(BidDTO bid) {
         if (series == null) return;
         bidSequence++;
@@ -82,12 +67,41 @@ public class PriceChartManager {
                 new XYChart.Data<>(bidSequence, bid.getBidAmount());
         installHover(dataPoint, bid.getBidderUsername(), bidSequence);
         series.getData().add(dataPoint);
+        expandYAxisIfNeeded(bid.getBidAmount());
     }
 
-    /**
-     * Overload giữ nguyên tương thích ngược — dùng khi không có username.
-     * Nếu controller cũ vẫn gọi append(long), sẽ dùng bản này.
-     */
+    private void expandYAxisIfNeeded(long newPrice) {
+        if (yAxis.isAutoRanging()) return;
+
+        double currentUpper = yAxis.getUpperBound();
+        double currentLower = yAxis.getLowerBound();
+        double tickUnit     = yAxis.getTickUnit();
+
+        boolean changed = false;
+
+        if (newPrice > currentUpper) {
+            double newUpper = Math.ceil((newPrice + tickUnit * 0.5) / tickUnit) * tickUnit;
+            yAxis.setUpperBound(newUpper);
+            changed = true;
+        }
+
+        if (newPrice < currentLower) {
+            double newLower = Math.max(0, Math.floor((newPrice - tickUnit * 0.5) / tickUnit) * tickUnit);
+            yAxis.setLowerBound(newLower);
+            changed = true;
+        }
+
+        if (changed) {
+            double range = yAxis.getUpperBound() - yAxis.getLowerBound();
+            if (range > 0) {
+                long rawTick   = (long) (range / 6);
+                long magnitude = (long) Math.pow(10, (long) Math.log10(Math.max(rawTick, 1)));
+                long newTick   = Math.max(magnitude, (long) tickUnit);
+                yAxis.setTickUnit(newTick);
+            }
+        }
+    }
+
     public void append(long bidAmount) {
         BidDTO stub = new BidDTO();
         stub.setBidAmount(bidAmount);
@@ -99,12 +113,7 @@ public class PriceChartManager {
         return series != null;
     }
 
-    // ------------------------------------------------------------------ //
-    //  Popup / hover                                                       //
-    // ------------------------------------------------------------------ //
-
     private void buildPopup() {
-        // Style cho popup card
         VBox card = new VBox(2, labelSeq, labelUsername, labelAmount);
         card.setStyle(
             "-fx-background-color: #1e1e2e;" +
@@ -131,23 +140,19 @@ public class PriceChartManager {
                                String username, int seq) {
         data.nodeProperty().addListener((obs, oldNode, newNode) -> {
             if (newNode == null) return;
-
-            // Phóng to dot khi hover
             newNode.setOnMouseEntered(e -> {
                 newNode.setStyle("-fx-cursor: hand; -fx-scale-x: 1.6; -fx-scale-y: 1.6;");
 
-                // Điền nội dung popup
                 labelSeq.setText("Bid #" + seq);
                 labelUsername.setText(username != null && !username.isBlank() ? username : "Ẩn danh");
                 labelAmount.setText(String.format("%,d ₫", data.getYValue().longValue()));
 
-                // Tính tọa độ màn hình của dot để hiện popup ngay bên TRÊN
                 Bounds boundsInScene = newNode.localToScene(newNode.getBoundsInLocal());
                 Bounds boundsInScreen = newNode.localToScreen(newNode.getBoundsInLocal());
 
                 if (boundsInScreen != null) {
                     double popupX = boundsInScreen.getCenterX();
-                    double popupY = boundsInScreen.getMinY() - 80; // 80px trên dot
+                    double popupY = boundsInScreen.getMinY() - 80;
                     hoverPopup.show(newNode, popupX - 60, popupY);
                 }
             });
@@ -158,10 +163,6 @@ public class PriceChartManager {
             });
         });
     }
-
-    // ------------------------------------------------------------------ //
-    //  Axis configuration                                                  //
-    // ------------------------------------------------------------------ //
 
     private void configureYAxis(List<BidDTO> bidHistory, AuctionDTO auction) {
         if (auction == null || bidHistory.isEmpty()) {
