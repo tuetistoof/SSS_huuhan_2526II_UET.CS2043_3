@@ -15,15 +15,10 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * NotificationDAO — CRUD bảng notification.
- * Lưu khi user offline, load khi user login.
- */
+
 public class NotificationDAO extends BaseDAO {
-    // Logging Standards: Declared first
     private static final Logger logger = Logger.getLogger(NotificationDAO.class.getName());
 
-    /** Lưu 1 notification vào DB. */
     public boolean save(NotificationDTO notificationDto) throws DAOException, Exception {
         String sql = "INSERT INTO notification (id, user_id, type, auction_id, auction_name, price, winner, is_read, created_at) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, ?)";
@@ -48,7 +43,6 @@ public class NotificationDAO extends BaseDAO {
         }
     }
 
-    /** Lấy tất cả notification chưa đọc của user — gọi ngay sau login. */
     public List<NotificationDTO> findUnreadByUserId(String userId) throws DAOException, Exception {
         String sql = "SELECT id, type, auction_id, auction_name, price, winner, is_read, created_at "
                    + "FROM notification WHERE user_id = ? AND is_read = FALSE "
@@ -79,7 +73,6 @@ public class NotificationDAO extends BaseDAO {
         return unreadNotificationsList;
     }
 
-    /** Đánh dấu đã đọc 1 notification. */
     public void markRead(String notificationId) throws DAOException, Exception {
         String sql = "UPDATE notification SET is_read = TRUE WHERE id = ?";
         try (Connection conn = getConnection();
@@ -93,7 +86,6 @@ public class NotificationDAO extends BaseDAO {
         }
     }
 
-    /** Đánh dấu đã đọc toàn bộ của user. */
     public void markAllRead(String userId) throws DAOException, Exception {
         String sql = "UPDATE notification SET is_read = TRUE WHERE user_id = ? AND is_read = FALSE";
         try (Connection conn = getConnection();

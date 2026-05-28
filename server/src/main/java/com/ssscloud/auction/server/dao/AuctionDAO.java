@@ -23,10 +23,8 @@ import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 
 public class AuctionDAO extends BaseDAO {
-    // Logging Standards: Declared first
     private static final Logger logger = Logger.getLogger(AuctionDAO.class.getName()); 
 
-    // --- PUBLIC METHODS ---
 
     public boolean saveAuction(Auction auction) throws DAOException, Exception {
         logger.log(Level.INFO, "Initiating auction persistence for: {0}", auction.getAuctionConfig().getName());
@@ -44,13 +42,11 @@ public class AuctionDAO extends BaseDAO {
             connection = getConnection();
             connection.setAutoCommit(false);
 
-            // 1. Entity - Persist auction name
             psEntity = connection.prepareStatement(sqlEntity);
             psEntity.setString(1, auction.getAuctionConfig().getId());
             psEntity.setString(2, auction.getAuctionConfig().getName());
             psEntity.executeUpdate();
 
-            // 2. Auction Config
             psAuctionConfig = connection.prepareStatement(sqlAuctionConfig);
             psAuctionConfig.setString(1, auction.getAuctionConfig().getId());
             psAuctionConfig.setLong(2,   auction.getAuctionConfig().getStartPrice());
@@ -60,7 +56,6 @@ public class AuctionDAO extends BaseDAO {
             psAuctionConfig.setInt(6,    auction.getAuctionConfig().getExtendSecond());
             psAuctionConfig.executeUpdate();
 
-            // 3. Auction
             psAuction = connection.prepareStatement(sqlAuction);
             psAuction.setString(1, auction.getAuctionConfig().getId());
             psAuction.setString(2, auction.getStatus().name());
@@ -68,7 +63,6 @@ public class AuctionDAO extends BaseDAO {
             psAuction.setString(4, auction.getItemId());
             psAuction.executeUpdate();
 
-            // 4. Bid transactions - Dependency Injection: Short name
             BidTransactionDAO bidDAO = new BidTransactionDAO();
             for (BidTransaction bidTransaction : auction.getBidTransaction()) {
                 bidDAO.saveBidTransaction(connection, bidTransaction);
@@ -316,16 +310,7 @@ public class AuctionDAO extends BaseDAO {
         );
     }
 
-    /**
-     * Map một row từ JOIN query sang BidTransaction.
-     *
-     * Lý do dùng alias "b_auction_id" thay vì "auction_id":
-     *   - JOIN query đã có  a.id AS auction_id  (dùng cho auction)
-     *   - Nếu đọc rs.getString("auction_id") thì JDBC trả về cột đầu tiên
-     *     khớp tên, tức là a.id — không phải b.auction_id — gây bug silent.
-     *   - Đặt alias riêng b.auction_id AS b_auction_id loại bỏ hoàn toàn
-     *     sự nhập nhằng này.
-     */
+    
     private BidTransaction mapRowToBid(ResultSet rs) throws SQLException {
         return new BidTransaction(
             rs.getString("b_auction_id"),                       // b.auction_id AS b_auction_id

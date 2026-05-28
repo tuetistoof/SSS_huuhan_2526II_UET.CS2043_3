@@ -21,9 +21,6 @@ import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
 public class QueryDAO extends BaseDAO{
     private static final Logger logger = Logger.getLogger(QueryDAO.class.getName());
 
-    // --- PUBLIC METHODS ---
-    // Thêm inner record (hoặc tạo class riêng, nhưng để gọn thì dùng record)
-
     public static class AuctionScheduleInfo {
         private final String auctionId;
         private final AuctionStatus status;
@@ -39,12 +36,6 @@ public class QueryDAO extends BaseDAO{
         public LocalDateTime getEndTime() { return endTime;   }
     }
 
-    // --- SCHEDULE RECOVERY ---
-
-    /**
-     * Chỉ lấy auctionId + endTime cho auction OPEN/RUNNING.
-     * Nhẹ hơn findByStatus() — không load full Auction object lên RAM.
-     */
     public List<AuctionScheduleInfo> findActiveScheduleInfos() throws DAOException, Exception {
         String sql =
              "SELECT a.id AS auction_id, a.status, ac.end_time " +
@@ -196,7 +187,6 @@ public class QueryDAO extends BaseDAO{
     }
 
 
-    // ── Query ─────────────────────────────────────────────────────────────────
     public List<BidderDisplayDTO> findBiddedAuctionsDetailsByUser(String userId) throws DAOException, Exception {
         logger.log(Level.INFO, "Retrieving bidded auction details for userId: {0}", userId);
         List<BidderDisplayDTO> biddedAuctionsList = new ArrayList<>();
@@ -221,7 +211,6 @@ public class QueryDAO extends BaseDAO{
             "JOIN entity ei               ON i.id = ei.id " +
             "LEFT JOIN item_image_url img ON a.item_id = img.item_id " +
             
-            // Lấy bid cao nhất hiện tại
             "LEFT JOIN ( " +
             "    SELECT auction_id, MAX(bid_amount) AS bid_amount " +
             "    FROM bid_transaction " +
@@ -233,7 +222,6 @@ public class QueryDAO extends BaseDAO{
             "    GROUP BY auction_id " +
             ") AS last_bid ON last_bid.auction_id = a.id " +
             
-            // Lấy bid mới nhất của user đang xem
             "LEFT JOIN ( " +
             "    SELECT auction_id, MAX(bid_amount) AS bid_amount " +
             "    FROM bid_transaction " +
@@ -249,7 +237,6 @@ public class QueryDAO extends BaseDAO{
             
             "WHERE a.status IN ('OPEN', 'RUNNING') " +
             
-            // Fix Bug 1: thêm các cột cần thiết vào GROUP BY
             "GROUP BY a.id, e.name, ac.end_time, u.username, ei.name, i.type, " +
             "         ac.start_price, last_bid.bid_amount, my_bid.bid_amount";
 
@@ -260,9 +247,9 @@ public class QueryDAO extends BaseDAO{
         try {
             connection = getConnection();
             preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, userId);  // bt_user.bidder_id
-            preparedStatement.setString(2, userId);  // b3.bidder_id
-            preparedStatement.setString(3, userId);  // b4.bidder_id
+            preparedStatement.setString(1, userId);  
+            preparedStatement.setString(2, userId); 
+            preparedStatement.setString(3, userId);  
             resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
@@ -346,8 +333,6 @@ public class QueryDAO extends BaseDAO{
         }
     }
 
-    // ── Watch ─────────────────────────────────────────────────────────────────
-
     public boolean add(String auctionId, String userId) throws DAOException, Exception {
         String sql = "INSERT INTO watchlist (auction_id, user_id) VALUES (?, ?)";
         Connection        connection        = null;
@@ -372,7 +357,6 @@ public class QueryDAO extends BaseDAO{
         }
     }
 
-    // ── Unwatch ───────────────────────────────────────────────────────────────
 
     public boolean remove(String auctionId, String userId) throws DAOException, Exception {
         String sql = "DELETE FROM watchlist WHERE auction_id = ? AND user_id = ?";
@@ -396,7 +380,6 @@ public class QueryDAO extends BaseDAO{
         }
     }
 
-    // ── Query ─────────────────────────────────────────────────────────────────
 
     public List<BidderDisplayDTO> findWatchlistDetailsByUser(String userId) throws DAOException, Exception {
         List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
@@ -513,7 +496,6 @@ public class QueryDAO extends BaseDAO{
         }
     }
 
-    // ── Query ───────────────────────────────────────────────────────
 
     public List<BidderDisplayDTO> findWonItemsByUser(String userId) throws DAOException, Exception {
         List<BidderDisplayDTO> auctionDetailsList = new ArrayList<>();
@@ -582,7 +564,6 @@ public class QueryDAO extends BaseDAO{
         return auctionDetailsList;
     }
 
-    // --- PRIVATE METHODS ---
     private AuctionScheduleInfo mapRowToAuctionScheduleInfo(ResultSet resultSet) throws SQLException {
         return new AuctionScheduleInfo(
             resultSet.getString("auction_id"),

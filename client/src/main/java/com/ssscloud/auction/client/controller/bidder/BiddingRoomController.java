@@ -59,10 +59,6 @@ import javafx.stage.Modality;
 
 
 public class BiddingRoomController implements MessageListener {
-
-    // =================================================================================
-    // 1. FXML FIELDS
-    // =================================================================================
     @FXML private Button btnAutoToggle;
     @FXML private Button btnChangeMaxBidToggle;
     @FXML private Button btnBack;
@@ -117,9 +113,6 @@ public class BiddingRoomController implements MessageListener {
     @FXML private TextField txtMaxBid;
     @FXML private TextField txtNewMaxBid;
 
-    // =================================================================================
-    // 2. STATE & DEPENDENCIES
-    // =================================================================================
     private AuctionCountdownTimer timer;
     private PriceChartManager chartManager;
 
@@ -148,15 +141,12 @@ public class BiddingRoomController implements MessageListener {
     private String currentUserName = currentUser != null ? currentUser.getUsername() : null;
 
     private Runnable onSuccessCallback;
-    private volatile boolean roomCanceled = false; // Guard: admin cancel
+    private volatile boolean roomCanceled = false;
 
     private final ObservableList<BidDTO> bidHistory = FXCollections.observableArrayList();
     private final AuctionClientSocket socket = AuctionClientSocket.getInstance();
     private final SocketDispatcher dispatcher = SocketDispatcher.getInstance();
 
-    // =================================================================================
-    // 3. INITIALIZATION & LIFECYCLE
-    // =================================================================================
     public void setOnSuccessCallback(Runnable cb) {
         this.onSuccessCallback = cb;
     }
@@ -248,9 +238,6 @@ public class BiddingRoomController implements MessageListener {
         socket.removeListener(this);
     }
 
-    // =================================================================================
-    // 4. FXML EVENT HANDLERS
-    // =================================================================================
     @FXML
     void handleFollowRoom(ActionEvent event) {
         if (currentAuction == null) return;
@@ -365,8 +352,6 @@ public class BiddingRoomController implements MessageListener {
 
     @FXML
     void handleSwitchToManual(ActionEvent event) {
-        // Khi đang auto bid, tab Manual bị disable nên handler này không thể bị trigger
-        // Guard phòng thủ cho chắc
         if (isAutoBidding) return;
         formAuto.setVisible(false);
         formAuto.setManaged(false);
@@ -412,8 +397,6 @@ public class BiddingRoomController implements MessageListener {
 
     @FXML
     void handleToggleAutoBid(ActionEvent event) {
-        // Chỉ còn START — không có cancel
-        // Validate trước, thay đổi UI sau (tránh UI lộn xộn khi validate fail)
         String rawText = txtMaxBid.getText() == null ? "" : txtMaxBid.getText().trim();
         if (rawText.isEmpty()) {
             showError("Please enter your max bid amount.");
@@ -434,7 +417,6 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
-        // Validate OK → lock UI
         btnAutoToggle.setDisable(true);
         btnAutoToggle.setText("Registering...");
 
@@ -445,10 +427,10 @@ public class BiddingRoomController implements MessageListener {
         dispatcher.request(json, raw -> {
             if (ServerResponse.isSuccess(raw)) {
                 autoBidMaxBid = finalMaxBid;
-                applyAutoBidState(true);  // ẩn btnAutoToggle, hiện txtNewMaxBid
+                applyAutoBidState(true);
             } else {
                 showError(ServerResponse.errorMessage(raw));
-                resetAutoBidButton();     // khôi phục về idle, KHÔNG ẩn txtMaxBid
+                resetAutoBidButton();
             }
         }, () -> {
             showError("Connection error.");
@@ -478,8 +460,6 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
-        // Chỉ check trùng khi biết max hiện tại (autoBidMaxBid > 0)
-        // Nếu autoBidMaxBid=0 (vào lại phòng, không biết max cũ) → cho qua
         if (autoBidMaxBid > 0 && newMax == autoBidMaxBid) {
             showError("New max bid is the same as current max bid.");
             return;
@@ -490,8 +470,6 @@ public class BiddingRoomController implements MessageListener {
         btnSource.setText("Updating...");
 
         final long finalNewMax = newMax;
-        // CHANGE_AUTO_BID = upsert trên server (register() removeIf cũ + add mới)
-        // 1 bước duy nhất, không cần cancel trước
         String json = JsonUtils.toJson(ClientMessage.request("AUTO_BID",
                 new AutoBidRequest(currentAuction.getId(), finalNewMax)));
 
@@ -532,9 +510,6 @@ public class BiddingRoomController implements MessageListener {
         updateImageView();
     }
 
-    // =================================================================================
-    // 5. SOCKET & REAL-TIME HANDLERS
-    // =================================================================================
     @Override
     public void onMessageReceived(String jsonMessage) {
         Platform.runLater(() -> handleServerPush(jsonMessage));
@@ -601,6 +576,7 @@ public class BiddingRoomController implements MessageListener {
         }
         
         if (chartManager.isReady() && panelChart.isVisible()) chartManager.append(bid);
+        
         resetPlaceBidButton();
     }
 
@@ -645,7 +621,7 @@ public class BiddingRoomController implements MessageListener {
                 ? "🎉 Congrats! You won " + String.format("%,d ₫", finalPrice)
                 : "Winner: " + winner + " (" + String.format("%,d ₫", finalPrice) + ")";
                 
-        showBanner(resultMsg, 0); // show permanently
+        showBanner(resultMsg, 0);
     }
 
     private void handleAuctionCanceled(JsonObject root) {
@@ -698,9 +674,6 @@ public class BiddingRoomController implements MessageListener {
         showBanner("⚠ Auto Bid stopped - current price exceeded your maximum.", 5);
     }
 
-    // =================================================================================
-    // 6. UI UPDATES & HELPERS
-    // =================================================================================
     private void populateUI() {
         if (currentAuction == null) return;
         long currentPrice = getCurrentPrice();
@@ -758,17 +731,14 @@ private void applyAutoBidState(boolean active) {
                 lblHowToAutoBid.setVisible(true);
                 lblHowToAutoBid.setText(txt);
 
-                // txtMaxBid: hiển thị max đang đặt (disabled để read-only)
                 if (autoBidMaxBid > 0) {
                     txtMaxBid.setText(String.format("%,d", autoBidMaxBid));
                 } else {
-                    // Vào lại phòng — session mới, không còn biết max
                     txtMaxBid.setPromptText("Active on server - enter new max to update");
                     txtMaxBid.clear();
                 }
                 txtMaxBid.setDisable(true);
 
-                // Hiện ô update max
                 if (txtNewMaxBid != null) {
                     txtNewMaxBid.setVisible(true);
                     txtNewMaxBid.setManaged(true);
@@ -781,7 +751,6 @@ private void applyAutoBidState(boolean active) {
                     btnChangeMaxBidToggle.setText("Update Max");
                 }
 
-                // Cập nhật lblAutoBidMinPrice
                 BidDTO latest = findHighestBid();
                 if (latest != null && lblAutoBidMinPrice != null) {
                     lblAutoBidMinPrice.setText("Min: " + String.format("%,d ₫",
@@ -794,13 +763,11 @@ private void applyAutoBidState(boolean active) {
                 btnPlaceBid.setDisable(true);
                 txtManualBid.setDisable(true);
 
-                // FIX BUG 2: Không có cancel → ẩn btnAutoToggle khi đang active
                 btnAutoToggle.setVisible(false);
                 btnAutoToggle.setManaged(false);
             });
         } else {
             Platform.runLater(() -> {
-                // Chuyển về Manual tab
                 formAuto.setVisible(false);
                 formAuto.setManaged(false);
                 formManual.setVisible(true);
@@ -811,11 +778,9 @@ private void applyAutoBidState(boolean active) {
                 btnTabManual.setDisable(false);
                 txtManualBid.setDisable(false);
 
-                // FIX BUG 1: txtMaxBid là input field cố định, chỉ clear + enable, KHÔNG ẩn
                 txtMaxBid.setDisable(false);
                 txtMaxBid.clear();
 
-                // Ẩn ô update max
                 if (txtNewMaxBid != null) {
                     txtNewMaxBid.setVisible(false);
                     txtNewMaxBid.setManaged(false);
@@ -826,7 +791,6 @@ private void applyAutoBidState(boolean active) {
                     btnChangeMaxBidToggle.setManaged(false);
                 }
 
-                // FIX BUG 2: Hiện lại btnAutoToggle ở trạng thái Start
                 btnAutoToggle.setVisible(true);
                 btnAutoToggle.setManaged(true);
                 btnAutoToggle.setDisable(false);
@@ -834,8 +798,6 @@ private void applyAutoBidState(boolean active) {
                 btnAutoToggle.getStyleClass().remove("br-btn-auto-active");
                 btnAutoToggle.getStyleClass().add("br-btn-secondary");
 
-                // FIX BUG 1: KHÔNG gọi resetAutoBidButton() ở đây nữa
-                // resetAutoBidButton() chỉ dùng khi START thất bại (error path)
                 btnPlaceBid.setDisable(false);
                 btnPlaceBid.setText("Place Bid");
             });
@@ -850,7 +812,7 @@ private void applyAutoBidState(boolean active) {
         btnAutoToggle.setManaged(false);
         txtManualBid.setDisable(true);
         if (txtMaxBid != null) txtMaxBid.setDisable(true);
-        // FIX BUG 5: Ẩn ô update max nếu đang ở auto mode khi phòng kết thúc/cancel
+
         if (txtNewMaxBid != null) {
             txtNewMaxBid.setVisible(false);
             txtNewMaxBid.setManaged(false);
@@ -896,13 +858,12 @@ private void applyAutoBidState(boolean active) {
     }
 
     private void resetPlaceBidButton() {
-        if (roomCanceled) return; // Guard: phòng đã cancel, không reset
+        if (roomCanceled) return;
         if (!isAutoBidding) btnPlaceBid.setDisable(false);
         btnPlaceBid.setText("Place Bid");
     }
 
     private void resetAutoBidButton() {
-        // Chỉ reset nút về trạng thái idle — txtMaxBid là input cố định, KHÔNG ẩn
         txtMaxBid.clear();
         txtMaxBid.setDisable(false);
         btnAutoToggle.setVisible(true);
@@ -955,9 +916,6 @@ private void applyAutoBidState(boolean active) {
         activeTabBtn.getStyleClass().setAll("br-tab-active");
     }
 
-    // =================================================================================
-    // 7. DATA PROCESSING & LOGIC
-    // =================================================================================
     private void checkFollowStatus() {
         if (currentAuction == null) return;
         String json = JsonUtils.toJson(ClientMessage.request("CHECK_FOLLOWING", currentAuction.getId()));
@@ -1003,8 +961,6 @@ private void applyAutoBidState(boolean active) {
             i++;
         bidHistory.add(i, bid);
         listViewBidHistory.scrollTo(Math.max(0, i - 1));
-        if (chartManager.isReady() && panelChart.isVisible())
-            chartManager.rebuild(bidHistory, currentAuction);
     }
 
     private boolean acceptIncomingVersion(long incomingVersion) {
@@ -1090,9 +1046,6 @@ private void applyAutoBidState(boolean active) {
                 && Objects.equals(a.getBidType(), b.getBidType());
     }
 
-    // =================================================================================
-    // 8. INNER CLASSES
-    // =================================================================================
     private void setupBidHistoryList() {
         listViewBidHistory.setItems(bidHistory);
         listViewBidHistory.setPlaceholder(new Label("There is no bid transaction"));

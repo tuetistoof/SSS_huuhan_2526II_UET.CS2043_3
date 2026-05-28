@@ -124,7 +124,12 @@ public class AutoBidService {
      * 1. register() — sau khi thêm entry vào registrationsMap
      * 2. ConcurrentBidManager.processTask() — sau khi worker xử lí xong 1 bid
      */
-    public void tryTrigger(String auctionId) throws Exception {
+    public void tryTrigger(String auctionId) throws ServiceException, Exception {
+        if (auctionId == null || auctionId.isBlank()) {
+            logger.log(Level.WARNING, "AutoBid trigger failed: Missing or invalid auctionId.");
+            throw new ServiceException(ErrorCode.MISSING_AUCTION_ID,
+                    "Auto-bid trigger failed: The auction identifier is required.");
+        }
         Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
         if (auctionEntity == null || auctionEntity.getStatus().isEnded()
                 || auctionEntity.isExpired() || !auctionEntity.getStatus().isActive()) {
@@ -152,16 +157,24 @@ public class AutoBidService {
      * bid)
      * 5. Nếu không còn candidate nào thỏa mãn → dừng
      */
-    public void trigger(String auctionId) throws Exception {
-        Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
+    public void trigger(String auctionId) throws ServiceException, Exception {
+        if (auctionId == null || auctionId.isBlank()) {
+            logger.log(Level.WARNING, "AutoBid trigger failed: Missing or invalid auctionId.");
+            throw new ServiceException(ErrorCode.MISSING_AUCTION_ID,
+                    "Auto-bid trigger failed: The auction identifier is required.");
+        }
         try {
-            if (auctionEntity == null || auctionEntity.getStatus().isEnded() || auctionEntity.isExpired()
-                    || !auctionEntity.getStatus().isActive()) {
-                return;
-            }
-            auctionId = auctionEntity.getAuctionConfig().getId();
-            long increment = auctionEntity.getAuctionConfig().getMinIncrement();
             while (true) {
+                List<AutoBidEntry> autoBidEntriesList = registrationsMap.get(auctionId);
+                if (autoBidEntriesList == null || autoBidEntriesList.isEmpty()) {
+                    return;
+                }
+                Auction auctionEntity = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
+                if (auctionEntity == null || auctionEntity.getStatus().isEnded() || auctionEntity.isExpired()
+                        || !auctionEntity.getStatus().isActive()) {
+                    return;
+                }
+                long increment = auctionEntity.getAuctionConfig().getMinIncrement();
                 BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
                 boolean isFirstBid = (lastBidTransaction == null);
                 long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()
@@ -169,12 +182,9 @@ public class AutoBidService {
                 String highestBidderId = lastBidTransaction == null ? null : lastBidTransaction.getBidderId();
                 long highestBidderLock = lastBidTransaction == null ? 0 : lastBidTransaction.getLockedBalance();
                 BidType lastBidType = lastBidTransaction == null ? null : lastBidTransaction.getType();
-                List<AutoBidEntry> autoBidEntriesList = registrationsMap.get(auctionId);
-                if (autoBidEntriesList == null || autoBidEntriesList.isEmpty()) {
-                    return;
-                }
                 logger.log(Level.INFO, "Auto-bid matching triggered for auctionId: " + auctionId + " with "
                         + autoBidEntriesList.size() + " candidates.");
+                        
                 List<AutoBidEntry> entriesSnapshotList = new ArrayList<>(autoBidEntriesList);
                 List<AutoBidEntry> otherCompetitorsList = new ArrayList<>();
                 for (AutoBidEntry entry : entriesSnapshotList) {
@@ -257,7 +267,7 @@ public class AutoBidService {
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
                     "[SYSTEM_FAILURE] Unexpected system error in AutoBidService.trigger for auctionId: "
-                            + auctionEntity.getAuctionConfig().getId(),
+                            + auctionId,
                     exception);
             throw exception;
         }

@@ -17,10 +17,8 @@ import com.ssscloud.auction.common.model.user.Bidder;
 import com.ssscloud.auction.common.model.user.Seller;
 
 public class UserDAO extends BaseDAO {
-    // Logging Standards: Declared first as a private static final attribute
     private static final Logger logger = Logger.getLogger(UserDAO.class.getName()); 
 
-    // --- PUBLIC METHODS ---
 
     public boolean saveBidder(Bidder bidder) throws DAOException, Exception {
         logger.log(Level.INFO, "Initiating persistence for Bidder: {0}", bidder.getUserName());

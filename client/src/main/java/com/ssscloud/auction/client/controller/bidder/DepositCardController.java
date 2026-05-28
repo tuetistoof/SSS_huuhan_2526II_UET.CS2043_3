@@ -12,6 +12,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.application.Platform;
 public class DepositCardController {
 
     @FXML private Label lblError;
@@ -32,11 +33,14 @@ public class DepositCardController {
         lblError.setManaged(false);
         String amountTxt = txtDepositValue.getText().trim();
 
-        int amount = 0;
+        long amount = 0;
         try {
-            amount = Integer.parseInt(amountTxt);
+            amount = Long.parseLong(amountTxt);
         } catch (NumberFormatException e) {
-            lblError.setText("Please enter a valid number!");
+            String msg = amountTxt.matches("\\d+") 
+                ? "Amount is too large!" 
+                : "Please enter a valid number!";
+            lblError.setText(msg);
             lblError.setVisible(true);
             lblError.setManaged(true);
             return;
@@ -51,15 +55,14 @@ public class DepositCardController {
 
         String json = JsonUtils.toJson(ClientMessage.request("DEPOSIT", amount));
         dispatcher.request(json, raw -> {
-            Double newBalance = ServerResponse.unwrap(raw, "DEPOSIT_RESPONSE", Double.class);
+            Long newBalance = ServerResponse.unwrap(raw, "DEPOSIT_RESPONSE", Long.class);
             if (newBalance != null && mainLayoutController != null) {
-                // JavaFX cần chạy UI update trên luồng chính (Platform.runLater) nếu dispatcher là luồng khác
-                javafx.application.Platform.runLater(() -> {
+                Platform.runLater(() -> {
                     mainLayoutController.updateBalance(newBalance.longValue());
                 });
             }
         }, () -> {
-            javafx.application.Platform.runLater(() -> {
+            Platform.runLater(() -> {
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Unsuccess");
                 alert.setHeaderText(null);
