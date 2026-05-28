@@ -184,7 +184,7 @@ public class AutoBidService {
                 BidType lastBidType = lastBidTransaction == null ? null : lastBidTransaction.getType();
                 logger.log(Level.INFO, "Auto-bid matching triggered for auctionId: " + auctionId + " with "
                         + autoBidEntriesList.size() + " candidates.");
-                        
+
                 List<AutoBidEntry> entriesSnapshotList = new ArrayList<>(autoBidEntriesList);
                 List<AutoBidEntry> otherCompetitorsList = new ArrayList<>();
                 for (AutoBidEntry entry : entriesSnapshotList) {
@@ -217,7 +217,8 @@ public class AutoBidService {
                     long basePrice = Math.max(secondHighestBidAmount, currentAuctionPrice);
                     bidAmount = Math.min(basePrice + increment, winningEntry.maxBid);
                 }
-                if (validateAutoBidSubmit(auctionEntity, bidAmount)) {
+                List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
+                if (validateAutoBidSubmit(auctionEntity, bidAmount, lastBidTransaction)) {
 
                     if (!userDAO.lockBidderBalance(winningEntry.bidderId, winningEntry.maxBid)) {
                         logger.log(Level.WARNING,
@@ -247,22 +248,18 @@ public class AutoBidService {
                         notifyAutoBidStopped(winningEntry.bidderId);
                         continue;
                     }
-
-                    List<AutoBidEntry> entriesToRemoveList = new ArrayList<>();
-                    for (AutoBidEntry entry : entriesSnapshotList) {
-                        if (!entry.bidderId.equals(winningEntry.bidderId)) {
-                            entriesToRemoveList.add(entry);
-                        }
-                    }
-                    autoBidEntriesList.removeAll(entriesToRemoveList);
-                    entriesToRemoveList.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
-                    return;
                 } else {
-                    List<AutoBidEntry> toRemove = new ArrayList<>(entriesSnapshotList);
-                    autoBidEntriesList.removeAll(toRemove);
-                    toRemove.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
-                    return;
+                    if (winningEntry.maxBid < currentAuctionPrice)
+                        entriesSnapshotList.add(winningEntry);
                 }
+                for (AutoBidEntry entry : entriesSnapshotList) {
+                    if (!entry.bidderId.equals(winningEntry.bidderId)) {
+                        entriesToRemoveList.add(entry);
+                    }
+                }
+                autoBidEntriesList.removeAll(entriesToRemoveList);
+                entriesToRemoveList.forEach(entry -> notifyAutoBidStopped(entry.bidderId));
+                return;
             } // end while(true)
         } catch (Exception exception) {
             logger.log(Level.SEVERE,
@@ -443,14 +440,14 @@ public class AutoBidService {
         }
     }
 
-    private boolean validateAutoBidSubmit(Auction auction, long bidAmount)
+    private boolean validateAutoBidSubmit(Auction auction, long bidAmount, BidTransaction lastBid)
             throws ServiceException {
         if (auction == null) {
             throw new ServiceException(ErrorCode.AUCTION_NOT_FOUND,
                     "Resource not found: The specified auction does not exist.");
         }
         long minIncrement = auction.getAuctionConfig().getMinIncrement();
-        BidTransaction lastBid = auction.getLastBidTransaction();
+
         if (lastBid == null) {
             if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
 
