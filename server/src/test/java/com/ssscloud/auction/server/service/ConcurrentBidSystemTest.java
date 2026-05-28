@@ -497,16 +497,6 @@ public class ConcurrentBidSystemTest {
         assertEquals("sys06-C", remaining.get(0).bidderId);
     }
 
-    /**
-     * SYS-07: Đa luồng cùng đăng ký lại autobid (re-register) cho cùng 1 bidder.
-     *
-     * WHY: autoBidEntriesList.removeIf(entry -> entry.bidderId.equals(bidderId))
-     * phải an toàn khi nhiều thread cùng re-register cho cùng bidderId.
-     * Kết quả: chỉ 1 entry tồn tại cho bidderId đó (không duplicate).
-     *
-     * Kịch bản: 5 thread cùng đăng ký autobid cho "sys07-bidder" với maxBid khác nhau.
-     * Sau khi xong, phải có đúng 1 entry cho "sys07-bidder".
-     */
     // =========================================================================
     // Nhóm 3 — Đa luồng trộn manual + autobid trong 1 auction
     // =========================================================================

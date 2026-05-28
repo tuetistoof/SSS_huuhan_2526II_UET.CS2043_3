@@ -169,6 +169,8 @@ public class AutoBidService {
                 if (autoBidEntriesList == null || autoBidEntriesList.isEmpty()) {
                     return; // Không còn candidate → dừng
                 }
+                Auction freshAuction = AuctionRegistry.getInstance().retrieveAndValidateAuction(auctionId);
+                auctionEntity = freshAuction;
                 BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
                 boolean isFirstBid = (lastBidTransaction == null);
                 long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()

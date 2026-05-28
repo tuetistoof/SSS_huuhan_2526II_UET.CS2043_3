@@ -18,23 +18,11 @@ import com.ssscloud.auction.common.payload.response.DTO.AdminDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.common.payload.response.request.AdminMetrics;
 
-/**
- * AdminDAO handles data access operations for admin-specific queries.
- * Provides auction list retrieval with optional status filtering and system metrics.
- */
 public class AdminDAO extends BaseDAO {
 
-    // Logging Standards: Declared first as a private static final attribute
     private static final Logger logger = Logger.getLogger(AdminDAO.class.getName());
 
-    // --- PUBLIC METHODS ---
-
-    /**
-     * Lấy tất cả auction, có thể filter theo status.
-     * Nếu filter == null thì lấy toàn bộ.
-     */
     public List<AdminDisplayDTO> findAllAuctions(AuctionStatus filter) throws DAOException, Exception {
-        // Query base — JOIN để lấy tên auction, seller, và giá hiện tại
         String baseSql =
             "SELECT a.id, " +
             "       e.name                                        AS auction_name, " +
@@ -46,7 +34,6 @@ public class AdminDAO extends BaseDAO {
             "JOIN auction_config ac ON a.id = ac.id " +
             "JOIN entity e          ON a.id = e.id " +
             "JOIN user u            ON a.seller_id = u.id " +
-            // Subquery lấy bid mới nhất để tính current_price
             "LEFT JOIN ( " +
             "    SELECT b1.auction_id, b1.bid_amount " +
             "    FROM bid_transaction b1 " +
@@ -57,7 +44,6 @@ public class AdminDAO extends BaseDAO {
             "    ) " +
             ") AS last_bid ON last_bid.auction_id = a.id ";
 
-        // Thêm WHERE nếu có filter, không thì lấy tất cả
         String sql = (filter != null)
             ? baseSql + "WHERE a.status = ? ORDER BY ac.end_time DESC"
             : baseSql + "ORDER BY ac.end_time DESC";
@@ -74,7 +60,6 @@ public class AdminDAO extends BaseDAO {
             connection        = getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
-            // Chỉ set tham số khi có filter
             if (filter != null) {
                 preparedStatement.setString(1, filter.name());
             }
@@ -101,12 +86,7 @@ public class AdminDAO extends BaseDAO {
         }
     }
 
-    /**
-     * Lấy 3 con số thống kê cho metric cards:
-     * số auction đang RUNNING, số auction đã FINISHED, tổng số user.
-     */
     public AdminMetrics getMetrics() throws DAOException, Exception {
-        // 1 câu query duy nhất — SUM điều kiện để đếm theo status
         String sql =
             "SELECT " +
             "    SUM(status = 'RUNNING')  AS running_count, " +
@@ -133,7 +113,6 @@ public class AdminDAO extends BaseDAO {
                 );
             }
 
-            // Không có row nào thì trả về toàn 0
             return new AdminMetrics(0, 0, 0);
 
         } catch (SQLException sqlException) {
@@ -147,10 +126,6 @@ public class AdminDAO extends BaseDAO {
         }
     }
 
-    /**
-     * Lấy tất cả user (BIDDER + SELLER), có thể filter theo role.
-     * filter == null thì lấy tất cả.
-     */
     public List<UserDTO> getAllUsers(String roleFilter) throws DAOException, Exception {
         String baseSql =
             "SELECT u.id, u.username, u.email, u.role, " +
@@ -197,11 +172,7 @@ public class AdminDAO extends BaseDAO {
         }
     }
 
-    // --- PRIVATE METHODS ---
-
-    /** Map một row ResultSet sang AdminAuctionView */
     private AdminDisplayDTO mapRowToAdminAuctionView(ResultSet rs) throws SQLException {
-        // Đọc end_time an toàn — có thể null nếu auction chưa set
         LocalDateTime endTime = null;
         java.sql.Timestamp endTimeTs = rs.getTimestamp("end_time");
         if (endTimeTs != null) {
@@ -218,7 +189,6 @@ public class AdminDAO extends BaseDAO {
         );
     }
 
-    /** Map một row ResultSet sang UserDTO cho admin user list */
     private UserDTO mapRowToUserDTO(ResultSet rs) throws SQLException {
         String roleStr = rs.getString("role");
         UserRole role = (roleStr != null) ? UserRole.valueOf(roleStr) : null;
@@ -228,7 +198,7 @@ public class AdminDAO extends BaseDAO {
             rs.getString("email"),
             role,
             rs.getLong("account_balance"),
-            0L  // unsettledBalance không cần cho admin view
+            0L
         );
     }
 }

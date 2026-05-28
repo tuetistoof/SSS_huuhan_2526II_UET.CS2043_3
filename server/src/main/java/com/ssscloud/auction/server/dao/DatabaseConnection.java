@@ -13,10 +13,6 @@ import com.ssscloud.auction.common.exception.ErrorCode;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-/**
- * DatabaseConnection manages the lifecycle and configuration of the HikariCP connection pool.
- * It follows the Singleton pattern to ensure a shared resource across the persistence layer.
- */
 public class DatabaseConnection {
     private static final Logger logger = Logger.getLogger(DatabaseConnection.class.getName());
 
@@ -71,8 +67,6 @@ public class DatabaseConnection {
             throw exception;
         }
     }
-
-    // --- PUBLIC METHODS ---
 
     public static DatabaseConnection getInstance() throws DAOException, Exception {
         try {

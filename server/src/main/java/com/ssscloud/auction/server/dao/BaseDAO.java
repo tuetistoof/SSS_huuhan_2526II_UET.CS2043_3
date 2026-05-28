@@ -15,17 +15,6 @@ import com.ssscloud.auction.common.exception.ErrorCode;
 public abstract class BaseDAO {
     protected static final Logger logger = Logger.getLogger(BaseDAO.class.getName());
 
-    // --- PROTECTED METHODS ---
-
-    /**
-     * Retrieves a managed database connection from the centralized infrastructure pool.
-     * @return A valid Connection object.
-     * @throws DAOException, Exception if a connection cannot be established or an unexpected error occurs.
-     * Lấy một kết nối cơ sở dữ liệu được quản lý từ pool hạ tầng tập trung.
-     * @return Đối tượng Connection hợp lệ.
-     * @throws DAOException nếu không thể thiết lập kết nối.
-     * @throws Exception cho các lỗi hệ thống chưa xác định.
-     */
     protected Connection getConnection() throws DAOException, Exception {
         try {
             return DatabaseConnection.getInstance().getConnection();
