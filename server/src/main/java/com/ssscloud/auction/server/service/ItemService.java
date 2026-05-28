@@ -8,7 +8,6 @@ import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.model.base.Item;
 import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
 import com.ssscloud.auction.server.dao.ItemDAO;
-import com.ssscloud.auction.server.factory.ItemDTOFactory;
 
 public class ItemService {
     private static final Logger logger = Logger.getLogger(ItemService.class.getName()); // Logging Standard: Declared first
@@ -51,7 +50,7 @@ public class ItemService {
             if (item == null) {
                 throw new ServiceException(ErrorCode.ITEM_NOT_FOUND, "Resource not found: Item with identifier " + itemId + " does not exist.");
             }
-            ItemDTO itemDto = ItemDTOFactory.toDto(item);
+            ItemDTO itemDto = item.toDto();
             return itemDto;
         } catch (ServiceException serviceException) {
             throw serviceException;

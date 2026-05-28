@@ -1,6 +1,9 @@
 package com.ssscloud.auction.common.model.item;
 
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
+import com.ssscloud.auction.common.payload.response.DTO.VehicleDTO;
+
 import java.util.List;
 
 public class Vehicle extends Item {
@@ -63,5 +66,12 @@ public class Vehicle extends Item {
 
   public void setWarrantyPeriod(int warrantyPeriod) {
     this.warrantyPeriod = warrantyPeriod;
+  }
+  @Override
+  protected ItemDTO createDto() {
+    VehicleDTO vehicleDto = new VehicleDTO();
+    vehicleDto.setIsRepaired(getIsRepaired());
+    vehicleDto.setWarrantyPeriod(getWarrantyPeriod());
+    return vehicleDto;
   }
 }

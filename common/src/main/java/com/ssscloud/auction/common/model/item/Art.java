@@ -1,6 +1,9 @@
 package com.ssscloud.auction.common.model.item;
 
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.payload.response.DTO.ArtDTO;
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -55,4 +58,10 @@ public class Art extends Item {
   public void setCertificate(boolean certificate) {
     this.certificate = certificate;
   }
+  @Override
+protected ItemDTO createDto() {
+    ArtDTO artDto = new ArtDTO();
+    artDto.setCertificate(getCertificate());
+    return artDto;
+}
 }

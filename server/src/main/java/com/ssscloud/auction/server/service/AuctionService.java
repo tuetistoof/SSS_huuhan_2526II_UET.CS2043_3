@@ -22,7 +22,6 @@ import com.ssscloud.auction.server.dao.AuctionDAO;
 import com.ssscloud.auction.server.dao.QueryDAO;
 import com.ssscloud.auction.server.dao.QueryDAO.AuctionScheduleInfo;
 import com.ssscloud.auction.server.dao.UserDAO;
-import com.ssscloud.auction.server.factory.ItemDTOFactory;
 import com.ssscloud.auction.server.factory.ItemFactory;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
@@ -128,7 +127,7 @@ public class AuctionService {
             logger.log(Level.INFO, "Auction successfully created and registered with ID: {0}", auctionConfig.getId());
     
             UserDTO sellerDto = userService.getByUserId(sellerId);
-            ItemDTO itemDto = ItemDTOFactory.toDto(item);
+            ItemDTO itemDto = item.toDto();
             
             return auction.toAuctionDto(sellerDto, itemDto);
         } catch (ServiceException serviceException) {
