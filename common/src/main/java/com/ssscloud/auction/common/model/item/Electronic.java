@@ -1,6 +1,9 @@
 package com.ssscloud.auction.common.model.item;
 
 import com.ssscloud.auction.common.model.base.Item;
+import com.ssscloud.auction.common.payload.response.DTO.ElectricDTO;
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
+
 import java.util.List;
 
 public class Electronic extends Item {
@@ -66,5 +69,12 @@ public class Electronic extends Item {
 
   public void setWarrantyPeriod(int warrantyPeriod) {
     this.warrantyPeriod = warrantyPeriod;
+  }
+  @Override
+  protected ItemDTO createDto() {
+    ElectricDTO electricDto = new ElectricDTO();
+    electricDto.setIsRepaired(getIsRepaired());
+    electricDto.setWarrantyPeriod(getWarrantyPeriod());
+    return electricDto;
   }
 }

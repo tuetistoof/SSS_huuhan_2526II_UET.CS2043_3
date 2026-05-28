@@ -3,6 +3,8 @@ package com.ssscloud.auction.common.model.base;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ssscloud.auction.common.payload.response.DTO.ItemDTO;
+
 public abstract class Item extends Entity {
   // tinh theo gia viet nam nen de la long
   private String sellerId;
@@ -91,4 +93,16 @@ public abstract class Item extends Entity {
   public List<String> getImageUrl() {
     return imageUrl;
   }
+  public final ItemDTO toDto() {
+        ItemDTO itemDto = createDto();
+        itemDto.setId(getId());
+        itemDto.setName(getName());
+        itemDto.setSellerId(getSellerId());
+        itemDto.setCreator(getCreator());
+        itemDto.setDescription(getDescription());
+        itemDto.setItemType(getType());
+        itemDto.setImageUrls(getImageUrl());
+        return itemDto;
+  }
+  protected abstract ItemDTO createDto();
 }

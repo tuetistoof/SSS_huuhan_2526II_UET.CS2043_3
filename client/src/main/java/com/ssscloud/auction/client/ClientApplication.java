@@ -34,7 +34,7 @@ public class ClientApplication extends Application {
         
         Scene scene = new Scene(SceneManager.loginScene);
         //primaryStage.initStyle(StageStyle.UNDECORATED);
-        primaryStage.setTitle("Cloud Bidding");
+        primaryStage.setTitle("CloudBid");
         primaryStage.setScene(scene);
         primaryStage.centerOnScreen();
         primaryStage.show();
