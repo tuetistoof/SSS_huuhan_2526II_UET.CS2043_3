@@ -174,7 +174,6 @@ public class AutoBidService {
                         || !auctionEntity.getStatus().isActive()) {
                     return;
                 }
-                auctionId = auctionEntity.getAuctionConfig().getId();
                 long increment = auctionEntity.getAuctionConfig().getMinIncrement();
                 BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
                 boolean isFirstBid = (lastBidTransaction == null);
@@ -185,6 +184,7 @@ public class AutoBidService {
                 BidType lastBidType = lastBidTransaction == null ? null : lastBidTransaction.getType();
                 logger.log(Level.INFO, "Auto-bid matching triggered for auctionId: " + auctionId + " with "
                         + autoBidEntriesList.size() + " candidates.");
+                        
                 List<AutoBidEntry> entriesSnapshotList = new ArrayList<>(autoBidEntriesList);
                 List<AutoBidEntry> otherCompetitorsList = new ArrayList<>();
                 for (AutoBidEntry entry : entriesSnapshotList) {
