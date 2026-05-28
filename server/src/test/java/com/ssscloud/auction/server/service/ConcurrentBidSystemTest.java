@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -25,7 +24,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +34,6 @@ import com.ssscloud.auction.common.enums.AuctionStatus;
 import com.ssscloud.auction.common.enums.BidType;
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.model.auction.Auction;
-import com.ssscloud.auction.common.model.auction.BidTransaction;
 import com.ssscloud.auction.common.model.base.AuctionConfig;
 import com.ssscloud.auction.common.model.user.Bidder;
 import com.ssscloud.auction.common.payload.request.AutoBidRequest;
@@ -172,9 +169,13 @@ public class ConcurrentBidSystemTest {
         for (String id : auctionIds) {
             try { ConcurrentBidManager.getInstance().shutdown(id); }
             catch (Exception ignored) {}
-            try { autoBidService.clearRegistrations(id); }
-            catch (Exception ignored) {}
-            AuctionRegistry.getInstance().remove(id);
+            if (autoBidService != null) {
+                try { autoBidService.clearRegistrations(id); }
+                catch (Exception ignored) {}
+            }
+            if (AuctionRegistry.getInstance() != null) {
+                AuctionRegistry.getInstance().remove(id);
+            }
         }
         ConcurrentBidManager.resetInstance();
     }
@@ -220,7 +221,7 @@ public class ConcurrentBidSystemTest {
             }, "sys01-" + i).start();
         }
 
-        done.await(10, TimeUnit.SECONDS);
+        awaitLatch(done, 10, "SYS-01: Tất cả thread manual bid phải submit xong");
         waitForPrice(auctionSingle, topBid, WORKER_TIMEOUT_MS);
 
         assertEquals(topBid, auctionSingle.getCurrentPrice(),
@@ -261,8 +262,8 @@ public class ConcurrentBidSystemTest {
             }, "sys02-" + i).start();
         }
 
-        done.await(5, TimeUnit.SECONDS);
-        Thread.sleep(500); // Đợi worker drain queue
+        awaitLatch(done, 5, "SYS-02: Tất cả thread same-price phải submit xong");
+        waitForTransactionCount(auctionSingle, 1, WORKER_TIMEOUT_MS);
 
         assertEquals(1, auctionSingle.getBidTransaction().size(),
             "SYS-02: Chỉ đúng 1 bid transaction khi N luồng gửi cùng mức giá");
@@ -315,20 +316,14 @@ public class ConcurrentBidSystemTest {
             }, "sys03-" + i).start();
         }
 
-        done.await(10, TimeUnit.SECONDS);
+        awaitLatch(done, 10, "SYS-03: Tất cả thread stress manual phải submit xong");
 
         long finalPrice = START_PRICE + numBidders * MIN_INC;
         waitForPrice(auctionSingle, finalPrice, 5_000);
 
         // Chờ thêm cho đến khi localUnlocked không thay đổi trong 500ms
         // → đảm bảo worker đã drain hết tất cả task còn lại trong queue
-        long stableUnlocked;
-        long deadline = System.currentTimeMillis() + 5_000;
-        do {
-            stableUnlocked = localUnlocked.get();
-            Thread.sleep(500);
-        } while (localUnlocked.get() != stableUnlocked
-                && System.currentTimeMillis() < deadline);
+        waitForStableValue(localUnlocked, 500, 5_000);
 
         // Invariant: mọi bidder thua đều được unlock đúng 1 lần với đúng bidAmt
         // Tổng unlock = tổng bidAmt của (numBidders - 1) bidder thua
@@ -393,7 +388,7 @@ public class ConcurrentBidSystemTest {
             }, "sys04-" + i).start();
         }
 
-        done.await(10, TimeUnit.SECONDS);
+        awaitLatch(done, 10, "SYS-04: Tất cả thread BidService phải hoàn tất");
         waitForPrice(auctionSingle, START_PRICE + numBidders * MIN_INC, WORKER_TIMEOUT_MS);
 
         assertEquals(0, errors.get(),
@@ -444,7 +439,7 @@ public class ConcurrentBidSystemTest {
             }, "sys05-" + i).start();
         }
 
-        done.await(10, TimeUnit.SECONDS);
+        awaitLatch(done, 10, "SYS-05: Tất cả thread autobid register phải hoàn tất");
 
         // Đợi autobid worker xử lý xong
         long winnerMaxBid = maxBidBase + numBidders * 10_000L;
@@ -452,10 +447,10 @@ public class ConcurrentBidSystemTest {
         long expectedProxy = Math.min(secondHighest + MIN_INC, winnerMaxBid);
         waitForPrice(auctionSingle, expectedProxy, 5_000);
 
-        assertEquals(1, autoBidService.getRegistrations(AUCTION_SINGLE).size(),
+        List<AutoBidService.AutoBidEntry> remaining = autoBidService.getRegistrations(AUCTION_SINGLE);
+        assertEquals(1, remaining.size(),
             "SYS-05: Chỉ 1 entry (winner) còn lại sau khi autobid hoàn tất");
-        assertEquals("sys05-bidder-" + numBidders,
-            autoBidService.getRegistrations(AUCTION_SINGLE).get(0).bidderId,
+        assertEquals("sys05-bidder-" + numBidders, remaining.get(0).bidderId,
             "SYS-05: Winner phải là bidder có maxBid cao nhất");
     }
 
@@ -529,7 +524,7 @@ public class ConcurrentBidSystemTest {
             buildAutoBidRequest(AUCTION_SINGLE, 500_000L),
             "sys08-auto", "AutoBidder"
         );
-        Thread.sleep(200); // Đợi autobid worker start
+        waitForHighestBidder(auctionSingle, "sys08-auto", 3_000);
 
         // 5 manual bidder cùng bid đồng thời
         int numManual     = 5;
@@ -554,14 +549,8 @@ public class ConcurrentBidSystemTest {
             }, "sys08-manual-" + i).start();
         }
 
-        done.await(8, TimeUnit.SECONDS);
-
-        // Đợi autobid phản công xong (giá phải > topManualBid)
-        long deadline = System.currentTimeMillis() + 5_000;
-        while (auctionSingle.getCurrentPrice() <= topManualBid
-               && System.currentTimeMillis() < deadline) {
-            Thread.sleep(100);
-        }
+        awaitLatch(done, 8, "SYS-08: Tất cả manual bidder phải submit xong");
+        waitForAutoBidCounter(auctionSingle, "sys08-auto", topManualBid, 5_000);
 
         assertTrue(auctionSingle.getCurrentPrice() > topManualBid,
             "SYS-08: Sau khi autobid phản công, giá phải vượt quá manual bid cao nhất ("
@@ -594,7 +583,7 @@ public class ConcurrentBidSystemTest {
             buildAutoBidRequest(AUCTION_SINGLE, 150_000L),
             "sys09-auto", "AutoBidder"
         );
-        Thread.sleep(300); // Đợi autobid trigger lần đầu
+        waitForHighestBidder(auctionSingle, "sys09-auto", 3_000);
 
         long autoInitialPrice = auctionSingle.getCurrentPrice();
         assertTrue(autoInitialPrice >= START_PRICE,
@@ -648,11 +637,7 @@ public class ConcurrentBidSystemTest {
 
         // Chờ autobid ổn định: auto-3 là winner, giá phải >= startPrice
         // Không assert giá cụ thể vì số lần trigger phụ thuộc timing
-        long deadline = System.currentTimeMillis() + 5_000;
-        while (!"sys10-auto-3".equals(auctionSingle.getHighestBidderId())
-                && System.currentTimeMillis() < deadline) {
-            Thread.sleep(100);
-        }
+        waitForHighestBidder(auctionSingle, "sys10-auto-3", 5_000);
         assertEquals("sys10-auto-3", auctionSingle.getHighestBidderId(),
             "SYS-10: auto-3 phải là winner sau khi đăng ký xong");
 
@@ -663,12 +648,7 @@ public class ConcurrentBidSystemTest {
         waitForPrice(auctionSingle, 500_000L, 3_000);
 
         // Chờ hệ thống ổn định hoàn toàn: totalLocked không thay đổi trong 600ms
-        long stableLocked;
-        deadline = System.currentTimeMillis() + 5_000;
-        do {
-            stableLocked = totalLocked.get();
-            Thread.sleep(600);
-        } while (totalLocked.get() != stableLocked && System.currentTimeMillis() < deadline);
+        waitForStableValue(totalLocked, 600, 5_000);
 
         assertEquals("sys10-manual", auctionSingle.getHighestBidderId(),
             "SYS-10: Manual bidder phải là winner cuối");
@@ -766,7 +746,7 @@ public class ConcurrentBidSystemTest {
             }, "sys11-C-" + i).start();
         }
 
-        done.await(10, TimeUnit.SECONDS);
+        awaitLatch(done, 10, "SYS-11: Tất cả manual bidder nhiều auction phải submit xong");
         waitForPrice(auctionA, finalPriceA, WORKER_TIMEOUT_MS);
         waitForPrice(auctionB, finalPriceB, WORKER_TIMEOUT_MS);
         waitForPrice(auctionC, finalPriceC, WORKER_TIMEOUT_MS);
@@ -794,7 +774,7 @@ public class ConcurrentBidSystemTest {
      *     40 thread → tất cả treo mãi → TimeoutException.
      *  2. Thêm timeout cho barrier.await() — phòng thủ nếu bất kỳ thread nào
      *     chết trước barrier, các thread còn lại không treo vĩnh viễn.
-     *  3. pool.shutdown() + awaitTermination() trước done.await() để đảm bảo
+     *  3. pool.shutdown() sau khi mở startGun để không nhận thêm task mới
      *     pool không còn task pending khi test kết thúc.
      */
     @Test
@@ -847,7 +827,9 @@ public class ConcurrentBidSystemTest {
             startGun.countDown();
 
             pool.shutdown();
-            done.await(12, TimeUnit.SECONDS);
+            awaitLatch(done, 12, "SYS-12: Tất cả task cross-contamination phải submit xong");
+            assertTrue(pool.awaitTermination(2, TimeUnit.SECONDS),
+                "SYS-12: Executor phải kết thúc sau khi toàn bộ task hoàn tất");
 
             long expectedFinal = START_PRICE + bidsPerAuction * MIN_INC;
             waitForPrice(auctionA,    expectedFinal, WORKER_TIMEOUT_MS);
@@ -901,8 +883,10 @@ public class ConcurrentBidSystemTest {
         pool.submit(() -> { try { autoBidService.register(buildAutoBidRequest(AUCTION_C, 180_000L), "sys13-C1", "C1"); } catch (Exception ignored) {} finally { done.countDown(); } return null; });
         pool.submit(() -> { try { autoBidService.register(buildAutoBidRequest(AUCTION_C, 280_000L), "sys13-C2", "C2"); } catch (Exception ignored) {} finally { done.countDown(); } return null; });
 
-        done.await(8, TimeUnit.SECONDS);
+        awaitLatch(done, 8, "SYS-13: Tất cả autobid registration phải hoàn tất");
         pool.shutdown();
+        assertTrue(pool.awaitTermination(2, TimeUnit.SECONDS),
+            "SYS-13: Executor phải kết thúc sau khi toàn bộ registration hoàn tất");
 
         // Tính giá proxy kỳ vọng
         long proxyA = Math.min(200_000L + MIN_INC, 300_000L); // 201k
@@ -967,11 +951,11 @@ public class ConcurrentBidSystemTest {
             }, "sys14-bidder-" + i).start();
         }
 
-        done.await(12, TimeUnit.SECONDS);
-        Thread.sleep(2_000); // Đợi tất cả autobid worker drain xong
+        awaitLatch(done, 12, "SYS-14: Tất cả autobidder phải register xong");
 
-        // Mỗi auction phải có tối đa 1 winner còn lại
+        // Mỗi auction phải có tối đa 1 winner còn lại sau khi worker drain.
         for (int a = 0; a < auctions.length; a++) {
+            waitForRegistrationCountAtMost(auctionIds[a], 1, 5_000);
             List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(auctionIds[a]);
             assertTrue(entries.size() <= 1,
                 "SYS-14: Auction " + auctionIds[a] + " không được có nhiều hơn 1 winner. Actual: " + entries.size());
@@ -1027,8 +1011,12 @@ public class ConcurrentBidSystemTest {
                 } catch (Exception ignored) {} finally { autoDone.countDown(); }
             }).start();
         }
-        autoDone.await(5, TimeUnit.SECONDS);
-        Thread.sleep(300); // Đợi autobid workers start
+        awaitLatch(autoDone, 5, "SYS-15: Tất cả autobidder ban đầu phải register xong");
+
+        // Chờ từng autobid worker commit bid đầu tiên trước khi mở barrier cho manual thread.
+        for (int a = 0; a < 3; a++) {
+            waitForHighestBidder(auctionObjs[a], auctionSetup[a][1], 5_000);
+        }
 
         // Bid thủ công vào tất cả 3 auction đồng thời
         int manualCount = 3 * 3; // 3 auction × 3 manual bidder
@@ -1052,10 +1040,17 @@ public class ConcurrentBidSystemTest {
             }
         }
 
-        manualDone.await(8, TimeUnit.SECONDS);
-        Thread.sleep(2_000); // Đợi autobid phản công xong
-
         long topManualBid = START_PRICE + 3 * MIN_INC; // 103_000
+
+        awaitLatch(manualDone, 8, "SYS-15: Tất cả manual bidder phải submit xong");
+
+        // Chờ autobid phản công xong trên từng auction.
+        // Không thể chỉ chờ highestBidder == autoId vì auto đã là winner từ
+        // trước khi manual bid chạy; điều kiện đó có thể đúng ngay lập tức dù
+        // queue manual/autobid chưa drain xong.
+        for (int a = 0; a < 3; a++) {
+            waitForAutoBidCounter(auctionObjs[a], auctionSetup[a][1], topManualBid, 8_000);
+        }
 
         // AutoBidder phải thắng ở mỗi auction (maxBid > topManualBid)
         assertEquals("sys15-auto-A", auctionA.getHighestBidderId(),
@@ -1073,14 +1068,21 @@ public class ConcurrentBidSystemTest {
         assertTrue(auctionC.getCurrentPrice() > topManualBid,
             "SYS-15: Auction C phải có giá > manual bid (" + topManualBid + ")");
 
-        // Giá mỗi auction phải độc lập (không nhiễm chéo)
-        assertTrue(auctionA.getCurrentPrice() != auctionB.getCurrentPrice()
-            || auctionA.getCurrentPrice() != auctionC.getCurrentPrice()
-            || auctionB.getCurrentPrice() != auctionC.getCurrentPrice()
-            // Nếu tình cờ bằng nhau thì cũng OK — chỉ cần mỗi auction tự handle
-            || true,
-            "SYS-15: Các auction phải tự handle độc lập");
+        // Mỗi auction còn đúng auto bidder riêng của auction đó.
+        List<AutoBidService.AutoBidEntry> registrationsA = autoBidService.getRegistrations(AUCTION_A);
+        List<AutoBidService.AutoBidEntry> registrationsB = autoBidService.getRegistrations(AUCTION_B);
+        List<AutoBidService.AutoBidEntry> registrationsC = autoBidService.getRegistrations(AUCTION_C);
+        assertEquals(1, registrationsA.size(), "SYS-15: Auction A chỉ được còn 1 autobid registration");
+        assertEquals(1, registrationsB.size(), "SYS-15: Auction B chỉ được còn 1 autobid registration");
+        assertEquals(1, registrationsC.size(), "SYS-15: Auction C chỉ được còn 1 autobid registration");
+        assertEquals("sys15-auto-A", registrationsA.get(0).bidderId,
+            "SYS-15: Auction A không được lẫn registration từ auction khác");
+        assertEquals("sys15-auto-B", registrationsB.get(0).bidderId,
+            "SYS-15: Auction B không được lẫn registration từ auction khác");
+        assertEquals("sys15-auto-C", registrationsC.get(0).bidderId,
+            "SYS-15: Auction C không được lẫn registration từ auction khác");
     }
+
 
     /**
      * SYS-16: Stress test tổng hợp — 3 auction × (N autobid + M manual) đồng thời.
@@ -1129,8 +1131,10 @@ public class ConcurrentBidSystemTest {
                         barrier.await();
                         autoBidService.register(buildAutoBidRequest(aId, maxBid), bidId, bidId);
                     } catch (Exception e) {
-                        if (!e.getMessage().contains("INCREMENT_TOO_LOW")
-                            && !e.getMessage().contains("INSUFFICIENT")) {
+                        String message = e.getMessage();
+                        if (message == null
+                            || (!message.contains("INCREMENT_TOO_LOW")
+                                && !message.contains("INSUFFICIENT"))) {
                             errors.incrementAndGet();
                         }
                     } finally { done.countDown(); }
@@ -1156,8 +1160,10 @@ public class ConcurrentBidSystemTest {
         }
 
         threads.forEach(Thread::start);
-        done.await(15, TimeUnit.SECONDS);
-        Thread.sleep(3_000); // Đợi tất cả worker drain
+        awaitLatch(done, 15, "SYS-16: Tất cả thread mixed stress phải hoàn tất");
+        for (Auction auction : aObjs) {
+            waitForPriceGreaterThan(auction, START_PRICE, 5_000);
+        }
 
         assertEquals(0, errors.get(),
             "SYS-16: Không được có lỗi bất ngờ trong đa luồng hỗn hợp");
@@ -1167,9 +1173,6 @@ public class ConcurrentBidSystemTest {
             assertTrue(aObjs[a].getCurrentPrice() > START_PRICE,
                 "SYS-16: Auction " + aIds[a] + " phải có giá > startPrice sau khi xử lý xong");
         }
-
-        // Không deadlock → test pass trong timeout (test tự verify điều này)
-        assertTrue(true, "SYS-16: Không có deadlock — hệ thống hoàn thành trong timeout");
     }
 
     /**
@@ -1187,7 +1190,7 @@ public class ConcurrentBidSystemTest {
             auctionA, "sys17-warmup", "warmup",
             START_PRICE + MIN_INC, START_PRICE + MIN_INC, BidType.MANUAL
         );
-        Thread.sleep(400); // Đợi worker A xử lý
+        waitForPrice(auctionA, START_PRICE + MIN_INC, WORKER_TIMEOUT_MS);
 
         // Shutdown auction A
         ConcurrentBidManager.getInstance().shutdown(AUCTION_A);
@@ -1241,7 +1244,7 @@ public class ConcurrentBidSystemTest {
         autoBidService.register(buildAutoBidRequest(AUCTION_B, 400_000L), "sys18-B1", "B1");
         autoBidService.register(buildAutoBidRequest(AUCTION_B, 350_000L), "sys18-B2", "B2");
 
-        Thread.sleep(500); // Đợi autobid trigger auction A
+        waitForHighestBidder(auctionA, "sys18-A1", 5_000);
 
         // Clear autobid của auction A
         autoBidService.clearRegistrations(AUCTION_A);
@@ -1309,9 +1312,13 @@ public class ConcurrentBidSystemTest {
         return req;
     }
 
+    private void awaitLatch(CountDownLatch latch, long timeoutSeconds, String message)
+            throws InterruptedException {
+        assertTrue(latch.await(timeoutSeconds, TimeUnit.SECONDS), message);
+    }
+
     /**
-     * Chờ giá auction đạt đến mức kỳ vọng trong thời gian timeout.
-     * Poll mỗi 50ms. Không throw nếu timeout — để assertion fail với message rõ ràng.
+     * Chờ giá auction đạt ít nhất mức kỳ vọng trong thời gian timeout.
      */
     private void waitForPrice(Auction auction, long expectedPrice, long timeoutMs)
             throws InterruptedException {
@@ -1320,5 +1327,93 @@ public class ConcurrentBidSystemTest {
                && System.currentTimeMillis() < deadline) {
             Thread.sleep(50);
         }
+        assertTrue(auction.getCurrentPrice() >= expectedPrice,
+            "Timeout waiting for price >= " + expectedPrice
+                + ". Actual: " + auction.getCurrentPrice()
+                + ", auctionId: " + auction.getAuctionConfig().getId());
+    }
+
+    private void waitForPriceGreaterThan(Auction auction, long minimumPriceExclusive, long timeoutMs)
+            throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (auction.getCurrentPrice() <= minimumPriceExclusive
+               && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        assertTrue(auction.getCurrentPrice() > minimumPriceExclusive,
+            "Timeout waiting for price > " + minimumPriceExclusive
+                + ". Actual: " + auction.getCurrentPrice()
+                + ", auctionId: " + auction.getAuctionConfig().getId());
+    }
+
+    private void waitForTransactionCount(Auction auction, int expectedCount, long timeoutMs)
+            throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (auction.getBidTransaction().size() < expectedCount
+               && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        assertTrue(auction.getBidTransaction().size() >= expectedCount,
+            "Timeout waiting for bid transaction count >= " + expectedCount
+                + ". Actual: " + auction.getBidTransaction().size()
+                + ", auctionId: " + auction.getAuctionConfig().getId());
+    }
+
+    private void waitForHighestBidder(Auction auction, String expectedBidderId, long timeoutMs)
+            throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (!expectedBidderId.equals(auction.getHighestBidderId())
+            && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        assertEquals(expectedBidderId, auction.getHighestBidderId(),
+            "Timeout waiting for highest bidder in auction "
+                + auction.getAuctionConfig().getId());
+    }
+
+    private void waitForAutoBidCounter(Auction auction, String expectedBidderId,
+            long minimumPriceExclusive, long timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while ((!expectedBidderId.equals(auction.getHighestBidderId())
+                || auction.getCurrentPrice() <= minimumPriceExclusive)
+            && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        assertEquals(expectedBidderId, auction.getHighestBidderId(),
+            "Timeout waiting for autobid counter winner in auction "
+                + auction.getAuctionConfig().getId());
+        assertTrue(auction.getCurrentPrice() > minimumPriceExclusive,
+            "Timeout waiting for autobid counter price > " + minimumPriceExclusive
+                + ". Actual: " + auction.getCurrentPrice()
+                + ", auctionId: " + auction.getAuctionConfig().getId());
+    }
+
+    private void waitForRegistrationCountAtMost(String auctionId, int maxCount, long timeoutMs)
+            throws Exception {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (autoBidService.getRegistrations(auctionId).size() > maxCount
+               && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50);
+        }
+        int actual = autoBidService.getRegistrations(auctionId).size();
+        assertTrue(actual <= maxCount,
+            "Timeout waiting for autobid registrations <= " + maxCount
+                + ". Actual: " + actual + ", auctionId: " + auctionId);
+    }
+
+    private void waitForStableValue(AtomicLong value, long stableWindowMs, long timeoutMs)
+            throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            long previous = value.get();
+            Thread.sleep(stableWindowMs);
+            if (value.get() == previous) {
+                return;
+            }
+        }
+        long beforeFinalWindow = value.get();
+        Thread.sleep(stableWindowMs);
+        assertEquals(beforeFinalWindow, value.get(),
+            "Value did not stabilize within " + timeoutMs + "ms");
     }
 }
