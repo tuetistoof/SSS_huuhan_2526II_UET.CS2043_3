@@ -2,12 +2,8 @@
 @import "base.css";
 
 /* ==========================================================
-   component-notification.css — CloudBid Notification Center
-   Covers: Notification cell states (Read/Unread), interactive hovers,
-           icon wrapper bubbles, and structured typography.
+   POPUP ROOT & LAYOUT
    ========================================================== */
-
-/* ── Popup root container ── */
 .notif-popup-root {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12;
@@ -25,7 +21,7 @@
 .notif-popup-title {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-text-fill: -cloud-rose-deeper;
+    -fx-text-fill: -cloud-rose-dark;
 }
 
 .notif-popup-badge {
@@ -43,6 +39,14 @@
     -fx-padding: 0;
     -fx-control-inner-background: transparent;
     -fx-selection-bar: -cloud-surface-alt;
+}
+
+.notif-popup-list .list-cell {
+    -fx-background-color: transparent;
+}
+
+.notif-popup-list .list-cell:filled:hover {
+    -fx-background-color: transparent;
 }
 
 .notif-popup-footer {
@@ -67,7 +71,9 @@
     -fx-background-color: -cloud-primary-light;
 }
 
-
+/* ==========================================================
+   CELL STATES (Unread / Read)
+   ========================================================== */
 .notif-unread {
     -fx-background-color: -cloud-rose-light; 
     -fx-background-radius: 8px;  
@@ -85,46 +91,51 @@
     -fx-background-color: -cloud-primary-pale; 
 }
 
-
+/* ==========================================================
+   ICONS (Fix hiển thị tàng hình)
+   ========================================================== */
 .notif-icon {
     -fx-background-radius: 18; 
     -fx-font-size: 16px; 
-    -fx-font-family: Segoe UI, Arial, sans-serif;
+    -fx-font-family: "Segoe UI Emoji", Segoe UI, Arial, sans-serif;
+    -fx-padding: 6 10 6 10;
+    -fx-alignment: center;
 }
 
-/* ── Loại 1: Thông báo Bị vượt giá (Outbid Notification Icon) ── */
 .notif-icon-outbid {
     -fx-background-color: -cloud-primary-light; 
+    /* Ép cứng màu icon để không bị mất hình */
+    -fx-text-fill: -cloud-primary !important; 
 }
 
-/* ── Loại 2: Phiên đấu giá kết thúc (Auction Ended Notification Icon) ── */
 .notif-icon-ended {
     -fx-background-color: -cloud-info-bg;
-}
-
-/* =========================================================
-   TYPOGRAPHY ELEMENTS (Thành phần chữ cấu trúc)
-   ========================================================= */
-
-.notif-title {
-    -fx-font-size: 13px; 
-    -fx-text-fill: -cloud-rose-dark; 
-}
-
-.notif-time {
-    -fx-font-size: 11px; 
-    -fx-text-fill: -cloud-text-muted;
-}
-
-.notif-desc {
-    -fx-font-size: 13px; 
-    -fx-text-fill: -cloud-text-secondary; 
+    /* Ép cứng màu icon xanh dương */
+    -fx-text-fill: -cloud-info-text !important;
 }
 
 /* ==========================================================
-   DARK MODE
+   TYPOGRAPHY
    ========================================================== */
+.notif-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -cloud-rose-deeper;
+}
 
+.notif-time {
+    -fx-font-size: 11px;
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.notif-desc {
+    -fx-font-size: 13px;
+    -fx-text-fill: -cloud-text-primary;
+}
+
+/* ==========================================================
+   DARK MODE OVERRIDES
+   ========================================================== */
 .theme-dark .notif-unread {
     -fx-background-color: -cloud-primary-light;
 }
@@ -138,27 +149,6 @@
     -fx-background-color: -cloud-primary-pale;
 }
 
-.theme-dark .notif-title {
-    -fx-text-fill: -cloud-rose-dark;
-}
-
-.theme-dark .notif-time {
-    -fx-text-fill: -cloud-text-muted;
-}
-
-.theme-dark .notif-desc {
-    -fx-text-fill: -cloud-text-secondary;
-}
-
-.theme-dark .notif-icon-outbid {
-    -fx-background-color: -cloud-primary-light;
-}
-
-.theme-dark .notif-icon-ended {
-    -fx-background-color: -cloud-info-bg;
-}
-
-/* ── Dark mode popup container ── */
 .theme-dark .notif-popup-root {
     -fx-background-color: -cloud-surface;
     -fx-border-color: -cloud-border;
@@ -189,4 +179,29 @@
 
 .theme-dark .notif-popup-mark-all-btn:hover {
     -fx-background-color: -cloud-primary-light;
+}
+
+/* Icons Dark Mode */
+.theme-dark .notif-icon-outbid {
+    -fx-background-color: -cloud-primary-light;
+    -fx-text-fill: -cloud-primary !important;
+}
+
+.theme-dark .notif-icon-ended {
+    -fx-background-color: -cloud-info-bg;
+    /* Token badge sáng hơn chút cho dễ nhìn trên nền tối */
+    -fx-text-fill: -cloud-info-badge !important; 
+}
+
+/* Typography Dark Mode */
+.theme-dark .notif-title {
+    -fx-text-fill: -cloud-rose-dark;
+}
+
+.theme-dark .notif-time {
+    -fx-text-fill: -cloud-text-secondary;
+}
+
+.theme-dark .notif-desc {
+    -fx-text-fill: -cloud-text-primary;
 }

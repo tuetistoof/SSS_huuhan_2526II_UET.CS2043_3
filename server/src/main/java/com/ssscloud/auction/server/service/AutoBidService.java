@@ -161,7 +161,6 @@ public class AutoBidService {
             }
             auctionId = auctionEntity.getAuctionConfig().getId();
             long increment = auctionEntity.getAuctionConfig().getMinIncrement();
-
             while (true) {
                 BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
                 boolean isFirstBid = (lastBidTransaction == null);
