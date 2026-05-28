@@ -243,10 +243,10 @@ public class CreateAuctionController{
             txtEndTime.requestFocus();
             return;
         }
-        if (endTime.isBefore(LocalDateTime.now().plusMinutes(5))) {
-            showError("End time must be at least 5 minutes from now.");
-            return;
-        }
+        // if (endTime.isBefore(LocalDateTime.now().plusMinutes(5))) {
+        //     showError("End time must be at least 5 minutes from now.");
+        //     return;
+        // }
         // Temp URLs for demo
         String urlIfNone = "https://cdn.donmai.us/original/b1/a8/b1a861a2321d635e7a0d6e452730f9d5.jpg";
         List<String> urls = new ArrayList<>(Arrays.asList());

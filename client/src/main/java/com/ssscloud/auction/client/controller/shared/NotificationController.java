@@ -207,9 +207,10 @@ public class NotificationController implements MessageListener {
  
         NotifCell() {
             root.setPadding(new Insets(8, 12, 8, 12));
+            iconLabel.getStyleClass().add("notif-icon");
             textBox.getChildren().addAll(titleLbl, bodyLbl);
             titleLbl.getStyleClass().add("notif-title");
-            bodyLbl.getStyleClass().add("notif-body");
+            bodyLbl.getStyleClass().add("notif-desc");
             bodyLbl.setWrapText(true);
             timeLbl.getStyleClass().add("notif-time");
             HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -226,12 +227,19 @@ public class NotificationController implements MessageListener {
             super.updateItem(item, empty);
             if (empty || item == null) { setGraphic(null); return; }
  
-            iconLabel.setText("OUTBID".equals(item.getType()) ? "⚡" : "🏁");
+            iconLabel.getStyleClass().removeAll("notif-icon-outbid", "notif-icon-ended");
+            if ("OUTBID".equals(item.getType())) {
+                iconLabel.setText("⚡");
+                iconLabel.getStyleClass().add("notif-icon-outbid");
+            } else {
+                iconLabel.setText("🏁");
+                iconLabel.getStyleClass().add("notif-icon-ended");
+            }
+
             titleLbl.setText(item.getTitle());
             bodyLbl.setText(item.getBody());
             timeLbl.setText(item.getTime().format(FMT));
  
-            // Chưa đọc → highlight
             root.getStyleClass().removeAll("notif-read", "notif-unread");
             root.getStyleClass().add(item.isRead() ? "notif-read" : "notif-unread");
  
