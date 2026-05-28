@@ -18,10 +18,7 @@ import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.model.auction.BidTransaction;
 
 public class BidTransactionDAO extends BaseDAO {
-    // Logging Standards: Declared first
     private static final Logger logger = Logger.getLogger(BidTransactionDAO.class.getName());
-
-    // --- PUBLIC METHODS ---
 
     public boolean saveBidTransaction(BidTransaction bidTransaction) throws DAOException, Exception {
         logger.log(Level.INFO, "Initiating bid transaction persistence for auctionId: {0}", bidTransaction.getAuctionId());
@@ -178,8 +175,6 @@ public class BidTransactionDAO extends BaseDAO {
             closeResource(rs, ps);
         }
     }
-
-    // --- PRIVATE METHODS ---
 
     private BidTransaction mapRowToBidTransaction(ResultSet rs) throws SQLException {
         String auctionId = rs.getString("auction_id");

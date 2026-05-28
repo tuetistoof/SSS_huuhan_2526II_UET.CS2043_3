@@ -18,10 +18,7 @@ import com.ssscloud.auction.common.model.item.Electronic;
 import com.ssscloud.auction.common.model.item.Vehicle;
 
 public class ItemDAO extends BaseDAO {
-    // Logging Standards: Declared first as a private static final attribute
     private static final Logger logger = Logger.getLogger(ItemDAO.class.getName());
-
-    // --- PUBLIC METHODS ---
 
     public boolean saveElectronic(Electronic electronic) throws DAOException, Exception {
         logger.log(Level.INFO, "Initiating persistence for electronic item: {0}", electronic.getId());

@@ -22,8 +22,7 @@ import com.ssscloud.auction.server.util.SessionRegistry;
  * placements.
  */
 public class BidService {
-    private static final Logger logger = Logger.getLogger(BidService.class.getName()); // Logging Standards: Declared
-                                                                                       // first
+    private static final Logger logger = Logger.getLogger(BidService.class.getName());
 
     private final AuctionDAO auctionDAO;
     private final UserDAO userDAO;
@@ -32,8 +31,6 @@ public class BidService {
         this.auctionDAO = auctionDAO;
         this.userDAO = userDAO;
     }
-
-    // --- PUBLIC METHODS ---
 
     public void placeBid(PlaceBidRequest placeBidRequest, String bidderId, String bidderUsername)
             throws ServiceException, Exception {
@@ -56,7 +53,7 @@ public class BidService {
             SessionRegistry.getInstance().addUnsettledBalance(bidderId, placeBidRequest.getBidAmount());
             try {
                 ConcurrentBidManager.getInstance().submitBid(auction, bidderId, bidderUsername,
-                    placeBidRequest.getBidAmount(), placeBidRequest.getBidAmount(), BidType.MANUAL);
+                        placeBidRequest.getBidAmount(), placeBidRequest.getBidAmount(), BidType.MANUAL);
             } catch (Exception submitException) {
                 userDAO.unlockBidderBalance(bidderId, placeBidRequest.getBidAmount());
                 SessionRegistry.getInstance().addUnsettledBalance(bidderId, -placeBidRequest.getBidAmount());
@@ -72,8 +69,6 @@ public class BidService {
             throw exception;
         }
     }
-
-    // --- PRIVATE METHODS ---
 
     private void validatePlaceBidRequest(PlaceBidRequest placeBidRequest, String bidderId)
             throws ServiceException, Exception {
@@ -101,13 +96,11 @@ public class BidService {
         BidTransaction lastBid = auction.getLastBidTransaction();
 
         if (lastBid == null) {
-            // Chưa có bid — chỉ cần >= startPrice
             if (bidAmount < auction.getAuctionConfig().getStartPrice()) {
                 throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
                         "Bid must be at least the starting price of " + auction.getAuctionConfig().getStartPrice());
             }
         } else {
-            // Đã có bid — phải vượt currentPrice + minIncrement
             if (bidAmount - auction.getCurrentPrice() < minIncrement) {
                 throw new ServiceException(ErrorCode.INCREMENT_TOO_LOW,
                         "The bid increment is lower than the required minimum of " + minIncrement);
@@ -115,27 +108,23 @@ public class BidService {
         }
     }
 
-
     private void validateBidderAccount(User bidder, long bidAmount, Auction auction)
-        throws ServiceException {
+            throws ServiceException {
         if (!(bidder instanceof Bidder bidderAccount)) {
             throw new ServiceException(ErrorCode.NOT_BIDDER, "...");
         }
 
-        // Kiểm tra A có đang là highest bidder không
         BidTransaction lastBid = auction.getLastBidTransaction();
         long alreadyLocked = 0;
         if (lastBid != null && lastBid.getBidderId().equals(bidderAccount.getId())) {
-            // A đang giữ bid cũ — khi thắng bid mới, bid cũ sẽ được unlock
-            // Chỉ cần đủ tiền cho phần chênh lệch
             alreadyLocked = lastBid.getLockedBalance();
         }
 
         long netRequired = bidAmount - alreadyLocked;
         if (bidderAccount.getAvailableBalance() < netRequired) {
             throw new ServiceException(ErrorCode.INSUFFICIENT_BALANCE,
-                "Insufficient balance. Need: " + netRequired
-                + ", available: " + bidderAccount.getAvailableBalance());
+                    "Insufficient balance. Need: " + netRequired
+                            + ", available: " + bidderAccount.getAvailableBalance());
         }
     }
 

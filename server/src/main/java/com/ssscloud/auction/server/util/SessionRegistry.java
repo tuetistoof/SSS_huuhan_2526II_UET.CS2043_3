@@ -19,7 +19,8 @@ public class SessionRegistry {
     private static final Logger logger = Logger.getLogger(SessionRegistry.class.getName());
     private static final SessionRegistry instance = new SessionRegistry();
 
-    private SessionRegistry() {}
+    private SessionRegistry() {
+    }
 
     public static SessionRegistry getInstance() {
         return instance;
@@ -88,7 +89,8 @@ public class SessionRegistry {
 
     private void notifyUnsettledBalanceUpdate(String userId, long unsettledBalance) {
         PrintWriter writer = instance.getWriter(userId);
-        if (writer == null) return;
+        if (writer == null)
+            return;
 
         try {
             synchronized (writer) {

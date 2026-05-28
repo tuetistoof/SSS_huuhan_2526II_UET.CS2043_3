@@ -236,7 +236,7 @@ public class ConcurrentBidManager {
                         new Object[] { task.bidderId, auctionId });
                 userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
                 SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
-                return; // Không throw — đây là luồng bình thường khi auction bị cancel
+                return;
             }
 
             BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
@@ -245,8 +245,6 @@ public class ConcurrentBidManager {
                     : auctionEntity.getAuctionConfig().getStartPrice();
             if (validateBidAmount(task.bidAmount, auctionEntity)
                     && auctionEntity.getAuctionConfig().getEndTime().isAfter(LocalDateTime.now())) {
-                // --- Nhánh BID THẮNG ---
-                // Bước 1: Unlock bidder CŨ (nếu có)
                 String previousBidderId = lastBidTransaction != null ? lastBidTransaction.getBidderId() : null;
                 if (previousBidderId != null) {
                     long unlockAmount = lastBidTransaction.getLockedBalance();
@@ -254,12 +252,10 @@ public class ConcurrentBidManager {
                     SessionRegistry.getInstance().addUnsettledBalance(previousBidderId, -unlockAmount);
                 }
 
-                // Bước 2: Cập nhật pending balance seller
                 long delta = task.bidAmount - currentAuctionPrice;
                 userDAO.updatePendingBalance(auctionEntity.getSellerId(), delta);
                 SessionRegistry.getInstance().addUnsettledBalance(auctionEntity.getSellerId(), delta);
 
-                // Bước 3: Tạo và commit bid transaction
                 BidTransaction bidTransaction = new BidTransaction(
                         auctionId, task.bidderId, task.bidderUsername,
                         task.bidAmount, task.lockedAmount, LocalDateTime.now(), task.bidType);
@@ -267,17 +263,13 @@ public class ConcurrentBidManager {
                 boolean markRunning = auctionEntity.getStatus() == AuctionStatus.OPEN;
                 LocalDateTime updatedEndTime = AntiSnipingService
                         .calculateExtendedEndTime(auctionEntity.getAuctionConfig());
-                auctionEntity.commitBid(bidTransaction, markRunning, updatedEndTime); // --- publish snapshot một lần
-                                                                                      // ---
-
-                // FIX: Đánh dấu bid đã commit — từ đây KHÔNG unlock task.bidderId nếu có lỗi
+                auctionEntity.commitBid(bidTransaction, markRunning, updatedEndTime);
                 bidCommitted = true;
 
                 if (bidTransactionDAO != null) {
                     try {
                         bidTransactionDAO.saveBidTransaction(bidTransaction);
                     } catch (Exception e) {
-                        // Chỉ log — không rollback vì in-memory state đã commit
                         logger.log(Level.SEVERE,
                                 "Database persistence failure: unable to save bid transaction for auctionId: "
                                         + auctionId,
@@ -294,12 +286,9 @@ public class ConcurrentBidManager {
                     auctionDAO.updateEndTime(auctionId, updatedEndTime);
                 }
                 ChangeManager.getInstance().notify(auctionEntity);
-                notificationController.notifyWatchers(auctionEntity,
-                        auctionEntity.getHighestBidderId());
+                notificationController.notifyWatchers(auctionEntity, auctionEntity.getHighestBidderId());
 
             } else {
-                // --- Nhánh BID THUA ---
-                // bidAmount <= currentPrice → reject và trả tiền ngay
                 logger.log(Level.INFO,
                         "Bid task skipped: amount " + task.bidAmount
                                 + " is not higher than current price " + currentAuctionPrice);
@@ -309,8 +298,7 @@ public class ConcurrentBidManager {
 
             if (autoBidService != null) {
                 try {
-                    // ★ ĐỔI TỪ trigger SANG tryTrigger ★
-                    autoBidService.tryTrigger(auctionEntity);
+                    autoBidService.tryTrigger(auctionId);
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Auto-bid trigger failed for auctionId: " + auctionId, e);
                 }
@@ -325,17 +313,12 @@ public class ConcurrentBidManager {
                     userDAO.unlockBidderBalance(task.bidderId, task.lockedAmount);
                     SessionRegistry.getInstance().addUnsettledBalance(task.bidderId, -task.lockedAmount);
                 } catch (Exception unlockEx) {
-                    // Unlock cũng fail — log CRITICAL để ops can thiệp thủ công
                     logger.log(Level.SEVERE,
                             "[CRITICAL_BALANCE_LEAK] Failed to unlock balance for bidderId=" + task.bidderId
                                     + ", auctionId=" + auctionId
                                     + ". MANUAL CORRECTION REQUIRED. unlockError: " + unlockEx.getMessage(),
                             unlockEx);
                 }
-                // ★ XỬ LÝ LỖI CHO AUTOBID ★
-                // Nếu đây là luồng AutoBid và gặp lỗi khi chưa commit (ví dụ lỗi DB, lỗi
-                // balance, v.v.)
-                // -> Loại bỏ bidder lỗi này khỏi registrationsMap để tránh lặp lỗi vô hạn
                 if (task.bidType == BidType.AUTO && autoBidService != null) {
                     try {
                         autoBidService.removeRegistration(auctionId, task.bidderId);
@@ -355,11 +338,9 @@ public class ConcurrentBidManager {
                                 + exception.getMessage(),
                         exception);
             }
-            // ★ GỌI LẠI tryTrigger KHI THẤT BẠI ★
-            // Để đảm bảo chuỗi AutoBid không bị dừng lại do 1 bidder bị lỗi
             if (autoBidService != null && auctionEntity != null) {
                 try {
-                    autoBidService.tryTrigger(auctionEntity);
+                    autoBidService.tryTrigger(auctionId);
                 } catch (Exception triggerEx) {
                     logger.log(Level.WARNING,
                             "Auto-bid trigger retry failed after processTask exception for auctionId: " + auctionId,
