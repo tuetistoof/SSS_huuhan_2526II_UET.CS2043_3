@@ -164,18 +164,18 @@ public class AutoBidService {
             }
             String auctionId = auctionEntity.getAuctionConfig().getId();
             long increment = auctionEntity.getAuctionConfig().getMinIncrement();
-            BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
-            boolean isFirstBid = (lastBidTransaction == null);
-            long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()
-                    : lastBidTransaction.getBidAmount();
-            String highestBidderId = lastBidTransaction == null ? null : lastBidTransaction.getBidderId();
-            long highestBidderLock = lastBidTransaction == null ? 0 : lastBidTransaction.getLockedBalance();
-            BidType lastBidType = lastBidTransaction == null ? null : lastBidTransaction.getType();
             while (true) {
                 List<AutoBidEntry> autoBidEntriesList = registrationsMap.get(auctionId);
                 if (autoBidEntriesList == null || autoBidEntriesList.isEmpty()) {
                     return; // Không còn candidate → dừng
                 }
+                BidTransaction lastBidTransaction = auctionEntity.getLastBidTransaction();
+                boolean isFirstBid = (lastBidTransaction == null);
+                long currentAuctionPrice = lastBidTransaction == null ? auctionEntity.getCurrentPrice()
+                        : lastBidTransaction.getBidAmount();
+                String highestBidderId = lastBidTransaction == null ? null : lastBidTransaction.getBidderId();
+                long highestBidderLock = lastBidTransaction == null ? 0 : lastBidTransaction.getLockedBalance();
+                BidType lastBidType = lastBidTransaction == null ? null : lastBidTransaction.getType();
                 logger.log(Level.INFO, "Auto-bid matching triggered for auctionId: " + auctionId + " with "
                         + autoBidEntriesList.size() + " candidates.");
                 List<AutoBidEntry> entriesSnapshotList = new ArrayList<>(autoBidEntriesList);

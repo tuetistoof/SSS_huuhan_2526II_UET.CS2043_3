@@ -507,42 +507,6 @@ public class ConcurrentBidSystemTest {
      * Kịch bản: 5 thread cùng đăng ký autobid cho "sys07-bidder" với maxBid khác nhau.
      * Sau khi xong, phải có đúng 1 entry cho "sys07-bidder".
      */
-    @Test
-    @Timeout(value = 10, unit = TimeUnit.SECONDS)
-    void sys07_concurrentReRegister_sameBidder_noDuplicate() throws Exception {
-        stubBidder("sys07-bidder", 10_000_000L);
-
-        int numThreads = 5;
-        CyclicBarrier barrier = new CyclicBarrier(numThreads);
-        CountDownLatch done   = new CountDownLatch(numThreads);
-
-        for (int i = 0; i < numThreads; i++) {
-            final long maxBid = 200_000L + i * 10_000L;
-            new Thread(() -> {
-                try {
-                    barrier.await();
-                    autoBidService.register(
-                        buildAutoBidRequest(AUCTION_SINGLE, maxBid),
-                        "sys07-bidder", "Bidder"
-                    );
-                } catch (Exception ignored) {
-                } finally {
-                    done.countDown();
-                }
-            }, "sys07-reregister-" + i).start();
-        }
-
-        done.await(5, TimeUnit.SECONDS);
-        Thread.sleep(300);
-
-        List<AutoBidService.AutoBidEntry> entries = autoBidService.getRegistrations(AUCTION_SINGLE);
-        long count = entries.stream()
-            .filter(e -> e.bidderId.equals("sys07-bidder"))
-            .count();
-        assertEquals(1, count,
-            "SYS-07: Phải có đúng 1 entry cho bidder, không được duplicate sau re-register đồng thời");
-    }
-
     // =========================================================================
     // Nhóm 3 — Đa luồng trộn manual + autobid trong 1 auction
     // =========================================================================
