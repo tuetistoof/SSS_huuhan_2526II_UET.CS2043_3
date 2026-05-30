@@ -596,6 +596,11 @@ public class BiddingRoomController implements MessageListener {
             } else if (prevLeader != null && prevLeader.equals(currentUserName)
                     && !currentUserName.equals(bid.getBidderUsername())) {
                 showOutbidAlert(bid.getBidderUsername(), bid.getBidAmount());
+                if (isAutoBidding && bid.getBidAmount() >= autoBidMaxBid) {
+                    autoBidMaxBid = 0;
+                    applyAutoBidState(false);
+                    showBanner("⚠ Auto Bid stopped - current price exceeded your maximum.", 5);
+                }
             }
         } catch (Exception ignored) {}
 
