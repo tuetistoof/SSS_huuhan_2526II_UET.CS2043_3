@@ -45,6 +45,7 @@ public class BidderDashboardController implements MessageListener {
 
     private int currentBannerIndex = 0;
     private final String[] bannerUrls = {
+        "https://i.pinimg.com/736x/80/d3/ce/80d3ce2d95bc7a4b483ad61acd417e40.jpg",
         "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=1920&h=400&fit=crop", 
         "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=1920&h=400&fit=crop", 
         "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1920&h=400&fit=crop", 

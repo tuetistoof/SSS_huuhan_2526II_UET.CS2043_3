@@ -228,20 +228,22 @@ public class MainLayoutController implements MessageListener {
     }
 
     private void handleSessionKicked() {
+        cleanupCurrentController();
         removeListener();
         if (notificationController != null) notificationController.destroy();
         SessionManager.getInstance().logout();
-
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Login session expired");
-        alert.setHeaderText(null);
-        alert.setContentText("Your account are logged in from another location! Logging out.");
-        alert.showAndWait(); //blocking intentionally, not thread block
 
         Parent loginRoot = ViewLoader.load("login-signup.fxml").root();
         Stage stage = (Stage) contentArea.getScene().getWindow();
         stage.getScene().setRoot(loginRoot);
         stage.setMaximized(false);
+
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Login session expired");
+        alert.setHeaderText(null);
+        alert.setContentText("Your account has been logged in from another location.");
+        alert.initOwner(stage);
+        alert.show();
     }
 
     private void initNotification() {

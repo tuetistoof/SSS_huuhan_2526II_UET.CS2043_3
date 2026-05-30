@@ -212,9 +212,6 @@
     -fx-padding: 5;
 }
 
-/* =========================================
-   MAIN SCROLL PANE
-   ========================================= */
 .main-scroll-pane {
     -fx-background-color: -cloud-bg;
     -fx-background: -cloud-bg;
@@ -246,9 +243,6 @@
     -fx-padding: 0;
 }
 
-/* =========================================
-   DASHBOARD — HEADER + METRIC CARDS
-   ========================================= */
 .dashboard-header {
     -fx-background-color: -cloud-primary-pale;
     -fx-background-radius: 12px;
@@ -276,9 +270,6 @@
     -fx-text-fill: -cloud-text-disabled;
 }
 
-/* =========================================
-   BUTTONS — PRIMARY (shared across screens)
-   ========================================= */
 .btn-primary {
     -fx-background-color: -cloud-primary;
     -fx-text-fill: white;
@@ -294,9 +285,6 @@
     -fx-scale-y: 0.97;
 }
 
-/* =========================================
-   FILTER TABS
-   ========================================= */
 .filter-tab {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent #dddddd transparent;
@@ -312,9 +300,6 @@
     -fx-border-color: transparent transparent -cloud-primary transparent;
 }
 
-/* =========================================
-   TABLE / DATA LIST
-   ========================================= */
 .data-table {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 10;
@@ -362,9 +347,6 @@
     -fx-font-style: italic;
 }
 
-/* =========================================
-   STATUS BADGES
-   ========================================= */
 .badge-running {
     -fx-background-color: -cloud-success-bg;
     -fx-background-radius: 20;
@@ -405,9 +387,6 @@
     -fx-font-weight: bold;
 }
 
-/* =========================================
-   AUCTION CARD (grid list)
-   ========================================= */
 .auction-card {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12px;
@@ -441,9 +420,6 @@
     -fx-padding: 3 8 3 8;
 }
 
-/* =========================================
-   SECTION TITLES
-   ========================================= */
 .section-title {
     -fx-font-size: 15px;
     -fx-font-weight: bold;
@@ -454,9 +430,6 @@
     -fx-text-fill: -cloud-text-placeholder;
 }
 
-/* =========================================
-   INNER CARD
-   ========================================= */
 .inner-card {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12px;
@@ -464,9 +437,6 @@
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);
 }
 
-/* =========================================
-   LOADING SPINNER
-   ========================================= */
 .loading-spinner {
     -fx-fill: transparent;
     -fx-stroke: -cloud-primary-dark;

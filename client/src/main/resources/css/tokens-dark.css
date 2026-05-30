@@ -6,7 +6,7 @@
 .theme-dark,
 .theme-dark * {
     /* Brand / Primary — Dựa trên #1A1A1E */
-    -cloud-primary:          #FF4081;   /* Hồng neon chuẩn */
+    -cloud-primary:          #FF3F80;   /* Hồng neon chuẩn */
     -cloud-primary-dark:     #E91E63;
     -cloud-primary-deeper:   #C2185B;
     -cloud-primary-light:    rgba(255, 64, 129, 0.15);
