@@ -27,7 +27,7 @@
                            <children>
                               <ImageView fitHeight="82.0" fitWidth="102.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@../images/Asset%202.png" />
+                                    <Image url="@../images/Asset2.png" />
                                  </image>
                               </ImageView>
                               <Label style="-fx-font-family: 'Gabriola', serif;" text="CLOUDBID" textFill="#a40000">

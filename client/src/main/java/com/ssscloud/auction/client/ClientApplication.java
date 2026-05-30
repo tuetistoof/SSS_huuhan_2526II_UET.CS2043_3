@@ -10,6 +10,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -32,6 +33,8 @@ public class ClientApplication extends Application {
         
         Scene scene = new Scene(SceneManager.loginScene);
         primaryStage.setTitle("CloudBid");
+        Image icon = new Image(getClass().getResourceAsStream("/images/Asset2.png"));
+        primaryStage.getIcons().add(icon);
         primaryStage.setScene(scene);
         primaryStage.centerOnScreen();
         primaryStage.show();
