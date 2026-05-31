@@ -1,163 +1,262 @@
-# CloudBid - Hệ Thống Đấu Giá Trực Tuyến (Online Auction System)
+# CloudBid — Hệ Thống Đấu Giá Trực Tuyến
 
-> **Môn học:** Lập trình nâng cao (INT2204) - Đại học Công nghệ, ĐHQGHN (UET-VNU)  
-> **Nhóm thực hiện:** Nhóm 4
-
----
-
-## 1. Giới thiệu Bài toán & Phạm vi Hệ thống
-
-**CloudBid** là một hệ thống đấu giá trực tuyến thời gian thực được phát triển theo kiến trúc **Client-Server** đa luồng (Multi-threaded). Dự án mô phỏng sàn đấu giá ảo nơi người dùng có thể tham gia vào các phiên đấu giá với nhiều danh mục sản phẩm phong phú.
-
-### Phạm vi và Đối tượng sử dụng
-Hệ thống hỗ trợ phân quyền chi tiết với 3 nhóm vai trò (Roles) chính:
-1. **Người đấu giá (Bidder):**
-   * Đăng nhập/Đăng ký tài khoản và quản lý số dư ví cá nhân.
-   * Xem danh sách các phiên đấu giá đang diễn ra, xem chi tiết phòng đấu giá.
-   * Đặt giá thầu thủ công (Normal Bid) hoặc đặt cấu hình tự động đấu giá (Auto-Bid).
-   * Theo dõi danh sách sản phẩm đã thắng, lịch sử thầu, và danh sách quan tâm (Watchlist).
-   * Nhận thông báo thời gian thực khi bị vượt giá (Outbid), khi thắng cuộc, hoặc khi phiên kết thúc.
-2. **Người bán (Seller):**
-   * Đăng ký sản phẩm mới thông qua biểu mẫu nhập liệu và hệ thống định danh loại.
-   * Tạo cấu hình phiên đấu giá mới (Giá khởi điểm, bước giá tối thiểu, thời gian bắt đầu, thời gian kết thúc).
-   * Theo dõi tiến trình đấu giá và quản lý số dư khả dụng/số dư tạm giữ (Pending Balance).
-3. **Quản trị viên (Admin):**
-   * Giám sát hệ thống và người dùng.
-   * Xem danh sách tất cả các phiên đấu giá và có quyền kết thúc/hủy phiên đấu giá khẩn cấp.
-   * Theo dõi nhật ký hệ thống (System Logs).
+> **Đồ án môn Lập Trình Nâng Cao (CS2043) — Nhóm SSS (Huuhan)**  
+> **Kiến trúc:** Client–Server đa luồng  
+> **Công nghệ:** JavaFX 21 (Client) + Java Socket (Server) + MySQL 8.0 + Maven  
+> **Tài liệu dự án:**  
+> * [📄 Báo cáo BTL (OneDrive)](https://1drv.ms/w/c/a49f15581f61e2f3/IQDCZOaazyt9SasJdDgkvcAVAfDvFopFUlgUfr6WMrkBEbM?e=7jYRQ6)  
+> * [🎥 Video Demo hệ thống (YouTube)](https://youtu.be/fg49XR1IxoI?si=F4GLxw9gnSC42smE)
 
 ---
 
-## 2. Công nghệ Sử dụng & Yêu cầu Môi trường
-
-Hệ thống sử dụng các công nghệ Java hiện đại, tập trung vào lập trình hướng đối tượng (OOP) thuần chất lượng cao:
-
-* **Ngôn ngữ:** Java 25 (sử dụng các tính năng mới nhất để tối ưu hiệu năng).
-* **Giao diện Client:** JavaFX 21 (sử dụng FXML cho Layout và CSS cho Styling).
-* **Kết nối mạng (Networking):** Java Socket TCP/IP thuần, truyền tải dữ liệu dạng tin nhắn JSON (sử dụng thư viện `gson:2.10.1`).
-* **Cơ sở dữ liệu:** MySQL 8.0, quản lý kết nối hiệu năng cao qua pool kết nối **HikariCP** (`HikariCP:4.0.3`).
-* **Trình quản lý mã nguồn & build:** Maven (cấu hình dự án đa module).
-* **Kiểm định code style:** Checkstyle (cấu hình Google Checks tùy chỉnh đạt chuẩn 0 lỗi).
-* **Kiểm thử & Độ phủ:** JUnit 5 và JaCoCo Maven Plugin.
-
----
-
-## 3. Cấu trúc Thư mục & Các Module Chính
-
-Hệ thống được tổ chức thành 3 module Maven lồng nhau:
-
-```text
-├── common/             # Module dùng chung chứa Model, Enum, Exception và DTO
-│   └── src/main/java/com/ssscloud/auction/common/
-│       ├── enums/      # Các enum trạng thái (AuctionStatus, UserRole, BidType)
-│       ├── exception/  # Cơ chế bắt lỗi tùy chỉnh (BaseException, DAOException, ServiceException...)
-│       └── model/      # Cây kế thừa thực thể OOP (Entity -> User, Item, Auction, BidTransaction...)
-│
-├── server/             # Module Server xử lý Logic nghiệp vụ và Cơ sở dữ liệu
-│   └── src/main/java/com/ssscloud/auction/server/
-│       ├── controller/ # Định tuyến yêu cầu từ client (UserController, BidController...)
-│       ├── dao/        # Tầng truy cập CSDL sử dụng SQL thuần và Hikari Connection Pool
-│       ├── factory/    # Factory Method tạo các loại sản phẩm (Art, Electronic, Vehicle)
-│       ├── networking/ # Socket server đa luồng (AuctionSocketServer, ClientHandler, ClientObserver)
-│       └── service/    # Xử lý luồng nghiệp vụ lõi (ConcurrentBidManager, AutoBidService, AntiSnipingService...)
-│
-└── client/             # Module Client chứa UI JavaFX và Giao tiếp mạng
-    └── src/main/java/com/ssscloud/auction/client/
-        ├── controller/ # Controller điều hướng giao diện JavaFX (BiddingRoomController, Dashboard...)
-        ├── networking/ # Client Socket gửi nhận và lắng nghe thông điệp từ server
-        └── util/       # Các tiện ích (ThemeManager hỗ trợ Light/Dark mode, SceneManager chuyển giao diện...)
-```
+## Mục lục
+1. [Yêu cầu hệ thống](#1-yêu-cầu-hệ-thống)
+2. [Cách chạy nhanh (dành cho thầy/cô chấm bài)](#2-cách-chạy-nhanh-dành-cho-thầycô-chấm-bài)
+3. [Hướng dẫn cài đặt chi tiết](#3-hướng-dẫn-cài-đặt-chi-tiết)
+4. [Hướng dẫn sử dụng chi tiết](#4-hướng-dẫn-sử-dụng-chi-tiết)
+5. [Thiết lập cơ sở dữ liệu](#5-thiết-lập-cơ-sở-dữ-liệu)
+6. [Tùy chỉnh cấu hình (nếu cần)](#6-tùy-chỉnh-cấu-hình-nếu-cần)
+7. [Giải thích cơ chế tự động kết nối & Fallback](#7-giải-thích-cơ-chế-tự-động-kết-nối--fallback)
+8. [Build từ source](#8-build-từ-source)
+9. [Dành cho thành viên nhóm (dev)](#9-dành-cho-thành-viên-nhóm-dev)
+10. [Tài khoản demo](#10-tài-khoản-demo)
 
 ---
 
-## 4. Vị trí Các File JAR (.jar)
+## 1. Yêu cầu hệ thống
 
-Sau khi dự án được biên dịch thành công, các file Executable / Shaded Fat JAR sẽ nằm ở các vị trí tương ứng:
+| Thành phần | Phiên bản tối thiểu | Ghi chú |
+|---|---|---|
+| **Java (JDK/JRE)** | 17 trở lên | Tải tại: [Adoptium](https://adoptium.net) *(Khuyên dùng JDK 21 hoặc 25)* |
+| **MySQL Server** | 8.0 trở lên | Quản lý lưu trữ dữ liệu thực thể và phiên giao dịch |
+| **RAM** | 512 MB trống | Đủ cho cả tiến trình Server và Client cùng hoạt động |
+| **Hệ điều hành** | Windows / macOS / Linux | Đã thử nghiệm hoạt động đa nền tảng ổn định |
 
-* **Server JAR:** `server/target/server-0.0.1-SNAPSHOT.jar`
-* **Client JAR:** `client/target/client-0.0.1-SNAPSHOT.jar`
-
-> 💡 **Mẹo tiện ích:** Để đơn giản hóa quá trình chạy, nhóm đã viết sẵn script đóng gói tự động. Sau khi chạy script này, hai file JAR gọn nhẹ sẽ được copy trực tiếp ra thư mục gốc của dự án với tên gọi:
-> * **Server JAR:** `./server.jar`
-> * **Client JAR:** `./client.jar`
+> **Kiểm tra phiên bản Java:** Mở Terminal (Linux/macOS) hoặc CMD/PowerShell (Windows) và chạy lệnh:  
+> `java -version`
 
 ---
 
-## 5. Hướng dẫn Cài đặt & Chạy Chương trình
+## 2. Cách chạy nhanh (dành cho thầy/cô chấm bài)
 
-### Bước 1: Chuẩn bị Cơ sở dữ liệu
-1. Tạo một cơ sở dữ liệu MySQL có tên là `cloud`.
-2. Khởi tạo cấu trúc bảng và nạp dữ liệu mẫu bằng cách chạy file SQL tại đường dẫn:  
-   `[root]/server/src/main/resources/db/init.sql`
+### Bước 1 — Chuẩn bị cơ sở dữ liệu
+> *(Chỉ cần làm một lần duy nhất)*
 
-### Bước 2: Cấu hình Kết nối CSDL và Server
-1. Mở file cấu hình database của Server tại:  
-   `[root]/server/src/main/resources/application.properties`
-2. Chỉnh sửa URL kết nối, Username, và Password phù hợp với CSDL MySQL cục bộ của bạn:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
-   spring.datasource.username=root
-   spring.datasource.password=your_password
-   ```
-
-### Bước 3: Đóng gói chương trình (Biên dịch ra file JAR)
-Chạy script đóng gói tự động ở thư mục gốc của dự án:
+Mở MySQL và chạy các lệnh dưới đây để tạo cơ sở dữ liệu và nạp dữ liệu mẫu ban đầu:
 ```bash
-./build_jars.sh
-```
-*Script sẽ tự động dọn dẹp thư mục build cũ, biên dịch mã nguồn, chạy kiểm định chất lượng, đóng gói thư viện phụ thuộc và copy 2 file JAR `server.jar` và `client.jar` ra thư mục gốc.*
+# Tạo cơ sở dữ liệu mới
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS cloud CHARACTER SET utf8mb4;"
 
-### Bước 4: Khởi chạy hệ thống theo thứ tự
-
-1. **Chạy Server:**
-   Mở terminal ở thư mục gốc của dự án và chạy lệnh:
-   ```bash
-   java -jar server.jar
-   ```
-   *Server sẽ bắt đầu lắng nghe kết nối tại cổng `5000` và ghi nhận hoạt động vào file `server.log` ở thư mục gốc.*
-
-2. **Chạy Client (Có thể mở nhiều cửa sổ terminal khác nhau để chạy nhiều Client):**
-   Mở một terminal mới ở thư mục gốc và chạy lệnh:
-   ```bash
-   java -jar client.jar
-   ```
-   *Bạn có thể mở nhiều terminal và chạy lệnh trên để kiểm tra tính năng thầu đồng thời (Concurrent Bidding).*
-
----
-
-## 💡 Hướng dẫn chạy nhanh bằng Docker Compose (Khuyên Dùng)
-
-Nếu máy bạn đã cài đặt Docker và Docker Compose, bạn có thể chạy toàn bộ hệ thống (gồm MySQL database tự khởi tạo + Server) bằng một lệnh duy nhất ở thư mục gốc:
-
-```bash
-docker compose up --build
+# Nạp dữ liệu mẫu (nhập mật khẩu MySQL của thầy/cô khi được hỏi)
+mysql -u root -p cloud < server/src/main/resources/db/init.sql
 ```
 
-Sau khi Server trong Docker khởi động xong, bạn chỉ cần mở máy khách client cục bộ để kết nối và trải nghiệm:
+### Bước 2 — Cấu hình mật khẩu MySQL (nếu cần)
+Mở file `client.properties` (đặt cùng thư mục với file `client.jar`) và điền mật khẩu MySQL của thầy/cô vào dòng tương ứng:
+```properties
+local.db.username=root
+local.db.password=<mật_khẩu_mysql_của_thầy_cô>
+```
+
+### Bước 3 — Chạy ứng dụng
+Đặt ba file **`client.jar`**, **`server.jar`** và **`client.properties`** trong **cùng một thư mục**, sau đó mở Terminal tại thư mục này và chạy:
 ```bash
 java -jar client.jar
 ```
 
----
+**Chỉ cần vậy thôi.** Ứng dụng khách sẽ tự động:
+1. Thử kết nối tới máy chủ chung của nhóm (nếu đang online).
+2. Nếu máy chủ nhóm offline → Tự động khởi chạy `server.jar` cục bộ ngay trên máy thầy/cô (tự truyền cấu hình database qua biến môi trường).
+3. Đợi trong giây lát và hiển thị giao diện đăng nhập trực quan.
 
-## 6. Danh sách Chức năng Đã Hoàn Thành
-
-| STT | Chức năng chính | Mô tả kỹ thuật | Trạng thái |
-| :--- | :--- | :--- | :---: |
-| 1 | **Đăng ký / Đăng nhập** | Xác thực tài khoản qua Socket, phân quyền vai trò (Admin, Bidder, Seller) | ✔ Hoàn thành |
-| 2 | **Tạo phiên đấu giá** | Seller tạo phiên với cấu hình tùy biến. Áp dụng **Factory Method Pattern** để khởi tạo thông tin sản phẩm theo danh mục (Art, Electronic, Vehicle) | ✔ Hoàn thành |
-| 3 | **Đấu giá trực tuyến** | Cập nhật thông tin giá thầu thời gian thực sử dụng **Observer Pattern** kết hợp Socket push tin nhắn JSON | ✔ Hoàn thành |
-| 4 | **Tự động đấu giá (Auto-Bid)**| Người dùng đặt giới hạn ngân sách tối đa, hệ thống tự động nâng giá thầu dựa trên thuật toán hàng đợi ưu tiên | ✔ Hoàn thành |
-| 5 | **Chống bắn tỉa (Anti-Sniping)**| Tự động cộng thêm 60 giây vào thời gian kết thúc nếu phát hiện lượt thầu hợp lệ trong 60 giây cuối cùng | ✔ Hoàn thành |
-| 6 | **Xử lý Đấu giá Đồng thời** | Ngăn chặn race conditions khi nhiều người đặt giá cùng lúc bằng khóa `ReentrantLock` theo từng AuctionId tại server | ✔ Hoàn thành |
-| 7 | **Hệ thống ví tiền (Wallet)** | Quản lý số dư khả dụng và số dư đóng băng tạm giữ (Locked Balance). Tự động trả tiền thầu cũ khi bị outbid và kết chuyển tiền khi hoàn tất | ✔ Hoàn thành |
-| 8 | **Hệ thống thông báo** | Thông báo đẩy thời gian thực khi có biến động giá thầu, đổi vị thế thầu, thắng thầu, nhận tiền | ✔ Hoàn thành |
-| 9 | **Light / Dark Mode** | Hỗ trợ chuyển đổi giao diện sáng/tối linh hoạt trực tiếp trên giao diện Client nhờ CSS Stylesheet | ✔ Hoàn thành |
-| 10| **Trang giám sát Admin** | Admin xem log hoạt động hệ thống, hủy/dừng phiên đấu giá, theo dõi người dùng hoạt động | ✔ Hoàn thành |
+> 📋 Lịch sử log của server cục bộ sẽ được ghi tự động ra file `server-local.log` trong cùng thư mục.
 
 ---
 
-## 7. Link Báo cáo & Video Demo
+## 3. Hướng dẫn cài đặt chi tiết
 
-* **Báo cáo PDF (Tối đa 6 trang):** [👉 Link xem Báo cáo PDF](./Bao-cao-BTL-Nhom-4.pdf) *(Vui lòng cập nhật đường dẫn chính xác)*
-* **Video Demo thực tế (Tối đa 3 phút):** [👉 Link xem Video Demo trên YouTube/Drive](#) *(Vui lòng cập nhật đường dẫn chính xác)*
+Nếu thầy/cô hoặc nhà phát triển muốn chạy hệ thống một cách thủ công và độc lập từng thành phần từ repository, hãy làm theo các bước dưới đây:
+
+### 3.1. Clone dự án về máy tính
+```bash
+git clone https://github.com/tuetistoof/Coud_auction_system.git
+cd Coud_auction_system
+```
+
+### 3.2. Import database thủ công
+1. Đảm bảo MySQL Server đang hoạt động trên cổng mặc định `3306`.
+2. Tạo database tên `cloud` thông qua MySQL Workbench, phpMyAdmin hoặc CLI:
+   ```sql
+   CREATE DATABASE cloud CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+3. Import file dữ liệu mẫu có sẵn tại đường dẫn: `server/src/main/resources/db/init.sql`.
+
+### 3.3. Cấu hình các file thuộc tính
+*   **Cấu hình Server:** Mở file `server/src/main/resources/application.properties` để cấu hình khớp với tài khoản MySQL của bạn:
+    ```properties
+    spring.datasource.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+    spring.datasource.username=root
+    spring.datasource.password=your_password
+    ```
+*   **Cấu hình Client:** Mở file `client/src/main/resources/client.properties` để cấu hình địa chỉ Server mà Client sẽ tìm kiếm đầu tiên:
+    ```properties
+    server.host=localhost
+    server.port=5000
+    ```
+
+---
+
+## 4. Hướng dẫn sử dụng chi tiết
+
+Hệ thống được thiết kế với cơ chế cập nhật thời gian thực đa luồng thông qua kết nối Socket TCP/IP, hỗ trợ đầy đủ các tính năng đặt thầu, tự động thầu và chống bắn tỉa.
+
+### 4.1. Đăng nhập và Khám phá các Vai trò
+Bạn có thể mở đồng thời nhiều cửa sổ Client khác nhau để mô phỏng sàn đấu giá thực tế:
+1. **Người đấu giá (Bidder):**
+   * Đăng nhập bằng tài khoản `bidder01` (hoặc tạo tài khoản mới).
+   * Vào **Nạp tiền** ở góc phải để cộng số dư ảo của ví.
+   * Chọn một sản phẩm trong trạng thái `RUNNING` để vào phòng đấu giá chi tiết.
+   * **Đặt giá thầu (Normal Bid):** Nhập số tiền thầu lớn hơn giá tối thiểu yêu cầu và nhấn nút đặt thầu.
+   * **Tự động đấu giá (Auto-Bid):** Thiết lập ngân sách thầu tối đa và bước giá tự động tăng. Server sẽ tự thầu hộ bạn mỗi khi có người vượt giá.
+2. **Người bán (Seller):**
+   * Đăng nhập bằng tài khoản `seller01`.
+   * Chọn **Tạo phiên đấu giá** (Create Auction). Nhập tên sản phẩm, chọn loại sản phẩm (Art/Electronic/Vehicle) để kích hoạt **Factory Method** tương ứng.
+   * Thiết lập giá khởi điểm, bước giá tối thiểu và thời gian kết thúc của sản phẩm.
+3. **Quản trị viên (Admin):**
+   * Đăng nhập bằng tài khoản `admin`.
+   * Giám sát danh sách phiên thầu, xem log hệ thống thời gian thực hoặc hủy phiên đấu giá khẩn cấp nếu phát hiện bất thường.
+
+### 4.2. Test tính năng cập nhật đồng bộ thời gian thực (Real-time Sync)
+1. Mở song song **Client A** (`bidder01`) và **Client B** (đăng ký một tài khoản bidder mới) trên màn hình.
+2. Cùng vào xem chi tiết một sản phẩm đấu giá.
+3. Ở **Client A**, thực hiện đặt thầu.
+4. Ngay lập tức, màn hình **Client B** sẽ tự động cập nhật số tiền thầu mới nhất, vẽ cột mốc mới trên biểu đồ biến động giá và hiển thị lịch sử lượt thầu của Client A trong danh sách mà **không cần tải lại trang**.
+
+---
+
+## 5. Thiết lập cơ sở dữ liệu
+
+File schema đầy đủ (kèm dữ liệu bảng mẫu) nằm tại:
+```
+server/src/main/resources/db/init.sql
+```
+
+Nếu cần reset dữ liệu về trạng thái ban đầu sạch sẽ:
+```bash
+mysql -u root -p -e "DROP DATABASE IF EXISTS cloud; CREATE DATABASE cloud CHARACTER SET utf8mb4;"
+mysql -u root -p cloud < server/src/main/resources/db/init.sql
+```
+
+---
+
+## 6. Tùy chỉnh cấu hình (nếu cần)
+
+File `client.properties` (đặt cùng thư mục với `client.jar`):
+
+```properties
+# Server kết nối chính — nhóm sẽ cập nhật IP public/cloud vào đây
+server.host=100.67.91.8
+server.port=5000
+
+# DB cho chế độ LOCAL (thầy/cô chỉnh ở đây nếu MySQL khác mặc định)
+local.db.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+local.db.username=root
+local.db.password=
+```
+
+**Lưu ý:** Nếu `client.properties` không tồn tại cạnh file `.jar`, các giá trị mặc định trong ứng dụng sẽ được dùng (`localhost:5000`, user `root`, không mật khẩu).
+
+---
+
+## 7. Giải thích cơ chế tự động kết nối & Fallback
+
+```
+Khởi động client.jar
+        │
+        ▼
+Thử kết nối server.host:port (timeout 2 giây)
+        │
+   ┌────┴────┐
+   │ Thành   │ Thất bại
+   │ công    │
+   ▼         ▼
+Dùng      Tìm server.jar cùng thư mục
+server         │
+nhóm           ▼
+           Khởi động server.jar local
+           (truyền DB config qua env vars)
+               │
+               ▼
+           Chờ tối đa 15 giây
+               │
+               ▼
+           Kết nối localhost:5000
+               │
+               ▼
+           Hiện UI đăng nhập
+```
+
+---
+
+## 8. Build từ source
+
+**Yêu cầu thêm:** Maven 3.8+ (hoặc dùng `./mvnw` đi kèm)
+
+```bash
+# Clone repo
+git clone https://github.com/tuetistoof/Coud_auction_system.git
+cd SSS_huuhan_2526II_UET.CS2043_3
+
+# Build và đóng gói tất cả
+./build_jars.sh
+
+# Kết quả: server.jar và client.jar ở thư mục gốc
+```
+
+> **Windows:** chạy lệnh Maven trực tiếp trong Git Bash / CMD:
+> ```cmd
+> mvnw.cmd clean package -DskipTests
+> copy server\target\server-0.0.1-SNAPSHOT.jar server.jar
+> copy client\target\client-0.0.1-SNAPSHOT.jar client.jar
+> ```
+
+---
+
+## 9. Dành cho thành viên nhóm (dev)
+
+Kết nối server Tailscale chung của nhóm:
+
+```bash
+# Đảm bảo Tailscale trên máy đang chạy ổn định, sau đó chạy:
+java -jar client.jar
+# → client tự kết nối server.host trong client.properties (IP Tailscale của server)
+```
+
+Chạy server local độc lập khi dev offline:
+
+```bash
+# Terminal 1 — Khởi động server local
+java -jar server.jar
+
+# Terminal 2 — Khởi động client
+java -jar client.jar
+# → client thấy server.host Tailscale không phản hồi, tự động khởi tạo local server trên localhost
+```
+
+---
+
+## 10. Tài khoản demo
+
+Thầy/cô và các bạn có thể sử dụng danh sách tài khoản dưới đây để chạy thử nghiệm các vai trò trong hệ thống:
+
+| Vai trò | Username | Mật khẩu | Ghi chú |
+|---|---|---|---|
+| **Admin** | `admin` | `admin123` | Có quyền dừng phiên đấu giá khẩn cấp, xem log hệ thống |
+| **Người bán (Seller)** | `seller01` | `123456` | Đăng ký mặt hàng mới và tạo các phiên đấu giá |
+| **Người đấu giá (Bidder)** | `bidder01` | `123456` | Xem chi tiết, nạp tiền ảo, đặt thầu tự động hoặc thủ công |
+
+> Dữ liệu mẫu (mặt hàng, giao dịch thầu cũ) đã được nạp sẵn qua file `init.sql`.
+
+---
+
+*Đồ án môn Lập Trình Nâng Cao — Nhóm SSS (Huuhan) — UET, 2025–2026*
