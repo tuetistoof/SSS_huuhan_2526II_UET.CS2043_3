@@ -304,8 +304,8 @@ Tiếp tục từ **Bước 4** của Cách 1.
 
 ## Báo cáo PDF & Video Demo
 
-- 📄 **Báo cáo PDF:** [Tải báo cáo BTL (OneDrive)](https://1drv.ms/w/c/a49f15581f61e2f3/IQDCZOaazyt9SasJdDgkvcAVAfDvFopFUlgUfr6WMrkBEbM?e=7jYRQ6)
-- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/fg49XR1IxoI?si=F4GLxw9gnSC42smE)
+- 📄 **Báo cáo PDF:** [Tải báo cáo BTL (OneDrive)](https://onedrive.live.com/:w:/g/personal/A49F15581F61E2F3/IQDCZOaazyt9SasJdDgkvcAVAYEP5GbRumbw0TRJ1OkQaho?resid=A49F15581F61E2F3!s9ae664c22bcf497dab09743824bdc015&ithint=file%2Cdocx&migratedtospo=true&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3cvYy9hNDlmMTU1ODFmNjFlMmYzL0lRRENaT2Fhenl0OVNhc0pkRGdrdmNBVkFZRVA1R2JSdW1idzBUUkoxT2tRYWhv)
+- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/qp2XtEzeNdc?si=bRdj4pj7f57cWgfh)
 
 ---
 
