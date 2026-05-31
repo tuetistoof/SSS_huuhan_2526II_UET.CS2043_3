@@ -8,22 +8,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Immutable snapshot of the mutable state of an Auction.
+ * Snapshot bất biến lưu trữ trạng thái động của một phiên đấu giá tại một thời điểm nhất định.
  *
- * Stored (truly mutable, cannot be derived cheaply):
- *   - endTime         : changes on anti-sniping extension
- *   - status          : OPEN → RUNNING → FINISHED / CANCELED
- *   - bidTransactions : the authoritative bid list (unmodifiable copy)
- *   - version         : monotonically increasing counter
- *
- * NOT stored — derived on demand from bidTransactions (all O(1)):
- *   - lastBidTransaction  : bidTransactions.getLast()
- *   - bidCount            : bidTransactions.size()
- *   - currentPrice        : lastBid.getBidAmount() or auctionConfig.getStartPrice()
- *   - highestBidderId/Name, bidTime, bidType : lastBid getters
- *
- * NOT stored — immutable after auction creation (live on AuctionConfig):
- *   - id, name, startPrice, minIncrement, startTime, sellerId, itemId
+ * Stored
+ *   - endTime         
+ *   - status         
+ *   - bidTransactions 
+ *   - version         
  */
 public final class AuctionSnapshot {
 

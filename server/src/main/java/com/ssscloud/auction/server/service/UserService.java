@@ -16,11 +16,14 @@ import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
 import com.ssscloud.auction.server.dao.UserDAO;
 
 /**
- * UserService manages the core business logic for user entities, 
- * including authentication, registration, and financial balance operations.
+ * các method
+ * login/deposit/register/getByUserId/getUnsettledBalance
+ * đảm nhiệm xử lý logic nghiệp vụ liên quan đến người dùng, bao gồm xác thực, 
+ * quản lý tài khoản, và truy xuất thông tin người dùng. UserService tương tác với UserDAO để thực hiện các thao tác liên quan đến dữ liệu người dùng trong cơ sở dữ liệu.
  */
+
 public class UserService {
-    private static final Logger logger = Logger.getLogger(UserService.class.getName()); // Logging Standards: First attribute
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
 
     private final UserDAO userDAO;
 

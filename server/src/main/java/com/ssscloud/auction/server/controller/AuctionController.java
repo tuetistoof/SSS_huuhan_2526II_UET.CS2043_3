@@ -1,6 +1,5 @@
 package com.ssscloud.auction.server.controller;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -9,15 +8,16 @@ import com.ssscloud.auction.common.exception.ErrorCode;
 import com.ssscloud.auction.common.payload.request.CreateAuctionRequest;
 import com.ssscloud.auction.common.payload.request.GetAuctionDetailsRequest;
 import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
-import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.payload.response.request.ApiResponse;
-import com.ssscloud.auction.common.payload.response.request.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.service.AuctionService;
-
 /**
- * AuctionController manages all incoming networking requests related to auction sessions.
+ * AuctionController xử lý các request từ client liên quan đến auction:
+ *   - Tạo auction mới (chỉ dành cho seller)
+ *  - Lấy thông tin chi tiết của một auction cụ thể (dành cho tất cả user)
+ * - Đảm bảo auction đang xem đã được load vào bộ nhớ (đăng ký vào registry) để nhận update real-time (dành cho tất cả user)
  */
+
 public class AuctionController {
     private static final Logger logger = Logger.getLogger(AuctionController.class.getName());
 

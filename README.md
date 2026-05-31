@@ -1,163 +1,301 @@
-# CloudBid - Hệ Thống Đấu Giá Trực Tuyến (Online Auction System)
+# CloudBid — Hệ thống Đấu giá Trực tuyến
 
-> **Môn học:** Lập trình nâng cao (INT2204) - Đại học Công nghệ, ĐHQGHN (UET-VNU)  
-> **Nhóm thực hiện:** Nhóm 4
-
----
-
-## 1. Giới thiệu Bài toán & Phạm vi Hệ thống
-
-**CloudBid** là một hệ thống đấu giá trực tuyến thời gian thực được phát triển theo kiến trúc **Client-Server** đa luồng (Multi-threaded). Dự án mô phỏng sàn đấu giá ảo nơi người dùng có thể tham gia vào các phiên đấu giá với nhiều danh mục sản phẩm phong phú.
-
-### Phạm vi và Đối tượng sử dụng
-Hệ thống hỗ trợ phân quyền chi tiết với 3 nhóm vai trò (Roles) chính:
-1. **Người đấu giá (Bidder):**
-   * Đăng nhập/Đăng ký tài khoản và quản lý số dư ví cá nhân.
-   * Xem danh sách các phiên đấu giá đang diễn ra, xem chi tiết phòng đấu giá.
-   * Đặt giá thầu thủ công (Normal Bid) hoặc đặt cấu hình tự động đấu giá (Auto-Bid).
-   * Theo dõi danh sách sản phẩm đã thắng, lịch sử thầu, và danh sách quan tâm (Watchlist).
-   * Nhận thông báo thời gian thực khi bị vượt giá (Outbid), khi thắng cuộc, hoặc khi phiên kết thúc.
-2. **Người bán (Seller):**
-   * Đăng ký sản phẩm mới thông qua biểu mẫu nhập liệu và hệ thống định danh loại.
-   * Tạo cấu hình phiên đấu giá mới (Giá khởi điểm, bước giá tối thiểu, thời gian bắt đầu, thời gian kết thúc).
-   * Theo dõi tiến trình đấu giá và quản lý số dư khả dụng/số dư tạm giữ (Pending Balance).
-3. **Quản trị viên (Admin):**
-   * Giám sát hệ thống và người dùng.
-   * Xem danh sách tất cả các phiên đấu giá và có quyền kết thúc/hủy phiên đấu giá khẩn cấp.
-   * Theo dõi nhật ký hệ thống (System Logs).
+> **Đồ án môn CS2043 — Lập Trình Nâng Cao**  
+> **Nhóm:** SSS (Huuhan) — UET, 2025–2026  
+> **Kiến trúc:** Client–Server | JavaFX + Spring Boot + TCP Socket + MySQL
 
 ---
 
-## 2. Công nghệ Sử dụng & Yêu cầu Môi trường
+## Mô tả bài toán & Phạm vi hệ thống
 
-Hệ thống sử dụng các công nghệ Java hiện đại, tập trung vào lập trình hướng đối tượng (OOP) thuần chất lượng cao:
+**CloudBid** là nền tảng đấu giá trực tuyến thời gian thực, xây dựng trên kết nối TCP Socket thuần và trao đổi gói tin JSON. Hệ thống giải quyết các bài toán: đồng bộ dữ liệu đa client, quản lý thầu đồng thời (concurrency), tự động nâng giá (auto-bid) và chống bắn tỉa (anti-sniping).
 
-* **Ngôn ngữ:** Java 25 (sử dụng các tính năng mới nhất để tối ưu hiệu năng).
-* **Giao diện Client:** JavaFX 21 (sử dụng FXML cho Layout và CSS cho Styling).
-* **Kết nối mạng (Networking):** Java Socket TCP/IP thuần, truyền tải dữ liệu dạng tin nhắn JSON (sử dụng thư viện `gson:2.10.1`).
-* **Cơ sở dữ liệu:** MySQL 8.0, quản lý kết nối hiệu năng cao qua pool kết nối **HikariCP** (`HikariCP:4.0.3`).
-* **Trình quản lý mã nguồn & build:** Maven (cấu hình dự án đa module).
-* **Kiểm định code style:** Checkstyle (cấu hình Google Checks tùy chỉnh đạt chuẩn 0 lỗi).
-* **Kiểm thử & Độ phủ:** JUnit 5 và JaCoCo Maven Plugin.
+Hệ thống hỗ trợ 3 vai trò người dùng:
+
+- **Bidder (Người đấu giá):** Đăng ký/đăng nhập, nạp tiền vào ví ảo, vào phòng thầu để đặt thầu thủ công hoặc bật Auto-Bid, theo dõi Watchlist, nhận push notification khi bị vượt giá hoặc thắng thầu.
+- **Seller (Người bán):** Tạo phiên đấu giá mới theo danh mục (Art / Electronic / Vehicle), thiết lập giá khởi điểm, bước giá, thời gian kết thúc và theo dõi số dư tạm giữ.
+- **Admin (Quản trị viên):** Giám sát toàn bộ tài khoản và phiên đấu giá, có quyền dừng/hủy phiên thầu khẩn cấp.
 
 ---
 
-## 3. Cấu trúc Thư mục & Các Module Chính
+## Công nghệ sử dụng, môi trường chạy & Yêu cầu cài đặt
 
-Hệ thống được tổ chức thành 3 module Maven lồng nhau:
+| Thành phần | Yêu cầu tối thiểu | Chi tiết |
+|---|---|---|
+| **Java SDK** | 17+ (khuyên dùng 21) | JavaFX 21 (UI) + Java TCP Socket đa luồng |
+| **Database** | MySQL 8.0+ | Connection pool HikariCP |
+| **Build tool** | Maven 3.8+ | Dự án có sẵn Maven Wrapper (`mvnw`) |
+| **Hệ điều hành** | Windows / macOS / Linux | Hỗ trợ Docker |
+| **Docker** *(tuỳ chọn)* | Docker Desktop / Engine | Triển khai nhanh không cần cài đặt thủ công |
 
-```text
-├── common/             # Module dùng chung chứa Model, Enum, Exception và DTO
-│   └── src/main/java/com/ssscloud/auction/common/
-│       ├── enums/      # Các enum trạng thái (AuctionStatus, UserRole, BidType)
-│       ├── exception/  # Cơ chế bắt lỗi tùy chỉnh (BaseException, DAOException, ServiceException...)
-│       └── model/      # Cây kế thừa thực thể OOP (Entity -> User, Item, Auction, BidTransaction...)
-│
-├── server/             # Module Server xử lý Logic nghiệp vụ và Cơ sở dữ liệu
-│   └── src/main/java/com/ssscloud/auction/server/
-│       ├── controller/ # Định tuyến yêu cầu từ client (UserController, BidController...)
-│       ├── dao/        # Tầng truy cập CSDL sử dụng SQL thuần và Hikari Connection Pool
-│       ├── factory/    # Factory Method tạo các loại sản phẩm (Art, Electronic, Vehicle)
-│       ├── networking/ # Socket server đa luồng (AuctionSocketServer, ClientHandler, ClientObserver)
-│       └── service/    # Xử lý luồng nghiệp vụ lõi (ConcurrentBidManager, AutoBidService, AntiSnipingService...)
-│
-└── client/             # Module Client chứa UI JavaFX và Giao tiếp mạng
-    └── src/main/java/com/ssscloud/auction/client/
-        ├── controller/ # Controller điều hướng giao diện JavaFX (BiddingRoomController, Dashboard...)
-        ├── networking/ # Client Socket gửi nhận và lắng nghe thông điệp từ server
-        └── util/       # Các tiện ích (ThemeManager hỗ trợ Light/Dark mode, SceneManager chuyển giao diện...)
+Kiểm tra Java: `java -version`. Nếu chưa có, tải tại [https://adoptium.net](https://adoptium.net).
+
+---
+
+## Cấu trúc thư mục & Các module chính
+
+```
+SSS_huuhan_2526II_UET.CS2043_3/
+├── common/          # Thực thể OOP dùng chung: Entity, Enum, Exception
+├── server/          # Logic nghiệp vụ: BidManager, AutoBidService, DAO, Socket Server
+├── client/          # Giao diện JavaFX (FXML + CSS), Client Socket
+├── server.jar       # Fat JAR server (chạy trực tiếp)
+├── client.jar       # Fat JAR client (chạy trực tiếp)
+├── client.properties# Cấu hình host/port server và DB (đặt cùng thư mục .jar)
+├── docker-compose.yml
+└── build_jars.sh    # Script build tự động
 ```
 
----
+**3 module Maven độc lập:**
 
-## 4. Vị trí Các File JAR (.jar)
-
-Sau khi dự án được biên dịch thành công, các file Executable / Shaded Fat JAR sẽ nằm ở các vị trí tương ứng:
-
-* **Server JAR:** `server/target/server-0.0.1-SNAPSHOT.jar`
-* **Client JAR:** `client/target/client-0.0.1-SNAPSHOT.jar`
-
-> 💡 **Mẹo tiện ích:** Để đơn giản hóa quá trình chạy, nhóm đã viết sẵn script đóng gói tự động. Sau khi chạy script này, hai file JAR gọn nhẹ sẽ được copy trực tiếp ra thư mục gốc của dự án với tên gọi:
-> * **Server JAR:** `./server.jar`
-> * **Client JAR:** `./client.jar`
+- **`common`** — Định nghĩa các thực thể cốt lõi (`User`, `Item`, `Auction`), Enum trạng thái và Exception phân lớp.
+- **`server`** — Xử lý logic trung tâm (`ConcurrentBidManager`, `AutoBidService`, `AntiSnipingService`), tầng DAO (SQL thuần) và Socket Server đa luồng.
+- **`client`** — Giao diện JavaFX (FXML + CSS, hỗ trợ Light/Dark Mode) và Client Socket lắng nghe dữ liệu đẩy từ Server.
 
 ---
 
-## 5. Hướng dẫn Cài đặt & Chạy Chương trình
+## Vị trí các file JAR
 
-### Bước 1: Chuẩn bị Cơ sở dữ liệu
-1. Tạo một cơ sở dữ liệu MySQL có tên là `cloud`.
-2. Khởi tạo cấu trúc bảng và nạp dữ liệu mẫu bằng cách chạy file SQL tại đường dẫn:  
-   `[root]/server/src/main/resources/db/init.sql`
+Sau khi build, Fat JAR thực thi được đặt tại thư mục gốc:
 
-### Bước 2: Cấu hình Kết nối CSDL và Server
-1. Mở file cấu hình database của Server tại:  
-   `[root]/server/src/main/resources/application.properties`
-2. Chỉnh sửa URL kết nối, Username, và Password phù hợp với CSDL MySQL cục bộ của bạn:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
-   spring.datasource.username=root
-   spring.datasource.password=your_password
-   ```
+| File | Đường dẫn |
+|---|---|
+| **Server JAR** | `./server.jar` |
+| **Client JAR** | `./client.jar` |
 
-### Bước 3: Đóng gói chương trình (Biên dịch ra file JAR)
-Chạy script đóng gói tự động ở thư mục gốc của dự án:
+Đường dẫn gốc trong `target/` (trước khi copy):
+- `server/target/server-0.0.1-SNAPSHOT.jar`
+- `client/target/client-0.0.1-SNAPSHOT.jar`
+
+---
+
+## Hướng dẫn chạy Server và Client
+
+> **Tổng quan:** Hệ thống gồm 2 thành phần chạy độc lập — **Server** (xử lý logic, kết nối DB) và **Client** (giao diện JavaFX). Server phải khởi động **trước**, sau đó mới chạy Client. Để chạy nhiều client đồng thời, mở thêm Terminal và chạy lại lệnh `java -jar client.jar` ở mỗi Terminal.
+
+---
+
+### Cách 1 — Chạy trực tiếp bằng file JAR có sẵn *(Dành cho người chấm bài)*
+
+Đây là cách nhanh nhất, không cần cài Maven hay build lại.
+
+#### Bước 1 — Kiểm tra Java
+
+Mở Terminal/CMD và chạy:
+
 ```bash
-./build_jars.sh
+java -version
 ```
-*Script sẽ tự động dọn dẹp thư mục build cũ, biên dịch mã nguồn, chạy kiểm định chất lượng, đóng gói thư viện phụ thuộc và copy 2 file JAR `server.jar` và `client.jar` ra thư mục gốc.*
 
-### Bước 4: Khởi chạy hệ thống theo thứ tự
+Yêu cầu **Java 17 trở lên**. Nếu chưa có, tải tại [https://adoptium.net](https://adoptium.net) và cài đặt, sau đó thử lại.
 
-1. **Chạy Server:**
-   Mở terminal ở thư mục gốc của dự án và chạy lệnh:
-   ```bash
-   java -jar server.jar
-   ```
-   *Server sẽ bắt đầu lắng nghe kết nối tại cổng `5000` và ghi nhận hoạt động vào file `server.log` ở thư mục gốc.*
+#### Bước 2 — Chuẩn bị thư mục chạy
 
-2. **Chạy Client (Có thể mở nhiều cửa sổ terminal khác nhau để chạy nhiều Client):**
-   Mở một terminal mới ở thư mục gốc và chạy lệnh:
-   ```bash
-   java -jar client.jar
-   ```
-   *Bạn có thể mở nhiều terminal và chạy lệnh trên để kiểm tra tính năng thầu đồng thời (Concurrent Bidding).*
+Đặt 3 file sau vào **cùng một thư mục** trên máy (ví dụ: `D:\cloudbid\`):
+
+```
+cloudbid/
+├── server.jar
+├── client.jar
+└── client.properties     ← tạo file này nếu chưa có (xem Bước 3)
+```
+
+#### Bước 3 — Tạo / chỉnh file `client.properties`
+
+Tạo file `client.properties` trong cùng thư mục với nội dung sau, **sửa lại mật khẩu MySQL** cho khớp với máy của bạn:
+
+```properties
+# Địa chỉ server (để localhost khi chạy local)
+server.host=localhost
+server.port=5000
+
+# Thông tin kết nối MySQL cho chế độ local
+local.db.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+local.db.username=root
+local.db.password=YOUR_MYSQL_PASSWORD
+```
+
+> Nếu bạn không đặt file này, ứng dụng dùng mặc định: `localhost`, user `root`, không mật khẩu.
+
+#### Bước 4 — Khởi tạo database MySQL
+
+Đảm bảo MySQL đang chạy trên máy (cổng `3306`), sau đó chạy 2 lệnh sau trong Terminal:
+
+```bash
+# Tạo database
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS cloud CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# Nạp schema và dữ liệu mẫu (chạy từ thư mục gốc dự án)
+mysql -u root -p cloud < server/src/main/resources/db/init.sql
+```
+
+> Lệnh trên sẽ hỏi mật khẩu MySQL của bạn. Nếu dùng MySQL Workbench hoặc DBeaver, bạn có thể import file `server/src/main/resources/db/init.sql` trực tiếp qua giao diện đồ họa.
+
+#### Bước 5 — Cấu hình Server (nếu build lại từ source)
+
+Mở file `server/src/main/resources/application.properties`, đảm bảo thông tin DB khớp với máy:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/cloud?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Ho_Chi_Minh
+spring.datasource.username=root
+spring.datasource.password=YOUR_MYSQL_PASSWORD
+```
+
+#### Bước 6 — Chạy Server
+
+Mở **Terminal 1**, điều hướng vào thư mục chứa JAR và chạy:
+
+```bash
+java -jar server.jar
+```
+
+Server khởi động thành công khi Terminal hiển thị dòng tương tự:
+
+```
+Socket Server started on port 5000
+Waiting for connections...
+```
+
+> Giữ Terminal này **mở trong suốt quá trình chạy**. Đừng đóng lại.
+
+#### Bước 7 — Chạy Client
+
+Mở **Terminal 2** mới (giữ Terminal 1 của Server vẫn chạy), điều hướng vào **cùng thư mục** và chạy:
+
+```bash
+java -jar client.jar
+```
+
+Sau 3–5 giây, cửa sổ đăng nhập JavaFX sẽ hiện ra.
+
+#### Bước 8 — Chạy nhiều Client đồng thời
+
+Để mô phỏng nhiều người đấu giá cùng lúc, mở thêm Terminal mới và chạy lại lệnh trên ở **mỗi Terminal**:
+
+```bash
+# Terminal 3
+java -jar client.jar
+
+# Terminal 4
+java -jar client.jar
+```
+
+Mỗi lần chạy sẽ mở thêm một cửa sổ Client độc lập, tất cả kết nối vào cùng một Server.
 
 ---
 
-## 💡 Hướng dẫn chạy nhanh bằng Docker Compose (Khuyên Dùng)
+### Cách 2 — Chạy bằng Docker Compose *(Không cần cài Java/MySQL trên máy)*
 
-Nếu máy bạn đã cài đặt Docker và Docker Compose, bạn có thể chạy toàn bộ hệ thống (gồm MySQL database tự khởi tạo + Server) bằng một lệnh duy nhất ở thư mục gốc:
+Yêu cầu: đã cài **Docker Desktop** (Windows/macOS) hoặc **Docker Engine** (Linux) và đang chạy.
+
+#### Bước 1 — Tạo file `.env` (cấu hình mật khẩu DB)
+
+Tạo file `.env` ở thư mục gốc dự án:
+
+```env
+DB_USERNAME=root
+DB_PASSWORD=YOUR_MYSQL_PASSWORD
+```
+
+#### Bước 2 — Khởi động MySQL + Server trong Docker
+
+Mở Terminal tại thư mục gốc dự án, chạy:
 
 ```bash
 docker compose up --build
 ```
 
-Sau khi Server trong Docker khởi động xong, bạn chỉ cần mở máy khách client cục bộ để kết nối và trải nghiệm:
+Docker sẽ tự động: tạo container MySQL → nạp `init.sql` → build Server → khởi động Server.  
+Chờ đến khi Terminal hiển thị `Socket Server started on port 5000` thì tiếp tục.
+
+#### Bước 3 — Chạy Client trên máy thật
+
+Mở Terminal mới (máy thật, không phải trong Docker), chạy:
+
 ```bash
 java -jar client.jar
 ```
 
----
+> Client vẫn chạy trực tiếp trên máy thật (không qua Docker) vì JavaFX cần hiển thị giao diện đồ họa.
 
-## 6. Danh sách Chức năng Đã Hoàn Thành
+#### Dừng Docker khi xong
 
-| STT | Chức năng chính | Mô tả kỹ thuật | Trạng thái |
-| :--- | :--- | :--- | :---: |
-| 1 | **Đăng ký / Đăng nhập** | Xác thực tài khoản qua Socket, phân quyền vai trò (Admin, Bidder, Seller) | ✔ Hoàn thành |
-| 2 | **Tạo phiên đấu giá** | Seller tạo phiên với cấu hình tùy biến. Áp dụng **Factory Method Pattern** để khởi tạo thông tin sản phẩm theo danh mục (Art, Electronic, Vehicle) | ✔ Hoàn thành |
-| 3 | **Đấu giá trực tuyến** | Cập nhật thông tin giá thầu thời gian thực sử dụng **Observer Pattern** kết hợp Socket push tin nhắn JSON | ✔ Hoàn thành |
-| 4 | **Tự động đấu giá (Auto-Bid)**| Người dùng đặt giới hạn ngân sách tối đa, hệ thống tự động nâng giá thầu dựa trên thuật toán hàng đợi ưu tiên | ✔ Hoàn thành |
-| 5 | **Chống bắn tỉa (Anti-Sniping)**| Tự động cộng thêm 60 giây vào thời gian kết thúc nếu phát hiện lượt thầu hợp lệ trong 60 giây cuối cùng | ✔ Hoàn thành |
-| 6 | **Xử lý Đấu giá Đồng thời** | Ngăn chặn race conditions khi nhiều người đặt giá cùng lúc bằng khóa `ReentrantLock` theo từng AuctionId tại server | ✔ Hoàn thành |
-| 7 | **Hệ thống ví tiền (Wallet)** | Quản lý số dư khả dụng và số dư đóng băng tạm giữ (Locked Balance). Tự động trả tiền thầu cũ khi bị outbid và kết chuyển tiền khi hoàn tất | ✔ Hoàn thành |
-| 8 | **Hệ thống thông báo** | Thông báo đẩy thời gian thực khi có biến động giá thầu, đổi vị thế thầu, thắng thầu, nhận tiền | ✔ Hoàn thành |
-| 9 | **Light / Dark Mode** | Hỗ trợ chuyển đổi giao diện sáng/tối linh hoạt trực tiếp trên giao diện Client nhờ CSS Stylesheet | ✔ Hoàn thành |
-| 10| **Trang giám sát Admin** | Admin xem log hoạt động hệ thống, hủy/dừng phiên đấu giá, theo dõi người dùng hoạt động | ✔ Hoàn thành |
+```bash
+docker compose down
+```
 
 ---
 
-## 7. Link Báo cáo & Video Demo
+### Cách 3 — Build từ source rồi chạy *(Dành cho nhà phát triển)*
 
-* **Báo cáo PDF (Tối đa 6 trang):** [👉 Link xem Báo cáo PDF](./Bao-cao-BTL-Nhom-4.pdf) *(Vui lòng cập nhật đường dẫn chính xác)*
-* **Video Demo thực tế (Tối đa 3 phút):** [👉 Link xem Video Demo trên YouTube/Drive](#) *(Vui lòng cập nhật đường dẫn chính xác)*
+Yêu cầu: **Maven 3.8+** (hoặc dùng Maven Wrapper `mvnw` có sẵn trong dự án).
+
+#### Linux / macOS
+
+```bash
+# Clone dự án
+git clone https://github.com/tuetistoof/Coud_auction_system.git
+cd SSS_huuhan_2526II_UET.CS2043_3
+
+# Cấp quyền và build (tự động copy JAR ra thư mục gốc)
+chmod +x build_jars.sh
+./build_jars.sh
+```
+
+Sau khi build xong, thư mục gốc sẽ có `server.jar` và `client.jar`. Tiếp tục từ **Bước 4** của Cách 1.
+
+#### Windows
+
+```cmd
+:: Clone dự án
+git clone https://github.com/tuetistoof/Coud_auction_system.git
+cd SSS_huuhan_2526II_UET.CS2043_3
+
+:: Build và copy JAR
+mvnw.cmd clean package -DskipTests
+copy server\target\server-0.0.1-SNAPSHOT.jar server.jar
+copy client\target\client-0.0.1-SNAPSHOT.jar client.jar
+```
+
+Tiếp tục từ **Bước 4** của Cách 1.
+
+---
+
+### Xử lý sự cố thường gặp
+
+| Lỗi | Nguyên nhân | Cách xử lý |
+|---|---|---|
+| `Connection refused` khi chạy Client | Server chưa khởi động | Chạy `server.jar` trước, chờ thấy `port 5000` |
+| `Access denied for user 'root'` | Sai mật khẩu MySQL | Sửa lại `client.properties` và `application.properties` |
+| `Unknown database 'cloud'` | Chưa tạo DB | Chạy lại lệnh ở Bước 4 |
+| Cửa sổ JavaFX không hiện | Java thiếu JavaFX module | Dùng đúng bản JDK có JavaFX (Azul Zulu FX hoặc Liberica Full JDK) |
+| Server tắt ngay sau khi chạy | DB chưa sẵn sàng | Kiểm tra MySQL đang chạy và cấu hình đúng port `3306` |
+
+---
+
+## Danh sách chức năng đã hoàn thành
+
+| STT | Tính năng | Giải pháp kỹ thuật | Trạng thái |
+|:---:|---|---|:---:|
+| 1 | Đăng ký & Đăng nhập | Socket JSON, phân quyền vai trò | ✅ |
+| 2 | Tạo phiên đấu giá | Factory Method Pattern tạo `Item` theo danh mục | ✅ |
+| 3 | Đấu giá trực tiếp (realtime) | Observer Pattern, đồng bộ phòng thầu đa client | ✅ |
+| 4 | Tự động thầu (Auto-Bid) | Hàng đợi ưu tiên, ngân sách tối đa | ✅ |
+| 5 | Chống bắn tỉa (Anti-Sniping) | Gia hạn tự động +60 giây khi có thầu sát giờ chót | ✅ |
+| 6 | Xử lý thầu đồng thời | `ReentrantLock` per-auction, chống race condition | ✅ |
+| 7 | Hệ thống ví tiền (Wallet) | Đóng băng số dư, tự hoàn trả khi bị outbid | ✅ |
+| 8 | Push notification thời gian thực | Server đẩy thông báo khi bị vượt giá / thắng thầu | ✅ |
+| 9 | Giao diện Light / Dark Mode | Chuyển đổi CSS Stylesheet động | ✅ |
+| 10 | Trang quản trị (Admin) | Xem log, giám sát và dừng khẩn cấp phiên thầu | ✅ |
+
+---
+
+
+## Báo cáo PDF & Video Demo
+
+- 📄 **Báo cáo PDF:** [Tải báo cáo BTL (OneDrive)](https://1drv.ms/w/c/a49f15581f61e2f3/IQDCZOaazyt9SasJdDgkvcAVAfDvFopFUlgUfr6WMrkBEbM?e=7jYRQ6)
+- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/fg49XR1IxoI?si=F4GLxw9gnSC42smE)
+
+---
+
+*Đồ án môn Lập Trình Nâng Cao (CS2043) — Nhóm SSS (Huuhan) — UET, 2025–2026*

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.logging.Level;
 
 public class NotificationController {
-    // Logging Standards: Declared first as a private static final attribute
     private static final Logger logger = Logger.getLogger(NotificationController.class.getName());
  
     private final NotificationService notificationService; // Dependency Injection: Short name
@@ -32,7 +31,7 @@ public class NotificationController {
 
     public void notifyWatchers(Auction auction, String highestBidderId) throws ControllerException, Exception {
         try {
-            //validateAuctionId(auctionId);
+            validateAuctionId(auction.getAuctionConfig().getId());
             validateUserId(highestBidderId);
             
             logger.log(Level.INFO, "Triggering outbid notifications for auctionId: {0}", auction);
@@ -48,7 +47,7 @@ public class NotificationController {
 
     public void notifyAuctionEnded(Auction auction) throws ControllerException, Exception {
         try {
-            //validateAuctionId(auction);
+            validateAuctionId(auction.getAuctionConfig().getId());
             
          
             logger.log(Level.INFO, "Triggering auction-ended notifications for auctionId: {0}", auction);

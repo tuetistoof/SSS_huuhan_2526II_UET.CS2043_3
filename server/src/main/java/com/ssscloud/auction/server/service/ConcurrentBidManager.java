@@ -25,25 +25,20 @@ import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
 /**
- * ConcurrentBidManager handles asynchronous bid processing for active auctions.
- * It utilizes a per-auction queue and worker thread model to ensure thread
- * safety
- * and sequential consistency of bids within a single auction room.
+ * đảm nhiệm quản lý việc xử lý đồng thời các bid cho cùng một auction, đảm bảo tính nhất quán của dữ liệu và thứ tự xử lý.
+ * Mỗi auction sẽ có một queue riêng để nhận các bid task, và một worker thread
  */
 public class ConcurrentBidManager {
-    private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); // Logging Standards:
-                                                                                                 // Declared first
+    private static final Logger logger = Logger.getLogger(ConcurrentBidManager.class.getName()); 
     private static ConcurrentBidManager instance = null;
     private UserDAO userDAO;
-    private BidTransactionDAO bidTransactionDAO; // Dependency Injection: Short name for DAO
+    private BidTransactionDAO bidTransactionDAO; 
     private AutoBidService autoBidService;
     private AuctionDAO auctionDAO;
     private NotificationController notificationController;
-    private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>(); // Internal Logic:
-                                                                                                 // Descriptive naming
-    private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>(); // Internal Logic: Descriptive naming
-    private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); // Internal Logic: Track closed auctions
-                                                                              // to prevent new bids
+    private final Map<String, BlockingQueue<BidTask>> bidTaskQueues = new ConcurrentHashMap<>();
+    private final Map<String, Thread> workerThreads = new ConcurrentHashMap<>();
+    private final Set<String> closedAuctions = ConcurrentHashMap.newKeySet(); 
     private final Set<String> drainingAuctions = ConcurrentHashMap.newKeySet();
 
     private ConcurrentBidManager() {
@@ -56,7 +51,7 @@ public class ConcurrentBidManager {
         this.autoBidService = autoBidService;
         this.auctionDAO = auctionDAO;
         this.notificationController = notificationController;
-    } // Constructor section
+    } 
       // --- PUBLIC METHODS ---
 
     public static ConcurrentBidManager getInstance() {

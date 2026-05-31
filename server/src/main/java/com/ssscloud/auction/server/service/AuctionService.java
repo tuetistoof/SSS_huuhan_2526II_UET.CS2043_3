@@ -37,9 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * AuctionService manages the business logic for auction lifecycle operations.
- *
+/** *
  * scheduleClose pipeline:
  *   pool1 (ScheduledThreadPool) — tác vụ nhanh, không block:
  *     1. Đọc endTime từ RAM (không query DB)
@@ -68,7 +66,6 @@ public class AuctionService {
     private final UserDAO userDAO; 
     private final UserService userService;
     private final ItemService itemService;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
     private final NotificationService notificationService;
     private final AutoBidService autoBidService;
 
@@ -112,7 +109,7 @@ public class AuctionService {
                     request.getMinIncrement(),
                     startTime,
                     request.getEndTime(),
-                    AppConstant.DEFAULT_EXTENSION_SECONDS.getValue()); // Default anti-sniping extension duration
+                    AppConstant.DEFAULT_EXTENSION_SECONDS.getValue()); 
     
             Auction auction = new Auction(auctionConfig, AuctionStatus.OPEN, sellerId, item.getId());
             

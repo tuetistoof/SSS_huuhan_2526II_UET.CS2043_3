@@ -1,14 +1,11 @@
 package com.ssscloud.auction.server.controller;
 
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ssscloud.auction.common.enums.UserRole;
 import com.ssscloud.auction.common.exception.ControllerException;
-import com.ssscloud.auction.common.exception.DAOException;
 import com.ssscloud.auction.common.exception.ErrorCode;
-import com.ssscloud.auction.common.exception.ServiceException;
 import com.ssscloud.auction.common.payload.request.LoginRequest;
 import com.ssscloud.auction.common.payload.request.RegisterRequest;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
@@ -26,12 +23,12 @@ public class UserController {
 
     public String login(Object rawRequest) throws ControllerException, Exception {
         try {
-            String jsonPayload = JsonUtils.toJson(rawRequest); // Internal Logic: jsonPayload
+            String jsonPayload = JsonUtils.toJson(rawRequest); 
             LoginRequest loginRequest = JsonUtils.fromJson(jsonPayload, LoginRequest.class); // Request Mapping: loginRequest
 
             validateLoginRequest(loginRequest); // Validation: validateLoginRequest
 
-            UserDTO userDto = userService.login(loginRequest); // DTOs: userDto
+            UserDTO userDto = userService.login(loginRequest); 
             return JsonUtils.toJson(ApiResponse.success(userDto, "User logged in successfully."));
         } catch (ControllerException controllerException) {
             throw controllerException;
@@ -44,8 +41,8 @@ public class UserController {
 
     public String register(Object rawRequest) throws ControllerException, Exception {
         try {
-            String jsonPayload = JsonUtils.toJson(rawRequest); // Internal Logic: jsonPayload
-            RegisterRequest registerRequest = JsonUtils.fromJson(jsonPayload, RegisterRequest.class); // Request Mapping: registerRequest
+            String jsonPayload = JsonUtils.toJson(rawRequest); 
+            RegisterRequest registerRequest = JsonUtils.fromJson(jsonPayload, RegisterRequest.class); 
 
             validateRegisterRequest(registerRequest); // Validation: validateRegisterRequest
             UserDTO userDto = userService.register(registerRequest); // DTOs: userDto
@@ -60,12 +57,12 @@ public class UserController {
 
     public String deposit(Object rawRequest, String userId) throws ControllerException, Exception {
         try {
-            logger.log(Level.INFO, "Processing deposit request for userId: {0}", userId); // Logging Standards: Level.INFO
-            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim(); // Internal Logic: jsonPayload
-            long depositAmount = (long) Double.parseDouble(jsonPayload); // Naming Convention: depositAmount
-            logger.log(Level.INFO, "Parsed deposit amount: {0}", depositAmount); // Logging Standards: Level.INFO
-            validateDepositRequest(depositAmount); // Validation: validateDepositRequest
-            long newBalance = userService.deposit(depositAmount, userId); // DTOs: newBalance
+            logger.log(Level.INFO, "Processing deposit request for userId: {0}", userId); 
+            String jsonPayload = JsonUtils.toJson(rawRequest).replace("\"", "").trim(); 
+            long depositAmount = (long) Double.parseDouble(jsonPayload); 
+            logger.log(Level.INFO, "Parsed deposit amount: {0}", depositAmount); 
+            validateDepositRequest(depositAmount); 
+            long newBalance = userService.deposit(depositAmount, userId); 
             return JsonUtils.toJson(ApiResponse.success(newBalance, "Funds deposited successfully."));
         } catch (ControllerException controllerException) {
             throw controllerException;
@@ -95,40 +92,35 @@ public class UserController {
 
     private void validateLoginRequest(LoginRequest loginRequest){ // Validation: validateLoginRequest
         if (loginRequest == null)
-            throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The login request payload cannot be null."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The login request payload cannot be null.");
         if (loginRequest.getUsername() == null || loginRequest.getUsername().isBlank())
-            throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The username field is required and cannot be empty."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The username field is required and cannot be empty."); 
         if (loginRequest.getPassword() == null || loginRequest.getPassword().isBlank())
-            throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The password field is required and cannot be empty."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_LOGIN_REQUEST, "The password field is required and cannot be empty."); 
     }
 
      private void validateRegisterRequest(RegisterRequest registerRequest){ // Validation: validateRegisterRequest
         if (registerRequest == null)
-            throw new ControllerException(ErrorCode.INVALID_REGISTER_REQUEST, "The registration request payload cannot be null."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_REGISTER_REQUEST, "The registration request payload cannot be null."); 
         if (registerRequest.getUsername() == null || registerRequest.getUsername().isBlank())
-            throw new ControllerException(ErrorCode.INVALID_USERNAME, "The username field is required and cannot be empty."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_USERNAME, "The username field is required and cannot be empty."); 
         if (registerRequest.getPassword() == null || registerRequest.getPassword().isBlank())
-            throw new ControllerException(ErrorCode.INVALID_PASSWORD, "The password field is required and cannot be empty."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_PASSWORD, "The password field is required and cannot be empty."); 
         if (registerRequest.getEmail() == null || registerRequest.getEmail().isBlank())
-            throw new ControllerException(ErrorCode.INVALID_EMAIL, "The email address is required and cannot be empty."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_EMAIL, "The email address is required and cannot be empty."); 
         if (registerRequest.getRole() == null)
-            throw new ControllerException(ErrorCode.UNDEFINED_ROLE, "The user role must be specified."); // Language Policy: English
+            throw new ControllerException(ErrorCode.UNDEFINED_ROLE, "The user role must be specified."); 
 
         if (registerRequest.getUsername().length() < 3 || registerRequest.getUsername().length() > 20)
-            throw new ControllerException(ErrorCode.INVALID_LENGTH_USERNAME, "The username must be between 3 and 20 characters in length."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_LENGTH_USERNAME, "The username must be between 3 and 20 characters in length.");
         if (registerRequest.getPassword().length() < 6 || registerRequest.getPassword().length() > 100)
-            throw new ControllerException(ErrorCode.INVALID_LENGTH_PASSWORD, "The password must be between 6 and 100 characters in length."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_LENGTH_PASSWORD, "The password must be between 6 and 100 characters in length."); 
         if (!registerRequest.getEmail().contains("@")) 
-            throw new ControllerException(ErrorCode.INVALID_EMAIL, "The provided email address format is invalid."); // Language Policy: English
+            throw new ControllerException(ErrorCode.INVALID_EMAIL, "The provided email address format is invalid."); 
     }
 
     private void validateDepositRequest(long depositAmount){ // Validation: validateDepositRequest
         if (depositAmount <= 0)
-            throw new ControllerException(ErrorCode.INVALID_DEPOSIT, "The deposit amount must be a positive value greater than zero."); // Language Policy: English
-    }
-
-    private void validateGetMyAuctionsRequest(String sellerId) {
-        if (sellerId == null || sellerId.isBlank())
-            throw new ControllerException(ErrorCode.INVALID_DATA, "The seller identifier is mandatory to retrieve auctions.");
+            throw new ControllerException(ErrorCode.INVALID_DEPOSIT, "The deposit amount must be a positive value greater than zero."); 
     }
 }
