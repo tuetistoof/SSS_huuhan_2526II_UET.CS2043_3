@@ -45,3 +45,4 @@ repomix-output.xml
 server.log
 *.lck
 *.log.*
+server.log.*

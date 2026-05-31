@@ -294,7 +294,7 @@ Tiếp tục từ **Bước 4** của Cách 1.
 ## Báo cáo PDF & Video Demo
 
 - 📄 **Báo cáo PDF:** [Tải báo cáo BTL (OneDrive)](https://1drv.ms/w/c/a49f15581f61e2f3/IQDCZOaazyt9SasJdDgkvcAVAfDvFopFUlgUfr6WMrkBEbM?e=7jYRQ6)
-- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/fg49XR1IxoI?si=F4GLxw9gnSC42smE)
+- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/qp2XtEzeNdc?si=OyxiGee9npSjzNDM)
 
 ---
 
