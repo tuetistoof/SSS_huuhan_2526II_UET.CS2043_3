@@ -17,10 +17,7 @@ import com.ssscloud.auction.server.dao.UserDAO;
 import com.ssscloud.auction.server.util.AuctionRegistry;
 import com.ssscloud.auction.server.util.SessionRegistry;
 
-/**
- * BidService is responsible for handling the business logic of manual bid
- * placements.
- */
+
 public class BidService {
     private static final Logger logger = Logger.getLogger(BidService.class.getName());
 

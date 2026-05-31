@@ -18,6 +18,13 @@ import com.ssscloud.auction.server.dao.BidTransactionDAO;
 import com.ssscloud.auction.server.service.AutoBidService;
 import com.ssscloud.auction.server.service.BidService;
 import com.ssscloud.auction.server.util.AuctionRegistry;
+/**
+ * BidController xử lý các request từ client liên quan đến bidding:
+ *  - Đặt một bid thủ công (manual bid) cho một auction cụ thể (dành cho bidder)
+ * - Đăng ký cấu hình auto-bid cho một auction cụ thể (dành cho bidder)
+ * - Hủy đăng ký auto-bid (dành cho bidder) 
+ * - Lấy lịch sử các bid đã đặt cho một auction cụ thể (dành cho tất cả user)
+ */
 
 public class BidController {
     private static final Logger logger = Logger.getLogger(BidController.class.getName());

@@ -28,31 +28,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * AutoBidService manages the automated bidding logic for auction participants.
- * It maintains registrations and bid frequencies per auction room.
- *
- * CONCURRENCY MODEL (Per-Auction Worker Thread):
- * ┌─────────────────────────────────────────────────────────────────────┐
- * │ Auction A: autobid-worker-AuctionA ← triggerQueue-AuctionA │
- * │ Auction B: autobid-worker-AuctionB ← triggerQueue-AuctionB │
- * │ Auction C: autobid-worker-AuctionC ← triggerQueue-AuctionC │
- * │ ... │
- * │ Mỗi auction có 1 THREAD RIÊNG + 1 QUEUE RIÊNG. │
- * │ Các auction xử lí SONG SONG, không nghẽn cổ chai. │
- * │ Trong cùng 1 auction, trigger xử lí TUẦN TỰ (1 thread duy nhất).│
- * └─────────────────────────────────────────────────────────────────────┘
- *
- * Flow:
- * 1. register() / processTask() gọi tryTrigger()
- * → Đẩy tín hiệu vào triggerQueue của auction đó → return NGAY (non-blocking)
- * 2. Worker thread (autobid-worker-XXX) nhận tín hiệu từ queue
- * → Gộp nhiều tín hiệu thành 1 lần xử lí (drain queue)
- * → Lấy trạng thái auction MỚI NHẤT từ AuctionRegistry
- * → Chạy trigger() để tìm winner và submit bid
- * 3. Nếu submit thất bại → loại winner, thử candidate tiếp (retry loop)
- * 4. Nếu submit thành công → ConcurrentBidManager worker xử lí bid
- * → Worker gọi lại tryTrigger() → tín hiệu mới vào queue → lặp lại
- * 5. Khi không còn candidate → worker chờ (block) cho đến khi có AutoBid mới
+ * cơ chế 
+ * - Đăng ký auto-bid: bidder gửi maxBid → validate → thêm vào registrationsMap
+ * - Trigger auto-bid: sau khi đăng ký hoặc sau khi bid thủ công được xử
+    * lí xong → gọi tryTrigger() → đẩy tín hiệu vào triggerQueue của auction
+    * Worker thread của auction đó sẽ nhận tín hiệu và chạy trigger() để xử lí auto-bid matching
+    * AutoBidService chỉ chịu trách nhiệm quản lý đăng ký và trigger auto-bid matching.
  */
 public class AutoBidService {
     private static final Logger logger = Logger.getLogger(AutoBidService.class.getName());
@@ -74,9 +55,6 @@ public class AutoBidService {
     }
 
     /**
-     * Register an auto-bid request for a bidder in a specific auction.
-     * Validates request integrity, auction status, and bidder financial capacity.
-     *
      * Sau khi validate và thêm entry vào registrationsMap,
      * gọi tryTrigger() để đẩy tín hiệu vào queue của auction.
      * Thread client RETURN NGAY, không bị chặn.
@@ -141,8 +119,6 @@ public class AutoBidService {
 
     /**
      * Core trigger logic — xử lí auto-bid matching cho 1 auction.
-     *
-     * ★ CHỈ ĐƯỢC GỌI BỞI WORKER THREAD CỦA AUCTION ĐÓ. ★
      * Không cần lock vì mỗi auction chỉ có DUY NHẤT 1 worker thread.
      *
      * Flow:
@@ -270,9 +246,6 @@ public class AutoBidService {
         }
     }
 
-    /**
-     * Retrieve all auto-bid registrations for a specific auction.
-     */
     public List<AutoBidEntry> getRegistrations(String auctionId) throws Exception {
         try {
             List<AutoBidEntry> autoBidEntriesList = registrationsMap.getOrDefault(auctionId, List.of());
@@ -286,12 +259,7 @@ public class AutoBidService {
         }
     }
 
-    /**
-     * Clear all auto-bid registrations for a specific auction.
-     * Đánh dấu auctionId vào cancelledAuctionIds TRƯỚC khi remove khỏi map,
-     * để register() đang chạy đồng thời sẽ thấy flag và từ chối insert entry mới.
-     * Dừng worker thread của auction này.
-     */
+
     public void clearRegistrations(String auctionId) throws Exception {
         try {
             cancelledAuctionIds.add(auctionId);
@@ -394,9 +362,6 @@ public class AutoBidService {
         }
     }
 
-    /**
-     * Notify a bidder that their auto-bid has been stopped.
-     */
     private void notifyAutoBidStopped(String bidderId) {
         java.io.PrintWriter writer = sessionRegistry.getWriter(bidderId);
         if (writer != null) {

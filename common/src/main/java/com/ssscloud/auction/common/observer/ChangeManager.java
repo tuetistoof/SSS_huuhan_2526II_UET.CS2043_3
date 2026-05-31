@@ -9,9 +9,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * ChangeManager holds the registry of Subjects and their Observers, and provides methods to
- * attach/detach observers and notify them of changes. It is implemented as a thread-safe singleton
- * to ensure consistent state across the application.
+ * giữ map auction - list observer, cung cấp attach detach notify
+ * - attach: client gọi khi subscribe 1 auction, thêm observer vào list của auction đó
+ * - detach: client gọi khi unsubscribe hoặc disconnect, xóa observer khỏi list của auction đó
+ * - notify: auction gọi khi có thay đổi, gửi update đến tất cả observer trong list của auction đó
  */
 public class ChangeManager {
   private final Map<Subject, List<Observer>> registry = new ConcurrentHashMap<>();

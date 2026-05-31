@@ -13,6 +13,9 @@ import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.payload.response.request.ListResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.server.dao.QueryDAO;
+/**
+ * QueryController xử lý các request từ client liên quan đến truy vấn dữ liệu
+ */
 
 public class QueryController {
     private static final Logger logger = Logger.getLogger(QueryController.class.getName());

@@ -64,9 +64,6 @@ public class AdminController {
 
     /**
      * Trả về danh sách tất cả auction, có thể lọc theo status.
-     *
-     * Payload từ client: String tên status ("RUNNING", "OPEN", "FINISHED", "CANCELED")
-     *                    hoặc null / "" để lấy tất cả.
      */
     public String getAuctions(Object rawFilter) throws ControllerException, Exception {
         try {
@@ -92,8 +89,7 @@ public class AdminController {
     }
 
     /**
-     * Trả về 3 con số thống kê cho metric cards trên admin dashboard:
-     * runningCount, endedCount, totalUsers.
+     * Trả về 3 con số thống kê cho metric cards trên admin dashboard: runningCount, endedCount, totalUsers.
      */
     public String getMetrics() throws ControllerException, Exception {
         try {
@@ -112,16 +108,7 @@ public class AdminController {
         }
     }
 
-    /**
-     * Xóa (cancel) một auction không hợp lệ.
-     * Lý do xóa là bắt buộc — request sẽ bị từ chối nếu thiếu hoặc để trống.
-     *
-     * Payload từ client (JSON object):
-     * {
-     *   "auctionId": "abc-123",
-     *   "reason":    "Sản phẩm vi phạm chính sách đấu giá"
-     * }
-     */
+
     public String cancelAuction(Object rawRequest) throws ControllerException, Exception {
         try {
             logger.log(Level.INFO, "Admin requested auction cancellation. Payload: {0}", rawRequest);
@@ -170,11 +157,7 @@ public class AdminController {
 
     // ─────────────────────────── PRIVATE HELPERS ──────────────────────────
 
-    /**
-     * Chuyển đổi filter string từ client thành AuctionStatus enum.
-     * Trả về null nếu client không truyền filter (lấy tất cả).
-     * Ném ControllerException nếu giá trị không hợp lệ.
-     */
+    
     private AuctionStatus parseStatusFilter(Object rawFilter) throws ControllerException {
         if (rawFilter == null) {
             return null;
