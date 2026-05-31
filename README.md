@@ -1,7 +1,7 @@
 # CloudBid — Hệ thống Đấu giá Trực tuyến
 
-> **Đồ án môn CS2043 — Lập Trình Nâng Cao**  
-> **Nhóm:** SSS (Huuhan) — UET, 2025–2026  
+> **Bài tập lớn môn CS2043 — Lập Trình Nâng Cao**  
+> **Nhóm 4:** — UET, 2025–2026  
 > **Kiến trúc:** Client–Server | JavaFX + Spring Boot + TCP Socket + MySQL
 
 ---
@@ -87,7 +87,18 @@ Mở Terminal/CMD và chạy:
 java -version
 ```
 
-Yêu cầu **Java 17 trở lên**. Nếu chưa có, tải tại [https://adoptium.net](https://adoptium.net) và cài đặt, sau đó thử lại.
+Yêu cầu **Java 17 trở lên**.
+
+> **⚠️ Lưu ý dành riêng cho macOS:**  
+> JavaFX **không được đi kèm** trong các bản OpenJDK thông thường (Adoptium, Oracle JDK). Nếu dùng các bản JDK này, chạy `client.jar` sẽ báo lỗi:
+> ```
+> Error: JavaFX runtime components are missing
+> ```
+> Để tránh lỗi này, hãy cài một trong hai bản JDK có sẵn JavaFX:
+> - **Azul Zulu FX** → [https://www.azul.com/downloads/?package=jdk-fx](https://www.azul.com/downloads/?package=jdk-fx) — chọn *macOS* + *JDK FX*
+> - **Liberica Full JDK** → [https://bell-sw.com/pages/downloads/](https://bell-sw.com/pages/downloads/) — chọn *Full JDK*
+>
+> Sau khi cài, chạy lại `java -version` để xác nhận đang dùng đúng bản.
 
 #### Bước 2 — Chuẩn bị thư mục chạy
 
@@ -269,33 +280,33 @@ Tiếp tục từ **Bước 4** của Cách 1.
 | `Access denied for user 'root'` | Sai mật khẩu MySQL | Sửa lại `client.properties` và `application.properties` |
 | `Unknown database 'cloud'` | Chưa tạo DB | Chạy lại lệnh ở Bước 4 |
 | Cửa sổ JavaFX không hiện | Java thiếu JavaFX module | Dùng đúng bản JDK có JavaFX (Azul Zulu FX hoặc Liberica Full JDK) |
+| `Error: JavaFX runtime components are missing` *(macOS)* | Bản JDK không kèm JavaFX | Cài **Azul Zulu FX** hoặc **Liberica Full JDK** thay thế |
 | Server tắt ngay sau khi chạy | DB chưa sẵn sàng | Kiểm tra MySQL đang chạy và cấu hình đúng port `3306` |
 
 ---
 
 ## Danh sách chức năng đã hoàn thành
 
-| STT | Tính năng | Giải pháp kỹ thuật | Trạng thái |
-|:---:|---|---|:---:|
-| 1 | Đăng ký & Đăng nhập | Socket JSON, phân quyền vai trò | ✅ |
-| 2 | Tạo phiên đấu giá | Factory Method Pattern tạo `Item` theo danh mục | ✅ |
-| 3 | Đấu giá trực tiếp (realtime) | Observer Pattern, đồng bộ phòng thầu đa client | ✅ |
-| 4 | Tự động thầu (Auto-Bid) | Hàng đợi ưu tiên, ngân sách tối đa | ✅ |
-| 5 | Chống bắn tỉa (Anti-Sniping) | Gia hạn tự động +60 giây khi có thầu sát giờ chót | ✅ |
-| 6 | Xử lý thầu đồng thời | `ReentrantLock` per-auction, chống race condition | ✅ |
-| 7 | Hệ thống ví tiền (Wallet) | Đóng băng số dư, tự hoàn trả khi bị outbid | ✅ |
-| 8 | Push notification thời gian thực | Server đẩy thông báo khi bị vượt giá / thắng thầu | ✅ |
-| 9 | Giao diện Light / Dark Mode | Chuyển đổi CSS Stylesheet động | ✅ |
-| 10 | Trang quản trị (Admin) | Xem log, giám sát và dừng khẩn cấp phiên thầu | ✅ |
+| STT | Tính năng | Giải pháp kỹ thuật |
+|:---:|---|---|
+| 1 | Register & Login | Socket JSON, phân quyền theo vai trò (Bidder / Seller / Admin) |
+| 2 | Create Auction | Factory Method Pattern, phân cấp danh mục `Item` (Art / Electronic / Vehicle) |
+| 3 | Realtime Bidding | Observer Pattern, đồng bộ phòng thầu đa client |
+| 4 | Auto-Bid | Hàng đợi ưu tiên, ngân sách tối đa cấu hình được theo từng bidder |
+| 5 | Anti-Sniping | Tự động gia hạn +36 giây khi có bid sát thời điểm kết thúc |
+| 6 | Concurrent Bid Handling | `ReentrantLock` per auction, ngăn race condition |
+| 7 | Wallet & Balance Freeze | Đóng băng số dư khi đặt bid, hoàn trả tự động khi bị outbid |
+| 8 | Push Notification | Server đẩy sự kiện realtime khi bị vượt giá / thắng thầu |
+| 9 | Light / Dark Mode UI | Chuyển đổi CSS Stylesheet động |
+| 10 | Admin Dashboard | Xem log trực tiếp, dừng/hủy khẩn cấp phiên đấu giá |
 
 ---
-
 
 ## Báo cáo PDF & Video Demo
 
-- 📄 **Báo cáo PDF:** [Tải báo cáo BTL (OneDrive)](https://onedrive.live.com/:w:/g/personal/a49f15581f61e2f3/IQDCZOaazyt9SasJdDgkvcAVAYEP5GbRumbw0TRJ1OkQaho?rtime=ZaGSGDG_3kg&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3cvYy9hNDlmMTU1ODFmNjFlMmYzL0lRRENaT2Fhenl0OVNhc0pkRGdrdmNBVkFZRVA1R2JSdW1idzBUUkoxT2tRYWhv)
-- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/qp2XtEzeNdc?si=OyxiGee9npSjzNDM)
+- 📄 **Báo cáo PDF:** [Tải báo cáo BTL (OneDrive)](https://1drv.ms/w/c/a49f15581f61e2f3/IQDCZOaazyt9SasJdDgkvcAVAfDvFopFUlgUfr6WMrkBEbM?e=7jYRQ6)
+- 🎥 **Video Demo:** [Xem trên YouTube](https://youtu.be/fg49XR1IxoI?si=F4GLxw9gnSC42smE)
 
 ---
 
-*Đồ án môn Lập Trình Nâng Cao (CS2043) — Nhóm SSS (Huuhan) — UET, 2025–2026*
+*Bài tập lớn môn Lập Trình Nâng Cao (CS2043) — Nhóm 4 — UET, 2025–2026*
