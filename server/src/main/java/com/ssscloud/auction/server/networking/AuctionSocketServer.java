@@ -1,4 +1,4 @@
-    package com.ssscloud.auction.server.networking;
+ package com.ssscloud.auction.server.networking;
 
 import java.io.IOException;
 import java.net.ServerSocket;

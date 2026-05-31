@@ -1,13 +1,6 @@
 @import "tokens.css";
 @import "base.css";
 
-/* ==========================================================
-   Covers: Toast root alignment, main layout card container,
-           header layouts, icon circle vectors, typography text,
-           and the interactive close button.
-   ========================================================== */
-
-
 .toast-root {
     -fx-alignment: TOP_RIGHT;
     -fx-padding: 16 16 0 0;

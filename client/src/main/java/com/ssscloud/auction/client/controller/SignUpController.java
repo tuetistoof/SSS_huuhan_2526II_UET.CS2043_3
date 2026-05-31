@@ -29,8 +29,6 @@ import javafx.stage.Modality;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
-// Cần thêm check xem đúng định dạng gmail hay ko
-
 public class SignUpController {
 
     @FXML private Button btnSignUp;

@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import com.ssscloud.auction.client.controller.shared.LoadingController;
 import com.ssscloud.auction.client.networking.SocketDispatcher;
-import com.ssscloud.auction.client.util.SceneManager;
 import com.ssscloud.auction.client.util.ServerResponse;
 import com.ssscloud.auction.client.util.SessionManager;
 import com.ssscloud.auction.common.payload.ClientMessage;

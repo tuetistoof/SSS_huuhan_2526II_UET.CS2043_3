@@ -33,9 +33,20 @@ public class DatabaseConnection {
             Properties databaseProperties = new Properties();
             databaseProperties.load(inputStream);
             
-            String databaseUrl = databaseProperties.getProperty("spring.datasource.url");
-            String databaseUser = databaseProperties.getProperty("spring.datasource.username");
-            String databasePassword = databaseProperties.getProperty("spring.datasource.password");
+            String databaseUrl = System.getenv("SPRING_DATASOURCE_URL");
+            if (databaseUrl == null || databaseUrl.trim().isEmpty()) {
+                databaseUrl = databaseProperties.getProperty("spring.datasource.url");
+            }
+            
+            String databaseUser = System.getenv("SPRING_DATASOURCE_USERNAME");
+            if (databaseUser == null || databaseUser.trim().isEmpty()) {
+                databaseUser = databaseProperties.getProperty("spring.datasource.username");
+            }
+            
+            String databasePassword = System.getenv("SPRING_DATASOURCE_PASSWORD");
+            if (databasePassword == null || databasePassword.trim().isEmpty()) {
+                databasePassword = databaseProperties.getProperty("spring.datasource.password");
+            }
 
             if (databaseUrl == null || databaseUser == null || databasePassword == null) {
                 throw new DAOException(ErrorCode.DB_CONFIG_MISSING, "Configuration failure: Missing required database connection parameters (url/username/password).");

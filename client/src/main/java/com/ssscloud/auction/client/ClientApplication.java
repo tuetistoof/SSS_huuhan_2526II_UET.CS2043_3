@@ -10,6 +10,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -17,8 +18,6 @@ public class ClientApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Đọc host/port từ client.properties thay vì hardcode "localhost"
-        // → mỗi máy chỉ cần sửa server.host trong file đó rồi build lại
         Properties clientProps = new Properties();
         try (InputStream is = getClass().getResourceAsStream("/client.properties")) {
             if (is != null) {
@@ -33,8 +32,9 @@ public class ClientApplication extends Application {
         SceneManager.registerScene = FXMLLoader.load(getClass().getResource("/fxml/signup.fxml"));
         
         Scene scene = new Scene(SceneManager.loginScene);
-        //primaryStage.initStyle(StageStyle.UNDECORATED);
         primaryStage.setTitle("CloudBid");
+        Image icon = new Image(getClass().getResourceAsStream("/images/Asset2.png"));
+        primaryStage.getIcons().add(icon);
         primaryStage.setScene(scene);
         primaryStage.centerOnScreen();
         primaryStage.show();

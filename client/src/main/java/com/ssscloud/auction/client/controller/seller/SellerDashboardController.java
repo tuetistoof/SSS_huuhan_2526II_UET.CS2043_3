@@ -104,7 +104,6 @@ public class SellerDashboardController {
             return new SimpleStringProperty(String.format("%02d:%02d:%02d", h, m, s));
         });
 
-        // Trạng thái — badge màu (cần cả cellValueFactory và cellFactory)
         colStatus.setCellValueFactory(c ->
                 new SimpleStringProperty(statusLabel(c.getValue().getStatus())));
  
@@ -236,7 +235,6 @@ public class SellerDashboardController {
         }
     }
 
-
     public void setOnCreateAuction(Runnable callback) {
         this.onCreateAuction = callback;
     }
@@ -254,7 +252,6 @@ public class SellerDashboardController {
             case CANCELED         -> "badge-canceled";
         };
     }
-
 
     private String statusLabel(AuctionStatus status) {
         if (status == null) return "—";

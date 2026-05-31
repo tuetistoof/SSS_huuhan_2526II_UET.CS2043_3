@@ -279,6 +279,18 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
+        long alreadyLocked = 0;
+        BidDTO currentLeaderBid = findHighestBid();
+        if (currentLeaderBid != null && currentUserName != null
+                && currentUserName.equals(currentLeaderBid.getBidderUsername())) {
+            alreadyLocked = currentLeaderBid.getBidAmount();
+        }
+        long availableBalance = currentUser.getAccountBalance() - currentUser.getUnsettledBalance();
+        if (amount - alreadyLocked > availableBalance) {
+            showError("Insufficient balance.\nYour available balance is not enough to continue this action.");
+            return;
+        }
+
         if (!hasBids()) {
             if (amount < currentAuction.getStartPrice()) {
                 showError("Bid amount can not be lower than start price: "
@@ -411,9 +423,20 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
+        if (tempMaxBid <= 0) {
+            showError("Max bid must be larger than 0.");
+            return;
+        }
+
         if (tempMaxBid <= getCurrentPrice()) {
             showError("Max bid must be higher than current price ("+
                     String.format("%,d ₫", getCurrentPrice()) + ").");
+            return;
+        }
+
+        long availableBalance = currentUser.getAccountBalance() - currentUser.getUnsettledBalance();
+        if (tempMaxBid > availableBalance) {
+            showError("Insufficient balance.\nAvailable: " + String.format("%,d ₫", availableBalance));
             return;
         }
 
@@ -454,6 +477,11 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
+        if (newMax <= 0) {
+            showError("Max bid must be larger than 0.");
+            return;
+        }
+
         if (newMax <= getCurrentPrice()) {
             showError("New max bid must be higher than current price ("+
                     String.format("%,d ₫", getCurrentPrice()) + ").");
@@ -463,6 +491,15 @@ public class BiddingRoomController implements MessageListener {
         if (autoBidMaxBid > 0 && newMax == autoBidMaxBid) {
             showError("New max bid is the same as current max bid.");
             return;
+        }
+
+        if (newMax > autoBidMaxBid) {
+            long availableBalance = currentUser.getAccountBalance() - currentUser.getUnsettledBalance();
+            long netRequired = newMax - autoBidMaxBid;
+            if (netRequired > availableBalance) {
+                showError("Insufficient balance.\nAvailable: " + String.format("%,d ₫", availableBalance));
+                return;
+            }
         }
 
         Button btnSource = (Button) event.getSource();
@@ -559,6 +596,11 @@ public class BiddingRoomController implements MessageListener {
             } else if (prevLeader != null && prevLeader.equals(currentUserName)
                     && !currentUserName.equals(bid.getBidderUsername())) {
                 showOutbidAlert(bid.getBidderUsername(), bid.getBidAmount());
+                if (isAutoBidding && bid.getBidAmount() >= autoBidMaxBid) {
+                    autoBidMaxBid = 0;
+                    applyAutoBidState(false);
+                    showBanner("⚠ Auto Bid stopped - current price exceeded your maximum.", 5);
+                }
             }
         } catch (Exception ignored) {}
 

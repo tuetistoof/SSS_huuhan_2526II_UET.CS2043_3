@@ -13,7 +13,6 @@ import com.ssscloud.auction.common.payload.response.DTO.AuctionDTO;
 import com.ssscloud.auction.common.payload.response.DTO.BidderDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.SellerDisplayDTO;
 import com.ssscloud.auction.common.payload.response.DTO.UserDTO;
-import com.ssscloud.auction.common.payload.response.request.ApiResponse;
 import com.ssscloud.auction.common.util.JsonUtils;
 import com.ssscloud.auction.client.controller.seller.SellerDashboardController;
 import com.ssscloud.auction.client.controller.admin.AdminDashboardController;
@@ -54,7 +53,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.stage.Popup;
 import javafx.util.Duration;
@@ -68,7 +66,6 @@ public class MainLayoutController implements MessageListener {
 
     @FXML private HBox hBoxLogo;
 
-    // Icon ImageViews — để swap light/dark
     @FXML private javafx.scene.image.ImageView iconMenuBurger;
     @FXML private javafx.scene.image.ImageView iconNotification;
     @FXML private javafx.scene.image.ImageView iconHome;
@@ -107,14 +104,13 @@ public class MainLayoutController implements MessageListener {
 
     private NotificationController notificationController; 
     private Popup notifPopup;
-    private Parent notifPopupRoot; // root đã load sẵn từ fxml, tái sử dụng cho mọi lần show/hide
-        
+    private Parent notifPopupRoot;
     private BalancePopupController balancePopupController;
     private Popup balancePopup;
     private Parent balancePopupRoot;
 
     @FXML private VBox sidebar;
-    @FXML private Parent loading; // Giao diện của khung loading
+    @FXML private Parent loading;
     @FXML private LoadingController loadingController;
 
     private boolean isSidebarExpanded = true;
@@ -124,7 +120,6 @@ public class MainLayoutController implements MessageListener {
     private Object currentController = null;
     private UserDTO user = SessionManager.getInstance().getCurrentUser();
 
-    // --- Balance state (tracked in-memory, synced with SessionManager) ---
     private long currentBalance;
     private long currentUnsettledBalance;
 
@@ -183,9 +178,6 @@ public class MainLayoutController implements MessageListener {
         if (url != null) iv.setImage(new Image(url.toExternalForm()));
     }
 
-    // --- Balance update API (called externally by DepositCardController, etc.) ---
-
-
     public void updateBalance(long newBalance) {
         currentBalance = newBalance;
         SessionManager.getInstance().getCurrentUser().setAccountBalance(newBalance);
@@ -208,8 +200,6 @@ public class MainLayoutController implements MessageListener {
             balancePopupController.update(role, balance, unsettled);
         }
     }
-
-    // --- MessageListener implementation ---
 
     @Override
     public void onMessageReceived(String json) {
@@ -237,26 +227,24 @@ public class MainLayoutController implements MessageListener {
         socket.removeListener(this);
     }
 
-    // --- Session lifecycle ---
-
     private void handleSessionKicked() {
+        cleanupCurrentController();
         removeListener();
         if (notificationController != null) notificationController.destroy();
         SessionManager.getInstance().logout();
-
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Login session expired");
-        alert.setHeaderText(null);
-        alert.setContentText("Your account are logged in from another location! Logging out.");
-        alert.showAndWait(); //blocking intentionally, not thread block
 
         Parent loginRoot = ViewLoader.load("login-signup.fxml").root();
         Stage stage = (Stage) contentArea.getScene().getWindow();
         stage.getScene().setRoot(loginRoot);
         stage.setMaximized(false);
-    }
 
-    // --- Notification ---
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Login session expired");
+        alert.setHeaderText(null);
+        alert.setContentText("Your account has been logged in from another location.");
+        alert.initOwner(stage);
+        alert.show();
+    }
 
     private void initNotification() {
         try {
@@ -291,11 +279,8 @@ public class MainLayoutController implements MessageListener {
 
     private void navigateToAuction(String auctionId) {
         if (notifPopup != null && notifPopup.isShowing()) notifPopup.hide();
-        // Từ notification không có tab nguồn rõ ràng → back về Dashboard
         loadBiddingRoomGeneral(auctionId, false, () -> handleNavDashboard(null));
     }
-
-    // --- Role-based UI visibility ---
 
     private void applyRole(UserRole role) {
         btnDeposit.setVisible(false);       btnDeposit.setManaged(false);
@@ -317,13 +302,9 @@ public class MainLayoutController implements MessageListener {
                 if (btnAvailableBalance != null) { btnAvailableBalance.setVisible(true); btnAvailableBalance.setManaged(true); }
                 navNewAuctionRoom.setVisible(true);  navNewAuctionRoom.setManaged(true);
             }
-            case ADMIN -> {
-                // Admin has no balance display
-            }
+            case ADMIN -> {}
         }
     }
-
-    // __CLEANUP__
 
     private void cleanupCurrentController() {
         if (currentController == null) return;
@@ -339,8 +320,6 @@ public class MainLayoutController implements MessageListener {
         cleanupCurrentController();
         contentArea.getChildren().clear();
     }
-
-    // __NAVIGATION__
 
     @FXML
     void handleBell(ActionEvent event) {
@@ -385,7 +364,6 @@ public class MainLayoutController implements MessageListener {
         updateIcons(dark);
         Platform.runLater(() -> {
             if (!isSidebarExpanded) {
-                // Re-apply toàn bộ trạng thái collapsed
                 for (Label lbl : navLabels) {
                     if (lbl != null) { lbl.setVisible(false); lbl.setManaged(false); }
                 }
@@ -406,7 +384,6 @@ public class MainLayoutController implements MessageListener {
                 sidebar.setMinWidth(SIDEBAR_COLLAPSED_WIDTH);
                 sidebar.setMaxWidth(SIDEBAR_COLLAPSED_WIDTH);
             } else {
-                // Expanded — re-assert width phòng trường hợp CSS reset
                 sidebar.setPrefWidth(SIDEBAR_EXPANDED_WIDTH);
                 sidebar.setMinWidth(SIDEBAR_EXPANDED_WIDTH);
                 sidebar.setMaxWidth(SIDEBAR_EXPANDED_WIDTH);

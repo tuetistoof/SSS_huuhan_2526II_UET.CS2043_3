@@ -32,8 +32,6 @@ public class ItemsWonRowController {
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
 
-    // ── Public API ────────────────────────────────────────────────────────────
-
     public void setData(BidderDisplayDTO data) {
         this.data = data;
 
@@ -50,7 +48,6 @@ public class ItemsWonRowController {
             lblWonDate.setText("—");
         }
 
-        // Thumbnail — cùng pattern với WatchlistRowController
         String imageUrl;
         if (data.getImageUrl() != null && !data.getImageUrl().isEmpty()) {
             imageUrl = data.getImageUrl().get(0);
@@ -65,17 +62,12 @@ public class ItemsWonRowController {
         this.onViewDetails = callback;
     }
 
-    // ── FXML handler ──────────────────────────────────────────────────────────
-
     @FXML
     private void handleViewDetails() {
         if (onViewDetails != null) onViewDetails.run();
     }
 
-    // ── Private ───────────────────────────────────────────────────────────────
-
     private void setRowImage(String url) {
-        // Inline style cho background image — đúng pattern của WatchlistRowController
         String cssLayout = "-fx-background-image: url('" + url + "'); "
                 + "-fx-background-color: -cloud-surface-alt; "
                 + "-fx-background-position: center center; "

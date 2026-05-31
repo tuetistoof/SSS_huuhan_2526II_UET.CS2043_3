@@ -38,15 +38,16 @@ public class BidderDashboardController implements MessageListener {
     @FXML private ToggleButton tabArts;
     @FXML private ToggleButton tabElectronics;
     @FXML private ToggleButton tabVehicles;
-    @FXML private Parent loading; // Giao diện của khung loading
+    @FXML private Parent loading;
     @FXML private LoadingController loadingController;
     @FXML private StackPane bannerContainer;
     @FXML private Pane bannerPane;
 
     private int currentBannerIndex = 0;
     private final String[] bannerUrls = {
-        "https://i.pinimg.com/736x/80/d3/ce/80d3ce2d95bc7a4b483ad61acd417e40.jpg", 
-        "https://i.pinimg.com/1200x/d4/02/47/d4024736403321036254b43140c7cc45.jpg", 
+        "https://i.pinimg.com/736x/80/d3/ce/80d3ce2d95bc7a4b483ad61acd417e40.jpg",
+        "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=1920&h=400&fit=crop", 
+        "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=1920&h=400&fit=crop", 
         "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1920&h=400&fit=crop", 
         "https://i.pinimg.com/1200x/18/0f/37/180f37f9d241985c23cee550893ea4ec.jpg"  
     };
@@ -120,7 +121,7 @@ public class BidderDashboardController implements MessageListener {
 
     public void initData(List<BidderDisplayDTO> dataFromServer) {
         this.allAuctionsDisplayInfo = dataFromServer;
-        handleTabSelection("ALL"); // Mặc định mở lên là hiện tất cả
+        handleTabSelection("ALL");
     }
 
     @FXML void filterAll(ActionEvent event) { handleTabSelection("ALL"); }
@@ -176,7 +177,6 @@ public class BidderDashboardController implements MessageListener {
     }
 
     public void loadAuctionsToDashboard(List<BidderDisplayDTO> auctionsFromDB) {
-        // Xóa sạch dữ liệu cũ trước khi nạp mới
         auctionContainer.getChildren().clear();
 
         for (BidderDisplayDTO auction : auctionsFromDB) {

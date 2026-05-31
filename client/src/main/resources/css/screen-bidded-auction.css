@@ -1,15 +1,6 @@
 @import "tokens.css";
 @import "base.css";
 
-/* ==========================================================
-   screen-bidded-auction.css — CloudBid Bidded Auctions Screen
-   Covers: Header cards, status summary badges, layout grids,
-           empty states, item rows, and contextual action buttons.
-   ========================================================== */
-
-/* =========================================================
-   HEADER CARD (Pink Accent Tint)
-   ========================================================= */
 .bda-header-card {
     -fx-background-color: -cloud-rose-bg;
     -fx-background-radius: 12px;
@@ -29,7 +20,6 @@
     -fx-text-fill: -cloud-text-secondary;
 }
 
-/* ── Nhãn đếm tổng số lượng phiên ── */
 .bda-count-badge {
     -fx-background-color: -cloud-primary;
     -fx-background-radius: 15px;
@@ -45,16 +35,10 @@
     -fx-text-fill: -cloud-surface;
 }
 
-/* =========================================================
-   CONTENT AREA & LAYOUT CONTEXTS
-   ========================================================= */
 .bda-content-area {
     -fx-background-color: -cloud-bg;
 }
 
-/* =========================================================
-   EMPTY STATE (Trạng thái chưa tham gia đấu giá phiên nào)
-   ========================================================= */
 .bda-empty-state {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 12px;
@@ -72,9 +56,6 @@
     -fx-text-fill: -cloud-text-light;
 }
 
-/* =========================================================
-   BIDDED AUCTION CARD (Thẻ thông tin từng phiên)
-   ========================================================= */
 .bda-item-card {
     -fx-background-color: -cloud-surface;
     -fx-background-radius: 8px;
@@ -84,7 +65,6 @@
     -fx-border-radius: 8px;
 }
 
-/* Hiệu ứng tương tác hover nổi nhẹ tinh tế */
 .bda-item-card:hover {
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.10), 12, 0, 0, 4);
     -fx-border-color: -cloud-border-mid;
@@ -101,24 +81,21 @@
     -fx-text-fill: -cloud-text-muted;
 }
 
-/* ── Hiển thị giá bid cao nhất hiện tại ── */
 .bda-row-price {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-text-primary;
 }
 
-/* ── Hiển thị giá của riêng cá nhân người dùng đã đặt ── */
 .bda-row-mybid {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
     -fx-text-fill: -cloud-primary;
 }
 
-/* ── Label hiển thị thời gian còn lại (Timer) ── */
 .bda-row-timer {
     -fx-font-size: 13px;
-    -fx-text-fill: -cloud-warn-text; /* Màu cam cảnh báo từ tokens */
+    -fx-text-fill: -cloud-warn-text;
 }
 
 .bda-row-timer-safe {
@@ -126,9 +103,6 @@
     -fx-text-fill: -cloud-text-muted;
 }
 
-/* =========================================================
-   AUCTION TYPE & STATE BADGES
-   ========================================================= */
 .bda-badge-type {
     -fx-background-color: -cloud-primary-pale;
     -fx-background-radius: 6px;
@@ -138,7 +112,6 @@
     -fx-padding: 2 6 2 6;
 }
 
-/* ── Nhãn trạng thái thắng/thua (Kế thừa màu ngữ nghĩa chuẩn) ── */
 .bda-badge-winning {
     -fx-background-color: -cloud-success-bg;
     -fx-background-radius: 6px;
@@ -157,11 +130,6 @@
     -fx-padding: 3 8 3 8;
 }
 
-/* =========================================================
-   ACTION BUTTONS
-   ========================================================= */
-
-/* ── Nút "Vào phòng" (Đồng bộ hoàn toàn với cấu trúc btn-primary trong base.css) ── */
 .bda-btn-enter {
     -fx-background-color: -cloud-primary;
     -fx-text-fill: -cloud-surface;
@@ -184,7 +152,6 @@
     -fx-scale-y: 0.97;
 }
 
-/* ── Nút "Bỏ quan tâm" (Dạng Secondary/Outline nhẹ nhàng) ── */
 .bda-btn-unfollow {
     -fx-background-color: transparent;
     -fx-border-color: -cloud-border-strong;

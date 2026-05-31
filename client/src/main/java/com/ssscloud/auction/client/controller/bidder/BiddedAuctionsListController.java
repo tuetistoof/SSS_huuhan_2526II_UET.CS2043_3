@@ -60,10 +60,6 @@ public class BiddedAuctionsListController implements MessageListener {
         socket.removeListener(this);
     }
 
-    // ------------------------------------------------------------------ //
-    //  Data loading                                                        //
-    // ------------------------------------------------------------------ //
-
     public void loadWatchlist() {
         try {
             String requestJson = JsonUtils.toJson(ClientMessage.request("GET_BIDDED_AUCTIONS", null));
@@ -106,15 +102,11 @@ public class BiddedAuctionsListController implements MessageListener {
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  UI rendering                                                        //
-    // ------------------------------------------------------------------ //
-
     private void renderUI(List<BidderDisplayDTO> auctions) {
         this.masterList = auctions;
         Platform.runLater(() -> {
             listContainer.getChildren().clear();
-            rowControllerMap.clear();   // reset map mỗi lần render lại toàn bộ
+            rowControllerMap.clear();
             lblTotalCount.setText(String.valueOf(auctions.size()));
 
             if (auctions.isEmpty()) {
@@ -139,7 +131,6 @@ public class BiddedAuctionsListController implements MessageListener {
                             if (onOpenAuction != null) onOpenAuction.accept(auction);
                         });
 
-                        // Lưu vào map để refreshRow tìm lại được sau này
                         rowControllerMap.put(auction.getId(), rowCtrl);
 
                         listContainer.getChildren().add(rowNode);
@@ -165,10 +156,6 @@ public class BiddedAuctionsListController implements MessageListener {
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  Real-time socket handler                                            //
-    // ------------------------------------------------------------------ //
-
     @Override
     public void onMessageReceived(String json) {
         try {
@@ -182,7 +169,6 @@ public class BiddedAuctionsListController implements MessageListener {
                         for (BidderDisplayDTO dto : masterList) {
                             if (dto.getId().equals(bid.getAuctionId())) {
                                 dto.setCurrentPrice(bid.getBidAmount());
-                                // Cập nhật leading: user đang leading nếu chính họ vừa bid
                                 String currentUserId = SessionManager.getInstance().getCurrentUser() != null
                                         ? SessionManager.getInstance().getCurrentUser().getId() : null;
                                 if (currentUserId != null) {
@@ -195,7 +181,6 @@ public class BiddedAuctionsListController implements MessageListener {
                     });
                 }
                 case "AUCTION_ENDED", "AUCTION_CANCELED" -> {
-                    // re-fetch để list phản ánh đúng trạng thái
                     Platform.runLater(this::loadWatchlist);
                 }
             }

@@ -48,7 +48,6 @@ import javafx.scene.layout.VBox;
 
 public class AdminDashboardController {
 
-    // ── Auction table ──
     @FXML private TableColumn<AdminDisplayDTO, Void>   aColAction;
     @FXML private TableColumn<AdminDisplayDTO, String> aColEnd;
     @FXML private TableColumn<AdminDisplayDTO, String> aColName;
@@ -57,14 +56,12 @@ public class AdminDashboardController {
     @FXML private TableColumn<AdminDisplayDTO, String> aColStatus;
     @FXML private TableView<AdminDisplayDTO>           tblAuctions;
 
-    // ── User table ──
     @FXML private TableColumn<UserDTO, String> uColAccountBalance;
     @FXML private TableColumn<UserDTO, String> uColEmail;
     @FXML private TableColumn<UserDTO, String> uColRole;
     @FXML private TableColumn<UserDTO, String> uColUsername;
     @FXML private TableView<UserDTO>           tblUsers;
 
-    // ── Filter buttons ──
     @FXML private ToggleButton aFilterAll;
     @FXML private ToggleButton aFilterDone;
     @FXML private ToggleButton aFilterOpen;
@@ -73,12 +70,10 @@ public class AdminDashboardController {
     @FXML private ToggleButton uFilterBidder;
     @FXML private ToggleButton uFilterSeller;
 
-    // ── Metric labels ──
     @FXML private Label lblMetricEnded;
     @FXML private Label lblMetricRunning;
     @FXML private Label lblMetricUsers;
 
-    // ── Panels & tabs ──
     @FXML private VBox         panelAuctions;
     @FXML private VBox         panelUsers;
     @FXML private ToggleButton tabAuction;
@@ -154,7 +149,6 @@ public class AdminDashboardController {
             return new SimpleStringProperty(end != null ? end.format(DT_FMT) : "—");
         });
 
-        // Status — badge có màu
         aColStatus.setCellValueFactory(c -> new SimpleStringProperty(auctionStatusLabel(c.getValue().getStatus())));
         aColStatus.setCellFactory(col -> new TableCell<>() {
             private final Label badge = new Label();
@@ -172,7 +166,6 @@ public class AdminDashboardController {
             }
         });
 
-        // Action — nút Cancel, chỉ enable khi OPEN hoặc RUNNING
         aColAction.setCellFactory(col -> new TableCell<>() {
             private final Button btnCancel = new Button("Cancel");
             private final HBox   box       = new HBox(btnCancel);
@@ -222,7 +215,6 @@ public class AdminDashboardController {
             return new SimpleStringProperty(formatVnd(c.getValue().getAccountBalance()));
         });
 
-        // Role — badge có màu theo role
         uColRole.setCellValueFactory(c -> {
             UserRole role = c.getValue().getRole();
             return new SimpleStringProperty(role != null ? role.name() : "—");
@@ -328,7 +320,6 @@ public class AdminDashboardController {
             Platform.runLater(() -> {
                 if (apiResp != null && apiResp.isSuccess()) {
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Auction cancelled successfully.");
-                    // Cập nhật local — không cần reload toàn bộ list
                     auctionMaster.stream()
                         .filter(a -> a.getAuctionId().equals(dto.getAuctionId()))
                         .findFirst()

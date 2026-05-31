@@ -75,7 +75,7 @@ public class AuctionCardController {
 
         if (days > 0) {
             lblEndTime.setStyle("-fx-text-fill: #888888;");
-            return "Còn " + days;
+            return "Còn " + days + " ngày ";
         } else if (hours > 0) {
             lblEndTime.setStyle("-fx-text-fill: orange;"); 
             return "Còn " + hours + " giờ ";
