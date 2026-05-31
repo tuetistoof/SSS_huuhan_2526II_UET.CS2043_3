@@ -428,8 +428,10 @@ public class BiddingRoomController implements MessageListener {
             return;
         }
 
-        if (tempMaxBid <= getCurrentPrice()) {
-            showError("Max bid must be higher than current price ("+
+        BidDTO latestBid = findHighestBid();
+
+        if (tempMaxBid < getCurrentPrice() || (latestBid != null && tempMaxBid == getCurrentPrice())) {
+            showError("Max bid must be higher than current price (" +
                     String.format("%,d ₫", getCurrentPrice()) + ").");
             return;
         }
